@@ -211,7 +211,7 @@ def test_write_missing_only_fids_limits_regeneration(tmp_path, monkeypatch):
     monkeypatch.setattr(verdicts_mod, "_generate_one", fake_generate_one)
     monkeypatch.setattr(verdicts_mod, "_client", lambda: object())
 
-    data = {"films": {"film-a": {"title": "A"}, "film-b": {"title": "B"}}}
+    data = {"films": {"film-a": {"title": "A", "rt": {"critics": 90}}, "film-b": {"title": "B", "rt": {"critics": 90}}}}
     results = write_missing(data, force=True, only_fids={"film-a"})
 
     assert calls == ["film-a"]
@@ -365,3 +365,232 @@ def test_genuine_not_found_is_retried_after_its_own_ttl(tmp_path, monkeypatch):
     enrich(data, cache_path=str(cache_path))
 
     assert called["wikidata"] is True  # 4 days > NOT_FOUND_TTL (3 days) — retried
+
+
+# ---------------------------------------------------------------- fix wave B: re-releases, synopsis, title_ar
+
+def _film_ent(year, label="The Dark Knight", runtime=152, sitelinks=90, lang_qid="Q1860", ar=None, enwiki=None):
+    ent = {
+        "labels": {"en": {"value": label}, **({"ar": {"value": ar}} if ar else {})},
+        "claims": {
+            "P31": [{"mainsnak": {"datavalue": {"value": {"id": "Q11424"}}}}],
+            "P577": [{"mainsnak": {"datavalue": {"value": {"time": f"+{year}-07-18T00:00:00Z"}}}}],
+            "P2047": [{"mainsnak": {"datavalue": {"value": {"amount": f"+{runtime}"}}}}] if runtime else [],
+            "P364": [{"mainsnak": {"datavalue": {"value": {"id": lang_qid}}}}] if lang_qid else [],
+            "P1258": [{"mainsnak": {"datavalue": {"value": "the_dark_knight"}}}],
+        },
+        "sitelinks": {f"site{i}": {} for i in range(sitelinks)},
+    }
+    if enwiki:
+        ent["sitelinks"]["enwiki"] = {"title": enwiki}
+    return ent
+
+
+def _fake_wikidata(monkeypatch, ents):
+    monkeypatch.setattr(enrich_mod, "_wikidata_search",
+                        lambda title: [{"id": q, "description": "film"} for q in ents])
+    monkeypatch.setattr(enrich_mod, "_wikidata_entities",
+                        lambda ids, props="labels|claims": {i: ents[i] for i in ids if i in ents})
+
+
+def test_rerelease_accepts_a_famous_exact_title_with_matching_runtime(monkeypatch, tmp_path):
+    _fake_wikidata(monkeypatch, {"Q163872": _film_ent(2008, ar="فارس الظلام", enwiki="The Dark Knight")})
+    seen = {}
+    monkeypatch.setattr(enrich_mod, "_wikipedia_summary", lambda t: seen.setdefault("page", t) and "Batman fights the Joker.")
+
+    def fake_rt(rt_id, expected_year=None):
+        seen["rt"] = (rt_id, expected_year)
+        return {"critics": 94, "critics_count": 350, "audience": 94, "consensus": None, "url": "u"}
+    monkeypatch.setattr(enrich_mod, "_rt_ratings", fake_rt)
+
+    data = {"films": {"the-dark-knight": {"title": "The Dark Knight", "runtime": 155, "lang": "English"}}}
+    film = enrich(data, cache_path=str(tmp_path / "c.json"))["films"]["the-dark-knight"]
+    assert film["rerelease"] is True
+    assert film["year"] == 2008 and film["title_ar"] == "فارس الظلام"
+    assert seen["rt"] == ("the_dark_knight", 2008)      # the year guard accepts the film's own year
+    assert film["rt"]["critics"] == 94
+    assert seen["page"] == "The Dark Knight" and film["synopsis_en"] == "Batman fights the Joker."
+
+
+@pytest.mark.parametrize("ent, runtime, lang", [
+    (_film_ent(2008, sitelinks=5), 155, "English"),                 # a same-named obscurity
+    (_film_ent(2008, runtime=107), 120, "English"),                 # Moana 2016 vs a 120-min listing
+    (_film_ent(2008, label="The Dark Knight Returns"), 155, "English"),   # label is not exact
+    (_film_ent(2005, lang_qid="Q1860"), 152, "Korean"),              # different original language
+])
+def test_rerelease_guards_reject(monkeypatch, tmp_path, ent, runtime, lang):
+    _fake_wikidata(monkeypatch, {"Q1": ent})
+    monkeypatch.setattr(enrich_mod, "_wikipedia_summary", _raise)
+    monkeypatch.setattr(enrich_mod, "_rt_ratings", _raise)
+    data = {"films": {"the-dark-knight": {"title": "The Dark Knight", "runtime": runtime, "lang": lang}}}
+    film = enrich(data, cache_path=str(tmp_path / "c.json"))["films"]["the-dark-knight"]
+    assert film["rerelease"] is False and film["year"] is None and film["rt"] is None
+
+
+def test_old_not_found_is_retried_once_for_the_rerelease_fallback(monkeypatch, tmp_path):
+    fresh = datetime.now(timezone.utc).isoformat()
+    cache = tmp_path / "c.json"
+    cache.write_text(json.dumps({"interstellar": {"ids": {}, "ids_status": "not_found", "ids_checked_at": fresh,
+                                                   "synopsis_en": "A 1968 Kannada film about something else."}}), encoding="utf-8")
+    _fake_wikidata(monkeypatch, {"Q13417189": _film_ent(2014, label="Interstellar", runtime=169)})
+    monkeypatch.setattr(enrich_mod, "_wikipedia_summary", lambda t: None)
+    monkeypatch.setattr(enrich_mod, "_rt_ratings", lambda rt_id, expected_year=None: None)
+    data = {"films": {"interstellar": {"title": "Interstellar", "runtime": 170, "lang": "English"}}}
+    film = enrich(data, cache_path=str(cache))["films"]["interstellar"]
+    assert film["rerelease"] is True and film["year"] == 2014
+    entry = json.loads(cache.read_text(encoding="utf-8"))["interstellar"]
+    assert entry["lookup_v"] == enrich_mod.LOOKUP_VERSION and entry["ids_status"] == "found"
+
+
+def test_synopsis_is_dropped_when_nothing_was_matched(monkeypatch, tmp_path):
+    fresh = datetime.now(timezone.utc).isoformat()
+    cache = tmp_path / "c.json"
+    cache.write_text(json.dumps({"dhoomakethu": {"ids": {}, "ids_status": "not_found", "ids_checked_at": fresh,
+                                                  "lookup_v": 2, "synopsis_en": "Dhoomakethu is a 1968 Kannada film."}}),
+                     encoding="utf-8")
+    monkeypatch.setattr(enrich_mod.requests, "get", _raise)
+    data = {"films": {"dhoomakethu": {"title": "Dhoomakethu", "title_ar_chain": "دhoomakethu"}}}
+    film = enrich(data, cache_path=str(cache))["films"]["dhoomakethu"]
+    assert film["synopsis_en"] is None
+    assert "synopsis_en" not in json.loads(cache.read_text(encoding="utf-8"))["dhoomakethu"]
+
+
+def test_title_ar_is_never_the_english_label_and_falls_back_to_the_chains(monkeypatch, tmp_path):
+    fresh = datetime.now(timezone.utc).isoformat()
+    cache = tmp_path / "c.json"
+    cache.write_text(json.dumps({
+        "pressure": {"ids": {"qid": "Q9", "title_ar": "Pressure"}, "ids_status": "found", "ids_checked_at": fresh},
+        "crawlers": {"ids": {"qid": "Q8", "title_ar": "Crawlers"}, "ids_status": "found", "ids_checked_at": fresh},
+    }), encoding="utf-8")
+    monkeypatch.setattr(enrich_mod.requests, "get", _raise)
+    data = {"films": {"pressure": {"title": "Pressure", "title_ar_chain": "بريشر"}, "crawlers": {"title": "Crawlers"}}}
+    films = enrich(data, cache_path=str(cache))["films"]
+    assert films["pressure"]["title_ar"] == "بريشر"
+    assert films["crawlers"]["title_ar"] is None
+
+
+# ---------------------------------------------------------------- fix wave C: template verdicts, rewrites, merges
+
+def _vfile(d, fid, **kw):
+    v = {"fid": fid, "verdict": "yes", "ar": "زين.", "en": "Good.", "basis": "RT 90% (40 نقد)",
+         "written": "2026-09-24", "by": "claude"}
+    v.update(kw)
+    (d / f"{fid}.json").write_text(json.dumps(v, ensure_ascii=False), encoding="utf-8")
+
+
+def _read(d, fid):
+    return json.loads((d / f"{fid}.json").read_text(encoding="utf-8"))
+
+
+@pytest.fixture
+def vdir(tmp_path, monkeypatch):
+    monkeypatch.setattr(verdicts_mod, "VERDICTS_DIR", tmp_path)
+    calls = []
+
+    def fake_generate_one(client, fid, film, notes):
+        calls.append(fid)
+        return {"fid": fid, "verdict": "yes", "ar": "يستاهل.", "en": "Worth it.", "basis": "RT",
+                "basis_numbers": verdicts_mod.basis_numbers(film), "written": "2026-09-26", "by": "claude"}
+
+    monkeypatch.setattr(verdicts_mod, "_generate_one", fake_generate_one)
+    monkeypatch.setattr(verdicts_mod, "_client", lambda: object())
+    return tmp_path, calls
+
+
+def test_no_basis_writes_the_template_without_the_model(vdir):
+    d, calls = vdir
+    write_missing({"films": {"aaram": {"title": "Aaram"}}})
+    v = _read(d, "aaram")
+    assert calls == []
+    assert v["by"] == "template" and v["verdict"] == "unknown"
+    assert v["ar"] == "ما لقينا تقييمات كافية لهالفيلم للحين." and v["en"] == "Not enough ratings yet."
+
+
+def test_template_is_replaced_once_ratings_appear(vdir):
+    d, calls = vdir
+    write_missing({"films": {"x": {"title": "X"}}})
+    write_missing({"films": {"x": {"title": "X", "rt": {"critics": 81, "critics_count": 30}}}})
+    assert calls == ["x"] and _read(d, "x")["by"] == "claude"
+
+
+def test_claude_unknown_without_basis_becomes_the_template(vdir):
+    d, calls = vdir
+    _vfile(d, "moana", verdict="unknown", ar="ما لقينا تفاصيل واضحة، والمعلومات المتوفرة غامضة.", basis="unknown")
+    write_missing({"films": {"moana": {"title": "Moana"}}})
+    assert calls == [] and _read(d, "moana")["by"] == "template"
+
+
+def test_claude_verdict_kept_unless_the_basis_moves_materially(vdir):
+    d, calls = vdir
+    _vfile(d, "f", basis="RT 90% (40 نقد)")
+    write_missing({"films": {"f": {"title": "F", "rt": {"critics": 92, "critics_count": 60}}}})
+    assert calls == []
+    write_missing({"films": {"f": {"title": "F", "rt": {"critics": 95, "critics_count": 60}}}})
+    assert calls == ["f"]
+    calls.clear()
+    write_missing({"films": {"f": {"title": "F", "rt": {"critics": 95, "critics_count": 130}}}})  # count doubled
+    assert calls == ["f"]
+
+
+def test_claude_unknown_gets_a_real_verdict_when_a_rerelease_gets_rt(vdir):
+    d, calls = vdir
+    _vfile(d, "the-dark-knight", verdict="unknown", ar="ما لقينا تقييمات كافية لهالفيلم للحين.", basis="unknown")
+    write_missing({"films": {"the-dark-knight": {"title": "The Dark Knight", "rt": {"critics": 94, "critics_count": 350}}}})
+    assert calls == ["the-dark-knight"]
+
+
+def test_hand_edited_is_never_touched(vdir):
+    d, calls = vdir
+    _vfile(d, "h", by="saif", ar="مو زين — كتبه المالك بيده.")
+    write_missing({"films": {"h": {"title": "H", "rt": {"critics": 10, "critics_count": 400}}}}, force=True)
+    assert calls == [] and _read(d, "h")["by"] == "saif"
+
+
+def test_claude_verdict_with_a_banned_phrase_is_regenerated(vdir):
+    d, calls = vdir
+    _vfile(d, "dark-nun", verdict="mixed", ar="تقييم متوسط، مو الأقوى بنوعه.", basis="RT 53% (17 نقد)")
+    write_missing({"films": {"dark-nun": {"title": "Dark Nun", "rt": {"critics": 53, "critics_count": 17}}}})
+    assert calls == ["dark-nun"]
+
+
+@pytest.mark.parametrize("line", [
+    "ما لقينا معلومات واضحة، الملخص المتوفر يتكلم عن أغنية.",
+    "البيانات اللي وصلتنا ناقصة.",
+    "ما لقينا تقييمات، والمعلومات المتوفرة ناقصة.",
+    "ما نقدر نحكم عليه للحين.",
+    "بنحدّث المعلومات أول ما تتوفر.",
+    "نتابعه ونحدّث لكم.",
+    "تقييم متوسط، مو الأقوى.",
+    "لو تبغي رأي واضح ترّى شوي.",
+])
+def test_meta_talk_and_non_emirati_words_are_banned(line):
+    assert _dialect_violation(line)
+
+
+def test_english_meta_talk_is_banned():
+    assert verdicts_mod._english_violation("The summary we have is about a song.")
+    assert verdicts_mod._english_violation("We'll update once ratings arrive.")
+    assert verdicts_mod._english_violation("Worth it: 94% of critics.") is None
+
+
+def test_prompt_carries_a_synopsis_only_for_a_matched_film():
+    film = {"title": "Dhoomakethu", "synopsis_en": "Dhoomakethu is a 1968 Kannada film.", "wikidata": {"qid": None}}
+    assert "1968" not in verdicts_mod._film_prompt("dhoomakethu", film, None)
+    film["wikidata"] = {"qid": "Q1"}
+    assert "1968" in verdicts_mod._film_prompt("dhoomakethu", film, None)
+
+
+def test_fold_merged_moves_or_deletes(vdir):
+    d, _ = vdir
+    _vfile(d, "fall-2", verdict="mixed")
+    _vfile(d, "fall-2-deadpoint", verdict="mixed")
+    _vfile(d, "moana-live-action", verdict="mixed", basis="RT 35% · CinemaScore A-")
+    _vfile(d, "moana", verdict="unknown", ar="غامض.")
+    _vfile(d, "the-vvaan", verdict="skip")
+    done = verdicts_mod.fold_merged({"fall-2": "fall-2-deadpoint", "moana-live-action": "moana",
+                                     "the-vvaan": "the-vvaan-force-of-the-forest", "not-there": "x"})
+    assert done == {"fall-2": "deleted", "moana-live-action": "moved -> moana",
+                    "the-vvaan": "moved -> the-vvaan-force-of-the-forest"}
+    assert not (d / "fall-2.json").exists() and (d / "fall-2-deadpoint.json").exists()
+    assert _read(d, "moana")["verdict"] == "mixed" and _read(d, "moana")["fid"] == "moana"
+    assert _read(d, "the-vvaan-force-of-the-forest")["verdict"] == "skip"

@@ -10,8 +10,16 @@ The Arabic line is light Emirati dialect: the full rules live in the owner's mem
 only) — EMIRATI_SYSTEM_NOTE below is that file's rules folded into the system prompt, and
 _dialect_violation() is the automatic post-check the memory file says was skipped last time
 (prog-01: 256 re-recorded lines) so this run rejects and regenerates instead of shipping it.
-"anonymous" verdict: no ratings and no credible reviews found (small Indian/Filipino/Arabic
-releases) — the Arabic line says so honestly instead of inventing a rating.
+No basis, no model (fix wave, 2026-09-26): a film with no Rotten Tomatoes critics score, no
+CinemaScore and no credible review notes gets the fixed template verdict ("unknown", by
+"template") without calling the model — the model, asked to say "we found nothing", padded the
+line with talk about "the summary", "the data" and a wrong film's plot. Over time:
+  - "template" verdicts are replaced as soon as a basis appears;
+  - "claude" verdicts are regenerated only when their basis moved materially (RT critics >= 5
+    points, the review count at least doubled, or a score appeared where there was none), or when
+    the line breaks a rule added after it was written (a claude "unknown" with still no basis
+    becomes the template);
+  - any other "by" (hand-edited) is never touched.
 """
 from __future__ import annotations
 
@@ -84,9 +92,21 @@ BANNED_WORDS = {
 }
 BANNED_WORDS.update(_LEXICON.get("words", {}))
 
+BANNED_WORDS.update({
+    "مو": "مب",          # «مو الأقوى» — not Emirati (fix wave, 2026-09-26)
+    "ترّى": "تريّا",      # «ترّى شوي» — not the owner's Emirati
+})
+
 BANNED_PHRASES = {
     "لين لسا": "استعمل صياغة مباشرة، مثلاً: وودي وباز بعدهم يشدّون",
     "فرح فيه": "حبّه",
+    # meta talk about our own inputs — a visitor reads a verdict on a film, not on our pipeline
+    "الملخص": "احكِ عن الفيلم نفسه، لا عن «الملخص»",
+    "البيانات": "لا تذكر البيانات أو المصادر — احكِ عن الفيلم",
+    "المعلومات المتوفرة": "لا تذكر المعلومات المتوفرة — احكِ عن الفيلم",
+    "ما نقدر نحكم": "لا تعتذر — إن ما في أساس فالسطر يكون القالب الثابت",
+    "بنحدّث": "لا تَعِد بتحديث",
+    "نتابعه": "لا تَعِد بمتابعة",
 }
 BANNED_PHRASES.update(_LEXICON.get("phrases", {}))
 
@@ -123,6 +143,15 @@ def _tokens(text: str) -> list[str]:
 
 
 _BANNED_WORDS_BARE = {_strip_diacritics(k): (k, v) for k, v in BANNED_WORDS.items()}
+
+
+_EN_META = re.compile(r"\b(?:summary|the data|information available|available information|we'?ll update|"
+                      r"we will update|keep (?:you )?posted|stay tuned)\b", re.I)
+
+
+def _english_violation(en_text: str) -> str | None:
+    m = _EN_META.search(en_text or "")
+    return f'meta talk "{m.group(0)}" in the English line — talk about the film, not our inputs' if m else None
 
 
 def _dialect_violation(ar_text: str) -> str | None:
@@ -193,6 +222,13 @@ EMIRATI_SYSTEM_NOTE = f"""أنت تكتب سطراً عربياً بلهجة إ�
 - تصريفات الأفعال الممنوعة ممنوعة هي وياها: "يجي" ممنوعة بكل صيغها (يجيك، تجيك، بيجي، يجينا...)
   لا الفعل المجرد فقط — استعمل تصريف "إيي" المناسب دائماً.
 
+قواعد جولة الإصلاح (2026-09-26):
+- كل حقيقة في السطر (سنة، لغة، بلد، مخرج، ممثل، قصة، رقم) لازم تكون موجودة حرفياً في المدخلات
+  تحت. لا تضيف شي من معرفتك العامة ولا تخمّن أي فيلم هو.
+- ممنوع الكلام عن مدخلاتك: لا «الملخص» ولا «البيانات» ولا «المعلومات المتوفرة» ولا «ما نقدر
+  نحكم» ولا وعود «بنحدّث/نتابعه». الزائر يقرا حكم على فيلم، مب على طريقة شغلنا.
+- «مب» لا «مو»، ولا «ترّى».
+
 الأسلوب: جملتان قصيرتان كحد أقصى، كل جملة تحمل حقيقة واحدة (رقم أو حكم)، بلا حشو ولا مبالغة
 ("وايد" تُستخدم باعتدال لا في كل جملة). إذا لم تتوفر تقييمات كافية (أفلام هندية/فلبينية/عربية
 صغيرة بلا نقاد) فقل ذلك بصراحة بدل اختلاق رقم، مثلاً: «ما لقينا تقييمات كافية لهالفيلم للحين»."""
@@ -254,8 +290,9 @@ def _film_prompt(fid: str, film: dict, extra_notes: str | None) -> str:
         lines.append(f"Rotten Tomatoes (الجمهور): {rt['audience']}%")
     if rt.get("consensus"):
         lines.append(f"إجماع النقاد (إنجليزي): {rt['consensus']}")
-    if film.get("synopsis_en"):
-        lines.append(f"الملخص (إنجليزي): {film['synopsis_en']}")
+    # the plot only for a film whose Wikidata match was accepted (enrich.py) — never a guess
+    if film.get("synopsis_en") and (film.get("wikidata") or {}).get("qid"):
+        lines.append(f"القصة (إنجليزي، للسياق فقط — لا تذكر مصدرها): {film['synopsis_en']}")
     if extra_notes:
         clean_notes = _sanitize_notes(extra_notes)
         if clean_notes:
@@ -300,7 +337,7 @@ def _generate_one(client, fid: str, film: dict, extra_notes: str | None) -> dict
 
         ar = parsed.get("ar", "")
         verdict = parsed.get("verdict")
-        reason = _dialect_violation(ar)
+        reason = _dialect_violation(ar) or _english_violation(parsed.get("en", ""))
         if reason:
             last_reason = reason
             continue
@@ -314,6 +351,7 @@ def _generate_one(client, fid: str, film: dict, extra_notes: str | None) -> dict
             "ar": ar,
             "en": parsed.get("en", ""),
             "basis": parsed.get("basis", ""),
+            "basis_numbers": basis_numbers(film),
             "written": date.today().isoformat(),
             "by": "claude",
         }
@@ -322,15 +360,90 @@ def _generate_one(client, fid: str, film: dict, extra_notes: str | None) -> dict
                         f"(last reason: {last_reason})")
 
 
+TEMPLATE_AR = "ما لقينا تقييمات كافية لهالفيلم للحين."
+TEMPLATE_EN = "Not enough ratings yet."
+RT_MATERIAL_POINTS = 5
+
+
+def basis_numbers(film: dict) -> dict:
+    """The numbers a verdict stands on, stored with it so a later run can tell a material change."""
+    rt = film.get("rt") or {}
+    return {"rt": rt.get("critics"), "rt_count": rt.get("critics_count"), "cinemascore": film.get("cinemascore")}
+
+
+def has_basis(film: dict, notes: str | None = None) -> bool:
+    """RT critics score, a CinemaScore, or credible (sanitized, non-empty) review notes."""
+    if (film.get("rt") or {}).get("critics") is not None or film.get("cinemascore"):
+        return True
+    return bool(notes and _sanitize_notes(notes))
+
+
+def template_verdict(fid: str) -> dict:
+    return {"fid": fid, "verdict": "unknown", "ar": TEMPLATE_AR, "en": TEMPLATE_EN, "basis": "",
+            "basis_numbers": {"rt": None, "rt_count": None, "cinemascore": None},
+            "written": date.today().isoformat(), "by": "template"}
+
+
+def _stored_numbers(existing: dict) -> dict:
+    """basis_numbers of a verdict file; for one written before they were stored, read back out of
+    its basis line («RT 91% (37 نقد)»)."""
+    if isinstance(existing.get("basis_numbers"), dict):
+        return existing["basis_numbers"]
+    basis = existing.get("basis") or ""
+    m = re.search(r"RT\s*(\d{1,3})\s*%", basis)
+    c = re.search(r"RT\s*\d{1,3}\s*%\s*\((\d+)", basis)
+    return {"rt": int(m.group(1)) if m else None, "rt_count": int(c.group(1)) if c else None,
+            "cinemascore": None}
+
+
+def material_change(existing: dict, film: dict) -> bool:
+    """RT critics moved >= 5 points, the review count at least doubled, or a score appeared."""
+    old, new = _stored_numbers(existing), basis_numbers(film)
+    if new["rt"] is not None:
+        if old.get("rt") is None or abs(new["rt"] - old["rt"]) >= RT_MATERIAL_POINTS:
+            return True
+        if old.get("rt_count") and new["rt_count"] and new["rt_count"] >= 2 * old["rt_count"]:
+            return True
+    if new["cinemascore"] and new["cinemascore"] != old.get("cinemascore"):
+        return True
+    return False
+
+
+def needs_rewrite(existing: dict | None, film: dict, notes: str | None = None, force: bool = False) -> str | None:
+    """Why this film's verdict should be (re)written now, or None to keep the file as it is."""
+    if existing is None:
+        return "new"
+    by = existing.get("by")
+    basis = has_basis(film, notes)
+    if by == "template":
+        return "basis appeared" if basis else None
+    if by != "claude":
+        return None  # hand-edited — never
+    if force:
+        return "force"
+    if existing.get("verdict") == "unknown" and not basis:
+        return "unknown without basis -> template" if existing.get("ar") != TEMPLATE_AR else None
+    if _dialect_violation(existing.get("ar") or "") or _english_violation(existing.get("en") or ""):
+        return "breaks a rule"
+    if basis and material_change(existing, film):
+        return "basis moved"
+    if existing.get("verdict") == "unknown" and basis:
+        return "basis appeared"
+    return None
+
+
+def _write(path: Path, verdict: dict) -> None:
+    path.write_text(json.dumps(verdict, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+
+
 def write_missing(data: dict, force: bool = False, notes: dict[str, str] | None = None,
                    only_fids: set[str] | None = None) -> dict:
-    """Writes verdicts/<fid>.json for films that don't have one yet.
+    """Writes or refreshes verdicts/<fid>.json per needs_rewrite().
 
-    force=True also regenerates films whose verdict was written by "claude" (still never a
-    hand-edited file — "by" != "claude" is always left alone). `notes` is an optional
-    {fid: extra research text} map (e.g. lines pulled from reviews.md) folded into the prompt.
-    `only_fids`, if given, restricts regeneration to that set of fids (e.g. a targeted fix
-    round) — every other film is left exactly as it is, whether or not `force` is set.
+    A film with no basis (has_basis) gets the template without a model call. force=True also
+    regenerates claude-written verdicts (never a hand-edited one). `notes` is an optional
+    {fid: extra research text} map folded into the prompt. `only_fids`, if given, restricts the
+    run to that set of fids.
     """
     VERDICTS_DIR.mkdir(exist_ok=True)
     notes = notes or {}
@@ -341,21 +454,56 @@ def write_missing(data: dict, force: bool = False, notes: dict[str, str] | None 
         if only_fids is not None and fid not in only_fids:
             continue
         path = VERDICTS_DIR / f"{fid}.json"
+        existing = None
         if path.exists():
             try:
                 existing = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
-                existing = {}
-            if existing.get("by") != "claude":
-                continue  # hand-edited — never overwritten
-            if not force:
-                continue  # already have a claude verdict and force wasn't asked for
+                existing = {"by": "claude"}  # unreadable: rewrite it
+        if not needs_rewrite(existing, film, notes.get(fid), force):
+            continue
 
-        if client is None:
-            client = _client()
-
-        verdict = _generate_one(client, fid, film, notes.get(fid))
-        path.write_text(json.dumps(verdict, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+        if not has_basis(film, notes.get(fid)):
+            verdict = template_verdict(fid)
+        else:
+            if client is None:
+                client = _client()
+            verdict = _generate_one(client, fid, film, notes.get(fid))
+        _write(path, verdict)
         results[fid] = verdict
 
     return results
+
+
+def fold_merged(mapping: dict[str, str]) -> dict[str, str]:
+    """After normalize merged duplicate films: verdicts/<old>.json for a merged-away fid is folded
+    into the canonical fid. The old file moves over when the canonical has none, or only a
+    template/"unknown" one while the old one says something real; otherwise the old file is
+    deleted (a hand-edited old file is only ever moved, never deleted). Returns {old: action}."""
+    done = {}
+    for old, canon in sorted(mapping.items()):
+        if old == canon:
+            continue
+        op, cp = VERDICTS_DIR / f"{old}.json", VERDICTS_DIR / f"{canon}.json"
+        if not op.exists():
+            continue
+        try:
+            ov = json.loads(op.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            ov = {}
+        cv = None
+        if cp.exists():
+            try:
+                cv = json.loads(cp.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                cv = None
+        old_real = ov.get("verdict") not in (None, "unknown") and ov.get("by") != "template"
+        canon_weak = cv is None or (cv.get("by") in ("template", "claude") and cv.get("verdict") == "unknown")
+        if old_real and canon_weak or (cv is None and ov):
+            _write(cp, dict(ov, fid=canon))
+            op.unlink()
+            done[old] = f"moved -> {canon}"
+        elif ov.get("by") in ("claude", "template", None):
+            op.unlink()
+            done[old] = "deleted"
+    return done

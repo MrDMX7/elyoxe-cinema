@@ -39,6 +39,20 @@ search hits at all gets there, orthogonal to this year filter). The Rotten Tomat
 the same guard: a page's own `releaseYear` (read out of its `where-to-watch-json` block) must
 match the Wikidata-recorded year for that same qid, or the rating is dropped rather than
 attached to the wrong film.
+
+Re-releases (fix wave, 2026-09-26): a classic back in cinemas (The Dark Knight, Interstellar)
+has no current-year Wikidata film, so the year filter above finds nothing. Only then, and only
+under three guards, an older film is accepted: its English label equals the cleaned title
+exactly (case/punctuation-insensitive), it has >= 20 sitelinks (a well-known film, not a
+same-named obscurity), and its runtime, when both are known, is within 5 minutes of the
+listing's (plus: its original language, when Wikidata and the listing both give one, agrees).
+Such a film carries film["rerelease"] = True, and its RT page is checked against its own year.
+
+Synopsis: only for a film whose Wikidata match was accepted, and only from that item's own
+English Wikipedia sitelink — never a title search (that is how "Dhoomakethu" 2026 got the
+plot of a 1968 Kannada film). title_ar: the item's real Arabic label (never its English label
+as a fallback), else the Arabic title a chain publishes (Reel's TitleAlt, Novo's
+movie_title_ar), else none. Never machine-translated.
 """
 import json
 import os
@@ -54,6 +68,14 @@ RATINGS_TTL = timedelta(days=3)
 NOT_FOUND_TTL = timedelta(days=3)
 ERROR_TTL = timedelta(hours=6)
 FILM_QIDS = {"Q11424", "Q24862", "Q24869"}  # film, short film, television film
+LOOKUP_VERSION = 2          # 2: re-release fallback — a "not_found" from an older version is retried once
+RERELEASE_MIN_SITELINKS = 20
+RERELEASE_RUNTIME_TOLERANCE = 5
+# listing language -> Wikidata QID of that language (P364, original language of the film)
+LANG_QIDS = {"English": "Q1860", "Arabic": "Q13955", "Hindi": "Q1568", "Malayalam": "Q36236",
+             "Tamil": "Q5885", "Telugu": "Q8097", "Korean": "Q9176", "Japanese": "Q5287",
+             "French": "Q150", "Tagalog": "Q34057", "Punjabi": "Q58635"}
+_ARABIC = re.compile(r"[\u0600-\u06ff]")
 
 _last_call = [0.0]
 
@@ -136,14 +158,14 @@ def _wikidata_search(title):
         raise LookupFailed(f"bad JSON from wbsearchentities: {e}") from e
 
 
-def _wikidata_entities(ids):
+def _wikidata_entities(ids, props="labels|claims"):
     ids = [i for i in dict.fromkeys(ids) if i]
     if not ids:
         return {}
     r = _polite_get(
         "https://www.wikidata.org/w/api.php",
         params={"action": "wbgetentities", "ids": "|".join(ids), "format": "json",
-                "languages": "en|ar", "props": "labels|claims"},
+                "languages": "en|ar", "props": props},
     )
     if r is None:
         raise LookupFailed("network error calling wbgetentities")
@@ -162,6 +184,16 @@ def _label(entities, qid, lang):
     if "en" in labels:
         return labels["en"]["value"]
     return None
+
+
+def _arabic_label(entities, qid):
+    """The item's own Arabic label, or None — never the English label standing in for it."""
+    v = (entities.get(qid, {}).get("labels", {}).get("ar") or {}).get("value")
+    return v if v and _ARABIC.search(v) else None
+
+
+def _norm_title(t):
+    return re.sub(r"[^a-z0-9]+", "", (t or "").lower())
 
 
 def _claim_values(entity, prop):
@@ -246,6 +278,59 @@ def _find_film_qid(title, accepted_years):
     return None
 
 
+def _runtime_of(ent):
+    for v in _claim_values(ent, "P2047"):
+        try:
+            return round(float(str(v["amount"]).lstrip("+")))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return None
+
+
+def _find_rerelease_qid(title, runtime=None, lang=None):
+    """An older film for a title with no current-year match — see the module docstring's
+    "Re-releases": exact English label, >= RERELEASE_MIN_SITELINKS sitelinks, runtime within
+    RERELEASE_RUNTIME_TOLERANCE when both are known, original language agreeing when both are
+    known. Returns the qid or None. May raise LookupFailed."""
+    want = _norm_title(title)
+    if not want:
+        return None
+    hits = _wikidata_search(title)
+    if not hits:
+        return None
+    entities = _wikidata_entities([h["id"] for h in hits], props="labels|claims|sitelinks")
+    for h in hits:
+        qid = h["id"]
+        ent = entities.get(qid)
+        if not ent or not _looks_like_a_film(h, ent):
+            continue
+        label = ((ent.get("labels") or {}).get("en") or {}).get("value")
+        if _norm_title(label) != want:
+            continue
+        if len(ent.get("sitelinks") or {}) < RERELEASE_MIN_SITELINKS:
+            continue
+        rt = _runtime_of(ent)
+        if runtime and rt and abs(int(runtime) - rt) > RERELEASE_RUNTIME_TOLERANCE:
+            continue
+        lang_qid = LANG_QIDS.get(lang or "")
+        langs = {v.get("id") for v in _claim_values(ent, "P364")}
+        if lang_qid and langs and lang_qid not in langs:
+            continue
+        return qid
+    return None
+
+
+def _rerelease_ids(title, runtime=None, lang=None):
+    """_wikidata_ids() for the re-release fallback: {} or the same dict with rerelease=True."""
+    qid = _find_rerelease_qid(title, runtime, lang)
+    if not qid:
+        return {}
+    out = _ids_for_qid(qid)
+    if out:
+        out["rerelease"] = True
+    return out
+
+
 def _wikidata_ids(title, accepted_years):
     """Returns a permanent-cacheable dict of ids/labels for a title, or {} if unmatched.
 
@@ -255,7 +340,11 @@ def _wikidata_ids(title, accepted_years):
     qid = _find_film_qid(title, accepted_years)
     if not qid:
         return {}
-    entities = _wikidata_entities([qid])
+    return _ids_for_qid(qid)
+
+
+def _ids_for_qid(qid):
+    entities = _wikidata_entities([qid], props="labels|claims|sitelinks")
     ent = entities.get(qid)
     if not ent:
         return {}
@@ -276,9 +365,11 @@ def _wikidata_ids(title, accepted_years):
     imdb_ids = _claim_values(ent, "P345")
     rt_ids = _claim_values(ent, "P1258")
 
+    enwiki = ((ent.get("sitelinks") or {}).get("enwiki") or {}).get("title")
     return {
         "qid": qid,
-        "title_ar": _label(entities, qid, "ar"),
+        "enwiki": enwiki,
+        "title_ar": _arabic_label(entities, qid),
         "year": _claim_year(ent),
         "runtime": runtime,
         "genres": {
@@ -362,8 +453,9 @@ def _rt_ratings(rt_id, expected_year=None):
 # ---------- Wikipedia synopsis ----------
 
 def _wikipedia_summary(title):
+    """The REST summary of one exact English Wikipedia page (the matched item's sitelink)."""
     r = _polite_get(
-        f"https://en.wikipedia.org/api/rest_v1/page/summary/{requests.utils.quote(title)}"
+        f"https://en.wikipedia.org/api/rest_v1/page/summary/{requests.utils.quote(title.replace(' ', '_'), safe='')}"
     )
     if r is None or r.status_code != 200:
         return None
@@ -422,7 +514,9 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
         if ids_status == "found":
             should_attempt = False  # a confirmed match is permanent, never re-queried
         elif ids_status == "not_found":
-            should_attempt = not _fresh(ids_checked_at, NOT_FOUND_TTL)
+            # a "not found" from before the re-release fallback existed is retried once now
+            should_attempt = (entry.get("lookup_v", 1) < LOOKUP_VERSION
+                              or not _fresh(ids_checked_at, NOT_FOUND_TTL))
         elif ids_status == "error":
             should_attempt = not _fresh(ids_checked_at, ERROR_TTL)
         else:  # never attempted
@@ -432,6 +526,8 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
             now_iso = datetime.now(timezone.utc).isoformat()
             try:
                 found = _wikidata_ids(title, accepted_years)
+                if not found and not year_hint:
+                    found = _rerelease_ids(title, film.get("runtime"), film.get("lang"))
             except LookupFailed:
                 # Transient failure — do NOT overwrite a previously-found `ids` (there isn't
                 # one, by construction of should_attempt, except in the "not_found"-retry
@@ -453,12 +549,14 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
                 entry["ids"] = found
                 entry["ids_status"] = "found" if found else "not_found"
                 entry["ids_checked_at"] = now_iso
+                entry["lookup_v"] = LOOKUP_VERSION
                 dirty = True
             ids = found
 
-            if not offline:
+            # the plot only of the page Wikidata itself links to this film — never a title search
+            if found and found.get("enwiki"):
                 try:
-                    syn = _wikipedia_summary(title)
+                    syn = _wikipedia_summary(found["enwiki"])
                 except Exception:
                     syn = None
                 if syn:
@@ -466,9 +564,16 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
                     dirty = True
 
         ids = ids or {}
+        if not ids.get("qid") and entry.pop("synopsis_en", None) is not None:
+            dirty = True  # a synopsis without an accepted match is someone else's plot
 
-        if ids.get("title_ar"):
-            film["title_ar"] = ids["title_ar"]
+        title_ar = ids.get("title_ar")
+        if title_ar and not _ARABIC.search(title_ar):
+            title_ar = None  # an older cache entry holding the English label as "title_ar"
+        title_ar = title_ar or film.get("title_ar_chain")
+        if title_ar:
+            film["title_ar"] = title_ar
+        film["rerelease"] = bool(ids.get("rerelease"))
         if ids.get("year"):
             film["year"] = ids["year"]
         if ids.get("runtime") and not film.get("runtime"):
@@ -482,7 +587,7 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
         film["wikidata"] = {"qid": ids.get("qid")}
         film["imdb"] = {"id": ids.get("imdb_id")}
         film["imdb_score"] = None  # no OMDb key — filled later by hand
-        if entry.get("synopsis_en"):
+        if entry.get("synopsis_en") and ids.get("qid"):
             film["synopsis_en"] = entry["synopsis_en"]
 
         rt_id = ids.get("rt_id")

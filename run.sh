@@ -7,6 +7,8 @@
 # By hand, in the foreground:  bash run.sh
 #
 # Exit: 0 = deployed (possibly with degraded chains — those notify here), non-zero = nothing deployed.
+# Notifications: only when something is wrong (a chain failed, prices degraded, verdicts not pushed);
+# run-job.sh keeps this job quiet on success (QUIET_OK).
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$HERE"
@@ -43,6 +45,26 @@ rc=$?
 [ "$rc" -eq 0 ] || fail "refresh.py خرج بـ$rc — كل السلاسل فشلت، ما نُشر شي" "$rc"
 
 ./deploy.sh || fail "deploy.sh فشل بعد تحديث ناجح — الموقع على النسخة السابقة" 3
+
+# verdicts/*.json written this run (new films, templates replaced, merged-away files folded) go back
+# to origin, so the laptop and the next run see the same set. Only verdicts/ — never anything else
+# in the tree. A conflict aborts just this commit; the deploy already happened.
+commit_verdicts() {
+  git add -A -- verdicts/ || return 1
+  if git diff --cached --quiet -- verdicts/; then echo "verdicts: nothing new"; return 0; fi
+  local n; n=$(git diff --cached --name-only -- verdicts/ | wc -l)
+  git commit -q -m "chore(verdicts): auto $(date '+%F %H:%M')" -- verdicts/ || return 1
+  if ! git pull --rebase --autostash -q origin main; then
+    git rebase --abort >/dev/null 2>&1
+    git reset -q --soft HEAD~1 && git reset -q -- verdicts/
+    echo "verdicts: pull --rebase conflicted — commit undone, files kept for the next run"
+    return 2
+  fi
+  git push -q origin HEAD:main || { echo "verdicts: push failed"; return 3; }
+  echo "verdicts: committed and pushed $n file(s)"
+}
+vrc=0; commit_verdicts || vrc=$?
+[ "$vrc" -eq 0 ] || note "سينما ⚠" "نُشر الموقع، بس ما قدرت أرفع ملفات الأحكام (رمز $vrc) — بحاول الجولة الياية" "elyoxe-cinema-git"
 
 # health.json: {chain: {ok, at, error, shows, prices_degraded}} — anything off is worth one notification
 bad=$("$PY" - <<'EOF'

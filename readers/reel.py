@@ -41,7 +41,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from curl_cffi import requests as cr
 
-from readers.common import CITIES, HALLS, Polite, city_of, slug
+from readers.common import CITIES, HALLS, Polite, arabic_title, city_of, slug
 
 BASE = "https://storage.googleapis.com/eeg-prod-reelcinema-sb/web/vista/json"
 API = "https://apiuae.reelcinemas.com/webapi/api"
@@ -292,6 +292,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
         shows.append({
             "cinema": cinema_id_of[s["CinemaId"]],
             "film_title": _clean(film.get("Title")) or "",
+            "film_title_ar": arabic_title(film.get("TitleAlt")),
             "film_lang": _clean(film.get("Language")),
             "film_rating": _clean(film.get("Rating")),
             "runtime": film.get("RunTime"),

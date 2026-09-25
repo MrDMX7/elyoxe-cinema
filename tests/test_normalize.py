@@ -239,3 +239,97 @@ def test_city_slices_only_contains_its_city():
     dubai = slices["dubai"]
     assert list(dubai["cinemas"].keys()) == ["vox-mall-of-the-emirates"]
     assert all(s["cinema"] == "vox-mall-of-the-emirates" for s in dubai["shows"])
+
+
+# ---------------------------------------------------------------- cross-chain duplicates (fix wave A)
+
+def _acc(title, runtime=None, lang=None):
+    return {"title": title, "runtime": runtime, "lang": lang, "rating": None, "poster": None,
+            "title_ar": None, "chains": {"x"}}
+
+
+def _merge(*accs, aliases=None):
+    films = {normalize.film_fid(a["title"]): a for a in accs}
+    return normalize.merge_duplicates(films, aliases or {}, {})
+
+
+import pytest  # noqa: E402
+
+
+@pytest.mark.parametrize("a, b, canon", [
+    (_acc("The Vvaan: Force of the Forest", 130, "Hindi"), _acc("The Vvaan: Force of the Forrest", 165, "Hindi"), None),
+    (_acc("The Vvaan", 130, "Hindi"), _acc("The Vvaan: Force of the Forest", 130, "Hindi"), "the-vvaan-force-of-the-forest"),
+    (_acc("The Smurfs Timeless Adventure Volume 2", 85, "English"), _acc("The Smurf Timeless Adventure Volume 2", 80, "English"),
+     "the-smurfs-timeless-adventure-volume-2"),
+    (_acc("Butterfly Effect Azzam", 90, "Arabic"), _acc("The Butterfly Effect: Azzam", 90, "Arabic"), "the-butterfly-effect-azzam"),
+    (_acc("Buttery Effect Azzam", 90, "Arabic"), _acc("Butterfly Effect Azzam", 90, "Arabic"), None),
+    (_acc("Fall 2", 100, "English"), _acc("Fall 2: Deadpoint", 100, "English"), "fall-2-deadpoint"),
+    (_acc("Insidious", 105, "English"), _acc("Insidious: Out Of The Further", 105, "English"), "insidious-out-of-the-further"),
+    (_acc("Minions Monsters", 120, "English"), _acc("Minions & Monsters", 120, "English"), "minions-and-monsters"),
+    (_acc("Mirzapur", 210, "Hindi"), _acc("Mirzapur: The Movie", 210, "Hindi"), "mirzapur-the-movie"),
+    (_acc("Dhoomakethu", 130, "Malayalam"), _acc("Dhoomaketu", 125, "Malayalam"), "dhoomakethu"),
+    (_acc("Bethlahem Kudumba Unit", 155, "Malayalam"), _acc("Bethlehem Kudumba Unit", 165, "Malayalam"), None),
+])
+def test_listed_duplicates_merge_automatically(a, b, canon):
+    out, mapping = _merge(a, b)
+    assert len(out) == 1, (a["title"], b["title"])
+    if canon:
+        assert list(out) == [canon]
+
+
+def test_moana_live_action_merges_by_alias():
+    aliases = normalize.load_aliases()
+    out, mapping = _merge(_acc("Moana", 120, "English"), _acc("Moana Live Action", 120, "English"), aliases=aliases)
+    assert list(out) == ["moana"] and mapping == {"moana-live-action": "moana"}
+
+
+def test_aliases_yaml_picks_the_correct_spelling_and_title():
+    aliases = normalize.load_aliases()
+    out, mapping = _merge(_acc("The Vvaan: Force of the Forrest", 165, "Hindi"), _acc("The Vvaan: Force of the Forest", 130, "Hindi"),
+                          aliases=aliases)
+    assert list(out) == ["the-vvaan-force-of-the-forest"]
+    assert out["the-vvaan-force-of-the-forest"]["title"] == "The Vvaan: Force of the Forest"
+    # an alias applies even when only the misspelt listing is on today
+    out, mapping = _merge(_acc("Buttery Effect Azzam", 90, "Arabic"), aliases=aliases)
+    assert list(out) == ["the-butterfly-effect-azzam"] and mapping == {"buttery-effect-azzam": "the-butterfly-effect-azzam"}
+    out, _ = _merge(_acc("Bethlahem Kudumba Unit", 155, "Malayalam"), _acc("Bethlehem Kudumba Unit", 165, "Malayalam"), aliases=aliases)
+    assert list(out) == ["bethlehem-kudumba-unit"]
+
+
+@pytest.mark.parametrize("a, b", [
+    (_acc("Fall", 107, "English"), _acc("Fall 2", 100, "English")),
+    (_acc("Fall", 100, "English"), _acc("Fall 2: Deadpoint", 100, "English")),
+    (_acc("Moana 2", 100, "English"), _acc("Moana", 100, "English")),
+    (_acc("Toy Story 4", 100, "English"), _acc("Toy Story 5", 100, "English")),
+    (_acc("The Smurfs Timeless Adventure Volume 2", 85, "English"), _acc("The Smurfs Timeless Adventure Volume 3", 85, "English")),
+    (_acc("Cats in the Museum: Treasures of Egypt", 90, "English"), _acc("Cats in The Museum 2:Treasures of Egypt", 90, "English")),
+    (_acc("Avengers Endgame", 181, "English"), _acc("Avengers Endgame: Encore", 181, "English")),
+    (_acc("Mirzapur", 150, "Hindi"), _acc("Mirzapur: The Movie", 210, "Hindi")),   # subtitle, but runtimes an hour apart
+    (_acc("Revolver", 120, "Korean"), _acc("Revolvers", 95, "English")),          # near spelling, nothing else agrees
+])
+def test_sequels_and_different_films_stay_apart(a, b):
+    out, mapping = _merge(a, b)
+    assert len(out) == 2 and mapping == {}, (a["title"], b["title"])
+
+
+def test_merge_rewrites_shows_and_records_the_mapping():
+    results = {
+        "vox": {"cinemas": [VOX_CINEMA], "shows": [show(film_title="The Vvaan: Force of the Forrest", runtime=165, film_lang="Hindi")]},
+        "star": {"cinemas": [STAR_CINEMA], "shows": [show(cinema="star-bawadi-mall", film_title="THE VVAAN: FORCE OF THE FOREST",
+                                                          runtime=130, film_lang="Hindi", film_title_ar="ذا فان")]},
+    }
+    data = normalize.merge(results, previous=None, now=NOW)
+    assert list(data["films"]) == ["the-vvaan-force-of-the-forest"]
+    assert {s["film"] for s in data["shows"]} == {"the-vvaan-force-of-the-forest"}
+    assert data["merged"] == {"the-vvaan-force-of-the-forrest": "the-vvaan-force-of-the-forest"}
+    f = data["films"]["the-vvaan-force-of-the-forest"]
+    assert set(f["chains"]) == {"vox", "star"} and f["title"] == "The Vvaan: Force of the Forest"
+    assert f["title_ar_chain"] == "ذا فان"
+    assert all("film_title_ar" not in s for s in data["shows"])
+
+
+def test_chain_arabic_titles_are_cleaned_and_english_copies_dropped():
+    from readers.common import arabic_title
+    assert arabic_title("انترستيلر (إعادة اصدار)") == "انترستيلر"
+    assert arabic_title("بريشـر") == "بريشر"
+    assert arabic_title("Sacrifice") is None and arabic_title("") is None and arabic_title(None) is None

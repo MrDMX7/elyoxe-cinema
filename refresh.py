@@ -68,6 +68,8 @@ CHAIN_READERS = {
 ALL_CHAINS = list(CHAIN_READERS)
 
 DEFAULT_TIMEOUT = 8 * 60.0
+# VOX reads one showtimes page per cinema per day plus ~80 seat-map samples: ~490 s on the Fold.
+CHAIN_TIMEOUTS = {"vox": 15 * 60.0}
 RAW_REUSE_WINDOW = timedelta(hours=3)
 DUBAI_TZ = ZoneInfo("Asia/Dubai")
 PRICES_DEGRADED_THRESHOLD = 0.5  # priced/attempted below this -> health[chain]["prices_degraded"]
@@ -189,9 +191,16 @@ def _write_verdicts_isolated(data: dict) -> dict:
             "failed": failed, "error": last_error}
 
 
+def chain_timeout(chain: str) -> float:
+    return CHAIN_TIMEOUTS.get(chain, DEFAULT_TIMEOUT)
+
+
 def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days: int = 2,
-            force: bool = False, timeout: float = DEFAULT_TIMEOUT) -> int:
-    """Runs the full pipeline once. Returns the process exit code (0 ok, 1 all chains failed)."""
+            force: bool = False, timeout: float | None = None) -> int:
+    """Runs the full pipeline once. Returns the process exit code (0 ok, 1 all chains failed).
+
+    `timeout` (seconds) overrides every chain's own wall-clock limit (chain_timeout: VOX 900 s,
+    the rest 480 s) — the tests use it."""
     chains = list(chains) if chains else list(ALL_CHAINS)
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -208,7 +217,7 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
         if cached is not None:
             raw, ok, error, seconds = cached, True, None, 0.0
         else:
-            outcome = _run_chain(chain, days, offline, timeout)
+            outcome = _run_chain(chain, days, offline, timeout if timeout is not None else chain_timeout(chain))
             ok, error, seconds, raw = outcome["ok"], outcome["error"], outcome["seconds"], outcome["result"]
             if ok:
                 _write_json_atomic(_raw_path(chain), raw)
@@ -223,15 +232,17 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             # absent (older readers/fixtures): falls back to counting shows[].prices directly.
             # Never copied into `raw` itself past this point, so it can't leak into latest.json
             # (normalize.merge only ever reads raw["cinemas"]/raw["shows"]).
+            # A reader that reports price_health with attempted == 0 (Roxy: its prices come from
+            # prices.yaml by design, it never samples) is not degraded — nothing was tried.
             reader_price_health = raw.get("price_health") or {}
-            if reader_price_health.get("attempted"):
-                attempted = reader_price_health["attempted"]
+            if "attempted" in reader_price_health:
+                attempted = reader_price_health.get("attempted") or 0
                 priced = reader_price_health.get("priced") or 0
             else:
                 attempted = total
                 priced = sum(1 for s in raw.get("shows", []) if s.get("prices") is not None)
             pct = (priced / attempted * 100) if attempted else 0.0
-            degraded = bool(attempted and (priced / attempted) < PRICES_DEGRADED_THRESHOLD)
+            degraded = bool(attempted > 0 and (priced / attempted) < PRICES_DEGRADED_THRESHOLD)
 
             results[chain] = raw
             health[chain] = {"ok": True, "at": now, "error": None, "shows": total,
@@ -251,6 +262,16 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             summaries.append(f"{chain}: FAILED  {error}  {seconds:.1f}s")
 
     merged = normalize.merge(results, previous, now)
+
+    # a film merged into another (normalize.merge_duplicates, aliases.yaml) takes its verdict file
+    # with it: moved to the canonical fid when that one has nothing better, else deleted
+    try:
+        folded = verdicts_mod.fold_merged({**normalize.load_aliases().get("aliases", {}),
+                                           **merged.get("merged", {})})
+        if folded:
+            summaries.append("verdicts folded: " + ", ".join(f"{k} {v}" for k, v in folded.items()))
+    except Exception as e:  # noqa: BLE001 - housekeeping must never abort the publish
+        print(f"refresh: fold_merged failed: {e}", file=sys.stderr)
 
     # enrich() is already exception-safe per film internally, but is wrapped here too
     # (defensively — e.g. a cache-file I/O error) so nothing it does can abort the publish;

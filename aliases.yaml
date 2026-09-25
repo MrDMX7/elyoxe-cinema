@@ -1,0 +1,32 @@
+# aliases.yaml — the same film under different titles across chains (normalize.merge_duplicates).
+#
+# aliases: raw fid (slug of a chain's cleaned title) -> canonical fid. Applied before the automatic
+#   rules and even when only one spelling is on today, so a verdict file under the raw fid is
+#   folded into the canonical one (refresh.py) instead of coming back as a second film.
+# titles: canonical fid -> the display title to keep when the chains' spellings disagree.
+#
+# The automatic rules (normalize.same_film) already catch most of these; the list is here so a
+# misspelling ("Forrest", "Buttery") never becomes the canonical, and so a merge doesn't depend on
+# which chains happen to list the film today.
+aliases:
+  the-vvaan: the-vvaan-force-of-the-forest
+  the-vvaan-force-of-the-forrest: the-vvaan-force-of-the-forest
+  the-smurf-timeless-adventure-volume-2: the-smurfs-timeless-adventure-volume-2
+  butterfly-effect-azzam: the-butterfly-effect-azzam
+  buttery-effect-azzam: the-butterfly-effect-azzam
+  fall-2: fall-2-deadpoint
+  insidious: insidious-out-of-the-further
+  minions-monsters: minions-and-monsters
+  mirzapur: mirzapur-the-movie
+  dhoomaketu: dhoomakethu
+  bethlahem-kudumba-unit: bethlehem-kudumba-unit
+  moana-live-action: moana
+
+titles:
+  the-vvaan-force-of-the-forest: "The Vvaan: Force of the Forest"
+  the-butterfly-effect-azzam: "The Butterfly Effect: Azzam"
+  minions-and-monsters: "Minions & Monsters"
+  bethlehem-kudumba-unit: "Bethlehem Kudumba Unit"
+  fall-2-deadpoint: "Fall 2: Deadpoint"
+  insidious-out-of-the-further: "Insidious: Out of the Further"
+  mirzapur-the-movie: "Mirzapur: The Movie"

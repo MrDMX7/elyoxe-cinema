@@ -23,6 +23,21 @@ _CITY_WORDS = [
 ]
 
 
+_ARABIC_LETTER = re.compile(r"[\u0621-\u064a]")
+
+
+def arabic_title(s):
+    """A chain's own Arabic film title, cleaned for display, or None when it isn't Arabic at all
+    (Novo fills movie_title_ar with the English title for most films). Drops a trailing
+    parenthesis («انترستيلر (إعادة اصدار)»), tatweel («بريشـر») and doubled spaces."""
+    if not s or not _ARABIC_LETTER.search(s):
+        return None
+    t = s.replace("\u0640", "")
+    t = re.sub(r"\s*\([^)]*\)\s*$", "", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    return t or None
+
+
 def slug(s: str) -> str:
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-")

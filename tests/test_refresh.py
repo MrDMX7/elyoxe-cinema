@@ -349,3 +349,43 @@ def test_hung_chain_exit_code_ignores_enrich_verdicts_health(sandbox, monkeypatc
     health = json.loads((data_dir / "health.json").read_text(encoding="utf-8"))
     assert health["novo"]["ok"] is False
     assert health["enrich"]["ok"] is True  # the stub never raises
+
+
+# ---------------------------------------------------------------- fix wave D
+
+def test_zero_attempted_price_health_is_never_degraded(sandbox, monkeypatch):
+    """Roxy reports price_health {attempted: 0} by design (prices come from prices.yaml)."""
+    data_dir, _ = sandbox
+    monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
+
+    def roxy_like(days=2):
+        data = json.loads((REAL_FIXTURES_DIR / "roxy.json").read_text(encoding="utf-8"))
+        for s in data["shows"]:
+            s["prices"] = None
+        data["price_health"] = {"attempted": 0, "priced": 0, "error": None}
+        return data
+
+    _fake_readers(monkeypatch)
+    monkeypatch.setattr(refresh, "CHAIN_READERS", {**refresh.CHAIN_READERS, "roxy": roxy_like})
+    assert refresh.refresh(chains=["roxy"], offline=False, no_verdicts=True) == 0
+    health = json.loads((data_dir / "health.json").read_text(encoding="utf-8"))
+    assert health["roxy"]["prices_degraded"] is False
+
+
+def test_vox_gets_a_longer_timeout_than_the_others():
+    assert refresh.chain_timeout("vox") == 900
+    assert all(refresh.chain_timeout(c) == 480 for c in refresh.ALL_CHAINS if c != "vox")
+
+
+def test_merged_away_verdict_files_are_folded(sandbox, monkeypatch):
+    data_dir, verdicts_dir = sandbox
+    monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
+    (verdicts_dir / "fall-2.json").write_text(json.dumps(_verdict_json("fall-2", "mixed")), encoding="utf-8")
+    (verdicts_dir / "buttery-effect-azzam.json").write_text(json.dumps(_verdict_json("buttery-effect-azzam", "unknown")),
+                                                           encoding="utf-8")
+    _fake_readers(monkeypatch)
+    assert refresh.refresh(chains=["vox"], offline=False, no_verdicts=True) == 0
+    assert not (verdicts_dir / "fall-2.json").exists()
+    assert (verdicts_dir / "fall-2-deadpoint.json").exists()           # moved: nothing better was there
+    assert json.loads((verdicts_dir / "fall-2-deadpoint.json").read_text(encoding="utf-8"))["fid"] == "fall-2-deadpoint"
+    assert not (verdicts_dir / "buttery-effect-azzam.json").exists()

@@ -18,7 +18,7 @@ import re
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from readers.common import CITIES, HALLS, Polite, city_of, slug
+from readers.common import CITIES, HALLS, Polite, arabic_title, city_of, slug
 
 API = "https://uae-api.novocinemas.com/api/home"
 BOOKING_API = "https://uae-api.novocinemas.com/api/booking"
@@ -209,6 +209,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
                     shows.append({
                         "cinema": cinema_id,
                         "film_title": title,
+                        "film_title_ar": arabic_title(movie.get("movie_title_ar")),
                         "film_lang": film_lang,
                         "film_rating": rating,
                         "runtime": runtime,

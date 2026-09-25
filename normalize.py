@@ -7,10 +7,13 @@ slug()) so "Heart of the Beast" and "HEART OF THE BEAST (PG13)" become one film.
 """
 from __future__ import annotations
 
+import os
 import re
 from datetime import datetime, timedelta, timezone
 
 from readers.common import slug
+
+ALIASES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "aliases.yaml")
 
 # All reader-supplied show date/time strings are Asia/Dubai local time (no reader emits an
 # offset), and Dubai has stayed at a fixed UTC+4 with no DST, so a fixed-offset tzinfo is exact.
@@ -68,13 +71,20 @@ def _local_now(now: str) -> datetime:
     return dt
 
 
-def merge(results: dict[str, dict | None], previous: dict | None, now: str) -> dict:
+def merge(results: dict[str, dict | None], previous: dict | None, now: str,
+          aliases: dict | None = None) -> dict:
     """Merge each chain's fetch() output (or None/error on failure) into latest.json's shape.
 
     `results[chain]` is a reader's {"cinemas": [...], "shows": [...]} on success, or None / an
     Exception / an error string on failure. A failed chain keeps its cinemas and shows from
     `previous` (and its previous "at"), marked ok:false with the error. Shows more than 30
     minutes in the past (relative to `now`) are dropped from the output.
+
+    The same film listed under different titles by different chains ("The Vvaan: Force of the
+    Forest" / "...Forrest", "Minions & Monsters" / "Minions Monsters") is merged into one fid by
+    merge_duplicates() -- `aliases` ({"aliases": {raw fid: canonical}, "titles": {fid: title}},
+    default: aliases.yaml) first, then the automatic rules. data["merged"] records
+    {merged-away fid: canonical fid} for this run.
     """
     previous = previous or {}
     prev_cinemas: dict = previous.get("cinemas", {})
@@ -98,9 +108,12 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str) -> d
                 "rating": None,
                 "runtime": None,
                 "poster": None,
+                "title_ar": None,
                 "chains": set(),
             },
         )
+        if show.get("film_title_ar") and not acc["title_ar"]:
+            acc["title_ar"] = show["film_title_ar"]
         if _better_title(cleaned, acc["title"]):
             acc["title"] = cleaned
         if show.get("film_lang") and not acc["lang"]:
@@ -125,6 +138,7 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str) -> d
                 "rating": (pf or {}).get("rating"),
                 "runtime": (pf or {}).get("runtime"),
                 "poster": (pf or {}).get("poster"),
+                "title_ar": (pf or {}).get("title_ar_chain"),
                 "chains": set(),
             },
         )
@@ -151,7 +165,8 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str) -> d
                 cinemas_out[cinema["id"]] = dict(cinema)
             for show in result.get("shows", []):
                 fid = add_film(chain, show)
-                s = {k: v for k, v in show.items() if k not in ("film_title", "film_lang", "film_rating", "runtime", "poster")}
+                s = {k: v for k, v in show.items()
+                     if k not in ("film_title", "film_title_ar", "film_lang", "film_rating", "runtime", "poster")}
                 s["film"] = fid
                 shows_out.append(s)
         else:
@@ -180,8 +195,19 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str) -> d
     shows_out.sort(key=lambda s: (s["date"], s["time"]))
 
     referenced_fids = {s["film"] for s in shows_out}
-    films_out = {
-        fid: {
+    films_acc = {fid: acc for fid, acc in films_acc.items() if fid in referenced_fids}
+    counts: dict[str, int] = {}
+    for s in shows_out:
+        counts[s["film"]] = counts.get(s["film"], 0) + 1
+    if aliases is None:
+        aliases = load_aliases()
+    films_acc, mapping = merge_duplicates(films_acc, aliases, counts)
+    for s in shows_out:
+        s["film"] = mapping.get(s["film"], s["film"])
+
+    films_out = {}
+    for fid, acc in films_acc.items():
+        f = {
             "title": acc["title"],
             "lang": acc["lang"],
             "rating": acc["rating"],
@@ -189,17 +215,188 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str) -> d
             "poster": acc["poster"],
             "chains": sorted(acc["chains"]),
         }
-        for fid, acc in films_acc.items()
-        if fid in referenced_fids
-    }
+        if acc.get("title_ar"):
+            f["title_ar_chain"] = acc["title_ar"]
+        films_out[fid] = f
 
-    return {
+    out = {
         "generated": now,
         "chains": chains_out,
         "cinemas": cinemas_out,
         "films": films_out,
         "shows": shows_out,
     }
+    if mapping:
+        out["merged"] = dict(sorted(mapping.items()))
+    return out
+
+
+# ---------------------------------------------------------------- cross-chain duplicates
+
+def load_aliases(path: str = ALIASES_PATH) -> dict:
+    """aliases.yaml -> {"aliases": {raw fid: canonical fid}, "titles": {canonical fid: display title}}."""
+    try:
+        import yaml
+
+        with open(path, encoding="utf-8") as f:
+            y = yaml.safe_load(f) or {}
+    except (OSError, ImportError):
+        return {"aliases": {}, "titles": {}}
+    return {"aliases": dict(y.get("aliases") or {}), "titles": dict(y.get("titles") or {})}
+
+
+_NUMBER = re.compile(r"^(?:\d+|ii|iii|iv|vi|vii|viii|ix)$")
+# a subtitle that names a different release of the same film -- never merged into the plain title
+_RELEASE_WORDS = {"encore", "anniversary", "rerelease", "re", "remastered", "extended", "cut"}
+_SUBTITLE_SEP = re.compile(r"\s*(?::|\s[-\u2013\u2014]\s|\s-|-\s)\s*")
+RUNTIME_TOLERANCE = 6  # minutes
+
+
+def _tokens(title: str) -> list[str]:
+    """Cleaned title -> comparison tokens: lowercase words, "and"/"&" dropped, a leading "the" dropped."""
+    toks = [t for t in slug(clean_title(title)).split("-") if t and t != "and"]
+    if toks and toks[0] == "the":
+        toks = toks[1:]
+    return toks
+
+
+def _numbers(toks: list[str]) -> list[str]:
+    return [t for t in toks if _NUMBER.match(t)]
+
+
+def _lev(a: str, b: str, cap: int = 3) -> int:
+    """Levenshtein distance, stopping early once every path exceeds `cap`."""
+    if abs(len(a) - len(b)) > cap:
+        return cap + 1
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i] + [0] * len(b)
+        for j, cb in enumerate(b, 1):
+            cur[j] = min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb))
+        if min(cur) > cap:
+            return cap + 1
+        prev = cur
+    return prev[-1]
+
+
+def _runtime_close(a, b):
+    """True/False when both runtimes are known, None when either is missing."""
+    if not a or not b:
+        return None
+    return abs(a - b) <= RUNTIME_TOLERANCE
+
+
+def same_film(a: dict, b: dict) -> bool:
+    """The automatic duplicate rule for two films' accumulators ({title, runtime, lang}).
+
+    1. identical comparison tokens (leading "the" and "and"/"&" ignored) -> same film;
+    2. one title is the other plus a ":"/" - " subtitle (the head before the separator has the
+       other's exact tokens), the subtitle carries no number and no release word (Encore,
+       Anniversary...), and runtimes, when both are known, are within 6 minutes;
+    3. near-identical spelling: edit distance <= 2 on titles of 8+ characters, and runtimes
+       within 6 minutes or the same language.
+    Never across a differing number token: Fall / Fall 2, Toy Story 4 / 5, Volume 2 / 3 stay apart.
+    """
+    ta, tb = _tokens(a["title"]), _tokens(b["title"])
+    if not ta or not tb:
+        return False
+    if ta == tb:
+        return True
+    rt = _runtime_close(a.get("runtime"), b.get("runtime"))
+    for y, tx in ((b, ta), (a, tb)):
+        parts = _SUBTITLE_SEP.split(clean_title(y["title"]), maxsplit=1)
+        if len(parts) == 2:
+            head, sub = _tokens(parts[0]), _tokens(parts[1])
+            if (head == tx and sub and not _numbers(sub) and not (set(sub) & _RELEASE_WORDS)
+                    and rt is not False):
+                return True
+    if _numbers(ta) != _numbers(tb):
+        return False
+    sa, sb = " ".join(ta), " ".join(tb)
+    if min(len(sa), len(sb)) < 8 or _lev(sa, sb, 2) > 2:
+        return False
+    same_lang = bool(a.get("lang")) and a.get("lang") == b.get("lang")
+    return rt is True or same_lang
+
+
+def merge_duplicates(films: dict, aliases: dict | None = None, counts: dict | None = None):
+    """{fid: acc} -> ({canonical fid: merged acc}, {merged-away fid: canonical fid}).
+
+    aliases.yaml wins first (raw fid -> canonical, applied even when only one spelling is on
+    today); the automatic rule (same_film) then clusters what's left. A cluster's canonical fid
+    is an aliases.yaml target when one is in it, else the longest cleaned title (ties: more
+    shows, then alphabetical). The merged film keeps the canonical's fields and fills gaps from
+    the others; its title is aliases.yaml's `titles` entry when there is one.
+    """
+    aliases = aliases or {}
+    amap: dict = aliases.get("aliases") or {}
+    titles: dict = aliases.get("titles") or {}
+    counts = counts or {}
+
+    def target(fid: str) -> str:
+        seen = set()
+        while fid in amap and fid not in seen:
+            seen.add(fid)
+            fid = amap[fid]
+        return fid
+
+    fids = sorted(films)
+    parent = {f: f for f in fids}
+
+    def find(f):
+        while parent[f] != f:
+            parent[f] = parent[parent[f]]
+            f = parent[f]
+        return f
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    by_target: dict = {}
+    for f in fids:
+        by_target.setdefault(target(f), []).append(f)
+    for group in by_target.values():
+        for f in group[1:]:
+            union(group[0], f)
+    for i, a in enumerate(fids):
+        for b in fids[i + 1:]:
+            if find(a) != find(b) and same_film(films[a], films[b]):
+                union(a, b)
+
+    clusters: dict = {}
+    for f in fids:
+        clusters.setdefault(find(f), []).append(f)
+
+    alias_targets = set(amap.values())
+    out: dict = {}
+    mapping: dict = {}
+    for members in clusters.values():
+        targets = sorted({target(m) for m in members if target(m) != m or m in alias_targets})
+        if targets:
+            canon = targets[0]
+        else:
+            canon = sorted(members, key=lambda m: (-len(clean_title(films[m]["title"])),
+                                                   -counts.get(m, 0), m))[0]
+        order = sorted(members, key=lambda m: (m != canon, -counts.get(m, 0), m))
+        acc = dict(films.get(canon) or films[order[0]])
+        acc["chains"] = set()
+        for m in order:
+            fm = films[m]
+            acc["chains"] |= set(fm.get("chains") or ())
+            for k in ("lang", "rating", "runtime", "poster", "title_ar"):
+                if not acc.get(k) and fm.get(k):
+                    acc[k] = fm[k]
+            if _better_title(fm["title"], acc["title"]):
+                acc["title"] = fm["title"]
+        if titles.get(canon):
+            acc["title"] = titles[canon]
+        out[canon] = acc
+        for m in members:
+            if m != canon:
+                mapping[m] = canon
+    return out, mapping
 
 
 def city_slices(data: dict) -> dict:
