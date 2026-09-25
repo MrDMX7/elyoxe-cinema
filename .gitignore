@@ -3,3 +3,4 @@ out/
 __pycache__/
 .env
 data/films_cache.json
+star_bundle.js
