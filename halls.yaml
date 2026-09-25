@@ -1,0 +1,262 @@
+# What each chain calls its premium halls, and what is actually in them.
+# A show is matched to an entry by `match` (a regex on the chain's hall label) first, then by `codes`
+# (the hall code the reader assigns). confidence: high = the chain's own page; medium = press or a
+# review site; low = could not confirm, shown with a caveat.
+# Researched 2026-09-25.
+
+chains:
+  vox:
+    name: VOX Cinemas
+    name_ar: فوكس
+    halls:
+      - key: THEATRE
+        codes: [THEATRE]
+        match: theatre
+        name: THEATRE
+        name_ar: ثياتر
+        what_ar: أرقى قاعة عند فوكس. كراسي جلد تنسدح بالكامل مع مخدة وبطانية، أكل يوصلك لين كرسيك أو صالة خاصة قبل الفيلم، وخدمة شخصية.
+        what_en: VOX's top tier. Fully reclining leather seats with pillows and blankets, food served to your seat or in a private lounge, personal service.
+        source: https://uae.voxcinemas.com/ways-to-watch/theatre
+        confidence: high
+      - key: GOLD
+        codes: [GOLD]
+        match: '^gold'
+        name: GOLD
+        name_ar: جولد
+        what_ar: قاعة صغيرة بكراسي واسعة فيها طاولة تدور وماسك للمشروب، أكل من المطبخ يوصلك للكرسي، وصالة خاصة قبل وبعد الفيلم.
+        what_en: A small hall with wide seats, a swivel table and drink holder, chef-made food to your seat and a private lounge before and after.
+        source: https://uae.voxcinemas.com/ways-to-watch/gold
+        confidence: high
+      - key: MAX
+        codes: [MAX]
+        name: MAX
+        name_ar: ماكس
+        what_ar: شاشة فوكس الكبيرة. نفس الكراسي العادية بس الشاشة أكبر والصوت أقوى، والفرق في السعر بسيط.
+        what_en: VOX's big screen. Regular seats, a much larger screen and stronger sound, for a small premium.
+        source: https://uae.voxcinemas.com/ways-to-watch/summary
+        confidence: high
+      - key: IMAX
+        codes: [IMAX]
+        match: imax
+        name: IMAX
+        name_ar: آيماكس
+        what_ar: شاشة IMAX بنسبة أطول من العادي، وأفلام مصوّرة لها تعطيك صورة أكبر فوق وتحت.
+        what_en: An IMAX screen with a taller picture; films shot for IMAX show more of the frame.
+        source: https://uae.voxcinemas.com/ways-to-watch/summary
+        confidence: high
+      - key: 4DX
+        codes: [4DX]
+        name: 4DX
+        name_ar: فور دي إكس
+        what_ar: كراسي تتحرك مع الفيلم، وهوا وماي ودخان. حلو لأفلام الأكشن، ومب لكل أحد.
+        what_en: Seats that move with the film, plus wind, water and fog. Fun for action, not for everyone.
+        source: https://uae.voxcinemas.com/ways-to-watch/summary
+        confidence: high
+      - key: KIDS
+        codes: [KIDS]
+        name: KIDS
+        name_ar: كيدز
+        what_ar: قاعة للعيال بكراسي ملوّنة، وأفلام أنيميشن وعائلية بس.
+        what_en: A children's hall with colourful seating, showing animation and family films only.
+        source: https://uae.voxcinemas.com/ways-to-watch/kids
+        confidence: high
+      - key: PREMIER
+        match: premier
+        name: PREMIER
+        name_ar: بريمير
+        what_ar: كراسي جلد تنسدح بتعديل كهربائي، بين العادية وجولد في السعر.
+        what_en: Powered leather recliners, priced between Standard and GOLD.
+        source: https://uae.voxcinemas.com/ways-to-watch/premier
+        confidence: medium
+
+  star:
+    name: Star Cinemas
+    name_ar: ستار
+    halls:
+      - key: SUITES
+        codes: [SUITES]
+        match: suite
+        name: Platinum Suites
+        name_ar: البلاتينيوم سويتس
+        what_ar: أغلى قاعة عند ستار، كراسي تنسدح وخدمة داخل القاعة. التفاصيل تختلف من فرع لفرع.
+        what_en: Star's top tier, recliners with in-hall service. Details vary by branch.
+        source: https://venuewise.com/venue/star-cinemas-bawadi-mall/platinum-suite
+        confidence: medium
+      - key: PREMIUM
+        match: premium
+        name: Star Premium
+        name_ar: ستار بريميوم
+        what_ar: قاعة أرقى من العادية بنفس فئات الكراسي (سيلكت وفي آي بي). ما لقينا وصف رسمي لمحتواها.
+        what_en: A step above Standard with the same seat classes (Select and VIP). No official description of what's inside.
+        source: https://www.bawadimall.com/cinema/
+        confidence: low
+      - key: MX4D
+        match: mx4d
+        name: MX4D
+        name_ar: إم إكس فور دي
+        what_ar: كراسي تتحرك مع الفيلم ومؤثرات هوا وماي، في فرع بوادي.
+        what_en: Motion seats with wind and water effects, at Bawadi.
+        source: https://www.bawadimall.com/cinema/
+        confidence: medium
+
+  novo:
+    name: Novo Cinemas
+    name_ar: نوفو
+    halls:
+      - key: 7STAR
+        codes: [VIP]
+        match: '7 ?star'
+        name: 7 Star
+        name_ar: سفن ستار
+        what_ar: كراسي جلد تنسدح بالكامل بالكهربا مع مخدة وبطانية، صالة خاصة بقائمة أكل راقية، وخادم شخصي.
+        what_en: Fully reclining powered leather seats with pillow and blanket, a private lounge with a fine-dining menu and a personal butler.
+        source: https://www.timeoutdubai.com/movies/movies-features/71953-novo-cinemas-7-star-screen-reviewed
+        confidence: medium
+      - key: IMAX
+        codes: [IMAX]
+        match: imax
+        name: IMAX with Laser
+        name_ar: آيماكس ليزر
+        what_ar: في آي إم جي أكبر شاشة IMAX في دبي، 24.4 متر في 13.8، و360 كرسي، وعرض ليزر 4K وصوت 12 قناة.
+        what_en: At IMG, Dubai's largest IMAX: 24.4 by 13.8 metres, 360 seats, 4K laser projection and 12-channel sound.
+        source: https://www.boxofficepro.com/novo-cinemas-opens-dubais-largest-imax-with-laser-at-img-worlds-of-adventure/
+        confidence: high
+      - key: SKY
+        match: sky
+        name: SKY
+        name_ar: سكاي
+        what_ar: اسم تستعمله نوفو لقاعة مميزة في بعض الفروع؛ ما قدرنا نتأكد من محتواها.
+        what_en: A name Novo uses for a premium hall at some branches; we could not confirm what's in it.
+        source: https://uae.novocinemas.com/
+        confidence: low
+
+  roxy:
+    name: Roxy Cinemas
+    name_ar: روكسي
+    halls:
+      - key: PLATINUM
+        codes: [VIP, SUITES]
+        match: platinum
+        name: Platinum
+        name_ar: بلاتينيوم
+        what_ar: صالة قبل الفيلم فيها طاولات بلياردو وبلكونة، كراسي تنسدح بالكامل ومدفّاة مع بطانية، وأكل وشرب لين كرسيك.
+        what_en: A pre-show lounge with pool tables and a balcony, fully reclining heated seats with blankets, food and drinks to your seat.
+        source: https://www.tripadvisor.com/ShowUserReviews-g295424-d21253672-r886388920-The_Roxy_Cinema_City_Walk-Dubai_Emirate_of_Dubai.html
+        confidence: medium
+      - key: PREMIERE
+        match: premiere
+        name: Premiere
+        name_ar: بريمير
+        what_ar: درجة بين العادية والبلاتينيوم؛ ما لقينا وصف رسمي.
+        what_en: A tier between Standard and Platinum; no official description found.
+        source: https://www.theroxycinemas.com/
+        confidence: low
+
+  reel:
+    name: Reel Cinemas
+    name_ar: ريل
+    halls:
+      - key: PLATINUM
+        codes: [SUITES, VIP]
+        match: platinum
+        name: Platinum Suites
+        name_ar: بلاتينيوم سويتس
+        what_ar: كراسي جلد واسعة تنسدح على 3 وضعيات، وخادم ياخذ طلبك من قائمة أكل راقية.
+        what_en: Wide leather recliners with 3 positions and a butler taking orders from an à la carte menu.
+        source: https://reelcinemas.com/en-ae/experiences/reel-platinum-suites/
+        confidence: high
+      - key: DOLBY
+        match: dolby
+        name: Dolby Cinema
+        name_ar: دولبي سينما
+        what_ar: صورة Dolby Vision بتباين عالي وصوت Dolby Atmos من فوق ومن الجوانب.
+        what_en: Dolby Vision picture with high contrast and Dolby Atmos sound from above and around.
+        source: https://www.chapmantaylor.com/projects/reel-cinemas-dubai-mall
+        confidence: high
+      - key: MX4D
+        match: mx4d
+        name: MX4D
+        name_ar: إم إكس فور دي
+        what_ar: كراسي تتحرك مع الفيلم، وهوا وماي وثلج وإضاءة.
+        what_en: Motion seats with wind, water, snow and lighting effects.
+        source: https://reelcinemas.com/en-ae/locations/the-dubai-mall/
+        confidence: high
+      - key: SCREENX
+        codes: [SCREENX]
+        match: screenx
+        name: ScreenX
+        name_ar: سكرين إكس
+        what_ar: الفيلم يمتد على الجدارين الجانبيين، 270 درجة حواليك، في مشاهد مختارة.
+        what_en: The film spills onto both side walls, 270 degrees around you, in selected scenes.
+        source: https://reelcinemas.com/en-ae/locations/the-dubai-mall/
+        confidence: high
+      - key: BOUTIQUE
+        match: boutique
+        name: The Boutique
+        name_ar: ذا بوتيك
+        what_ar: قاعات ريل الصغيرة الراقية؛ ما لقينا وصف رسمي حديث لمحتواها.
+        what_en: Reel's small upscale halls; no current official description found.
+        source: https://reelcinemas.com/en-ae/
+        confidence: low
+
+  cineroyal:
+    name: Cine Royal
+    name_ar: سيني رويال
+    halls:
+      - key: VIP
+        codes: [VIP, SUITES]
+        match: 'royal suite|vip'
+        name: Royal Suites
+        name_ar: رويال سويتس
+        what_ar: كراسي جلد تنسدح مع طاولة جنبك وخادم يوصل لك الأكل، ومدخل وشباك تذاكر ولوبي خاص.
+        what_en: Reclining leather seats with a side table and butler service, plus a private entrance, box office and lobby.
+        source: https://www.thenationalnews.com/arts-culture/4-options-for-vip-cinema-experiences-in-the-uae-1.30721
+        confidence: medium
+      - key: ROYALPLUS
+        match: 'royal ?plus'
+        name: Royal Plus
+        name_ar: رويال بلس
+        what_ar: صوت Dolby Atmos وعرض 4K، بنفس كراسي القاعة العادية.
+        what_en: Dolby Atmos sound and 4K projection with regular seating.
+        source: https://www.thenationalnews.com/arts-culture/4-options-for-vip-cinema-experiences-in-the-uae-1.30721
+        confidence: medium
+
+  cinemacity:
+    name: Cinemacity
+    name_ar: سينما سيتي
+    halls:
+      - key: IMAX
+        codes: [IMAX]
+        match: imax
+        name: IMAX
+        name_ar: آيماكس
+        what_ar: في زيرو 6 بالشارقة، من أكبر الشاشات في المنطقة، بثلاث فئات كراسي. Regular عادي، Club جلد إيطالي نص انسداح مع طاولة تدور، VIP انسداح كامل وجرسون.
+        what_en: At Zero6 Sharjah, one of the region's largest screens, with three seat classes. Regular; Club, Italian leather semi-recliners with swivel tables; VIP, full recliners with a waiter.
+        source: https://www.cinemacity.ae/experiences/
+        confidence: high
+      - key: XXL
+        codes: [MAX]
+        match: 'xxl|infinity|plf'
+        name: XXL Screen
+        name_ar: شاشة XXL
+        what_ar: في القانا بأبوظبي، من أكبر الشاشات في الإمارات بعرض ليزر مزدوج، وفيها Regular وClub وVIP بحواجز خصوصية.
+        what_en: At AlQana Abu Dhabi, one of the UAE's largest screens with dual laser projection; Regular, Club and VIP with privacy panels.
+        source: https://www.cinemacity.ae/experiences/
+        confidence: high
+      - key: VIP
+        codes: [VIP, GOLD]
+        match: 'vip|luxury'
+        name: VIP seats
+        name_ar: كراسي VIP
+        what_ar: مب قاعة، فئة كراسي في كل الفروع. جلد ينسدح بالكامل، طاولة تدور، وجرسون بضغطة زر.
+        what_en: Not a hall but a seat class in every branch. Full leather recliners, a swivel table and a waiter at the press of a button.
+        source: https://www.cinemacity.ae/experiences/
+        confidence: high
+      - key: ARTHOUSE
+        match: arthouse
+        name: Arthouse
+        name_ar: آرت هاوس
+        what_ar: في القانا، قاعة للأفلام المستقلة والفايزة بالجوائز والأجنبية، بكراسي تنسدح.
+        what_en: At AlQana, a hall for independent, award-winning and foreign-language films, with recliners.
+        source: https://www.cinemacity.ae/experiences/
+        confidence: high

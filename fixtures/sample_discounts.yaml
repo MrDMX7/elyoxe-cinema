@@ -1,0 +1,33 @@
+# Test copy of discounts.yaml's shape (cards[] + rules{chain: {card: rule}}) — small and frozen so
+# tests/test_build.py does not move when the real file is edited. Values are illustrative.
+cards:
+  - {id: fazaa, name_ar: "فزعة", name_en: "Fazaa", kind: gov}
+  - {id: esaad, name_ar: "إسعاد", name_en: "Esaad", kind: gov}
+  - {id: homat, name_ar: "حماة الوطن", name_en: "Homat Al Watan", kind: gov}
+  - {id: adcb, name_ar: "بنك أبوظبي التجاري", name_en: "ADCB", kind: bank}
+
+rules:
+  star:
+    fazaa: {type: percent, value: 20, box_office_only: true, max_tickets: 4, valid_until: "2027-08-05",
+            note_ar: "من الشباك فقط، 4 تذاكر باليوم", source: "https://www.starcinemas.ae/offers", checked: "2026-09-25", confidence: official}
+    esaad: {type: percent, value: 20, note_ar: "بالبطاقة الفعلية فقط", source: "https://www.manafethme.com/blog/esaad-card",
+            checked: "2026-09-25", confidence: third-party}
+    homat: {status: none_found, note_ar: "ما لقينا خصم", source: "https://www.starcinemas.ae/offers", checked: "2026-09-25", confidence: official}
+  vox:
+    fazaa: {status: none_found, note_ar: "ما لقينا عرض فزعة قائم الآن", source: "https://uae.voxcinemas.com/ticket-offer/summary",
+            checked: "2026-09-25", confidence: official}
+    adcb: {type: bogo, excluded_halls: ["THEATRE", "GOLD"], note_ar: "اشتر تذكرة وخذ الثانية ببلاش", source: "https://uae.voxcinemas.com/ticket-offer/summary",
+           checked: "2026-09-25", confidence: official}
+  novo:
+    fazaa: {type: percent, value: 20, max_tickets: 4, valid_until: "2026-12-31", note_ar: "والبطاقة تشتغل لأفراد العائلة",
+            source: "https://uae.novocinemas.com/promotions/17", checked: "2026-09-25", confidence: official}
+    esaad: {type: percent, value: 20, excluded_halls: ["IMAX"], note_ar: "لا يشمل IMAX", source: "https://uae.novocinemas.com/promotions/15",
+            checked: "2026-09-25", confidence: official}
+  reel:
+    fazaa: {type: percent, value: 25, included_halls: ["SUITES"], box_office_only: true, valid_until: "2026-12-16",
+            note_ar: "عند الشباك يشمل SUITES فقط", source: "https://www.fazaa.ae/offers/view/reel-cinema", checked: "2026-09-25", confidence: official}
+  cinemacity:
+    fazaa: {type: percent, value: 20, box_office_only: true, valid_until: "2026-09-01",
+            note_ar: "عرض منتهي — للاختبار", source: "https://www.fazaa.ae/offers/view/cinemacity-alqana", checked: "2026-08-01", confidence: official}
+    esaad: {type: percent, value: 20, note_ar: "توثيق البطاقة أول مرة", source: "https://www.cinemacity.ae/offers-and-promotions/",
+            checked: "2026-09-25", confidence: third-party}
