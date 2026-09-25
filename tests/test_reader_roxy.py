@@ -90,3 +90,101 @@ def test_roxy_prices_are_null_no_seat_hold(data):
 def test_dates_are_today_and_tomorrow(data):
     dates = {s["date"] for s in data["shows"]}
     assert 1 <= len(dates) <= 2, f"expected 1-2 distinct dates (today+tomorrow), got {dates}"
+
+
+# --- Unit tests: no network ----------------------------------------------------------------
+
+
+def test_xtreme_and_gold_are_not_vox_brand_names():
+    """MAX and GOLD are VOX's own brand names; Roxy's Xtreme/Gold must not be mapped onto them."""
+    from readers.roxy import HALL_MAP
+
+    assert HALL_MAP["xtreme"] != "MAX"
+    assert HALL_MAP["gold"] != "GOLD"
+
+
+def test_map_date_business_day_midnight_bump():
+    """'Sep 25 Fri' at 00:10 is really the 26th (Roxy buckets by business day)."""
+    import datetime
+
+    from readers.roxy import _map_date
+
+    today = datetime.date(2026, 9, 25)
+    assert _map_date("Sep 25 Fri", today, time_hint="00:10") == "2026-09-26"
+    assert _map_date("Sep 25 Fri", today, time_hint="23:40") == "2026-09-25"
+    assert _map_date("Sep 25 Fri", today, time_hint=None) == "2026-09-25"
+
+
+def test_map_date_year_rollover():
+    """On Dec 31, 'Jan 01' must map to next year, not get stranded in the year that's ending."""
+    import datetime
+
+    from readers.roxy import _map_date
+
+    today = datetime.date(2026, 12, 31)
+    assert _map_date("Jan 1 Fri", today, time_hint="10:00") == "2027-01-01"
+
+    # And the reverse: early January looking at a "Dec 31" business day (rare, but the
+    # nearest-year logic must not anchor blindly on today.year here either).
+    today2 = datetime.date(2027, 1, 1)
+    assert _map_date("Dec 31 Thu", today2, time_hint="23:00") == "2026-12-31"
+
+
+def test_map_date_unparsable_returns_none():
+    import datetime
+
+    from readers.roxy import _map_date
+
+    assert _map_date("not a date", datetime.date(2026, 9, 25)) is None
+
+
+class _FakeResp:
+    def __init__(self, status_code, payload=None, text=""):
+        self.status_code = status_code
+        self._payload = payload
+        self.text = text
+
+    def json(self):
+        if self._payload is None:
+            raise ValueError("no json")
+        return self._payload
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            import requests
+
+            raise requests.HTTPError(f"status {self.status_code}")
+
+
+def test_fetch_raises_when_now_showing_page_has_no_movie_links(monkeypatch):
+    import readers.roxy as roxy
+
+    def fake_get(self, url, **kw):
+        return _FakeResp(200, text="<html>nothing here</html>")
+
+    monkeypatch.setattr(roxy._Client, "get", fake_get)
+
+    with pytest.raises(RuntimeError, match="zero now-showing"):
+        roxy.fetch()
+
+
+def test_fetch_raises_when_ajax_all_fail(monkeypatch):
+    """Every movie-schedule/ajax call failing must raise (X1), not silently return zero shows."""
+    import readers.roxy as roxy
+
+    home_html = '<a href="/en/movie/heart-of-the-beast">Heart of the Beast</a>'
+    movie_html = '<div data-history-node-id="178231"><h1>Heart of the Beast</h1></div>'
+
+    def fake_get(self, url, **kw):
+        if url.endswith("/en"):
+            return _FakeResp(200, text=home_html)
+        if "/en/movie/" in url and "ajax" not in url:
+            return _FakeResp(200, text=movie_html)
+        if "movie-schedule/ajax" in url:
+            return _FakeResp(500, text="")
+        return _FakeResp(404, text="")
+
+    monkeypatch.setattr(roxy._Client, "get", fake_get)
+
+    with pytest.raises(RuntimeError, match="ajax"):
+        roxy.fetch()

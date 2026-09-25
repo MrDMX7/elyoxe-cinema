@@ -1,0 +1,12 @@
+# Everything the readers/, build/normalize/enrich/discounts/price_table/verdicts pipeline and
+# the test suite import, grepped from every .py file in this repo (2026-09-26).
+requests
+curl_cffi
+beautifulsoup4
+lxml
+PyYAML
+pytest
+anthropic
+boto3
+cryptography
+pycryptodome

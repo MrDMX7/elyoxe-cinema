@@ -19,11 +19,17 @@ from __future__ import annotations
 import datetime
 import json
 import re
+from zoneinfo import ZoneInfo
 
 from readers.common import CITIES, HALLS, Polite, city_of, slug
 
 BASE = "https://cineroyal.ae"
 CHAIN = "cineroyal"
+DUBAI = ZoneInfo("Asia/Dubai")
+
+
+def _today_dubai() -> datetime.date:
+    return datetime.datetime.now(DUBAI).date()
 
 # (display name, cinemaRefId, extra text so city_of() can place it — all are
 # Abu Dhabi emirate malls, some (Deerfields, WTC) don't say "abu dhabi" in
@@ -39,10 +45,13 @@ CINEMAS_META = [
 
 # The brand's own four screenType labels (from /home/cinemas nav + API) mapped
 # onto the shared HALLS enum. Cine Royal runs no IMAX/4DX/MAX/SCREENX screens.
+# GOLD and MAX are VOX's own brand names and are never used for another chain — Royal Plus
+# (a Dolby Atmos premium screen, not a recliner/luxury seat tier) is "other chain's premium
+# format" -> OTHER with the raw label kept in hall_label, matched by halls.yaml separately.
 SCREEN_TYPE_TO_HALL = {
     "STANDARD": "Standard",
-    "ROYAL PLUS": "GOLD",     # Dolby Atmos premium screen, brand's mid-tier
-    "ROYAL CLASS": "VIP",     # VVIP private viewing, brand's top tier
+    "ROYAL PLUS": "OTHER",    # Dolby Atmos premium screen, brand's mid-tier — not GOLD (VOX-only)
+    "ROYAL CLASS": "VIP",     # VVIP private viewing / recliners, brand's top tier
     "ROYAL KIDS": "KIDS",
     "KIDS": "KIDS",
 }
@@ -69,7 +78,8 @@ def _build_cinemas() -> tuple[list[dict], dict[int, str]]:
         cid = _cinema_id(name)
         ref_to_id[cinema_ref] = cid
         city = city_of(name, hint) or "abu-dhabi"
-        assert city in CITIES
+        if city not in CITIES:
+            raise ValueError(f"cineroyal: unknown city {city!r} for cinema {name!r}")
         cinemas.append({
             "id": cid,
             "chain": CHAIN,
@@ -105,7 +115,9 @@ def _runtime_minutes(length) -> int | None:
 def _list_now_showing(s: Polite) -> list[tuple[str, str]]:
     r = s.get(BASE + "/home/nowShowing")
     if r is None or r.status_code != 200:
-        return []
+        raise RuntimeError(
+            f"cineroyal: /home/nowShowing failed (status={getattr(r, 'status_code', None)})"
+        )
     seen, out = set(), []
     for m in _MOVIE_BLOCK_RE.finditer(r.text):
         pretty_url, title = m.group(1), m.group(2).strip()
@@ -113,6 +125,8 @@ def _list_now_showing(s: Polite) -> list[tuple[str, str]]:
             continue
         seen.add(pretty_url)
         out.append((pretty_url, title))
+    if not out:
+        raise RuntimeError("cineroyal: /home/nowShowing returned zero films (markup may have changed)")
     return out
 
 
@@ -174,18 +188,26 @@ def fetch(days: int = 2) -> dict:
     s.get(BASE + "/home/nowShowing")
 
     cinemas, ref_to_id = _build_cinemas()
-    films = _list_now_showing(s)
+    films = _list_now_showing(s)  # raises if the request failed or no films were found
 
-    dates = [datetime.date.today() + datetime.timedelta(days=i) for i in range(days)]
+    today = _today_dubai()
+    dates = [today + datetime.timedelta(days=i) for i in range(max(days, 1))]
+    want_dates = {d.strftime("%Y-%m-%d") for d in dates}
     price_cache: dict[tuple, list[dict] | None] = {}
     shows: list[dict] = []
+    seen_shows: set[tuple] = set()
+
+    showtime_calls = 0
+    showtime_failed = 0
 
     for pretty_url, film_name in films:
         for d in dates:
             showdate_param = d.strftime("%d-%b-%Y")  # e.g. "25-Sep-2026" — what the site's own JS sends
             date_iso = d.strftime("%Y-%m-%d")
+            showtime_calls += 1
             data = _get_showtimes(s, pretty_url, film_name, showdate_param)
             if not data:
+                showtime_failed += 1
                 continue
             film_meta = data.get("film") or {}
             film_rating = film_meta.get("rating") or None
@@ -207,18 +229,36 @@ def fetch(days: int = 2) -> dict:
                     show_date_iso = st.get("showDate") or date_iso
                     if not time_24:
                         continue
+                    # The API's own `showDate` is already the real calendar date (verified live:
+                    # a "12:15AM" show carries showDate one day ahead of the query's showdate
+                    # param, matching its UTC `showTime` converted to Asia/Dubai) — no business-
+                    # day correction needed here, unlike Star/Roxy. Still, only keep shows that
+                    # land inside the requested window: a `showdate=25-Sep` query can return a
+                    # showDate of 26-Sep (the post-midnight show) which a `showdate=26-Sep` query
+                    # also returns independently — filtering + dedup below collapses that.
+                    if show_date_iso not in want_dates:
+                        continue
 
                     screen_ref = st.get("screenRefId")
-                    price_key = (cinema_ref, screen_ref, show_date_iso)
+                    # Cache key is (cinema, hall, date) — one price sample per cinema x hall
+                    # class x day, not per physical screen (several STANDARD screens at one
+                    # cinema must not each cost their own call).
+                    price_key = (cinema_ref, hall, show_date_iso)
                     if price_key not in price_cache:
                         price_cache[price_key] = _get_seat_prices(
                             s, screen_ref, cinema_ref, show_date_iso, formatted_time, pretty_url
                         )
                     prices = price_cache[price_key]
 
+                    film_title = film_name.title() if film_name.isupper() else film_name
+                    dedup_key = (cinema_id, film_title, show_date_iso, time_24, hall)
+                    if dedup_key in seen_shows:
+                        continue
+                    seen_shows.add(dedup_key)
+
                     shows.append({
                         "cinema": cinema_id,
-                        "film_title": film_name.title() if film_name.isupper() else film_name,
+                        "film_title": film_title,
                         "film_lang": film_lang,
                         "film_rating": film_rating,
                         "runtime": runtime,
@@ -230,7 +270,18 @@ def fetch(days: int = 2) -> dict:
                         "book": f"{BASE}/home/chooseScreen?prettyUrl={pretty_url}",
                     })
 
-    assert all(sh["hall"] in HALLS for sh in shows)
+    if not all(sh["hall"] in HALLS for sh in shows):
+        raise ValueError("cineroyal: a show landed with a hall outside the shared HALLS enum")
+
+    if showtime_calls and showtime_failed / showtime_calls > 0.5:
+        raise RuntimeError(
+            f"cineroyal: {showtime_failed}/{showtime_calls} getShowTimesByFilmAndShowDate "
+            "requests failed (non-200 or unparseable) — treating the run as broken rather than "
+            "publishing a partial/empty result"
+        )
+    if not shows:
+        raise RuntimeError("cineroyal: fetch produced zero shows")
+
     return {"cinemas": cinemas, "shows": shows}
 
 

@@ -31,6 +31,7 @@ import datetime
 import re
 import time
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from curl_cffi import requests as cr
 
@@ -39,6 +40,11 @@ from readers.common import CITIES, HALLS, city_of, slug
 BASE = "https://www.theroxycinemas.com"
 UA_IMPERSONATE = "chrome"
 GAP = 1.0  # seconds between requests, stays at ~1 req/s
+DUBAI = ZoneInfo("Asia/Dubai")
+
+
+def _today_dubai() -> datetime.date:
+    return datetime.datetime.now(DUBAI).date()
 
 # url-slug, site cinema-id, display name, google maps url (None if not found in probe)
 CINEMAS = [
@@ -61,16 +67,18 @@ MANUAL_CITY = {
     "al-khawaneej": "dubai",
 }
 
-# ROXY's own tier names -> the shared hall enum. Xtreme is Roxy's giant laser-screen
-# format (-> MAX); Platinum is the ultra-premium recliner tier (-> VIP per the brief's
-# rule); Gold/GOLD is a literal enum value; Silver is the base standard tier
-# (-> Standard); Bronze is a discount tier and 2L (couple/love-seat format) and
-# "Private Screen" (a whole room hired privately) don't match a named bucket -> OTHER,
-# except Private Screen which is closest to SUITES.
+# ROXY's own tier names -> the shared hall enum. MAX and GOLD are VOX's own brand names and
+# are never used for another chain, even when that chain's format is similar: Xtreme (Roxy's
+# giant laser-screen format) and Gold (Roxy's own premium tier) are "other chain's premium
+# format" -> OTHER, with the raw Roxy label kept verbatim in hall_label (halls.yaml matches
+# them by label, not by this enum code). Platinum is the ultra-premium recliner tier -> VIP
+# per the brief's recliner/luxury-seat-tier rule. Silver is the base standard tier ->
+# Standard. Bronze is a discount tier and 2L (couple/love-seat format) don't match a named
+# bucket -> OTHER. "Private Screen" (a whole room hired privately) is closest to SUITES.
 HALL_MAP = {
-    "xtreme": "MAX",
+    "xtreme": "OTHER",
     "platinum": "VIP",
-    "gold": "GOLD",
+    "gold": "OTHER",
     "silver": "Standard",
     "bronze": "OTHER",
     "2l": "OTHER",
@@ -125,8 +133,17 @@ def _hall(label: str) -> str:
     return HALL_MAP.get(label.strip().lower(), "OTHER")
 
 
-def _map_date(raw: str, year: int) -> str | None:
-    """'Sep 25 Fri' -> '2026-09-25'. Returns None if unparsable."""
+def _map_date(raw: str, today: datetime.date, time_hint: str | None = None) -> str | None:
+    """'Sep 25 Fri' -> '2026-09-25'. Returns None if unparsable.
+
+    Two corrections beyond a plain year-stamp:
+    - Year is picked as whichever of `today.year`/`today.year + 1` lands the date closest to
+      `today` (not blindly `today.year`), so a Dec 31 run asking about "Jan 01" doesn't map it
+      to the year that just ended and filter it out as if it were a year-old show.
+    - Roxy buckets a show under the *business day* it started on, not its calendar date: a
+      session listed as "Sep 25 Fri" at "00:10" actually plays on the 26th. When `time_hint`
+      (the raw "HH:MM" session time) has an hour before 04:00, one day is added.
+    """
     m = WEEKDAY_DATE_RE.match(raw)
     if not m:
         return None
@@ -134,7 +151,29 @@ def _map_date(raw: str, year: int) -> str | None:
     mnum = MONTHS.get(mon)
     if not mnum:
         return None
-    return f"{year:04d}-{mnum:02d}-{day:02d}"
+
+    best = None
+    for candidate_year in (today.year - 1, today.year, today.year + 1):
+        try:
+            d = datetime.date(candidate_year, mnum, day)
+        except ValueError:
+            continue
+        delta = abs((d - today).days)
+        if best is None or delta < best[0]:
+            best = (delta, d)
+    if best is None:
+        return None
+    result = best[1]
+
+    if time_hint:
+        try:
+            hour = int(time_hint.split(":", 1)[0])
+        except (ValueError, IndexError):
+            hour = None
+        if hour is not None and hour < 4:
+            result = result + datetime.timedelta(days=1)
+
+    return result.isoformat()
 
 
 def _cinemas() -> tuple[list[dict[str, Any]], dict[str, str]]:
@@ -166,7 +205,10 @@ def _cinemas() -> tuple[list[dict[str, Any]], dict[str, str]]:
 def _now_showing_slugs(client: _Client) -> list[str]:
     r = client.get(f"{BASE}/en")
     r.raise_for_status()
-    return sorted(set(MOVIE_LINK_RE.findall(r.text)))
+    slugs = sorted(set(MOVIE_LINK_RE.findall(r.text)))
+    if not slugs:
+        raise RuntimeError("roxy: /en returned zero now-showing movie links (markup may have changed)")
+    return slugs
 
 
 def _movie_meta(client: _Client, movie_slug: str) -> tuple[str | None, dict[str, Any]]:
@@ -208,24 +250,29 @@ def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
     client = _Client()
     cinemas, id_by_site_id = _cinemas()
 
-    today = datetime.date.today()
+    today = _today_dubai()
     want_dates = {(today + datetime.timedelta(days=i)).isoformat() for i in range(max(days, 1))}
-    year = today.year
 
     shows: list[dict[str, Any]] = []
     seen_slots: set[tuple[str, str, str, str]] = set()
+
+    ajax_calls = 0
+    ajax_failed = 0
 
     for movie_slug in _now_showing_slugs(client):
         nid, meta = _movie_meta(client, movie_slug)
         if not nid:
             continue
 
+        ajax_calls += 1
         r = client.get(f"{BASE}/en/movie-schedule/ajax", params={"nid": nid, "promotion": ""})
         if r.status_code != 200:
+            ajax_failed += 1
             continue
         try:
             payload = r.json()
         except ValueError:
+            ajax_failed += 1
             continue
         html = payload.get("html", "")
 
@@ -234,7 +281,7 @@ def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
             cid = id_by_site_id.get(site_cinema_id)
             if not cid:
                 continue
-            date = _map_date(raw_date, year)
+            date = _map_date(raw_date, today, time_hint=time_)
             if date is None or date not in want_dates:
                 continue
 
@@ -256,6 +303,15 @@ def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
                 "prices": None,
                 "book": f"{BASE}/en/movie/{movie_slug}#movie-schedule-block",
             })
+
+    if ajax_calls and ajax_failed / ajax_calls > 0.5:
+        raise RuntimeError(
+            f"roxy: {ajax_failed}/{ajax_calls} movie-schedule/ajax requests failed "
+            "(non-200 or unparseable) — treating the run as broken rather than publishing a "
+            "partial/empty result"
+        )
+    if not shows:
+        raise RuntimeError("roxy: fetch produced zero shows")
 
     return {"cinemas": cinemas, "shows": shows}
 
