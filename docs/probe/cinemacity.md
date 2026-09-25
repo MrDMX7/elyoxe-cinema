@@ -105,20 +105,37 @@ match wins), raw tag kept in `hall_label`:
 `film_lang` is read from whichever `Localization.Language.*` tag is present on the show
 (first match).
 
-## Prices — why `null`
+## Prices — live since 2026-09-26 (Task 1c), no seat hold
 
-Every show's `data.ticketing[].urls` points at `https://booking.cinemacity.ae/launch/ticketing/<uuid>`,
-which redirects to a Vista e-commerce widget (`booking.cinemacity.ae`). Followed one link
-in the browser pane to check: it lands on a **Login / Continue as Guest** screen
-(`https://booking.cinemacity.ae/login/...`) — no ticket-type or price is shown yet at
-that point. Continuing (as guest) moves into session/seat selection, where Vista widgets
-place a seat/session hold as soon as a seat or ticket-type quantity is confirmed, before
-any payment step. Per the binding rule ("only from endpoints that do NOT place a seat
-hold"), the reader does **not** proceed into that flow and does not log in or enter any
-personal details. `prices` is therefore always `None` for this chain. No separate
-public price-list endpoint was found on `cinemacity.ae` itself (some malls' cinema pages
-have a "Pricing" link but it resolves to a static content page, not fetched here since it
-isn't per-showtime pricing).
+The ticketing widget (`booking.cinemacity.ae`, Webedia/Boxoffice React app,
+`assets/index-*.js`) has a **seat-preview** mode that opens the seat map without an order step.
+Both calls are POSTs to the widget's own origin, no login, no guest form:
+
+1. `POST /api/launch/seatpreview/{boxofficeSessionId}` body
+   `{"requestData": null, "circuitId": 0, "selectedLanguageCulture": "en-US"}` →
+   `dataToken`, `selectSeatsModel.seatsLayoutModel.{areas[] (number, name), rows[].seats[]
+   (areaId, areaCategoryCode)}`. The `boxofficeSessionId` is the UUID in each show's `book` link
+   (`/launch/ticketing/<uuid>`).
+2. `POST /api/Tickets/GetTickets {"dataToken": …}` → `selectTicketsModel.groupedTicketTypes[]
+   .ticketTypeModels[]` = `{displayName, areaCategoryCode, price (fils, VAT incl.), tax, isMemberTicket,
+   isPackageTicket…}`. E.g. AlQana: AQ Deluxe 5000 (tax 476 → 50.00 AED incl. 5 % VAT), AQ-CLUB 6500.
+
+Member/redemption/third-party/card-promo/loyalty tickets are skipped; the first remaining ticket per
+seat area is the headline fare, named by the area (`Deluxe`, `CLUB`, `VIP`…). One sample per cinema ×
+hall label per run (retried once on the next show if it fails); failures leave `None`.
+
+The widget has Cloudflare Turnstile configured (`turnstileConfig.enabled: true`) but neither call
+asked for a token. Prices seen 2026-09-26 (AED): AlQana Deluxe 50 / CLUB 65 (PLF: Deluxe 65, CLUB 75,
+VIP 165; Arthouse 70); Starlight Deluxe 60 / Club 80 / VIP 200; Fountain Views Club 85, VIP recliner
+150; Arabian Centre 2D 42, VIP 100; Rahmania 65; Zero 6 Deluxe 45 / Club 48, IMAX from 65 to 120.
+
+## Review fixes (2026-09-26)
+
+- Show date = `startsAt[:10]` (calendar date), not the API's 03:00 business-day bucket; the window
+  now starts at 00:00 so today's after-midnight shows are kept.
+- Hall ruling: PLF and InfinityVision → `OTHER` (label kept), LuxurySeats → `VIP`.
+- `book` falls back to the locations page if a show has no ticketing link; city is validated;
+  zero shows raises `RuntimeError`.
 
 ## Rate limiting / politeness
 

@@ -38,29 +38,36 @@ Base: `https://uae-api.novocinemas.com/api/home`
 No pagination, no API key, no rate-limit header observed; reader uses `Polite(gap=1.0)`
 (~1 req/s) same as every other chain.
 
-## Prices — deliberately not fetched (`"prices": null` on every show)
+## Prices — live since 2026-09-26 (Task 1c), no seat hold
 
-Could not find a ticket-types/price-list endpoint that doesn't require entering the
-seat-selection step of the booking flow. Things tried:
+The seat-selection route (`/seat-selection/cinema/{cinemaId}/session/{sessionId}`) loads its data
+with a plain unauthenticated GET, found in the route's chunk (fetched from the page HTML):
 
-- Guessed a dozen GET paths off the same `uae-api.novocinemas.com/api/home` and
-  `/api/booking` bases (`/tickettypes/{session_id}`, `/session/{id}`,
-  `/price/{id}`, `/ticket-types/{id}`, …) — all 404.
-- Wanted to click through an actual "Book Now" → seat map in the browser pane to
-  watch the real request, but the browser pane is shared across the 7 parallel
-  chain agents in this task and hit its tab cap while another chain's session was
-  mid-checkout on `uae.voxcinemas.com` — didn't want to risk touching another
-  agent's in-flight booking, so stopped there rather than force a new tab.
-- Novo's cinema records carry a `vista_id` per site and movies carry a
-  `vista_Film_id`/`vista_hOFilmCode_id` — strongly suggests a Vista Cinema
-  (Veezi/Vista Insight) backend, where ticket-type pricing is normally returned
-  by a "GetTicketTypes"-style call keyed to a *held* session, not a free GET.
+- **`GET /api/booking/seat-layout/cinemas/{cinemaId}/sessions/{session_id}?country_id=2&channel=web`**
+  — `data.areas[]` = `{name, areaCategoryCode, priceInCents, taxInCents, ticketTypeCode,
+  ticketDescription}`. The page prints each area header as ``${name} (AED ${priceInCents/100})``,
+  so `priceInCents/100` is the displayed fare (e.g. Buhairah COOL = 36.75). Fired on page load,
+  before any seat click; no login and no guest form (the guest form only appears when the visitor
+  clicks a time on the movie page — the API itself doesn't need it).
+- Also there: `GET /api/booking/ticket-price/cinemas/{cid}/sessions/{sid}` (raw Vista ticket types:
+  18 rows incl. bank/loyalty/promo tickets) — not used, the seat-layout areas are the headline fares.
 
-Given the binding rule (no price call that places a seat hold), every show ships
-with `"prices": null`. Re-probe candidate: watch the booking flow at
-`uae.novocinemas.com/movies/{id}/{TITLE}` → pick a showtime → seat page, once a
-browser tab is free, and look specifically for a request fired *before* any seat
-is clicked.
+`cinemaId` is the numeric `cinemaId` on each session (9 = Buhairah), not the Vista code. The reader
+samples one session per cinema × `experience` per run, at least an hour away; a failure leaves that
+hall `None`. Prices seen 2026-09-26 (AED): BAS Mall COOL 42.50 / COOL PRIME 50 / EDGE 55; Buhairah
+COOL 36.75; Manar Mall 40 / 50 / 55; Mega Mall and Sahara Centre 40 / 50 / 60. Dragon Mart had no
+sessions in the window.
+
+## Review fixes (2026-09-26)
+
+- `/sessions` failures are counted; more than half failing (anything but the normal
+  "No sessions found" 400) raises `RuntimeError`, as does zero shows.
+- `experience` is the projection format ("2D"/"3D"), not the hall: plain formats map to
+  `Standard`, known hall words (IMAX, 4DX, 7 Star/Sky/VIP, Suites, Kids, Theatre) map by keyword,
+  anything else is `OTHER` — never silently Standard. The 7STAR/IMAX/SKY halls in halls.yaml are at
+  sites not in the current 6-cinema UAE list (IMG, Festival City…), so none appear today.
+- Show date = calendar date of the start (`isMidnightShow` after-midnight shows move to the next
+  day); "today" is Asia/Dubai; `film_lang` from a title's `(…)` suffix only when it is a language.
 
 ## Hall mapping
 

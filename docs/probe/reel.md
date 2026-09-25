@@ -86,14 +86,48 @@ name if `ScreenName` is blank). No 4DX/MX4D screens are currently live at any of
 cinemas (Experience.json has no MX4D entry for this market), so `4DX` never appears in the fixture
 — the mapping code is still there for if/when one opens.
 
-## Prices — always `None`, and why
+## Prices — live since 2026-09-26 (Task 1c), no seat hold
 
-`Sessions.json`'s `MinimumTicketPriceInCents` field is `null` on every session record observed
-(spot-checked dozens across all 3 cinemas and every hall type). Reel's real per-seat-class pricing
-only appears after `GetSeatLayout`/`GetSeatPlan` is called against `apiuae.reelcinemas.com` with an
-active booking session — i.e. after a seat is effectively held. The binding rule ("only from
-endpoints that do NOT place a seat hold... at most one price call per cinema × hall per day") rules
-that endpoint out entirely, so this reader never calls it and every show's `"prices"` is `None`.
+The booking backend `apiuae.reelcinemas.com` *does* hand out the ticket list before any seat is
+chosen — the earlier "needs a held session" note was wrong. Traced from the lazy seat-selection
+chunk (`assets/index-Zpk_B4ZD.js`, `getSeatLayout`) and the showtime-click hook
+(`assets/useTimeSlotBooking-*.js`, `CREATE_MOVIE_COOKIE`):
+
+1. `POST /webapi/api/auth/loginAsGuest {}` — the anonymous guest session the site opens itself
+   (no name/email/phone). Returns `tokens.access.token`, sent as `Authorization: Bearer …` (the
+   site's axios interceptor). Every call also carries a `source-name` header =
+   `base64(RSA-PKCS1v1.5("web"))` with the public key embedded in the bundle (`P4`).
+2. `POST /webapi/api/booking/CreateMovieCookie {"value": X1(json)}` where json =
+   `{CinemaId, SessionId, Experience, ScreenName}` and `X1` is the bundle's own 3DES-ECB with key
+   `md5("ReelCinemasWeb")` (hex + first 16 hex), url-safe base64. Tells the backend which session
+   the visitor is looking at.
+3. `POST /webapi/api/seats/getSeatLayout?IsCancel=false&sessionId= {}` — the seat page's load call.
+   `Sourcedata.TicketList[]` = `{AreaCode, TicketDescription, PriceInAed, PriceInCents}` and
+   `AreaEntityList[]` = `{AreaCode, AreaDescription}`. Example (Dubai Mall Screen 1):
+   Standard 44, Standard Plus 55 AED. `BookingTimer: 300` — a 5-minute seat-less order.
+
+No seat is ever set (`seats/setSeat` / `seats/addTicket` never called). The site's
+`order/cancelOrder` (POST, `{OptionalClientId, CinemaId, UserSessionId}`) answers 500 for an order
+without seats, so the reader doesn't call it; the empty order lapses on its 300 s timer.
+
+`readers/reel.py` samples once per cinema × experience code (STANDARD / PLATINUM / PREMIUM /
+DOLBY / SCREENX / IMAX / REELJUNIOR / INFINITY V) per run, on a session at least an hour away with
+seats available; a failed sample leaves that hall `None`. Cost: 1 login + 2 calls per sample,
+~9 samples → ~20 calls at ≥1.1 s. `readers/reel.py` needs `curl_cffi`, `cryptography` and
+`pycryptodome` for this (all installed here).
+
+Prices seen 2026-09-26 (AED, VAT incl., as the site shows them): Dubai Mall — Standard 44 / Plus 55;
+Premium Front 60 / Premium 70; Platinum Suites 178; Dolby 42 / Dolby Plus 65 / Dolby Premium 75;
+ScreenX Std 50 / Plus 60. Dubai Marina Mall — Standard 42 / Plus 53 / Preferred View 57; Dolby as
+Dubai Mall. The Springs Souk — Standard 42 / Plus 53; Reel Junior 48.
+
+## Review fixes (2026-09-26)
+
+- Live cinemas are now derived from `Sessions.json` (UAE cinemas with a session in the window);
+  a UAE cinema with sessions but no entry in `_CINEMA_ADDR_HINTS` raises instead of vanishing.
+- Hall ruling: Dolby Cinema and Infinity Vision → `OTHER` (raw screen name kept); Reel Premium
+  (recliners) → `VIP`. Dolby takes priority over the `INFINITY V` tag some Dolby screens carry.
+- "Today" is Asia/Dubai; zero in-window shows raises `RuntimeError`.
 
 ## Booking link
 

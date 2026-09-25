@@ -1,3 +1,11 @@
+# UPDATE 2026-09-26 (Task 1c): vox, novo, reel and cinemacity readers now return LIVE per-hall
+# prices from the chains' own booking front-ends, with no seat hold (VOX seat-map legend
+# data-price, Novo booking/seat-layout, Reel guest getSeatLayout, Cinema City seatpreview +
+# GetTickets -- see docs/probe/prices.md). This table is now only a fallback for a show whose live
+# sample failed in a given run (fill() never touches a show that already has prices). No seat
+# sampling was needed, so there is no `seat_sample` entry from this pass and no sample_prices.py.
+# The VOX Al Jimi rows below are the 2026-09-25 sample, kept as that fallback.
+#
 # Fallback ticket prices for chains whose readers ship "prices": null (vox, novo, reel, roxy,
 # cinemacity — see each chain's docs/probe/<chain>.md "Prices — why null" section for the
 # booking-flow trap that stops the reader itself from getting one). Read by price_table.py.

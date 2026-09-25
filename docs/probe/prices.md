@@ -1,4 +1,37 @@
-# Probe: the monthly price table (Task 1b)
+# Probe: prices
+
+## Task 1c (2026-09-26): live prices for VOX, Novo, Reel, Cinema City — no seat hold
+
+Every one of the four "needs a seat hold" chains turned out to expose seat-class prices *before*
+any seat is selected, from its own booking front-end. All four readers now return live prices,
+sampled once per cinema × hall per run (cached), and a failed price call leaves that hall's
+`prices` None without failing the chain. No seat was selected, held or released in this pass;
+no seat-sample (tier 3) was needed, so `sample_prices.py` was not written.
+
+| chain | source (hold-free) | how the earlier probe missed it |
+|---|---|---|
+| VOX | seat-map page legend: `li.seat[data-price="50.00 AED per ticket"][data-label]`, reached via the guest path `/booking/<id>` → `/seats/fetch` → `/seats`, then `/abandon` | read the visible total (0.00 AED); the per-class price is in the legend's attributes |
+| Novo | `GET uae-api.novocinemas.com/api/booking/seat-layout/cinemas/{cid}/sessions/{sid}` → `areas[].name/priceInCents` | the seat-selection route chunk wasn't loaded; guessed paths 404'd |
+| Reel | `apiuae.reelcinemas.com/webapi/api`: guest `auth/loginAsGuest` → `booking/CreateMovieCookie` → `seats/getSeatLayout` → `TicketList[].PriceInAed` | assumed getSeatLayout needs a held seat; it only needs the guest session + movie cookie |
+| Cinema City | `booking.cinemacity.ae` widget: `POST /api/launch/seatpreview/{uuid}` → `POST /api/Tickets/GetTickets {dataToken}` | stopped at the Login/Guest screen; seat-preview mode skips it |
+
+Coverage from the live run of 2026-09-26 (cinema × hall label pairs seen in the 2-day window):
+
+| chain | cinemas priced / with shows (total) | cinema × hall priced | halls priced |
+|---|---|---|---|
+| VOX | 23 / 23 (23) | 77 / 79 | Standard, MAX, IMAX, 4DX, GOLD, THEATRE, KIDS, Premier, Premium, Couch, THEATRE PODS, SAMSUNG ONYX — only *Private Cinema* (Kempinski, Reem) has no legend price |
+| Novo | 5 / 5 (6; Dragon Mart had no sessions) | 5 / 5 | Standard (2D) with COOL / COOL PRIME / EDGE seat classes |
+| Reel | 3 / 3 (3) | 9 / 9 experiences (39 / 39 screens) | Standard, Platinum Suites, Premium, Dolby, ScreenX, Reel Junior |
+| Cinema City | 6 / 6 (6) | 16 / 16 | Standard, VIP, IMAX, PLF, InfinityVision, Luxury Seats, Arthouse |
+
+Show level: VOX 2,873 / 2,884 shows priced; Novo 236 / 236; Reel 445 / 445; Cinema City 500 / 500.
+
+`prices.yaml` stays as a fallback (fill() only touches shows still at None). Roxy remains the only
+chain with no live price (login-gated) — not in scope of this pass.
+
+---
+
+## Task 1b (2026-09-26, earlier): the monthly price table
 
 Goal: fill `prices: null` on the five chains whose readers can't reach a price without a
 seat hold (vox, novo, reel, roxy, cinemacity — see each chain's own `docs/probe/<chain>.md`

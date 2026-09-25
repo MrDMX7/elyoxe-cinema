@@ -101,33 +101,40 @@ Mall and Dubai Festival City Mall:
 substring), specifically so `"THEATRE PODS in IMAX"` doesn't get swallowed into `THEATRE` or
 `IMAX` by accident.
 
-## Prices: could not be read without holding a seat
+## Prices — live since 2026-09-26 (Task 1c), no seat hold
 
-Traced the full booking flow live (guest checkout, no login, no personal data entered, no
-payment) for a real showtime:
-`showtimes page → /booking/<id> → guest-or-login screen ("Continue as Guest") →
-/booking/<order>/seats/fetch → conditions-of-access dialog → /booking/<order>/seats`.
+The earlier conclusion ("no price before a seat is clicked") was wrong: the seat-map page's
+**legend** carries every seat class and its price in attributes, in the raw HTML, before any click:
 
-The seat-map page itself — reached *before* clicking any seat — shows the screen layout, a seat
-legend (`Unavailable / Your Seat / Regular`), and a running total that reads **`0.00 AED`** until
-a seat is clicked. No per-seat-class price (Standard/MAX/GOLD/etc.) is rendered anywhere before a
-seat selection, and no JSON call fires with that data either — the seat-map HTML itself has no
-price fields hidden in markup, confirmed by reading the raw response body.
+```html
+<li class="seat standard sub-category-standard" data-area="0000000002" data-label="Regular"
+    data-price="50.00 AED per ticket">
+<li class="seat preferred-view sub-category-standard" data-area="0000000014" data-label="Preferred View"
+    data-price="75.00 AED per ticket">
+```
 
-The task brief mentions a previous researcher having obtained Standard 46/56/61 AED, MAX
-52/65/70 AED, THEATRE 195 AED "from the booking flow" — but reaching that point requires
-clicking an actual seat, which places a hold on it. **The binding rule in this task explicitly
-forbids that** ("If a price is only visible after selecting a seat ... do NOT do that — set
-`prices: null`"), so this reader does exactly that: every VOX show ships with `"prices": null`.
-No ticket-types/price-list endpoint that skips the seat-hold step was found for VOX — unlike
-some chains, there does not appear to be one.
+(The *visible* running total reads 0.00 AED; the per-class price only shows in a tooltip, which
+is why the browser look missed it.) Path the reader follows, all GETs with curl_cffi:
 
-**Open question for a follow-up, if VOX prices are wanted later:** whether VOX exposes a
-`GET .../seats` JSON variant (as opposed to the HTML page fetched here) that includes seat-class
-prices without a hold — this reader did not find one via the rendered network log, but the
-network log only shows the resources the *browser* actually requested; a raw endpoint enumeration
-wasn't attempted (out of scope: that would mean probing undocumented API surface, which felt like
-more risk than the task's price-safety rule wants).
+1. `GET /booking/<cinema>-<session>` → redirects to `/booking/<uuid>_<cinema>-<session>/guest`
+   (an anonymous guest order — what "Continue as Guest" continues).
+2. `GET /booking/<order>/seats/fetch` → `/seats/processing`, then `GET /booking/<order>/seats`
+   (retried up to 3× while still on `processing`). Parse `li.seat[data-price]`.
+3. `GET /booking/<order>/abandon?success_url=%2Fshowtimes` — the page's own "back" link (302).
+
+The seat grid's `<form id="seat-selection" action="/booking/<order>/allocate" method="post">` is
+never submitted, so no seat is selected or held (checked: no grid seat carries `allocated` after the
+read). One sample per cinema × hall label per run, on a show at least an hour away; a 403/429
+anywhere in the sampler stops sampling for the rest of the run (prices stay `None`), other failures
+leave that hall `None`. Cost ≈ 4 requests × ~100 cinema×hall pairs at ≥1.1 s ≈ 8 min.
+
+## Review fixes (2026-09-26)
+
+- `/showtimes` failures are counted: more than half failing raises `RuntimeError`; so does zero
+  parsed shows (markup change).
+- `hall_label` takes only the `<strong>`'s own text nodes, so the info-icon tooltip copy
+  ("…This session can be customized after you book…") no longer leaks in.
+- "Today" is Asia/Dubai.
 
 ## Live run results (this task's fixture)
 
