@@ -1,9 +1,9 @@
 {
-  "ar": "فيلم Digger لسا ما طلع تقييم نقدي رسمي له، فيه حظر نقد للحين. أول ردود فعل متضاربة بس ما نقدر نحكم عليه قبل صدور الأرقام.",
-  "basis": "لا يوجد رقم RT بعد (حظر نقدي)",
+  "ar": "ديغر من إخراج أليخاندرو غونزاليز إيناريتو وبطولة توم كروز، مدته 2 ساعة و9 دقايق. ردود أفعال النقاد الأولى متضاربة، ناقد قال إنه أفضل دور لكروز من زمان وفكرته مبتكرة، وناقدين ثانين وصفوه بـ'فوضى' و'مزعج'.",
+  "basis": "لا يوجد رقم RT بعد، ردود نقدية مسمّاة متضاربة",
   "by": "claude",
-  "en": "Digger has no official critic score yet due to a review embargo. Early reactions are divided, so no verdict can be given until scores are released.",
+  "en": "Digger, directed by Alejandro González Iñárritu and starring Tom Cruise, runs 2h09m. Early critic reactions are split, with one calling it Cruise's best in years and inventive, while others called it a mess and unpleasant.",
   "fid": "digger",
-  "verdict": "unknown",
+  "verdict": "mixed",
   "written": "2026-09-26"
 }
