@@ -200,6 +200,16 @@ def test_reel_price_health_login_failure_sets_error(monkeypatch, capsys):
     _assert_health(out, attempted=0, priced=0, error_is_none=False)
     assert "loginAsGuest" in capsys.readouterr().err
 
+    class BrokenClient:
+        def __init__(self):
+            raise OSError("curl_cffi session could not be created")
+
+    monkeypatch.setattr(reel, "_PriceClient", BrokenClient)
+    out = reel.fetch(days=2)
+    assert out["shows"] and all(sh["prices"] is None for sh in out["shows"])
+    _assert_health(out, attempted=0, priced=0, error_is_none=False)
+    assert "curl_cffi session could not be created" in out["price_health"]["error"]
+
     class GoodClient:
         def login(self):
             return None

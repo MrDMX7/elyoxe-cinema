@@ -309,11 +309,11 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
     price_of: dict = {}
     health = {"attempted": 0, "priced": 0, "error": None}
     if prices and sample_for:
-        pc = _PriceClient()
-        try:
+        try:  # constructing the curl_cffi session is part of the price path: it must not fail the chain
+            pc = _PriceClient()
             err = pc.login()
-        except Exception as e:  # network/Cloudflare/crypto failure while opening the guest session
-            err = f"loginAsGuest raised {e!r}"
+        except Exception as e:  # session construction, network, Cloudflare or crypto failure
+            err = f"price client/guest login raised {e!r}"
         if err:
             health["error"] = err
             print(f"[readers.reel] price sampling skipped: {err}", file=sys.stderr)
