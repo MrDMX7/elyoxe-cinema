@@ -47,14 +47,19 @@ rc=$?
 # health.json: {chain: {ok, at, error, shows, prices_degraded}} — anything off is worth one notification
 bad=$("$PY" - <<'EOF'
 import json
+CHAINS = ("vox", "star", "cineroyal", "novo", "reel", "roxy", "cinemacity")
 h = json.load(open("data/health.json", encoding="utf-8"))
-out = []
-for c, v in sorted(h.items()):
+out, low = [], []
+for c in CHAINS:
+    v = h.get(c) or {}
     if not v.get("ok"):
-        out.append(f"{c}: فشل ({(v.get('error') or '')[:60]})")
+        out.append(f"{c}: فشل ({(v.get('error') or 'ما انقرأ')[:60]})")
     elif v.get("prices_degraded"):
         out.append(f"{c}: الأسعار ناقصة")
-print(" · ".join(out))
+for k, v in sorted(h.items()):   # enrich / verdicts: a lower-priority note (the site still deployed)
+    if k not in CHAINS and isinstance(v, dict) and v.get("ok") is False:
+        low.append(f"{k}: {(v.get('error') or 'فشل')[:60]}")
+print(" · ".join(out + ([f"(ثانوي) {' · '.join(low)}"] if low else [])))
 EOF
 )
 if [ -n "$bad" ]; then
