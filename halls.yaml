@@ -118,7 +118,7 @@ chains:
         name: IMAX with Laser
         name_ar: آيماكس ليزر
         what_ar: في آي إم جي أكبر شاشة IMAX في دبي، 24.4 متر في 13.8، و360 كرسي، وعرض ليزر 4K وصوت 12 قناة.
-        what_en: At IMG, Dubai's largest IMAX: 24.4 by 13.8 metres, 360 seats, 4K laser projection and 12-channel sound.
+        what_en: "At IMG, Dubai's largest IMAX: 24.4 by 13.8 metres, 360 seats, 4K laser projection and 12-channel sound."
         source: https://www.boxofficepro.com/novo-cinemas-opens-dubais-largest-imax-with-laser-at-img-worlds-of-adventure/
         confidence: high
       - key: SKY

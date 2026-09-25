@@ -1,0 +1,191 @@
+/* «سينما» — the cinema layer over /tools/assets/base.css (paper, ink, saffron; Plex; rules, no radius, no shadow).
+   Logical properties only. Saffron marks the one number that matters (the price you pay) and the chosen words;
+   verdigris only means «live / starting now». Dark mode redefines base.css's tokens. */
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#141A17; --paper-2:#1B2320; --ink:#ECE9E1; --saffron:#F0BC5A; --saffron-deep:#F0BC5A; --saffron-lit:#F0BC5A;
+    --verdigris:#5CC9A4; --stone:#A3A69F; --stone-lit:#5F5E57; --rule:#2F3935; --rule-soft:#222A26; --danger:#E0816F;
+    color-scheme:dark;
+  }
+}
+.cinema{--now:var(--verdigris)}
+.vh{position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.cinema main{padding-block-end:1rem}
+.cinema h1{max-inline-size:22ch}
+.cinema main > section{margin-block-start:3.5rem}
+.cinema main > section > h2,.cinema .fcity > h2{display:flex;align-items:baseline;gap:.75rem;font-size:1.375rem;font-weight:600;margin:0 0 1rem;padding-block-end:.75rem;border-block-end:1px solid var(--ink)}
+.cinema h2 small{font-family:var(--mono);font-size:.8125rem;color:var(--stone);font-weight:400}
+.cinema h2 a{text-decoration:none}
+.te{color:var(--stone);margin:.25rem 0 0}
+p.te{font-size:1.125rem}
+
+/* the picker — a sentence you complete: «أنا في [العين] ومعي [فزعة]» */
+.pick{display:flex;flex-wrap:wrap;align-items:baseline;gap:.35rem .6rem;margin-block:1.75rem 0;color:var(--stone)}
+.pick.big{font-size:clamp(1.5rem,1.05rem + 2.2vw,2.5rem);line-height:1.45;color:var(--ink);padding-block:1.1rem;border-block:1px solid var(--ink);margin-block-start:2.25rem}
+.sel{position:relative;display:inline-flex}
+.sel select{appearance:none;-webkit-appearance:none;background:transparent;border:0;border-block-end:2px solid var(--saffron);border-radius:0;color:var(--ink);font-weight:600;padding-block:0;padding-inline:.1em 1.05em;cursor:pointer;max-inline-size:100%;line-height:1.3}
+.pick.big .sel select{font-size:inherit}
+.sel::after{content:"";position:absolute;inset-inline-end:.1em;inset-block-end:.55em;border-inline:.28em solid transparent;border-block-start:.34em solid var(--saffron);pointer-events:none}
+.pick.big .sel::after{inset-block-end:.6em}
+.sel select:focus-visible{outline:2px solid var(--saffron);outline-offset:3px}
+.sel option,.sel optgroup{color:#141A17;background:#F4F2ED;font-size:1rem}
+.cardnote{margin-block-start:.9rem;font-size:.9375rem;color:var(--stone);display:grid;gap:.2rem}
+.cardnote b{color:var(--ink);font-weight:500}
+
+/* prices: the base price in ink, the price you pay in saffron, the old one struck in stone */
+.p{white-space:nowrap}
+.p s,.p b,.p .num{unicode-bidi:isolate}
+.chkd .num,.sub bdi{margin-inline:.25em}
+.p .num{font-weight:500}
+.p s{color:var(--stone);font-size:.8em;margin-inline-end:.4em;text-decoration-thickness:1px}
+.p b{color:var(--saffron);font-weight:500;font-family:var(--mono)}
+.p small{color:var(--stone);font-size:.75rem;margin-inline-start:.35em;white-space:normal}
+.na{color:var(--stone);font-size:.875rem}
+
+/* on now */
+.now h2 .live{display:inline-block;inline-size:.55rem;block-size:.55rem;background:var(--now);align-self:center;animation:pulse 2.4s var(--ease) infinite}
+@keyframes pulse{50%{opacity:.35}}
+.strip{list-style:none;margin:0;padding:0;display:flex;overflow-x:auto;scroll-snap-type:x proximity;border-inline-start:1px solid var(--rule);scrollbar-width:thin}
+.strip li{flex:0 0 auto;inline-size:min(15rem,78vw);scroll-snap-align:start;border-inline-end:1px solid var(--rule)}
+.strip a{display:grid;gap:.15rem;padding:.25rem 1rem .75rem;text-decoration:none;block-size:100%}
+.strip a:hover{background:var(--paper-2)}
+.strip .tt{font-family:var(--mono);font-size:1.75rem;color:var(--now);line-height:1.3}
+.strip .ft{font-weight:600;line-height:1.4}
+.strip .pl{color:var(--stone);font-size:.8125rem}
+.strip .pp{font-size:.875rem}
+.strip .in{color:var(--stone);font-size:.8125rem}
+.now .hint{margin:0}
+
+/* the week's films: typographic tiles on a ruled grid; a poster only when there is one */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(17.5rem,100%),1fr));border-inline-start:1px solid var(--rule);border-block-start:1px solid var(--rule)}
+.film{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1rem;padding:1.25rem;border-inline-end:1px solid var(--rule);border-block-end:1px solid var(--rule);text-decoration:none;transition:background .2s var(--ease)}
+.film:hover{background:var(--paper-2)}
+.film .poster{inline-size:4.5rem;block-size:auto;aspect-ratio:2/3;object-fit:cover;background:var(--paper-2)}
+.fbody{display:flex;flex-direction:column;gap:.2rem;min-inline-size:0;grid-column:-2}
+.film .top{display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;margin-block-end:.35rem}
+.v{font-weight:600;font-size:.9375rem}
+.v-mixed .v,.v.v-mixed{font-weight:400}
+.v-skip .v,.v.v-skip,.v-unknown .v,.v.v-unknown{color:var(--stone);font-weight:400}
+.film .meta{color:var(--stone);font-size:.8125rem;display:flex;gap:.6rem}
+.film .t{font-size:1.375rem;line-height:1.3;font-weight:600;overflow-wrap:anywhere}
+.film .te{font-size:.875rem;margin:0}
+.film .rt{color:var(--stone);font-size:.8125rem;display:flex;gap:.9rem;margin-block-start:.2rem}
+.film .rt .num{color:var(--ink)}
+.film .cheap{display:grid;margin-block-start:auto;padding-block-start:.9rem}
+.film .cheap .lbl{color:var(--stone);font-size:.8125rem;border-block-start:1px solid var(--rule);padding-block-start:.7rem;margin-block-start:.4rem}
+.film .amt{font-family:var(--mono);font-size:1.75rem;line-height:1.35;color:var(--ink)}
+.film .amt.you{color:var(--saffron)}
+.film .amt small{font-family:var(--font);font-size:.875rem;color:var(--stone)}
+.film .amt s{font-size:.9375rem;color:var(--stone);margin-inline-start:.5rem}
+.film .where{color:var(--stone);font-size:.8125rem}
+.film.off{opacity:.5}
+.film.off:hover{opacity:.8}
+
+/* lists of cities, cards, sources */
+.clist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(13rem,100%),1fr));column-gap:2rem}
+.clist li{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;padding-block:.6rem;border-block-end:1px solid var(--rule)}
+.clist a{font-weight:500;text-decoration:none}
+.clist .n{color:var(--stone);font-size:.8125rem}
+.links{display:flex;flex-wrap:wrap;gap:.4rem 1.25rem;align-items:baseline;margin:.6rem 0}
+.links > span{color:var(--stone);font-size:.875rem;min-inline-size:4.5rem}
+.chains{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(16rem,100%),1fr));column-gap:2rem}
+.chains li{padding-block:.55rem;border-block-end:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:.25rem .75rem;align-items:baseline}
+.age{color:var(--stone);font-size:.8125rem;font-weight:400}
+.stale,.age.stale{color:var(--danger);font-size:.8125rem;font-weight:400}
+.freshline{margin:.35rem 0 0}
+.src{color:var(--stone);font-size:.8125rem}
+.weak{color:var(--stone);font-size:.8125rem;border-block-end:1px dotted currentColor}
+.chkd{color:var(--stone);font-size:.8125rem}
+
+/* ruled rows (cinemas in a city, cards at a chain) */
+.rows{display:grid}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm val" "sub val";column-gap:1.5rem;row-gap:.1rem;padding-block:.9rem;border-block-end:1px solid var(--rule)}
+.row .nm{grid-area:nm;font-weight:600;text-decoration:none}
+.row a.nm:hover{text-decoration:underline;text-decoration-color:var(--saffron)}
+.row .sub{grid-area:sub;color:var(--stone);font-size:.875rem;display:flex;flex-wrap:wrap;gap:.2rem .75rem;align-items:baseline}
+.row .from,.row .val{grid-area:val;align-self:center;text-align:end;font-size:1.0625rem}
+.row .from{color:var(--stone);font-size:.875rem}
+.row .from .p{font-size:1.25rem;color:var(--ink)}
+.crd{grid-template-areas:"nm val" "sub sub"}
+.crd .off{font-family:var(--mono);font-weight:500;color:var(--saffron)}
+.crd .off.txt{font-family:var(--font);font-weight:600}
+.crd .val{display:flex;flex-direction:column;align-items:flex-end}
+.nil{color:var(--stone);font-size:.9375rem}
+.ex{margin:0;padding-block:.35rem .9rem;border-block-end:1px solid var(--rule);color:var(--stone);font-size:.9375rem}
+.ex s{color:var(--stone)}
+.ex b{color:var(--saffron);font-weight:500;font-size:1.25rem}
+.cardrows .crd{border-block-end:0}
+
+/* schedules */
+.sched{display:grid}
+.srow{display:grid;grid-template-columns:minmax(10rem,17rem) minmax(0,1fr);gap:.5rem 2rem;padding-block:1rem;border-block-end:1px solid var(--rule)}
+.sf{display:flex;flex-direction:column;gap:.1rem}
+.sf a{text-decoration:none}
+.sf .t{font-weight:600;font-size:1.0625rem;line-height:1.4}
+.sc p{margin:0 0 .5rem;display:flex;flex-wrap:wrap;align-items:baseline;gap:.4rem .9rem}
+.sc p:last-child{margin:0}
+.sc .cn,.hn{font-size:.875rem;color:var(--stone);min-inline-size:7rem}
+.sc .cn{text-decoration:none}
+.times{display:inline-flex;flex-wrap:wrap;gap:.35rem}
+.tm{display:inline-flex;align-items:baseline;gap:.35rem;padding:.1rem .5rem;border:1px solid var(--rule);text-decoration:none;font-size:.9375rem;transition:border-color .2s var(--ease)}
+.tm:hover{border-color:var(--ink)}
+.tm small{color:var(--stone);font-size:.75rem}
+.tm.past{opacity:.35}
+.tm.soon{border-color:var(--now);color:var(--now)}
+
+/* halls explained + price tables */
+.halls{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(20rem,100%),1fr));column-gap:2.5rem}
+.hall{padding-block:1rem 1.25rem;border-block-end:1px solid var(--rule)}
+.hall h3{font-size:1.125rem;font-weight:600;margin:0 0 .25rem}
+.hall p{margin:0 0 .6rem;color:var(--stone);font-size:.9375rem;max-inline-size:var(--measure)}
+.hall .rng{color:var(--ink)}
+.hall .where{display:flex;flex-wrap:wrap;gap:.25rem 1rem;font-size:.875rem}
+table.prices{inline-size:100%;border-collapse:collapse;font-size:.9375rem}
+.prices th,.prices td{padding:.4rem 0;border-block-end:1px solid var(--rule-soft);text-align:start;font-weight:400}
+.prices thead th{color:var(--stone);font-size:.8125rem;border-block-end:1px solid var(--rule)}
+.prices td,.prices thead th:last-child{text-align:end}
+.prices td .p{font-size:1.0625rem}
+
+/* film page */
+.verdict{margin-block-start:2rem;border-block-start:1px solid var(--ink);padding-block-start:1rem}
+.cinema main > .verdict{margin-block-start:2rem}
+.verdict .word{font-size:clamp(2.5rem,1.8rem + 3.2vw,4.5rem);line-height:1.1;font-weight:600;margin:0}
+.verdict.v-skip .word,.verdict.v-unknown .word{color:var(--stone)}
+.verdict .say{font-size:clamp(1.125rem,1rem + .5vw,1.375rem);max-inline-size:38ch;margin:.75rem 0 0;line-height:1.7}
+.verdict .basis{font-family:var(--mono);font-size:.8125rem;color:var(--stone);margin:.5rem 0 0;text-align:start}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(10rem,100%),1fr));gap:0 1.5rem;margin:1.75rem 0 0}
+.facts div{padding-block:.5rem;border-block-start:1px solid var(--rule)}
+.facts dt{color:var(--stone);font-size:.8125rem}
+.facts dd{margin:0}
+.syn{max-inline-size:var(--measure);margin-block:1.5rem 0}
+.fcin{padding-block:.75rem 1rem;border-block-end:1px solid var(--rule)}
+.fcin h3{font-size:1.0625rem;font-weight:600;margin:0 0 .5rem;display:flex;flex-wrap:wrap;gap:.25rem .75rem;align-items:baseline}
+.fcin h3 a{text-decoration:none}
+.line{display:grid;grid-template-columns:3.5rem minmax(6rem,9rem) minmax(0,1fr) auto;gap:.4rem 1rem;align-items:baseline;padding-block:.35rem}
+.line .day{color:var(--stone);font-size:.8125rem}
+.line .pr{display:flex;flex-wrap:wrap;gap:.25rem 1rem;justify-content:flex-end}
+.seat{display:inline-flex;align-items:baseline;gap:.35rem}
+.seat > small{color:var(--stone);font-size:.75rem}
+.fcity.here > h2::after{content:"";inline-size:.5rem;block-size:.5rem;background:var(--saffron);align-self:center}
+
+/* cards matrix */
+.xwrap{overflow-x:auto;border-block:1px solid var(--ink)}
+.matrix{border-collapse:collapse;inline-size:max-content;min-inline-size:100%;font-size:.9375rem}
+.matrix th,.matrix td{padding:.55rem .9rem;border-block-end:1px solid var(--rule);text-align:start;white-space:nowrap}
+.matrix thead th{color:var(--stone);font-weight:400;font-size:.8125rem}
+.matrix tbody th{font-weight:500;position:sticky;inset-inline-start:0;background:var(--paper)}
+.matrix tbody th a{text-decoration:none}
+.matrix td b{color:var(--saffron);font-weight:500}
+.matrix .nil{font-size:.8125rem}
+.faq details:last-child{border-block-end:1px solid var(--rule)}
+
+@media (max-width:720px){
+  .srow{grid-template-columns:minmax(0,1fr)}
+  .line{grid-template-columns:auto minmax(0,1fr);grid-template-areas:"day hn" "tm tm" "pr pr"}
+  .line .day{grid-area:day}.line .hn{grid-area:hn;min-inline-size:0}.line .times{grid-area:tm}.line .pr{grid-area:pr;justify-content:flex-start}
+  .row{grid-template-areas:"nm" "sub" "val";grid-template-columns:minmax(0,1fr)}
+  .row .from,.row .val{text-align:start;align-self:start}
+  .crd .val{align-items:flex-start}
+  .film{padding:1rem}
+}
+@media (prefers-reduced-motion:reduce){.now h2 .live{animation:none}}

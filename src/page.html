@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="{{lang}}" dir="{{dir}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>{{title}}</title>
+<meta name="description" content="{{description}}">
+<link rel="canonical" href="{{url}}">
+<link rel="alternate" hreflang="ar" href="{{url_ar}}">
+<link rel="alternate" hreflang="en" href="{{url_en}}">
+<link rel="alternate" hreflang="x-default" href="{{url_ar}}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Elyoxe">
+<meta property="og:title" content="{{title}}">
+<meta property="og:description" content="{{description}}">
+<meta property="og:url" content="{{url}}">
+<meta property="og:image" content="https://elyoxe.com/{{og}}">
+<meta property="og:locale" content="{{locale}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#F4F2ED" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141A17" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/tools/assets/base.css">
+<link rel="stylesheet" href="/cinema/assets/cinema.css?v={{v}}">
+<script type="application/ld+json">{{jsonld}}</script>
+</head>
+<body class="cinema" data-page="{{page}}"{{attrs}}>
+<header class="bar"><div class="wrap">
+  <a class="brand" href="{{hub}}">Elyoxe <small>{{s_cinema}}</small></a>
+  <nav><a href="{{hub}}">{{s_home}}</a><a href="{{cities_href}}">{{s_cities}}</a><a href="{{cards_href}}">{{s_cards}}</a><a href="{{tools_href}}">{{s_tools}}</a><a href="{{alt}}" hreflang="{{alt_lang}}" lang="{{alt_lang}}">{{s_alt}}</a></nav>
+</div></header>
+<main class="wrap">
+{{body}}
+</main>
+<footer class="foot"><div class="wrap">
+  <span>{{s_footer}}</span>
+  <nav><a href="{{hub}}">{{s_home}}</a><a href="{{tools_href}}">{{s_tools}}</a><a href="{{home}}">{{s_studio}}</a></nav>
+</div></footer>
+<script>window.CT = {{strings}};</script>
+<script src="/cinema/assets/cinema.js?v={{v}}" defer></script>
+</body>
+</html>
