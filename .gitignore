@@ -10,3 +10,8 @@ data/lastmod.json
 data/*.json
 star_bundle.js
 data/.run.lock
+data/.last_pages
+.venv/
+venv/
+*.pyc
+.pytest_cache/
