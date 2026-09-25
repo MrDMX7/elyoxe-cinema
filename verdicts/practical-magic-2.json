@@ -1,8 +1,8 @@
 {
-  "ar": "النقاد عطوه 38% بس الجمهور فرح فيه وعطاه 93%. فجوة كبيرة بين الطرفين، وحبايب الفيلم الأول أكثر ناس بترتاح له.",
-  "basis": "RT: critics 38% · audience 93%",
+  "ar": "النقاد عطوه بس 36% من 163 نقد، بينما الجمهور حبه بنسبة 91%. لو تحب الفيلم الأول بترتاح له أكثر من النقاد.",
+  "basis": "RT 36% (163 نقد) · الجمهور 91%",
   "by": "claude",
-  "en": "Critics gave it 38% while audiences loved it at 93%, a huge gap. Fans of the original film will likely enjoy this sequel more than critics did.",
+  "en": "Critics gave it just 36% from 163 reviews, while audiences loved it at 91%. Fans of the original will enjoy it more than critics did.",
   "fid": "practical-magic-2",
   "verdict": "mixed",
   "written": "2026-09-26"
