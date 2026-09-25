@@ -1,0 +1,25 @@
+# The test gate for «سينما». Runs the suite on every push. Having a workflow at all also makes
+# ~/dotclaude/bin/wsync class this repo PULL_ONLY (it has .github/workflows/*), so half-finished
+# laptop edits are no longer auto-committed and pushed every 15 minutes: laptop commits need an
+# explicit `git push` (ruling 2026-09-26). The Fold's run.sh runs the same suite after its pull and
+# before any deploy, so a red commit never reaches elyoxe.com/cinema.
+name: test
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q

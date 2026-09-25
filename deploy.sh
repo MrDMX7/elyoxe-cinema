@@ -20,6 +20,13 @@ fi
 "$PY" build.py --data data/latest.json
 [ -s out/cinema/index.html ] && [ -s out/en/cinema/index.html ] && [ -s out/cinema/sitemap.xml ] \
   || { echo "deploy: build output incomplete" >&2; exit 3; }
+# floor: never publish a collapse. Zero films, or under half the pages of the last deploy, stops here
+# (the live site keeps the previous build). data/.last_pages is this runner's own count (gitignored).
+pages=$(find out/cinema out/en/cinema -name index.html | wc -l)
+films=$(find out/cinema/film -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
+last=$(cat data/.last_pages 2>/dev/null || echo 0)
+[ "$films" -gt 0 ] || { echo "deploy: zero film pages — refusing to publish" >&2; exit 5; }
+[ $((pages * 2)) -ge "$last" ] || { echo "deploy: $pages pages vs $last last time (< 50%) — refusing to publish" >&2; exit 5; }
 
 BUCKET=$(aws cloudformation describe-stacks --region "$REGION" --stack-name "$STACK" \
   --query "Stacks[0].Outputs[?OutputKey=='Bucket'].OutputValue" --output text)
@@ -33,7 +40,9 @@ aws s3 sync out/ "s3://$BUCKET/" --region "$REGION" --delete "${ONLY[@]}" \
 # 2) data slices, 10 min (with --delete: yesterday's <city>-<date>.json disappear)
 aws s3 sync out/ "s3://$BUCKET/" --region "$REGION" --delete --exclude "*" --include "cinema/data/*" \
   --content-type "application/json; charset=utf-8" --cache-control "public, max-age=600" --only-show-errors
-# 3) html + sitemap, 5 min (with --delete: pages of films that left are removed)
+# 3) html + sitemap, 5 min (with --delete: pages of films that left are removed). Note: this pass also
+#    uploads any non-HTML file outside assets/ and data/ (none today) with the 300 s cache — give a new
+#    such file (an OG image, say) its own pass if it should be cached longer.
 aws s3 sync out/ "s3://$BUCKET/" --region "$REGION" --delete "${ONLY[@]}" \
   --exclude "cinema/data/*" --exclude "cinema/assets/*" --exclude "en/cinema/assets/*" \
   --cache-control "public, max-age=300" --only-show-errors
@@ -56,4 +65,5 @@ check() {
 check "https://elyoxe.com/cinema/" "/cinema/assets/cinema.css"
 check "https://elyoxe.com/en/cinema/" "/cinema/assets/cinema.css"
 check "https://elyoxe.com/cinema/sitemap.xml" "<urlset"
-echo "deployed: https://elyoxe.com/cinema/"
+echo "$pages" > data/.last_pages
+echo "deployed: https://elyoxe.com/cinema/ ($pages pages, $films films)"

@@ -4,9 +4,10 @@
 # Runner: the Fold (residential IP; the chains' booking APIs are read from there). cron calls it through the
 # workspace's job wrapper, which adds the wake lock, the memory wait and a notification on success/failure:
 #   10 6,12,18,23 * * *  /data/local/debian-boot.sh -c "/root/workspace/automation/phone/run-job.sh cinema"
-# By hand, in the foreground:  bash run.sh
+# By hand, in the foreground:  bash run.sh [--force]   (arguments go to refresh.py)
 #
-# Exit: 0 = deployed (possibly with degraded chains — those notify here), non-zero = nothing deployed.
+# Exit: 0 = deployed (possibly with degraded chains — those notify here), non-zero = nothing deployed
+#   (6 = the test suite failed on the pulled code; the live site is left as it was).
 # Notifications: only when something is wrong (a chain failed, prices degraded, verdicts not pushed);
 # run-job.sh keeps this job quiet on success (QUIET_OK).
 set -uo pipefail
@@ -40,7 +41,14 @@ if ! git pull --ff-only -q; then
 fi
 echo "   at $(git log --oneline -1)"
 
-"$PY" refresh.py
+# test gate (ruling 2026-09-26): whatever was just pulled must pass the suite before it can publish.
+# Red -> no refresh, no deploy: the live site stays on the last good build. The laptop pushes by hand
+# now (the repo has a workflow, so wsync treats it as pull-only), and CI runs the same suite there.
+if ! "$PY" -m pytest -q -x -p no:cacheprovider; then
+  fail "الاختبارات فشلت على $(git log --oneline -1 | cut -c1-60) — ما نُشر شي، الموقع على النسخة السابقة" 6
+fi
+
+"$PY" refresh.py "$@"   # e.g. bash run.sh --force (ignore the 3-hour raw reuse and fetch every chain now)
 rc=$?
 [ "$rc" -eq 0 ] || fail "refresh.py خرج بـ$rc — كل السلاسل فشلت، ما نُشر شي" "$rc"
 
@@ -60,7 +68,7 @@ commit_verdicts() {
     echo "verdicts: pull --rebase conflicted — commit undone, files kept for the next run"
     return 2
   fi
-  git push -q origin HEAD:main || { echo "verdicts: push failed"; return 3; }
+  git push -q origin HEAD:main || { echo "verdicts: push failed — the local commit stays ahead of origin; the next run's pull --ff-only still works and its push carries both"; return 3; }
   echo "verdicts: committed and pushed $n file(s)"
 }
 vrc=0; commit_verdicts || vrc=$?
