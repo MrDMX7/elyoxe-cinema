@@ -72,3 +72,56 @@ def test_cinemacity_fixture_shape(data):
             assert isinstance(s["runtime"], int) and s["runtime"] > 0
         if s["film_lang"] is not None:
             assert isinstance(s["film_lang"], str) and s["film_lang"]
+
+
+# --- Task 1c: live prices + failure paths -------------------------------------------------
+
+class _Resp:
+    def __init__(self, status=200, payload=None, text="", url=""):
+        self.status_code, self._payload, self.text, self.url = status, payload, text, url
+
+    def json(self):
+        if self._payload is None:
+            raise ValueError("no json")
+        return self._payload
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(self.status_code)
+
+
+def test_cinemacity_fixture_has_live_prices(data):
+    priced = [s for s in data["shows"] if s["prices"]]
+    assert priced, "no priced show: the seatpreview/GetTickets sample failed for every hall"
+    assert {c["id"] for c in data["cinemas"]} == {s["cinema"] for s in data["shows"]}, "a cinema lost its shows"
+
+
+def test_cinemacity_dates_are_calendar_dates(data):
+    # a 00:xx show belongs to the day it actually starts, not the 03:00 business day
+    for s in data["shows"]:
+        assert s["date"] >= "2026-01-01"
+
+
+def test_cinemacity_no_vox_brands(data):
+    assert not {s["hall"] for s in data["shows"]} & {"MAX", "GOLD"}
+
+
+def test_cinemacity_raises_on_zero_shows(monkeypatch):
+    from readers import cinemacity
+
+    class FakePolite:
+        def __init__(self, *a, **k):
+            pass
+
+        def get(self, url, params=None, **k):
+            if url.endswith("/schedule"):
+                code = params["theaters"].split('"id":"')[1].split('"')[0]
+                return _Resp(200, {code: {"schedule": {}}})
+            return _Resp(200, [])
+
+        def post(self, *a, **k):
+            raise AssertionError("no price call without shows")
+
+    monkeypatch.setattr(cinemacity, "Polite", FakePolite)
+    with pytest.raises(RuntimeError):
+        cinemacity.fetch(days=2)

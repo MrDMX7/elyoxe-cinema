@@ -6,18 +6,27 @@ in the built-in browser pane while clicking a date tab on a movie page — see
 docs/probe/novo.md for the full trace).
 
 fetch(days=2) returns {"cinemas": [Cinema], "shows": [Show]} for today + the next
-(days - 1) days, across all six live Novo Cinemas UAE sites.
+(days - 1) days (Asia/Dubai), across all six live Novo Cinemas UAE sites.
+
+Prices (live, no seat hold): GET /api/booking/seat-layout/cinemas/{cinemaId}/sessions/{sessionId}
+is the call the seat-selection page makes on load, before any seat is touched. Each seat area carries
+its name and `priceInCents` — the exact figure the page prints in the area header ("COOL (AED 36.75)").
+No login, no guest form, no seat selection. One sample per cinema x hall per run; a failure there
+leaves that hall's `prices` None and never fails the chain.
 """
 import re
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from readers.common import CITIES, HALLS, Polite, city_of, slug
 
 API = "https://uae-api.novocinemas.com/api/home"
+BOOKING_API = "https://uae-api.novocinemas.com/api/booking"
 SITE = "https://uae.novocinemas.com"
+DUBAI = ZoneInfo("Asia/Dubai")
 
 # The API returns cinema.address == "" for every site (verified live 2026-09-25) and
-# city_of() can't place two of them from the mall name alone, so we pin those two.
+# city_of() can't place most of them from the mall name alone, so we pin them.
 _CITY_OVERRIDE = {
     "Sahara Centre": "sharjah",
     "Mega Mall": "sharjah",
@@ -27,26 +36,35 @@ _CITY_OVERRIDE = {
     "Dragon Mart": "dubai",
 }
 
+# Novo's session `experience` is mostly the projection format ("2D"/"3D"), which says nothing
+# about the hall, so plain formats map to Standard. Named hall products map by keyword; GOLD and
+# MAX are VOX brands and are never assigned here (ruling 2026-09-26). Anything unrecognised is
+# OTHER with the raw label kept — never silently Standard.
+_FORMATS = {"2d", "3d", "2d atmos", "3d atmos", "4k", "atmos", "dolby atmos", "hfr"}
 _HALL_WORDS = [
     ("IMAX", ["imax"]),
     ("4DX", ["4dx"]),
     ("SCREENX", ["screenx", "screen x"]),
-    ("GOLD", ["gold"]),
-    ("VIP", ["vip", "platinum", "lux", "sky", "7 star", "7star"]),
+    ("VIP", ["vip", "platinum", "lux", "sky", "7 star", "7star", "recliner"]),
     ("SUITES", ["suite"]),
     ("KIDS", ["kid"]),
     ("THEATRE", ["theatre", "theater", "private"]),
-    ("MAX", ["max"]),
 ]
+_LANGS = {"english", "arabic", "hindi", "malayalam", "tamil", "telugu", "kannada", "urdu", "bengali",
+          "punjabi", "marathi", "french", "spanish", "korean", "japanese", "chinese", "mandarin",
+          "turkish", "tagalog", "filipino", "russian", "persian", "farsi", "german", "italian"}
 
 
 def _hall_for(experience_name: str) -> str:
-    e = (experience_name or "").lower()
+    e = (experience_name or "").strip().lower()
+    if not e or e in _FORMATS:
+        return "Standard"
     for hall, words in _HALL_WORDS:
         if any(w in e for w in words):
-            assert hall in HALLS
+            if hall not in HALLS:
+                raise ValueError(f"novo: hall {hall!r} not in HALLS")
             return hall
-    return "Standard"
+    return "OTHER"
 
 
 def _time_24h(show_time: str) -> str | None:
@@ -66,10 +84,31 @@ def _film_lang(movie: dict) -> str | None:
     if isinstance(lang, dict) and lang.get("lang_name"):
         return lang["lang_name"]
     m = re.search(r"\(([^)]+)\)\s*$", movie.get("movie_title") or "")
-    return m.group(1) if m else None
+    # only a real language name counts: "(Live-Action)" is not a language
+    return m.group(1) if m and m.group(1).strip().lower() in _LANGS else None
 
 
-def fetch(days: int = 2) -> dict:
+def _sample_prices(s: Polite, cinema_num, session_id) -> list[dict] | None:
+    """Seat-area prices for one session, from the seat-selection page's load call. None on failure."""
+    try:
+        r = s.get(f"{BOOKING_API}/seat-layout/cinemas/{cinema_num}/sessions/{session_id}",
+                  params={"country_id": 2, "channel": "web"})
+        if r.status_code != 200:
+            return None
+        body = r.json()
+        if not body.get("success"):
+            return None
+        out: dict[str, float] = {}
+        for a in (body.get("data") or {}).get("areas") or []:
+            name, cents = (a.get("name") or "").strip(), a.get("priceInCents") or 0
+            if name and cents > 0 and name not in out:
+                out[name] = round(cents / 100, 2)
+        return [{"seat": k, "aed": v} for k, v in out.items()] or None
+    except Exception:
+        return None
+
+
+def fetch(days: int = 2, prices: bool = True) -> dict:
     s = Polite(gap=1.0)
 
     r = s.get(f"{API}/cinemas", params={"country_id": 2, "channel": "web"})
@@ -83,7 +122,8 @@ def fetch(days: int = 2) -> dict:
         cid = f"novo-{slug(name)}"
         cinema_id_by_name[name] = cid
         city = _CITY_OVERRIDE.get(name) or city_of(name, c.get("address") or "")
-        assert city in CITIES, f"novo cinema {name!r} has no known city"
+        if city not in CITIES:
+            raise ValueError(f"novo cinema {name!r} has no known city")
         lat = float(c["lat"]) if c.get("lat") not in (None, "") else None
         lng = float(c["long"]) if c.get("long") not in (None, "") else None
         cinemas.append({
@@ -104,9 +144,13 @@ def fetch(days: int = 2) -> dict:
     r.raise_for_status()
     movies = r.json()["data"]["movies"]
 
-    dates = [(date.today() + timedelta(days=i)).isoformat() for i in range(max(days, 1))]
+    now = datetime.now(DUBAI)
+    dates = [(now.date() + timedelta(days=i)).isoformat() for i in range(max(days, 1))]
 
     shows = []
+    calls = failed = 0
+    price_cache: dict[tuple[str, str], list[dict] | None] = {}
+    price_tries: dict[tuple[str, str], int] = {}
     for movie in movies:
         mid = movie["movie_id"]
         title = movie["movie_title"]
@@ -120,11 +164,16 @@ def fetch(days: int = 2) -> dict:
                 "cinemaId": "null", "languageId": "", "timing": "", "formatId": "",
                 "country_id": 2, "channel": "web", "v": 2,
             })
-            if r.status_code != 200:
+            calls += 1
+            try:
+                body = r.json()
+            except ValueError:
+                body = {}
+            if r.status_code == 400 and "no sessions" in str(body.get("message", "")).lower():
+                continue  # {"success": false, "message": "No sessions found"}: not playing that day
+            if r.status_code != 200 or not body.get("success"):
+                failed += 1
                 continue
-            body = r.json()
-            if not body.get("success"):
-                continue  # e.g. {"message": "No sessions found"} for a movie not on that day
             day_sessions = (body.get("data") or {}).get("sessions", {}).get(d, {})
             for cinema_key, sessions in day_sessions.items():
                 cinema_name = cinema_key.split("~")[0]
@@ -138,23 +187,37 @@ def fetch(days: int = 2) -> dict:
                     if t is None:
                         continue
                     hall_label = sess.get("experience") or "2D"
+                    key = (cinema_id, hall_label)
+                    start = datetime.strptime(f"{d} {t}", "%Y-%m-%d %H:%M").replace(tzinfo=DUBAI)
+                    # Novo lists after-midnight shows under the previous business day
+                    # (isMidnightShow); the Show carries the calendar date of the real start.
+                    if sess.get("isMidnightShow") and t < "06:00":
+                        start += timedelta(days=1)
+                    cal_date = start.date().isoformat()
+                    if (prices and price_cache.get(key) is None and price_tries.get(key, 0) < 2
+                            and start > now + timedelta(hours=1) and sess.get("session_id")):
+                        price_tries[key] = price_tries.get(key, 0) + 1
+                        price_cache[key] = _sample_prices(s, sess.get("cinemaId"), sess["session_id"])
                     shows.append({
                         "cinema": cinema_id,
                         "film_title": title,
                         "film_lang": film_lang,
                         "film_rating": rating,
                         "runtime": runtime,
-                        "date": d,
+                        "date": cal_date,
                         "time": t,
                         "hall": _hall_for(hall_label),
                         "hall_label": hall_label,
-                        # Ticket prices are only exposed once a seat is held in the
-                        # booking flow (Vista-style session lock) — never fetched.
-                        # See docs/probe/novo.md.
-                        "prices": None,
+                        "prices": key,  # resolved after the loop, once each hall is sampled
                         "book": book,
                     })
 
+    if calls and failed * 2 > calls:
+        raise RuntimeError(f"novo: {failed}/{calls} session calls failed — API blocked or changed")
+    if not shows:
+        raise RuntimeError("novo: zero shows in the window — sessions API returned nothing usable")
+    for sh in shows:
+        sh["prices"] = price_cache.get(sh["prices"])
     return {"cinemas": cinemas, "shows": shows}
 
 

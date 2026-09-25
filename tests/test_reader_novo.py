@@ -66,3 +66,54 @@ def test_all_novo_shows_are_standard_or_known_hall(data):
     # not silently fall through — if Novo ever adds IMAX/4DX this should still pass.
     for show in data["shows"]:
         assert show["hall"] in HALLS
+
+
+# --- Task 1c: live prices + failure paths -------------------------------------------------
+
+class _Resp:
+    def __init__(self, status=200, payload=None, text="", url=""):
+        self.status_code, self._payload, self.text, self.url = status, payload, text, url
+
+    def json(self):
+        if self._payload is None:
+            raise ValueError("no json")
+        return self._payload
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(self.status_code)
+
+
+def test_novo_fixture_has_live_prices(data):
+    priced = [s for s in data["shows"] if s["prices"]]
+    assert priced, "no priced show: the seat-layout sample failed for every hall"
+    for s in priced:
+        assert all(p["aed"] > 0 for p in s["prices"])
+
+
+def test_novo_unknown_label_is_other_not_standard():
+    from readers.novo import _hall_for
+
+    assert _hall_for("2D") == "Standard"
+    assert _hall_for("3D") == "Standard"
+    assert _hall_for("IMAX 2D") == "IMAX"
+    assert _hall_for("Dolby Cinema") == "OTHER"
+
+
+def test_novo_raises_when_sessions_are_blocked(monkeypatch):
+    from readers import novo
+
+    class FakePolite:
+        def __init__(self, *a, **k):
+            pass
+
+        def get(self, url, params=None, **k):
+            if url.endswith("/cinemas"):
+                return _Resp(200, {"data": [{"name": "Dragon Mart", "name_ar": "", "lat": "", "long": "", "address": ""}]})
+            if url.endswith("/movies"):
+                return _Resp(200, {"data": {"movies": [{"movie_id": 1, "movie_title": "X"}]}})
+            return _Resp(403, {"message": "Forbidden"})
+
+    monkeypatch.setattr(novo, "Polite", FakePolite)
+    with pytest.raises(RuntimeError):
+        novo.fetch(days=2)

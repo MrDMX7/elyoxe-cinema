@@ -44,13 +44,69 @@ _ALIASES = {
 
 
 def _notes_for(title: str, text: str) -> str | None:
-    """Pulls the bullet paragraph(s) mentioning this film out of reviews.md, if any."""
+    """Pulls the bullet block(s) mentioning this film out of reviews.md, if any.
+
+    reviews.md nests a film's actual ratings (RT %, Metacritic, box office, ...) as indented
+    sub-bullets under one top-level "- **Title** (...)" line, and those sub-bullet lines don't
+    repeat the title (e.g. "  - RT 96% (249 critics), Certified Fresh; Metacritic 79 ..." has
+    no "Resident Evil" in it). Matching only lines that literally contain the title — the
+    original approach — silently dropped every sub-bullet, which is how the round-1 Resident
+    Evil verdict ended up citing Metacritic 79 instead of the RT 96% two lines below it. Fixed
+    by grabbing a matched top-level bullet's full indented block, not just the matching line.
+    """
     candidates = [title] + _ALIASES.get(title, [])
-    hits = []
+    lines = text.splitlines()
+    blocks, i = [], 0
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.strip()
+        indent = len(line) - len(line.lstrip(" "))
+        is_top_bullet = stripped.startswith("-") and indent <= 2
+        if is_top_bullet and any(c.lower() in stripped.lower() for c in candidates):
+            block = [stripped]
+            j = i + 1
+            while j < len(lines):
+                nxt = lines[j]
+                if not nxt.strip():
+                    break
+                nxt_indent = len(nxt) - len(nxt.lstrip(" "))
+                if nxt_indent <= indent:
+                    break
+                block.append(nxt.strip())
+                j += 1
+            blocks.append("\n".join(block))
+            i = j
+        else:
+            i += 1
+    return "\n\n".join(blocks) if blocks else None
+
+
+# reviews.md's own "What films are in UAE cinemas" section lists titles under a language
+# header ("**English:** ...", "**Malayalam:** ...", ...) — parsed here instead of hardcoded,
+# so the same logic covers the ~50 more films the live job will add later, not just today's 25.
+# Round-1 controller fix: Pradhama Drishtya Kuttakkar was mislabeled "Bollywood" in the first
+# pass — it's Malayalam, and only the "Hindi" bucket is actually Bollywood.
+_LANG_LABEL_AR = {
+    "english": "إنجليزية", "arabic": "عربية (مصرية)", "hindi": "هندية (بوليوود)",
+    "malayalam": "مليالم", "tamil": "تاميل", "telugu": "تيلوغو", "punjabi": "بنجابية",
+    "tagalog": "تاغالوغ", "nepali": "نيبالية",
+}
+_LANG_HEADER = re.compile(r"^\s*-\s*\*\*([A-Za-z]+):\*\*\s*(.*)$")
+
+
+def _language_for(title: str, text: str) -> str | None:
+    candidates = [title] + _ALIASES.get(title, [])
     for line in text.splitlines():
-        if any(c.lower() in line.lower() for c in candidates) and line.strip().startswith("-"):
-            hits.append(line.strip())
-    return "\n".join(hits) if hits else None
+        m = _LANG_HEADER.match(line)
+        if not m:
+            continue
+        lang, rest = m.group(1).lower(), m.group(2)
+        if lang not in _LANG_LABEL_AR:
+            continue
+        entries = [e.strip() for e in rest.split(",")]
+        if any(any(c.lower() in e.lower() for c in candidates) for e in entries):
+            return _LANG_LABEL_AR[lang]
+    return None
 
 
 # Wikidata search hints for titles that collide with an older or unrelated work of the same
@@ -71,7 +127,7 @@ def build_data() -> dict:
     return {"films": films}
 
 
-def main():
+def main(only_titles: list[str] | None = None, force: bool = False):
     data = build_data()
     print(f"enriching {len(data['films'])} films (Wikidata + Rotten Tomatoes + Wikipedia)...")
     enrich(data, cache_path="data/films_cache.json")
@@ -83,19 +139,30 @@ def main():
             n = _notes_for(title, text)
             if n:
                 notes[slug(title)] = n
+            lang = _language_for(title, text)
+            if lang:
+                data["films"][slug(title)]["language"] = lang
     else:
         print(f"warning: reviews.md not found at {REVIEWS_MD}", file=sys.stderr)
 
-    print(f"writing missing verdicts ({len(notes)} films have reviews.md context)...")
-    results = write_missing(data, notes=notes)
-    print(f"wrote {len(results)} new verdict(s); "
-          f"{len(data['films']) - len(results)} already had one (or are hand-edited).")
+    only_fids = {slug(t) for t in only_titles} if only_titles else None
+    print(f"writing missing verdicts ({len(notes)} films have reviews.md context)..."
+          + (f" [only_fids={only_fids}]" if only_fids else ""))
+    results = write_missing(data, notes=notes, force=force, only_fids=only_fids)
+    print(f"wrote/regenerated {len(results)} verdict(s); "
+          f"{len(data['films']) - len(results)} left as-is (already had one, or not in only_fids).")
 
     for fid, film in data["films"].items():
         rt = film.get("rt") or {}
-        print(f"  {fid:35s} title_ar={film.get('title_ar')!r:20s} "
+        print(f"  {fid:35s} title_ar={film.get('title_ar')!r:20s} lang={film.get('language')!r:15s} "
               f"rt_critics={rt.get('critics')} rt_audience={rt.get('audience')}")
 
 
 if __name__ == "__main__":
-    main()
+    # python seed_verdicts.py                 -> full run (fills in any missing verdicts)
+    # python seed_verdicts.py --fix "Title A" "Title B"  -> force-regenerate only these
+    args = sys.argv[1:]
+    if args and args[0] == "--fix":
+        main(only_titles=args[1:], force=True)
+    else:
+        main()

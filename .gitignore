@@ -3,4 +3,9 @@ out/
 __pycache__/
 .env
 data/films_cache.json
+data/raw/
+data/latest.json
+data/health.json
+data/lastmod.json
+data/*.json
 star_bundle.js

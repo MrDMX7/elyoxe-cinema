@@ -26,39 +26,79 @@ VALID_VERDICTS = {"yes", "mixed", "skip", "unknown"}
 MODEL = "claude-sonnet-5"
 MAX_ATTEMPTS = 3
 
-# Words the owner has explicitly banned from Emirati narration/dialogue (feedback_emirati_dialect.md),
-# with the correct Emirati form noted in a comment. Word-boundary matched, not substring matched.
+# The owner's canonical, actively-maintained Emirati lexicon (content/video/_system/EMIRATI-LEXICON.json,
+# a sibling repo under the shared workspace). Loaded at call time, not vendored, so edits there apply
+# here automatically; falls back to the curated list below if the file isn't reachable (e.g. a checkout
+# of just this repo) rather than hard-failing.
+_WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
+_LEXICON_PATH = _WORKSPACE_ROOT / "content" / "video" / "_system" / "EMIRATI-LEXICON.json"
+
+
+def _load_lexicon() -> dict:
+    try:
+        return json.loads(_LEXICON_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+_LEXICON = _load_lexicon()
+
+# Words/phrases the owner has explicitly banned from Emirati narration/dialogue, with the correct
+# Emirati form noted alongside — this repo's own curated list (feedback_emirati_dialect.md,
+# round-1 controller review) plus whatever content/video/_system/EMIRATI-LEXICON.json adds. Word
+# entries are word-boundary matched; phrase entries are substring matched (order matters — a phrase
+# must be checked before a word it contains, e.g. "زي أي نص" before "زي").
 BANNED_WORDS = {
-    "وش": "شو",
-    "جوّه": "داخل",
-    "جوه": "داخل",
+    "وش": "شو", "ويش": "شو",
+    "جوّه": "داخل", "جوه": "داخل", "جوا": "داخل", "جوّا": "داخل",
     "مين": "منو",
     "بنزين": "بترول",
     "سيارة": "موتر / موترك",
     "جوال": "تلفون",
-    "بوريك": "براويك",
-    "يوريك": "يراويك",
+    "بوريك": "براويك", "يوريك": "يراويك", "وريك": "براويك", "توريك": "تراويك", "ورّتك": "راوتك",
     "امتلت": "فوّلت",
-    "انبلّ": "اتخرّس",
-    "انبل": "اتخرّس",
-    "أشلع": "افصخ",
-    "اشلع": "افصخ",
-    "تبيها": "تباها",
-    "تبيه": "تباه",
-    "قِسها": "قيسها",
-    "قسها": "قيسها",
+    "انبلّ": "اتخرّس", "انبل": "اتخرّس",
+    "أشلع": "افصخ", "اشلع": "افصخ",
+    "تبيها": "تباها", "تبيه": "تباه", "تبي": "تبغي",
+    "قِسها": "قيسها", "قسها": "قيسها",
     "رقمان": "رقمين",
-    "فلمّا": "فيوم",
-    "فلما": "فيوم",
+    "فلمّا": "فيوم", "فلما": "فيوم",
     "يكذب": "يجذب",  # only the specific idiom the owner corrected; leave normal "يكذب/لا يكذب" alone in most contexts
-    "وريك": "براويك",
+    "يجي": "إيي", "يجيك": "ييك", "تجيك": "تييك",
+    "زي": "شرات",
+    "طيب": "انزين",
+    "لحاله": "بروحه", "لحالها": "بروحها",
+    "انسكب": "إنجب",
+    "الجاي": "الياي",
+    "جديد": "يديد", "جديدة": "يديدة",
+    "خوّفتك": "ربشتك", "خوفتك": "ربشتك",
+    "حاطه": "حاطنه",
+    "كذا": "جذيه",
 }
+BANNED_WORDS.update(_LEXICON.get("words", {}))
+
+BANNED_PHRASES = {
+    "لين لسا": "استعمل صياغة مباشرة، مثلاً: وودي وباز بعدهم يشدّون",
+}
+BANNED_PHRASES.update(_LEXICON.get("phrases", {}))
+
 ARABIC_INDIC_DIGITS = re.compile(r"[٠-٩]")
 TANWIN = re.compile(r"[ًٌٍ]")  # ً ٌ ٍ
+# Arabic diacritics (tashkeel, incl. shadda ّ and sukun ْ) — Python's re \w does NOT include
+# combining marks (category Mn), so "جوّا" tokenizes as "جو"+"ا" and would never match the
+# banned-word dict's "جوّا" key unless both sides are stripped of diacritics before comparing.
+_DIACRITICS = re.compile(r"[ؐ-ًؚ-ٰٟۖ-ۜ۟-۪ۨ-ۭ]")
+
+
+def _strip_diacritics(text: str) -> str:
+    return _DIACRITICS.sub("", text)
 
 
 def _tokens(text: str) -> list[str]:
-    return re.findall(r"[^\W\d_]+", text, re.UNICODE)
+    return re.findall(r"[^\W\d_]+", _strip_diacritics(text), re.UNICODE)
+
+
+_BANNED_WORDS_BARE = {_strip_diacritics(k): (k, v) for k, v in BANNED_WORDS.items()}
 
 
 def _dialect_violation(ar_text: str) -> str | None:
@@ -67,21 +107,31 @@ def _dialect_violation(ar_text: str) -> str | None:
         return "Arabic-Indic digits (٠-٩) used — Western digits 0-9 only"
     if TANWIN.search(ar_text):
         return "tanwin (ً/ٌ/ٍ) in spoken text — never tanwin in the spoken register"
+    bare_text = _strip_diacritics(ar_text)
+    for phrase in BANNED_PHRASES:
+        if _strip_diacritics(phrase) in bare_text:
+            return f'banned phrase "{phrase}" used — say "{BANNED_PHRASES[phrase]}" instead'
     toks = set(_tokens(ar_text))
-    for bad in BANNED_WORDS:
-        if bad in toks:
-            return f'banned word "{bad}" used — say "{BANNED_WORDS[bad]}" instead'
+    for bad_bare, (bad, good) in _BANNED_WORDS_BARE.items():
+        if bad_bare in toks:
+            return f'banned word "{bad}" used — say "{good}" instead'
     return None
 
 
-EMIRATI_SYSTEM_NOTE = """أنت تكتب سطراً عربياً بلهجة إماراتية خفيفة لموقع سينما. اتبع هذه القواعد
-بصرامة (من ملف تصحيحات المالك، ومخالفتها كلّفت إعادة تسجيل 256 مقطعاً مرة سابقة):
+def _lexicon_prompt_block() -> str:
+    """Renders the full merged banned-word/phrase table into the system prompt (not just a
+    sample) so the model sees every entry the post-check will enforce, including whatever
+    content/video/_system/EMIRATI-LEXICON.json adds on top of the curated list below."""
+    word_lines = " · ".join(f"{bad}←{good}" for bad, good in sorted(BANNED_WORDS.items()))
+    phrase_lines = " · ".join(f"«{bad}»←«{good}»" for bad, good in sorted(BANNED_PHRASES.items()))
+    return f"ممنوعة (يسار) ← الصحيح (يمين):\n{word_lines}\n\nعبارات ممنوعة كاملة:\n{phrase_lines}"
 
-المعجم الإلزامي (استعمل العمود الأيمن، ولا تكتب العمود الأيسر أبداً):
-شو (لا وش) · مب (أداة نفي) · موتر/موترك (لا سيارة، حين تخاطب) · بترول (لا بنزين) ·
-تلفون (لا جوال) · براويك/يراويك (لا بوريك/يوريك) · فوّلت (لا امتلت) · اتخرّس (لا انبلّ) ·
-افصخ (لا أشلع) · تباها (لا تبيها) · قيسها (لا قِسها) · رقمين (لا رقمان) · فيوم (لا فلمّا) ·
-داخل (لا جوّه) · منو (لا مين) · يديد/الياي (فقط لو ذكرتها، لا تعمّم ج←ي على كل كلمة).
+
+EMIRATI_SYSTEM_NOTE = f"""أنت تكتب سطراً عربياً بلهجة إماراتية خفيفة لموقع سينما. اتبع هذه القواعد
+بصرامة (من ملف تصحيحات المالك ومعجم content/video/_system/EMIRATI-LEXICON.json، ومخالفتها كلّفت
+إعادة تسجيل 256 مقطعاً مرة سابقة):
+
+{_lexicon_prompt_block()}
 
 قاعدة الكاف/الجيم: لاحقة المخاطبة "ـج" للأنثى فقط. إذا خاطبت مشاهداً عاماً أو مذكراً
 فاكتب دائماً بالكاف الصريحة (لك، عليك، تلفونك) ولا تكتب أبداً "لج، عليج، تلفونج" في سياق غير مؤنث.
@@ -90,9 +140,24 @@ EMIRATI_SYSTEM_NOTE = """أنت تكتب سطراً عربياً بلهجة إم
 ممنوع تماماً: الأرقام الهندية العربية (٠١٢٣٤٥٦٧٨٩) — استعمل 0-9 الغربية فقط في أي رقم أو نسبة
 مثل 91% لا ٩١٪.
 
+قواعد الحقائق والمصدر (جولة تصحيح المالك الأولى، 2026-09-26):
+- اذكر فقط أرقاماً وحقائق مررتها لك في البيانات أو الملاحظات — لا اختلاق ولا تخمين.
+- لا تذكر أبداً عدد مرات العرض (showtimes/screenings) كدليل جودة — هذا رقم توزيع لا تقييم.
+- لا تذكر أبداً أسواق التوقّع أو الرهان (Kalshi وأشباهها) كأساس للحكم — ولو ورد رقم منها في
+  الملاحظات تجاهله تماماً. إذا ما فيه تقييم نقدي رسمي بعد، الحكم "unknown"، أو "mixed" فقط لو
+  فيه مراجعات نقدية حقيقية مسمّاة (اسم الناقد أو المطبوعة) فاذكرها بالاسم في الأساس.
+- نسبة الإشغال اليومي (occupancy) مقبولة فقط في سياق شباك التذاكر الهندي، لا كدليل جودة عام.
+- سمِّ لغة الفيلم بدقة عند وجودها في البيانات (مثلاً مليالم، تاميل، هندي، مصري) — **الأفلام
+  الهندية غير الهندية لغةً ليست "بوليوود"**؛ بوليوود = السينما الهندية بالهندية تحديداً فقط.
+- إذا توفّر رقم Rotten Tomatoes للنقاد فاستعمله كالمصدر الأساسي للأساس (basis)، لا Metacritic
+  ولا Letterboxd — استعملهما فقط لو ما فيه رقم RT.
+- إذا ما فيه اسم عربي شائع للفيلم فاكتب العنوان الإنجليزي بحروف لاتينية داخل السطر العربي (لا
+  تُترجم ولا تُعرِّب حرفياً)، وإلا استعمل الاسم العربي المعطى.
+- لا تبدأ أكثر من جملة أو أكثر من سطر بـ"فيلم <العنوان>" — التكرار مملّ، نوّع الصياغة.
+
 الأسلوب: جملتان قصيرتان كحد أقصى، كل جملة تحمل حقيقة واحدة (رقم أو حكم)، بلا حشو ولا مبالغة
 ("وايد" تُستخدم باعتدال لا في كل جملة). إذا لم تتوفر تقييمات كافية (أفلام هندية/فلبينية/عربية
-صغيرة بلا نقاد) فقل ذلك بصراحة بدل اختلاق رقم، مثلاً: «ما لقينا تقييمات كافية لهالفيلم للحين."""
+صغيرة بلا نقاد) فقل ذلك بصراحة بدل اختلاق رقم، مثلاً: «ما لقينا تقييمات كافية لهالفيلم للحين»."""
 
 
 def _client():
@@ -108,6 +173,32 @@ def _client():
     return anthropic.Anthropic(api_key=key)
 
 
+# Lines in reviews.md-style notes that must never reach the model as usable "facts" — prediction
+# markets/betting odds are never a basis (controller ruling, round 1). Stripped defensively here
+# even though the system prompt also tells the model to ignore them, since the notes text is
+# free-form research prose the model shouldn't have to filter itself.
+_NOTES_KEYWORD = re.compile(r"kalshi|betting market|prediction market|odds market", re.I)
+_MD_LINK = re.compile(r"\[[^\]]*\]\([^)]*\)")
+
+
+def _sanitize_notes(text: str) -> str:
+    """Drops any clause mentioning a prediction/betting market, and the markdown citation
+    links next to it. Clause boundaries here are the delimiters this research prose actually
+    uses (". ", "; ", " — ", line breaks) rather than a bare "." split, since RT percentages
+    and dollar figures ("53.8%", "$14M") contain periods that would wrongly end a clause.
+    """
+    out_lines = []
+    for line in text.splitlines():
+        clauses = re.split(r"(?<=[.;])\s+(?=[A-Z؀-ۿ])|\s+—\s+", line)
+        kept = [c for c in clauses if not _NOTES_KEYWORD.search(c)]
+        kept_line = " ".join(kept)
+        # A citation link left dangling next to a dropped clause (e.g. "[Kalshi](url)") —
+        # drop any remaining markdown link whose own text or URL still names the market.
+        kept_line = _MD_LINK.sub(lambda m: "" if _NOTES_KEYWORD.search(m.group(0)) else m.group(0), kept_line)
+        out_lines.append(kept_line.strip())
+    return "\n".join(l for l in out_lines if l).strip()
+
+
 def _film_prompt(fid: str, film: dict, extra_notes: str | None) -> str:
     rt = film.get("rt") or {}
     lines = [
@@ -116,8 +207,11 @@ def _film_prompt(fid: str, film: dict, extra_notes: str | None) -> str:
         f"المخرج: {film.get('director')}",
         f"الأنواع: {', '.join(film.get('genres', {}).get('ar') or film.get('genres', {}).get('en') or [])}",
     ]
+    if film.get("language"):
+        lines.append(f"لغة الفيلم: {film['language']}")
     if rt.get("critics") is not None:
-        lines.append(f"Rotten Tomatoes (النقاد): {rt['critics']}% من {rt.get('critics_count')} نقد")
+        lines.append(f"Rotten Tomatoes (النقاد، جُلِب الآن — الأحدث والمصدر الأساسي للأساس، "
+                     f"تجاهل أي رقم RT مختلف بالملاحظات فهو قديم): {rt['critics']}% من {rt.get('critics_count')} نقد")
     if rt.get("audience") is not None:
         lines.append(f"Rotten Tomatoes (الجمهور): {rt['audience']}%")
     if rt.get("consensus"):
@@ -125,12 +219,15 @@ def _film_prompt(fid: str, film: dict, extra_notes: str | None) -> str:
     if film.get("synopsis_en"):
         lines.append(f"الملخص (إنجليزي): {film['synopsis_en']}")
     if extra_notes:
-        lines.append("ملاحظات بحث إضافية:\n" + extra_notes)
+        clean_notes = _sanitize_notes(extra_notes)
+        if clean_notes:
+            lines.append("ملاحظات بحث إضافية (بلا أسواق توقّع/رهان — تم حذفها إن وجدت):\n" + clean_notes)
     lines.append(
         "\nرد بـJSON فقط بهذا الشكل بلا أي نص آخر: "
         '{"verdict": "yes|mixed|skip|unknown", "ar": "جملة أو جملتان بالإماراتية", '
         '"en": "one or two sentences in English", '
-        '"basis": "SHORT citation under 15 words, e.g. \'RT 91% (37 نقد) · الجمهور 88%\'"}'
+        '"basis": "SHORT citation under 15 words, RT first if available, e.g. \'RT 91% (37 نقد) · الجمهور 88%\'. '
+        'Never a screening count. Never a prediction-market/betting number."}'
     )
     return "\n".join(lines)
 
@@ -187,12 +284,15 @@ def _generate_one(client, fid: str, film: dict, extra_notes: str | None) -> dict
                         f"(last reason: {last_reason})")
 
 
-def write_missing(data: dict, force: bool = False, notes: dict[str, str] | None = None) -> dict:
+def write_missing(data: dict, force: bool = False, notes: dict[str, str] | None = None,
+                   only_fids: set[str] | None = None) -> dict:
     """Writes verdicts/<fid>.json for films that don't have one yet.
 
     force=True also regenerates films whose verdict was written by "claude" (still never a
     hand-edited file — "by" != "claude" is always left alone). `notes` is an optional
     {fid: extra research text} map (e.g. lines pulled from reviews.md) folded into the prompt.
+    `only_fids`, if given, restricts regeneration to that set of fids (e.g. a targeted fix
+    round) — every other film is left exactly as it is, whether or not `force` is set.
     """
     VERDICTS_DIR.mkdir(exist_ok=True)
     notes = notes or {}
@@ -200,6 +300,8 @@ def write_missing(data: dict, force: bool = False, notes: dict[str, str] | None 
     results = {}
 
     for fid, film in data.get("films", {}).items():
+        if only_fids is not None and fid not in only_fids:
+            continue
         path = VERDICTS_DIR / f"{fid}.json"
         if path.exists():
             try:

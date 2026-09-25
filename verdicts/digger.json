@@ -1,9 +1,9 @@
 {
-  "ar": "ديغر لتوم كروز آراء النقاد فيه متضاربة وايد، بعضهم قال أفضل دور له من مغنوليا وبعضهم قال فوضى. ما فيه تقييم رسمي للحين بس احتمالية الرفض عند 53.8%.",
-  "basis": "لا يوجد RT رسمي · Kalshi 53.8%",
+  "ar": "فيلم Digger لسا ما طلع تقييم نقدي رسمي له، فيه حظر نقد للحين. أول ردود فعل متضاربة بس ما نقدر نحكم عليه قبل صدور الأرقام.",
+  "basis": "لا يوجد رقم RT بعد (حظر نقدي)",
   "by": "claude",
-  "en": "Digger has sharply divided early reactions, from praise as Cruise's best since Magnolia to calls of a mess. No official RT score yet, but odds market puts it around 53.8%.",
+  "en": "Digger has no official critic score yet due to a review embargo. Early reactions are divided, so no verdict can be given until scores are released.",
   "fid": "digger",
-  "verdict": "mixed",
+  "verdict": "unknown",
   "written": "2026-09-26"
 }

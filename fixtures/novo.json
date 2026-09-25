@@ -75,19 +75,6 @@
   ],
   "shows": [
     {
-      "cinema": "novo-manar-mall",
-      "film_title": "Sacrifice",
-      "film_lang": null,
-      "film_rating": "PG15",
-      "runtime": 100,
-      "date": "2026-09-25",
-      "time": "23:45",
-      "hall": "Standard",
-      "hall_label": "2D",
-      "prices": null,
-      "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
-    },
-    {
       "cinema": "novo-buhairah-centre",
       "film_title": "Sacrifice",
       "film_lang": null,
@@ -97,7 +84,12 @@
       "time": "15:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
     },
     {
@@ -110,7 +102,12 @@
       "time": "17:40",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
     },
     {
@@ -123,7 +120,12 @@
       "time": "19:50",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
     },
     {
@@ -136,7 +138,20 @@
       "time": "17:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
     },
     {
@@ -149,7 +164,20 @@
       "time": "19:10",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
     },
     {
@@ -162,7 +190,20 @@
       "time": "21:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
     },
     {
@@ -175,7 +216,20 @@
       "time": "23:45",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
     },
     {
@@ -188,7 +242,20 @@
       "time": "18:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
     },
     {
@@ -201,7 +268,20 @@
       "time": "20:40",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
     },
     {
@@ -214,7 +294,20 @@
       "time": "22:50",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
     },
     {
@@ -227,7 +320,20 @@
       "time": "20:05",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
     },
     {
@@ -240,7 +346,308 @@
       "time": "22:20",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "Sacrifice",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "15:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "Sacrifice",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "17:40",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "Sacrifice",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "19:50",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Sacrifice",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Sacrifice",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "19:10",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Sacrifice",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "21:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Sacrifice",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "23:45",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Sacrifice",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "18:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Sacrifice",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "20:40",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Sacrifice",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "22:50",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Sacrifice",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "20:05",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Sacrifice",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "22:20",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11493/SACRIFICE"
     },
     {
@@ -253,7 +660,20 @@
       "time": "13:55",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
     },
     {
@@ -266,7 +686,20 @@
       "time": "19:50",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
     },
     {
@@ -279,7 +712,20 @@
       "time": "23:25",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
     },
     {
@@ -292,7 +738,20 @@
       "time": "14:55",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
     },
     {
@@ -305,7 +764,20 @@
       "time": "15:45",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
     },
     {
@@ -318,7 +790,20 @@
       "time": "21:35",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
     },
     {
@@ -331,7 +816,12 @@
       "time": "16:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
     },
     {
@@ -344,7 +834,204 @@
       "time": "22:25",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Jhingedaaw- 2",
+      "film_lang": null,
+      "film_rating": "TBC",
+      "runtime": 155,
+      "date": "2026-09-27",
+      "time": "13:55",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Jhingedaaw- 2",
+      "film_lang": null,
+      "film_rating": "TBC",
+      "runtime": 155,
+      "date": "2026-09-27",
+      "time": "19:50",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Jhingedaaw- 2",
+      "film_lang": null,
+      "film_rating": "TBC",
+      "runtime": 155,
+      "date": "2026-09-27",
+      "time": "23:25",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Jhingedaaw- 2",
+      "film_lang": null,
+      "film_rating": "TBC",
+      "runtime": 155,
+      "date": "2026-09-27",
+      "time": "14:55",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Jhingedaaw- 2",
+      "film_lang": null,
+      "film_rating": "TBC",
+      "runtime": 155,
+      "date": "2026-09-27",
+      "time": "15:45",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Jhingedaaw- 2",
+      "film_lang": null,
+      "film_rating": "TBC",
+      "runtime": 155,
+      "date": "2026-09-27",
+      "time": "21:35",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "Jhingedaaw- 2",
+      "film_lang": null,
+      "film_rating": "TBC",
+      "runtime": 155,
+      "date": "2026-09-27",
+      "time": "16:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "Jhingedaaw- 2",
+      "film_lang": null,
+      "film_rating": "TBC",
+      "runtime": 155,
+      "date": "2026-09-27",
+      "time": "22:25",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11489/JHINGEDAAW-2"
     },
     {
@@ -357,7 +1044,20 @@
       "time": "11:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11494/TUTT-PAINI-ENGLISH-NE-PUNJABI"
     },
     {
@@ -370,7 +1070,20 @@
       "time": "17:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11494/TUTT-PAINI-ENGLISH-NE-PUNJABI"
     },
     {
@@ -383,7 +1096,20 @@
       "time": "23:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11494/TUTT-PAINI-ENGLISH-NE-PUNJABI"
     },
     {
@@ -396,7 +1122,20 @@
       "time": "13:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11494/TUTT-PAINI-ENGLISH-NE-PUNJABI"
     },
     {
@@ -409,7 +1148,20 @@
       "time": "18:50",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11494/TUTT-PAINI-ENGLISH-NE-PUNJABI"
     },
     {
@@ -422,7 +1174,160 @@
       "time": "19:35",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11494/TUTT-PAINI-ENGLISH-NE-PUNJABI"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Tutt Paini English Ne (Punjabi)",
+      "film_lang": "Punjabi",
+      "film_rating": "TBC",
+      "runtime": 140,
+      "date": "2026-09-27",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11494/TUTT-PAINI-ENGLISH-NE-PUNJABI"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Tutt Paini English Ne (Punjabi)",
+      "film_lang": "Punjabi",
+      "film_rating": "TBC",
+      "runtime": 140,
+      "date": "2026-09-27",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11494/TUTT-PAINI-ENGLISH-NE-PUNJABI"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Tutt Paini English Ne (Punjabi)",
+      "film_lang": "Punjabi",
+      "film_rating": "TBC",
+      "runtime": 140,
+      "date": "2026-09-27",
+      "time": "23:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11494/TUTT-PAINI-ENGLISH-NE-PUNJABI"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Tutt Paini English Ne (Punjabi)",
+      "film_lang": "Punjabi",
+      "film_rating": "TBC",
+      "runtime": 140,
+      "date": "2026-09-27",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11494/TUTT-PAINI-ENGLISH-NE-PUNJABI"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Tutt Paini English Ne (Punjabi)",
+      "film_lang": "Punjabi",
+      "film_rating": "TBC",
+      "runtime": 140,
+      "date": "2026-09-27",
+      "time": "18:50",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11494/TUTT-PAINI-ENGLISH-NE-PUNJABI"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "Tutt Paini English Ne (Punjabi)",
+      "film_lang": "Punjabi",
+      "film_rating": "TBC",
+      "runtime": 140,
+      "date": "2026-09-27",
+      "time": "19:35",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11494/TUTT-PAINI-ENGLISH-NE-PUNJABI"
     },
     {
@@ -435,7 +1340,20 @@
       "time": "14:45",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11490/SHISH-DOU-ARABIC"
     },
     {
@@ -448,7 +1366,20 @@
       "time": "19:15",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11490/SHISH-DOU-ARABIC"
     },
     {
@@ -461,7 +1392,20 @@
       "time": "21:15",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11490/SHISH-DOU-ARABIC"
     },
     {
@@ -474,7 +1418,124 @@
       "time": "23:15",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11490/SHISH-DOU-ARABIC"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Shish Dou (Arabic)",
+      "film_lang": "Arabic",
+      "film_rating": "PG15",
+      "runtime": 85,
+      "date": "2026-09-27",
+      "time": "14:45",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11490/SHISH-DOU-ARABIC"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Shish Dou (Arabic)",
+      "film_lang": "Arabic",
+      "film_rating": "PG15",
+      "runtime": 85,
+      "date": "2026-09-27",
+      "time": "19:15",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11490/SHISH-DOU-ARABIC"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Shish Dou (Arabic)",
+      "film_lang": "Arabic",
+      "film_rating": "PG15",
+      "runtime": 85,
+      "date": "2026-09-27",
+      "time": "21:15",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11490/SHISH-DOU-ARABIC"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Shish Dou (Arabic)",
+      "film_lang": "Arabic",
+      "film_rating": "PG15",
+      "runtime": 85,
+      "date": "2026-09-27",
+      "time": "23:15",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11490/SHISH-DOU-ARABIC"
     },
     {
@@ -487,7 +1548,20 @@
       "time": "15:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11382/HEART-OF-THE-BEAST"
     },
     {
@@ -500,7 +1574,20 @@
       "time": "16:40",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11382/HEART-OF-THE-BEAST"
     },
     {
@@ -513,7 +1600,20 @@
       "time": "18:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11382/HEART-OF-THE-BEAST"
     },
     {
@@ -526,7 +1626,20 @@
       "time": "21:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11382/HEART-OF-THE-BEAST"
     },
     {
@@ -539,21 +1652,151 @@
       "time": "23:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11382/HEART-OF-THE-BEAST"
     },
     {
-      "cinema": "novo-manar-mall",
-      "film_title": "Pressure",
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Heart Of The Beast",
       "film_lang": null,
-      "film_rating": "PG13",
-      "runtime": 100,
-      "date": "2026-09-25",
-      "time": "23:40",
+      "film_rating": "TBC",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "15:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
-      "book": "https://uae.novocinemas.com/movies/11484/PRESSURE"
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11382/HEART-OF-THE-BEAST"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Heart Of The Beast",
+      "film_lang": null,
+      "film_rating": "TBC",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "16:40",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11382/HEART-OF-THE-BEAST"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Heart Of The Beast",
+      "film_lang": null,
+      "film_rating": "TBC",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "18:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11382/HEART-OF-THE-BEAST"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Heart Of The Beast",
+      "film_lang": null,
+      "film_rating": "TBC",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "21:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11382/HEART-OF-THE-BEAST"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Heart Of The Beast",
+      "film_lang": null,
+      "film_rating": "TBC",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "23:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11382/HEART-OF-THE-BEAST"
     },
     {
       "cinema": "novo-manar-mall",
@@ -565,7 +1808,20 @@
       "time": "17:05",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11484/PRESSURE"
     },
     {
@@ -578,7 +1834,20 @@
       "time": "19:15",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11484/PRESSURE"
     },
     {
@@ -591,7 +1860,20 @@
       "time": "21:25",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11484/PRESSURE"
     },
     {
@@ -604,7 +1886,20 @@
       "time": "23:40",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11484/PRESSURE"
     },
     {
@@ -617,7 +1912,20 @@
       "time": "20:25",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11484/PRESSURE"
     },
     {
@@ -630,7 +1938,160 @@
       "time": "20:50",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11484/PRESSURE"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Pressure",
+      "film_lang": null,
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "17:05",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11484/PRESSURE"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Pressure",
+      "film_lang": null,
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "19:15",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11484/PRESSURE"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Pressure",
+      "film_lang": null,
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "21:25",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11484/PRESSURE"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Pressure",
+      "film_lang": null,
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "23:40",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11484/PRESSURE"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Pressure",
+      "film_lang": null,
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "20:25",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11484/PRESSURE"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "Pressure",
+      "film_lang": null,
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "20:50",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11484/PRESSURE"
     },
     {
@@ -643,7 +2104,20 @@
       "time": "10:40",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11482/MITTI-DE-PUTT"
     },
     {
@@ -656,7 +2130,20 @@
       "time": "13:55",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11482/MITTI-DE-PUTT"
     },
     {
@@ -669,7 +2156,20 @@
       "time": "20:20",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11482/MITTI-DE-PUTT"
     },
     {
@@ -682,7 +2182,124 @@
       "time": "18:25",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11482/MITTI-DE-PUTT"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Mitti De Putt",
+      "film_lang": null,
+      "film_rating": "PG13",
+      "runtime": 155,
+      "date": "2026-09-27",
+      "time": "10:40",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11482/MITTI-DE-PUTT"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Mitti De Putt",
+      "film_lang": null,
+      "film_rating": "PG13",
+      "runtime": 155,
+      "date": "2026-09-27",
+      "time": "13:55",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11482/MITTI-DE-PUTT"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Mitti De Putt",
+      "film_lang": null,
+      "film_rating": "PG13",
+      "runtime": 155,
+      "date": "2026-09-27",
+      "time": "20:20",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11482/MITTI-DE-PUTT"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Mitti De Putt",
+      "film_lang": null,
+      "film_rating": "PG13",
+      "runtime": 155,
+      "date": "2026-09-27",
+      "time": "18:25",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11482/MITTI-DE-PUTT"
     },
     {
@@ -695,7 +2312,20 @@
       "time": "17:40",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11483/RESIDENT-EVIL"
     },
     {
@@ -708,7 +2338,20 @@
       "time": "19:45",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11483/RESIDENT-EVIL"
     },
     {
@@ -721,7 +2364,20 @@
       "time": "21:45",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11483/RESIDENT-EVIL"
     },
     {
@@ -734,7 +2390,124 @@
       "time": "23:45",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11483/RESIDENT-EVIL"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Resident Evil",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "17:40",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11483/RESIDENT-EVIL"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Resident Evil",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "19:45",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11483/RESIDENT-EVIL"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Resident Evil",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "21:45",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11483/RESIDENT-EVIL"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Resident Evil",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "23:45",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11483/RESIDENT-EVIL"
     },
     {
@@ -747,7 +2520,20 @@
       "time": "15:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11472/I-M-GAME-MALAYALAM"
     },
     {
@@ -760,7 +2546,20 @@
       "time": "21:35",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11472/I-M-GAME-MALAYALAM"
     },
     {
@@ -773,7 +2572,20 @@
       "time": "16:55",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11472/I-M-GAME-MALAYALAM"
     },
     {
@@ -786,7 +2598,20 @@
       "time": "23:25",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11472/I-M-GAME-MALAYALAM"
     },
     {
@@ -799,7 +2624,150 @@
       "time": "20:10",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11472/I-M-GAME-MALAYALAM"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "I’M Game (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 170,
+      "date": "2026-09-27",
+      "time": "15:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11472/I-M-GAME-MALAYALAM"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "I’M Game (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 170,
+      "date": "2026-09-27",
+      "time": "21:35",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11472/I-M-GAME-MALAYALAM"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "I’M Game (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 170,
+      "date": "2026-09-27",
+      "time": "16:55",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11472/I-M-GAME-MALAYALAM"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "I’M Game (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 170,
+      "date": "2026-09-27",
+      "time": "23:25",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11472/I-M-GAME-MALAYALAM"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "I’M Game (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 170,
+      "date": "2026-09-27",
+      "time": "20:10",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11472/I-M-GAME-MALAYALAM"
     },
     {
@@ -812,7 +2780,20 @@
       "time": "20:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11478/PRACTICAL-MAGIC-2"
     },
     {
@@ -825,7 +2806,20 @@
       "time": "22:35",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11478/PRACTICAL-MAGIC-2"
     },
     {
@@ -838,7 +2832,20 @@
       "time": "20:20",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11478/PRACTICAL-MAGIC-2"
     },
     {
@@ -851,7 +2858,20 @@
       "time": "23:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11478/PRACTICAL-MAGIC-2"
     },
     {
@@ -864,7 +2884,134 @@
       "time": "23:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11478/PRACTICAL-MAGIC-2"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Practical Magic 2",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "20:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11478/PRACTICAL-MAGIC-2"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Practical Magic 2",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "22:35",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11478/PRACTICAL-MAGIC-2"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Practical Magic 2",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "20:20",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11478/PRACTICAL-MAGIC-2"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Practical Magic 2",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "23:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11478/PRACTICAL-MAGIC-2"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "Practical Magic 2",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "23:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11478/PRACTICAL-MAGIC-2"
     },
     {
@@ -877,7 +3024,20 @@
       "time": "12:40",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11480/SPIDER-ISLAND"
     },
     {
@@ -890,7 +3050,12 @@
       "time": "16:40",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11480/SPIDER-ISLAND"
     },
     {
@@ -903,7 +3068,12 @@
       "time": "18:45",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11480/SPIDER-ISLAND"
     },
     {
@@ -916,7 +3086,20 @@
       "time": "21:15",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11480/SPIDER-ISLAND"
     },
     {
@@ -929,7 +3112,134 @@
       "time": "22:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11480/SPIDER-ISLAND"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Spider Island",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 95,
+      "date": "2026-09-27",
+      "time": "12:40",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11480/SPIDER-ISLAND"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "Spider Island",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 95,
+      "date": "2026-09-27",
+      "time": "16:40",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11480/SPIDER-ISLAND"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "Spider Island",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 95,
+      "date": "2026-09-27",
+      "time": "18:45",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11480/SPIDER-ISLAND"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Spider Island",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 95,
+      "date": "2026-09-27",
+      "time": "21:15",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11480/SPIDER-ISLAND"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Spider Island",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 95,
+      "date": "2026-09-27",
+      "time": "22:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11480/SPIDER-ISLAND"
     },
     {
@@ -942,7 +3252,20 @@
       "time": "14:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
     },
     {
@@ -955,7 +3278,20 @@
       "time": "19:40",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
     },
     {
@@ -968,7 +3304,20 @@
       "time": "14:25",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
     },
     {
@@ -981,7 +3330,20 @@
       "time": "19:50",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
     },
     {
@@ -994,7 +3356,20 @@
       "time": "22:15",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
     },
     {
@@ -1007,7 +3382,20 @@
       "time": "15:40",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
     },
     {
@@ -1020,7 +3408,20 @@
       "time": "21:15",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
     },
     {
@@ -1033,7 +3434,212 @@
       "time": "22:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "The Odyssey",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 175,
+      "date": "2026-09-27",
+      "time": "14:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "The Odyssey",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 175,
+      "date": "2026-09-27",
+      "time": "19:40",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "The Odyssey",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 175,
+      "date": "2026-09-27",
+      "time": "14:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "The Odyssey",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 175,
+      "date": "2026-09-27",
+      "time": "19:50",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "The Odyssey",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 175,
+      "date": "2026-09-27",
+      "time": "22:15",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "The Odyssey",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 175,
+      "date": "2026-09-27",
+      "time": "15:40",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "The Odyssey",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 175,
+      "date": "2026-09-27",
+      "time": "21:15",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "The Odyssey",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 175,
+      "date": "2026-09-27",
+      "time": "22:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11147/THE-ODYSSEY"
     },
     {
@@ -1046,7 +3652,20 @@
       "time": "11:10",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
     },
     {
@@ -1059,7 +3678,20 @@
       "time": "13:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
     },
     {
@@ -1072,7 +3704,20 @@
       "time": "19:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
     },
     {
@@ -1085,7 +3730,20 @@
       "time": "12:15",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
     },
     {
@@ -1098,7 +3756,20 @@
       "time": "14:45",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
     },
     {
@@ -1111,7 +3782,20 @@
       "time": "17:55",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
     },
     {
@@ -1124,7 +3808,20 @@
       "time": "20:05",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
     },
     {
@@ -1137,7 +3834,20 @@
       "time": "23:10",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
     },
     {
@@ -1150,7 +3860,20 @@
       "time": "17:25",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
     },
     {
@@ -1163,7 +3886,20 @@
       "time": "23:05",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
     },
     {
@@ -1176,7 +3912,12 @@
       "time": "20:55",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
     },
     {
@@ -1189,7 +3930,308 @@
       "time": "23:05",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "The End of Oak Street",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "11:10",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "The End of Oak Street",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "13:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "The End of Oak Street",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "19:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "The End of Oak Street",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "12:15",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "The End of Oak Street",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "14:45",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "The End of Oak Street",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "17:55",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "The End of Oak Street",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "20:05",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "The End of Oak Street",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "23:10",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "The End of Oak Street",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "17:25",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "The End of Oak Street",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "23:05",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "The End of Oak Street",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "20:55",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "The End of Oak Street",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "23:05",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11444/THE-END-OF-OAK-STREET"
     },
     {
@@ -1202,7 +4244,20 @@
       "time": "12:10",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
     },
     {
@@ -1215,7 +4270,20 @@
       "time": "18:05",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
     },
     {
@@ -1228,7 +4296,20 @@
       "time": "12:10",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
     },
     {
@@ -1241,7 +4322,20 @@
       "time": "14:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
     },
     {
@@ -1254,7 +4348,20 @@
       "time": "16:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
     },
     {
@@ -1267,7 +4374,20 @@
       "time": "14:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
     },
     {
@@ -1280,7 +4400,20 @@
       "time": "16:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
     },
     {
@@ -1293,7 +4426,20 @@
       "time": "18:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
     },
     {
@@ -1306,7 +4452,254 @@
       "time": "18:25",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Cats in The Museum 2:Treasures of Egypt",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "12:10",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Cats in The Museum 2:Treasures of Egypt",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "14:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Cats in The Museum 2:Treasures of Egypt",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "16:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Cats in The Museum 2:Treasures of Egypt",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "12:10",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Cats in The Museum 2:Treasures of Egypt",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "18:05",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Cats in The Museum 2:Treasures of Egypt",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "14:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Cats in The Museum 2:Treasures of Egypt",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "16:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Cats in The Museum 2:Treasures of Egypt",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "18:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Cats in The Museum 2:Treasures of Egypt",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "18:25",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11479/CATS-IN-THE-MUSEUM-2-TREASURES-OF-EGYPT"
     },
     {
@@ -1319,7 +4712,20 @@
       "time": "14:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11473/FALL-2-DEADPOINT"
     },
     {
@@ -1332,7 +4738,20 @@
       "time": "16:15",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11473/FALL-2-DEADPOINT"
     },
     {
@@ -1345,7 +4764,20 @@
       "time": "20:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11473/FALL-2-DEADPOINT"
     },
     {
@@ -1358,7 +4790,124 @@
       "time": "22:45",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11473/FALL-2-DEADPOINT"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Fall 2: Deadpoint",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "14:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11473/FALL-2-DEADPOINT"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Fall 2: Deadpoint",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "16:15",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11473/FALL-2-DEADPOINT"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Fall 2: Deadpoint",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "20:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11473/FALL-2-DEADPOINT"
+    },
+    {
+      "cinema": "novo-bas-mall-baniyas",
+      "film_title": "Fall 2: Deadpoint",
+      "film_lang": null,
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "22:45",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 42.5
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11473/FALL-2-DEADPOINT"
     },
     {
@@ -1371,7 +4920,46 @@
       "time": "18:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11487/ENNA-VILAI-TAMIL"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Enna Vilai (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG13",
+      "runtime": 140,
+      "date": "2026-09-27",
+      "time": "18:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11487/ENNA-VILAI-TAMIL"
     },
     {
@@ -1384,7 +4972,20 @@
       "time": "12:25",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11145/TOY-STORY-5"
     },
     {
@@ -1397,7 +4998,20 @@
       "time": "14:50",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11145/TOY-STORY-5"
     },
     {
@@ -1410,7 +5024,20 @@
       "time": "13:50",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11145/TOY-STORY-5"
     },
     {
@@ -1423,72 +5050,352 @@
       "time": "16:05",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11145/TOY-STORY-5"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Toy Story 5",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 105,
+      "date": "2026-09-27",
+      "time": "12:25",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11145/TOY-STORY-5"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Toy Story 5",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 105,
+      "date": "2026-09-27",
+      "time": "14:50",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11145/TOY-STORY-5"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Toy Story 5",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 105,
+      "date": "2026-09-27",
+      "time": "13:50",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11145/TOY-STORY-5"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Toy Story 5",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 105,
+      "date": "2026-09-27",
+      "time": "16:05",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11145/TOY-STORY-5"
     },
     {
       "cinema": "novo-manar-mall",
       "film_title": "Moana (live-action)",
-      "film_lang": "live-action",
+      "film_lang": null,
       "film_rating": "PG",
       "runtime": 120,
       "date": "2026-09-26",
       "time": "12:15",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11012/MOANA-LIVE-ACTION"
     },
     {
       "cinema": "novo-manar-mall",
       "film_title": "Moana (live-action)",
-      "film_lang": "live-action",
+      "film_lang": null,
       "film_rating": "PG",
       "runtime": 120,
       "date": "2026-09-26",
       "time": "14:50",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11012/MOANA-LIVE-ACTION"
     },
     {
       "cinema": "novo-manar-mall",
       "film_title": "Moana (live-action)",
-      "film_lang": "live-action",
+      "film_lang": null,
       "film_rating": "PG",
       "runtime": 120,
       "date": "2026-09-26",
       "time": "17:20",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11012/MOANA-LIVE-ACTION"
     },
     {
       "cinema": "novo-buhairah-centre",
       "film_title": "Moana (live-action)",
-      "film_lang": "live-action",
+      "film_lang": null,
       "film_rating": "PG",
       "runtime": 120,
       "date": "2026-09-26",
       "time": "15:55",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11012/MOANA-LIVE-ACTION"
     },
     {
       "cinema": "novo-buhairah-centre",
       "film_title": "Moana (live-action)",
-      "film_lang": "live-action",
+      "film_lang": null,
       "film_rating": "PG",
       "runtime": 120,
       "date": "2026-09-26",
       "time": "18:25",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11012/MOANA-LIVE-ACTION"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Moana (live-action)",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "12:15",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11012/MOANA-LIVE-ACTION"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Moana (live-action)",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "14:50",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11012/MOANA-LIVE-ACTION"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Moana (live-action)",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "17:20",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11012/MOANA-LIVE-ACTION"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "Moana (live-action)",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "15:55",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11012/MOANA-LIVE-ACTION"
+    },
+    {
+      "cinema": "novo-buhairah-centre",
+      "film_title": "Moana (live-action)",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "18:25",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 36.75
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11012/MOANA-LIVE-ACTION"
     },
     {
@@ -1501,7 +5408,46 @@
       "time": "23:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11476/IT-ENDS"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "It Ends",
+      "film_lang": null,
+      "film_rating": "15+",
+      "runtime": 90,
+      "date": "2026-09-27",
+      "time": "23:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11476/IT-ENDS"
     },
     {
@@ -1514,7 +5460,20 @@
       "time": "11:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
     },
     {
@@ -1527,7 +5486,20 @@
       "time": "13:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
     },
     {
@@ -1540,7 +5512,20 @@
       "time": "16:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
     },
     {
@@ -1553,7 +5538,20 @@
       "time": "12:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
     },
     {
@@ -1566,7 +5564,20 @@
       "time": "15:00",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
     },
     {
@@ -1579,7 +5590,20 @@
       "time": "17:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
     },
     {
@@ -1592,7 +5616,20 @@
       "time": "12:30",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
     },
     {
@@ -1605,7 +5642,20 @@
       "time": "14:15",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
     },
     {
@@ -1618,7 +5668,20 @@
       "time": "16:15",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
     },
     {
@@ -1631,7 +5694,280 @@
       "time": "18:20",
       "hall": "Standard",
       "hall_label": "2D",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Minions & Monsters",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Minions & Monsters",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "13:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
+    },
+    {
+      "cinema": "novo-mega-mall",
+      "film_title": "Minions & Monsters",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "16:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Minions & Monsters",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "12:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Minions & Monsters",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "15:00",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
+    },
+    {
+      "cinema": "novo-sahara-centre",
+      "film_title": "Minions & Monsters",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "17:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 60.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Minions & Monsters",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "12:30",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Minions & Monsters",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "14:15",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Minions & Monsters",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "16:15",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
+      "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
+    },
+    {
+      "cinema": "novo-manar-mall",
+      "film_title": "Minions & Monsters",
+      "film_lang": null,
+      "film_rating": "PG",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "18:20",
+      "hall": "Standard",
+      "hall_label": "2D",
+      "prices": [
+        {
+          "seat": "COOL",
+          "aed": 40.0
+        },
+        {
+          "seat": "COOL PRIME",
+          "aed": 50.0
+        },
+        {
+          "seat": "EDGE",
+          "aed": 55.0
+        }
+      ],
       "book": "https://uae.novocinemas.com/movies/11376/MINIONS-MONSTERS"
     }
   ]

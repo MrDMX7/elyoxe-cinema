@@ -180,3 +180,40 @@ def test_write_missing_skips_existing_claude_verdict_without_force(tmp_path, mon
     data = {"films": {"some-film": {"title": "Some Film"}}}
     results = write_missing(data)
     assert results == {}
+
+
+# ---------- verdicts.py: round-1 controller fixes ----------
+
+def test_dialect_check_rejects_lexicon_words():
+    for word in ("وش", "يجي", "جوّا", "يوريك", "زي", "طيب", "كذا", "مين", "سيارة"):
+        assert _dialect_violation(f"هذا فيه كلمة {word} داخل الجملة.") is not None, word
+
+
+def test_dialect_check_rejects_screening_count_phrase_is_not_a_hard_rule_but_lein_lisa_is():
+    assert _dialect_violation("وودي وباز لين لسا يشدّون.") is not None
+
+
+def test_write_missing_only_fids_limits_regeneration(tmp_path, monkeypatch):
+    monkeypatch.setattr(verdicts_mod, "VERDICTS_DIR", tmp_path)
+    for fid in ("film-a", "film-b"):
+        (tmp_path / f"{fid}.json").write_text(json.dumps({
+            "fid": fid, "verdict": "yes", "ar": "زين.", "en": "Good.",
+            "basis": "RT 90%", "written": "2026-09-24", "by": "claude",
+        }, ensure_ascii=False), encoding="utf-8")
+
+    calls = []
+
+    def fake_generate_one(client, fid, film, notes):
+        calls.append(fid)
+        return {"fid": fid, "verdict": "yes", "ar": "زين جداً.", "en": "Great.",
+                "basis": "RT 95%", "written": "2026-09-26", "by": "claude"}
+
+    monkeypatch.setattr(verdicts_mod, "_generate_one", fake_generate_one)
+    monkeypatch.setattr(verdicts_mod, "_client", lambda: object())
+
+    data = {"films": {"film-a": {"title": "A"}, "film-b": {"title": "B"}}}
+    results = write_missing(data, force=True, only_fids={"film-a"})
+
+    assert calls == ["film-a"]
+    assert set(results) == {"film-a"}
+    assert json.loads((tmp_path / "film-b.json").read_text(encoding="utf-8"))["basis"] == "RT 90%"

@@ -72,3 +72,53 @@ def test_reel_fixture_shape(data):
             assert isinstance(s["runtime"], int) and s["runtime"] > 0
         if s["film_lang"] is not None:
             assert isinstance(s["film_lang"], str) and s["film_lang"]
+
+
+# --- Task 1c: live prices + failure paths -------------------------------------------------
+
+class _Resp:
+    def __init__(self, status=200, payload=None, text="", url=""):
+        self.status_code, self._payload, self.text, self.url = status, payload, text, url
+
+    def json(self):
+        if self._payload is None:
+            raise ValueError("no json")
+        return self._payload
+
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise RuntimeError(self.status_code)
+
+
+def test_reel_fixture_has_live_prices(data):
+    priced = [s for s in data["shows"] if s["prices"]]
+    assert priced, "no priced show: the guest getSeatLayout sample failed for every hall"
+
+
+def test_reel_no_vox_brands(data):
+    assert not {s["hall"] for s in data["shows"]} & {"MAX", "GOLD"}
+
+
+def test_reel_hall_mapping():
+    from readers.reel import _hall_of
+
+    assert _hall_of({"SessionAttributesNames": ["INFINITY V", "DOLBY"], "ScreenName": "Screen 2 Dolby"})[0] == "OTHER"
+    assert _hall_of({"SessionAttributesNames": ["2D", "PREMIUM"], "ScreenName": "Premium 15"})[0] == "VIP"
+    assert _hall_of({"SessionAttributesNames": ["2D", "PLATINUM"], "ScreenName": "Platinum 1"})[0] == "SUITES"
+
+
+def test_reel_raises_on_zero_shows(monkeypatch):
+    from readers import reel
+
+    class FakePolite:
+        def __init__(self, *a, **k):
+            pass
+
+        def get(self, url, **k):
+            if url.endswith("Cinemas.json"):
+                return _Resp(200, {"value": [{"ID": "0001", "Name": "Dubai Mall", "CinemaNationalId": "UAE"}]})
+            return _Resp(200, {"value": []})
+
+    monkeypatch.setattr(reel, "Polite", FakePolite)
+    with pytest.raises(RuntimeError):
+        reel.fetch(days=2, prices=False)

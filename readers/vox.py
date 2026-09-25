@@ -13,15 +13,23 @@ Akamai Bot Manager blocks plain `requests`/`curl` from this machine at the TLS-f
 that instead of readers.common.Polite (which wraps plain `requests` and would hang here). CITIES,
 HALLS, slug() and city_of() are still reused from readers.common.
 
-Prices: VOX never shows a per-seat-class price until a seat is clicked in the seat map, and clicking
-a seat holds it. The task's binding rule forbids reading a price that way, so this reader always sets
-"prices": None for VOX and records the finding in docs/probe/vox.md instead of guessing.
+Prices (live, no seat hold): the seat-map page the guest flow opens *before* any seat is clicked
+already carries every seat class with its price in the legend markup:
+  <li class="seat standard ..." data-area="0000000002" data-label="Regular" data-price="50.00 AED per ticket">
+The reader walks the site's own guest path once per cinema x hall per run --
+  GET /booking/<session>  (opens an anonymous guest order, as "Continue as Guest" does)
+  GET /booking/<order>/seats/fetch -> GET /booking/<order>/seats   (read the legend)
+  GET /booking/<order>/abandon?success_url=/showtimes               (the page's own "back" link)
+-- and never POSTs the page's `/allocate` form, so no seat is ever selected or held. Any failure
+leaves that hall's prices None; a 403/429 there stops price sampling for the rest of the run.
 """
 from __future__ import annotations
 
 import re
+import sys
 import time
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from bs4 import BeautifulSoup
 from curl_cffi import requests as cr
@@ -31,6 +39,8 @@ from readers.common import CITIES, HALLS, city_of, slug as _slug
 BASE = "https://uae.voxcinemas.com"
 UA_IMPERSONATE = "chrome"
 GAP = 1.1  # seconds between requests, stays under ~1 req/s
+DUBAI = ZoneInfo("Asia/Dubai")
+_PRICE_RE = re.compile(r"([\d.]+)\s*AED")
 
 # Cinemas whose name/address don't carry a recognisable city word for common.city_of()
 # (truncated addresses on VOX's own site, or malls named without their city).
@@ -71,14 +81,14 @@ class _Client:
         self.gap = gap
         self._last = 0.0
 
-    def get(self, url: str):
+    def get(self, url: str, **kw):
         wait = self.gap - (time.monotonic() - self._last)
         if wait > 0:
             time.sleep(wait)
         for attempt in range(3):
             self._last = time.monotonic()
             try:
-                r = self.s.get(url, impersonate=UA_IMPERSONATE, timeout=30)
+                r = self.s.get(url, impersonate=UA_IMPERSONATE, timeout=30, **kw)
                 if r.status_code in (429, 500, 502, 503, 504) and attempt < 2:
                     time.sleep(3 * (attempt + 1))
                     continue
@@ -148,7 +158,12 @@ def _parse_showtimes(html: str, cinema_name: str, date_str: str) -> list[dict]:
         for dates_div in art.select("div.dates"):
             for hall_li in dates_div.select("ol.showtimes > li"):
                 strong = hall_li.select_one("strong")
-                raw_hall = strong.get_text(strip=True) if strong else "Standard"
+                # only the strong's own text: its info-icon <a> / tooltip <div> children are UI copy
+                raw_hall = ""
+                if strong:
+                    raw_hall = " ".join(t.strip() for t in strong.find_all(string=True, recursive=False)
+                                        if t.strip())
+                raw_hall = raw_hall or "Standard"
                 hall, hall_label = _hall_of(raw_hall)
                 for a in hall_li.select("ol > li > a.showtime"):
                     time_24 = _to_24h(a.get_text())
@@ -172,12 +187,62 @@ def _parse_showtimes(html: str, cinema_name: str, date_str: str) -> list[dict]:
     return shows
 
 
-def fetch(days: int = 2) -> dict:
+def _legend_prices(html: str) -> list[dict] | None:
+    """Seat classes + prices from the seat-map legend (the li elements that carry data-price)."""
+    soup = BeautifulSoup(html, "lxml")
+    out: dict[str, float] = {}
+    for li in soup.select("li.seat[data-price]"):
+        label = (li.get("data-label") or "").strip()
+        m = _PRICE_RE.search(li.get("data-price") or "")
+        if label and m and float(m.group(1)) > 0 and label not in out:
+            out[label] = float(m.group(1))
+    return [{"seat": k, "aed": v} for k, v in out.items()] or None
+
+
+class _Blocked(Exception):
+    pass
+
+
+def _sample_prices(client: _Client, book_url: str) -> list[dict] | None:
+    """One read of the pre-selection seat map for this session, then abandon the empty order."""
+    r = client.get(book_url)
+    if r is None or r.status_code in (403, 429):
+        raise _Blocked(f"{book_url}: {getattr(r, 'status_code', None)}")
+    m = re.search(r"/booking/([^/?#]+_[^/?#]+)/", str(r.url))
+    if r.status_code != 200 or not m:
+        return None
+    order = m.group(1)
+    try:
+        prices = None
+        f = client.get(f"{BASE}/booking/{order}/seats/fetch")
+        if f is not None and f.status_code in (403, 429):
+            raise _Blocked(f"seats/fetch: {f.status_code}")
+        for attempt in range(3):
+            p = client.get(f"{BASE}/booking/{order}/seats")
+            if p is None:
+                break
+            if p.status_code in (403, 429):
+                raise _Blocked(f"seats: {p.status_code}")
+            if p.status_code == 200 and str(p.url).rstrip("/").endswith("/seats"):
+                prices = _legend_prices(p.text)
+                break
+            time.sleep(2 * (attempt + 1))  # still on /seats/processing
+        return prices
+    finally:
+        try:  # the seat page's own "back to showtimes" link -- releases the empty guest order
+            client.get(f"{BASE}/booking/{order}/abandon?success_url=%2Fshowtimes", allow_redirects=False)
+        except Exception:
+            pass
+
+
+def fetch(days: int = 2, prices: bool = True) -> dict:
     client = _Client()
     cinemas_raw = _fetch_cinema_list(client)
 
     cinemas, shows = [], []
-    today = date.today()
+    now = datetime.now(DUBAI)
+    today = now.date()
+    calls = failed = 0
 
     for c in cinemas_raw:
         cslug = c["slug"]
@@ -206,13 +271,41 @@ def fetch(days: int = 2) -> dict:
             d = today + timedelta(days=offset)
             d_str = d.strftime("%Y%m%d")
             date_str = d.strftime("%Y-%m-%d")
+            calls += 1
             r = client.get(f"{BASE}/showtimes/{cslug}?d={d_str}")
-            if r.status_code != 200:
+            if r is None or r.status_code != 200:
+                failed += 1
                 continue
             for show in _parse_showtimes(r.text, name, date_str):
                 show["cinema"] = cid
                 shows.append(show)
 
+    if calls and failed * 2 > calls:
+        raise RuntimeError(f"vox: {failed}/{calls} showtime pages failed -- Akamai block or site change")
+    if not shows:
+        raise RuntimeError("vox: zero shows parsed -- showtime markup changed")
+
+    # prices: one legend read per cinema x hall_label, on a session at least an hour away
+    price_of: dict[tuple[str, str], list[dict] | None] = {}
+    if prices:
+        tries: dict[tuple[str, str], int] = {}
+        for sh in sorted(shows, key=lambda x: (x["date"], x["time"])):
+            key = (sh["cinema"], sh["hall_label"])
+            if price_of.get(key) or tries.get(key, 0) >= 2:
+                continue
+            start = datetime.strptime(f"{sh['date']} {sh['time']}", "%Y-%m-%d %H:%M").replace(tzinfo=DUBAI)
+            if start < now + timedelta(hours=1):
+                continue
+            tries[key] = tries.get(key, 0) + 1
+            try:
+                price_of[key] = _sample_prices(client, sh["book"])
+            except _Blocked as e:
+                print(f"[readers.vox] price sampling stopped: {e}", file=sys.stderr)
+                break
+            except Exception:
+                price_of[key] = None
+    for sh in shows:
+        sh["prices"] = price_of.get((sh["cinema"], sh["hall_label"]))
     return {"cinemas": cinemas, "shows": shows}
 
 

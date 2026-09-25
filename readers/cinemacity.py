@@ -5,19 +5,27 @@ Site is a Gatsby front-end backed by a JSON API at
 (the "boxofficeapi" name is a Gatsby data-source label, not a third-party service —
  it is Cinema City's own public API and needs no auth, cookies or referrer).
 
+Prices (live, no seat hold): the booking widget at booking.cinemacity.ae (Webedia/Boxoffice
+"ticketing" app) exposes the same two calls its seat-preview screen makes before any seat is touched:
+  POST /api/launch/seatpreview/<boxofficeSessionId>  -> areas + a dataToken (no seat selected)
+  POST /api/Tickets/GetTickets {"dataToken": ...}    -> ticket types with price (fils, VAT incl.)
+One sample per cinema x hall_label per run; any failure there leaves `prices` None for that hall.
+
 See docs/probe/cinemacity.md for the full probe notes (endpoints, headers, how the
-theater code list and hall/tag vocabulary were discovered, and why prices are None).
+theater code list and hall/tag vocabulary were discovered, and the price calls).
 """
 from __future__ import annotations
 
 import re
 from datetime import datetime, timedelta, timezone
 
-from .common import HALLS, Polite, city_of, slug
+from readers.common import CITIES, HALLS, Polite, city_of, slug
 
 CHAIN = "cinemacity"
 BASE = "https://www.cinemacity.ae/api/gatsby-source-boxofficeapi"
+BOOKING = "https://booking.cinemacity.ae"
 DUBAI_TZ = timezone(timedelta(hours=4))  # Asia/Dubai, UTC+4 year-round, no DST
+_LAUNCH_RE = re.compile(r"/launch/ticketing/([0-9a-f-]{36})")
 
 # (Vista theater code, display name, mall, address) — from https://www.cinemacity.ae/our-locations/
 # and each location's own page (2026-09-25). Addresses are stable venue data (not showtime data),
@@ -47,9 +55,11 @@ _HALL_RULES = [
     (lambda tags: any("Kids" in t for t in tags), "KIDS", "Kids"),
     (lambda tags: any("Suite" in t for t in tags), "SUITES", "Suites"),
     (lambda tags: "Showtime.Service.VIP" in tags, "VIP", "VIP"),
-    (lambda tags: "Auditorium.Experience.PLF" in tags, "MAX", "PLF"),
-    (lambda tags: "Auditorium.Experience.InfinityVision" in tags, "MAX", "InfinityVision"),
-    (lambda tags: "Auditorium.Comfort.LuxurySeats" in tags, "GOLD", "Luxury Seats"),
+    # MAX/GOLD are VOX brand names (review ruling 2026-09-26): another chain's large-format
+    # screen is OTHER with its own label, and a recliner/luxury-seat tier is VIP.
+    (lambda tags: "Auditorium.Experience.PLF" in tags, "OTHER", "PLF"),
+    (lambda tags: "Auditorium.Experience.InfinityVision" in tags, "OTHER", "InfinityVision"),
+    (lambda tags: "Auditorium.Comfort.LuxurySeats" in tags, "VIP", "Luxury Seats"),
     (lambda tags: "Showtime.Experience.CinemaCityArthouse" in tags, "OTHER", "Arthouse"),
 ]
 
@@ -80,6 +90,53 @@ def _book_url(show: dict) -> str | None:
     return None
 
 
+def _session_uuid(book: str | None) -> str | None:
+    m = _LAUNCH_RE.search(book or "")
+    return m.group(1) if m else None
+
+
+def _sample_prices(sess: Polite, session_uuid: str) -> list[dict] | None:
+    """Seat-class prices for one showtime, from the widget's own pre-seat calls. None on any failure."""
+    hdr = {"Accept": "application/json", "Content-Type": "application/json"}
+    try:
+        r = sess.post(f"{BOOKING}/api/launch/seatpreview/{session_uuid}",
+                      json={"requestData": None, "circuitId": 0, "selectedLanguageCulture": "en-US"},
+                      headers=hdr)
+        if r.status_code != 200:
+            return None
+        pv = r.json()
+        token = pv.get("dataToken")
+        layout = ((pv.get("selectSeatsModel") or {}).get("seatsLayoutModel")) or {}
+        area_name = {str(a.get("areaNumber")): (a.get("name") or "").strip() for a in layout.get("areas") or []}
+        cat_name: dict[str, str] = {}
+        for row in layout.get("rows") or []:
+            for seat in row.get("seats") or []:
+                code, aid = seat.get("areaCategoryCode"), str(seat.get("areaId"))
+                if code and area_name.get(aid):
+                    cat_name.setdefault(code, area_name[aid])
+        if not token:
+            return None
+        r = sess.post(f"{BOOKING}/api/Tickets/GetTickets", json={"dataToken": token}, headers=hdr)
+        if r.status_code != 200:
+            return None
+        groups = ((r.json().get("selectTicketsModel") or {}).get("groupedTicketTypes")) or []
+    except Exception:
+        return None
+    out: dict[str, float] = {}
+    for g in groups:
+        for t in g.get("ticketTypeModels") or []:
+            if (t.get("isMemberTicket") or t.get("isRedemptionTicket") or t.get("isThirdPartyMemberTicket")
+                    or t.get("isCardPaymentPromotionTicket") or t.get("isLoyaltyCreditTicket")):
+                continue
+            price = t.get("price") or 0
+            if price <= 0:
+                continue
+            seat = cat_name.get(t.get("areaCategoryCode")) or (t.get("displayName") or "").strip()
+            if seat and seat not in out:  # first listed ticket per seat class = the site's headline fare
+                out[seat] = round(price / 100, 2)
+    return [{"seat": k, "aed": v} for k, v in out.items()] or None
+
+
 def _cinema_id(name: str) -> str:
     short = re.sub(r"^cinemacity\s+", "", name, flags=re.IGNORECASE)
     return f"{CHAIN}-{slug(short)}"
@@ -96,7 +153,7 @@ def fetch(days: int = 2) -> dict:
     sess = Polite(gap=1.0)
 
     today = datetime.now(DUBAI_TZ).date()
-    frm = f"{today.isoformat()}T03:00:00"
+    frm = f"{today.isoformat()}T00:00:00"  # calendar day start: keeps today's 00:00-03:00 shows
     to = f"{(today + timedelta(days=days)).isoformat()}T03:00:00"
 
     cinemas = []
@@ -106,6 +163,8 @@ def fetch(days: int = 2) -> dict:
     for code, name, mall, address in CINEMAS_RAW:
         cid = _cinema_id(name)
         city = city_of(address, name, mall)
+        if city not in CITIES:
+            raise ValueError(f"cinemacity: no city for {name!r} ({address!r})")
         cinemas.append({
             "id": cid,
             "chain": CHAIN,
@@ -142,6 +201,9 @@ def fetch(days: int = 2) -> dict:
         for m in r.json():
             movies_meta[m["id"]] = m
 
+    price_cache: dict[tuple[str, str], list[dict] | None] = {}
+    price_tries: dict[tuple[str, str], int] = {}
+    today_s, last_s = today.isoformat(), (today + timedelta(days=days - 1)).isoformat()
     shows = []
     for cid, sched in per_cinema_schedule.items():
         for movie_id, by_date in sched.items():
@@ -152,13 +214,24 @@ def fetch(days: int = 2) -> dict:
             runtime_s = meta.get("runtime")
             runtime = round(runtime_s / 60) if runtime_s else None
 
-            for date, showlist in by_date.items():
+            for _business_day, showlist in by_date.items():
                 for s in showlist:
                     if s.get("isExpired"):
                         continue
                     tags = set(s.get("tags", []))
                     hall, hall_label = _hall(tags)
-                    time_ = s["startsAt"].split("T")[1][:5]
+                    # calendar date of the real start (the API buckets by a 03:00 business day)
+                    date, time_ = s["startsAt"][:10], s["startsAt"].split("T")[1][:5]
+                    if not (today_s <= date <= last_s):
+                        continue
+                    book = _book_url(s) or "https://www.cinemacity.ae/our-locations/"
+                    key = (cid, hall_label)
+                    # one successful sample per cinema x hall per run; a failed sample is retried on
+                    # the next show of that hall, at most twice, then the hall stays unpriced
+                    if price_cache.get(key) is None and price_tries.get(key, 0) < 2:
+                        price_tries[key] = price_tries.get(key, 0) + 1
+                        uuid = _session_uuid(book)
+                        price_cache[key] = _sample_prices(sess, uuid) if uuid else None
                     shows.append({
                         "cinema": cid,
                         "film_title": title,
@@ -169,10 +242,14 @@ def fetch(days: int = 2) -> dict:
                         "time": time_,
                         "hall": hall,
                         "hall_label": hall_label,
-                        "prices": None,  # see docs/probe/cinemacity.md — needs a seat hold
-                        "book": _book_url(s),
+                        "prices": key,  # resolved after the loop, once every hall is sampled
+                        "book": book,
                     })
 
+    for sh in shows:
+        sh["prices"] = price_cache.get(sh["prices"])
+    if not shows:
+        raise RuntimeError("cinemacity: zero shows in the window — schedule API changed or blocked")
     return {"cinemas": cinemas, "shows": shows}
 
 
