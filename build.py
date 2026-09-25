@@ -332,26 +332,23 @@ class Site:
         return f'<span class="na">{esc(L(T["box"], lang))}</span>'
 
     def cinema_prices(self, cid):
-        """hall key -> {code, label, seats{seat: aed}, asof} from today's shows first, then any day.
-        Live prices win over the fallback table; a hall priced only from the table carries `asof`
-        (the table entry's date) so its cells say «السعر بتاريخ …» instead of borrowing the live freshness."""
-        out = {}
-        shows = [s for s in self.shows if s["cinema"] == cid]
-        for s in sorted(shows, key=lambda s: s["date"] != self.today):
+        """hall key -> {code, label, seats{seat: aed}, asof}: ONE day's prices per hall — today's when they are
+        live, else the next day with live prices, else the fallback table (whose `asof`, the table entry's
+        date, makes its cells say «السعر بتاريخ …» instead of borrowing the live freshness). Prices are
+        sampled per show date, so days are never mixed (a Friday sample is not a Saturday price)."""
+        out, buckets = {}, {}
+        for s in (s for s in self.shows if s["cinema"] == cid):
             k = self.hkey(s); code, label = self.hall_code_label(s)
-            h = out.setdefault(k, {"code": code, "label": label, "seats": {}, "sample": s, "asof": None, "_table": {}})
+            out.setdefault(k, {"code": code, "label": label, "seats": {}, "sample": s, "asof": None})
             asof = self.table_date(s)
-            seats = h["_table"] if asof else h["seats"]
+            b = buckets.setdefault(k, {}).setdefault((asof is not None, s["date"] != self.today, s["date"]), {"seats": {}, "asof": asof})
             for p in s.get("prices") or []:
                 if p.get("aed") and p["aed"] > 0:
-                    cur = seats.get(p["seat"])
-                    seats[p["seat"]] = p["aed"] if cur is None else min(cur, p["aed"])
-            if asof and (h["asof"] is None or asof < h["asof"]): h["asof"] = asof
-        for h in out.values():
-            tbl = h.pop("_table")
-            if h["seats"]: h["asof"] = None
-            elif tbl: h["seats"] = tbl
-            else: h["asof"] = None
+                    cur = b["seats"].get(p["seat"])
+                    b["seats"][p["seat"]] = p["aed"] if cur is None else min(cur, p["aed"])
+        for k, bs in buckets.items():
+            best = min((key for key, b in bs.items() if b["seats"]), default=None)   # live first, then today first
+            if best is not None: out[k]["seats"], out[k]["asof"] = bs[best]["seats"], bs[best]["asof"]
         for code in self.cinemas[cid].get("halls") or []:
             if isinstance(code, str) and not any(v["code"] == code for v in out.values()) and code not in ("OTHER",):
                 out.setdefault(self.h.key(self.cinemas[cid]["chain"], code, ""), {"code": code, "label": "", "seats": {}, "sample": None, "asof": None})
@@ -741,13 +738,23 @@ class Site:
                 out.append(f'<div class="fcin"><h3><a href="{P(lang, city, cid)}">{self.cname_html(cid, lang)}</a> {self.fresh(chain, lang)}</h3>')
                 for k in dict.fromkeys(self.hkey(s) for s in ss):
                     hs = [s for s in ss if self.hkey(s) == k]
-                    withp = [s for s in hs if any((p.get("aed") or 0) > 0 for p in s.get("prices") or [])]
-                    priced = next((s for s in withp if not self.table_date(s)), None) or next(iter(withp), None)  # live first
-                    pc = ("".join(f'<span class="seat"><small>{esc(p["seat"])}</small> {self.pcell(p["aed"], chain, priced.get("hall") or "OTHER", k, cid, self.table_date(priced), lang)}</span>'
-                                  for p in sorted((p for p in priced["prices"] if (p.get("aed") or 0) > 0), key=lambda p: p["aed"])) if priced else self.box(lang))
-                    tl = "".join(f'<span class="dd"><i>{esc(L(lab, lang))}</i>{self.times([s for s in hs if s["date"] == d], lang, links=mode != "plain")}</span>'
-                                 for d, lab in days if any(s["date"] == d for s in hs))
-                    out.append(f'<div class="line"><span class="hn">{self.hall_html(hs[0], lang)}</span><span class="pr">{pc}</span>{tl}</div>')
+                    # prices are sampled per show date (weekday/weekend differ): one price row per hall when
+                    # every day agrees, else a row per day — so a live Friday price never stands for Saturday
+                    def prices_for(group):
+                        withp = [s for s in group if any((p.get("aed") or 0) > 0 for p in s.get("prices") or [])]
+                        priced = next((s for s in withp if not self.table_date(s)), None) or next(iter(withp), None)  # live first
+                        if not priced: return None
+                        return "".join(f'<span class="seat"><small>{esc(p["seat"])}</small> {self.pcell(p["aed"], chain, priced.get("hall") or "OTHER", k, cid, self.table_date(priced), lang)}</span>'
+                                       for p in sorted((p for p in priced["prices"] if (p.get("aed") or 0) > 0), key=lambda p: p["aed"]))
+                    hd = [(d, lab) for d, lab in days if any(s["date"] == d for s in hs)]
+                    per_day = {d: prices_for([s for s in hs if s["date"] == d]) for d, _ in hd}
+                    known = {v for v in per_day.values() if v}
+                    split = len(known) > 1 or (len(known) == 1 and None in per_day.values())
+                    pc = "" if split else (next(iter(known)) if known else self.box(lang))
+                    tl = "".join(f'<span class="dd"><i>{esc(L(lab, lang))}</i>{self.times([s for s in hs if s["date"] == d], lang, links=mode != "plain")}'
+                                 + (f'<span class="pr">{per_day[d] or self.box(lang)}</span>' if split else "") + '</span>'
+                                 for d, lab in hd)
+                    out.append(f'<div class="line"><span class="hn">{self.hall_html(hs[0], lang)}</span>' + (f'<span class="pr">{pc}</span>' if pc else "") + f'{tl}</div>')
                 out.append('</div>')
             out.append('</section>')
         if mode != "full" and len(days) == 1:

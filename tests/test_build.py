@@ -344,3 +344,22 @@ def test_bogo_price_says_per_person_with_two_tickets(tmp_path):
     assert home.count("ppNote(b.r)") == 2
     assert "ppNote(x.r)" in js[js.index("function renderPrices"):js.index("function renderNote")]
     assert "r: x.a != null ? x.r : null" in js                                   # best() keeps the rule
+
+
+def test_film_schedule_prices_each_day_when_days_differ(tmp_path):
+    """Prices are sampled per show date: when tomorrow's price differs (or is a dated table price), the
+    film page prices each day on its own row instead of letting today's price stand for tomorrow."""
+    data = json.load(open(DATA, encoding="utf-8"))
+    tomorrow = "2026-09-26"
+    base = [s for s in data["shows"] if s["cinema"] == "vox-al-jimi-mall" and s.get("prices")][0]
+    t2 = dict(base, date=tomorrow, time="21:00", prices=[{"seat": "Regular", "aed": 77.5}], price_source="table", price_checked="2026-09-25")
+    data["shows"].append(t2)
+    p = tmp_path / "d.json"; p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    out = str(tmp_path / "o")
+    build.build(str(p), DISC, out)
+    film = read(out, "cinema", "film", base["film"])
+    assert 'data-aed="77.50"' in film and 'data-asof="2026-09-25"' in film and "السعر بتاريخ" in film
+    assert f'data-aed="{build.money(base["prices"][0]["aed"])}"' in film            # today's live price kept
+    # the cinema page prices halls from ONE day, live and today first
+    cin = read(out, "cinema", "al-ain", "vox-al-jimi-mall")
+    assert 'data-aed="77.50"' not in cin

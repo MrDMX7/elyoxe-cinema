@@ -173,6 +173,7 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:.9375rem}
 .line .pr{display:flex;flex-wrap:wrap;gap:.25rem 1rem}
 .line .dd{display:flex;flex-wrap:wrap;align-items:baseline;gap:.35rem .6rem}
 .line .dd i{font-style:normal;color:var(--stone);font-size:.8125rem;min-inline-size:2.75rem}
+.line .dd .pr{flex-basis:100%}
 .seat{display:inline-flex;align-items:baseline;gap:.35rem}
 .seat > small{color:var(--stone);font-size:.75rem}
 .fcity.here > h2::after{content:"";inline-size:.5rem;block-size:.5rem;background:var(--saffron);align-self:center}
