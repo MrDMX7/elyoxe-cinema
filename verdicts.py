@@ -24,7 +24,7 @@ from pathlib import Path
 VERDICTS_DIR = Path(__file__).resolve().parent / "verdicts"
 VALID_VERDICTS = {"yes", "mixed", "skip", "unknown"}
 MODEL = "claude-sonnet-5"
-MAX_ATTEMPTS = 3
+MAX_ATTEMPTS = 5
 
 # The owner's canonical, actively-maintained Emirati lexicon (content/video/_system/EMIRATI-LEXICON.json,
 # a sibling repo under the shared workspace). Loaded at call time, not vendored, so edits there apply
@@ -74,13 +74,37 @@ BANNED_WORDS = {
     "خوّفتك": "ربشتك", "خوفتك": "ربشتك",
     "حاطه": "حاطنه",
     "كذا": "جذيه",
+    # round-2 controller review, 2026-09-26 — caught in avengers-endgame-encore/mutiny/
+    # toy-story-5/the-odyssey/insidious and generalized so the ~50-film live job doesn't
+    # repeat them:
+    "لسا": "بعد / بعدهم",           # "لسا" alone, not just inside "لين لسا"
+    "والي": "واللي",                 # plain typo for the relative pronoun, not dialect
+    "شاهده": "شوفه",                 # MSA register creeping into the Emirati line
+    "ستاذم": "ستاثام",               # garbled transliteration of "Statham"
 }
 BANNED_WORDS.update(_LEXICON.get("words", {}))
 
 BANNED_PHRASES = {
     "لين لسا": "استعمل صياغة مباشرة، مثلاً: وودي وباز بعدهم يشدّون",
+    "فرح فيه": "حبّه",
 }
 BANNED_PHRASES.update(_LEXICON.get("phrases", {}))
+
+# Verb roots whose common inflected forms (attached subject/object pronouns: يجيك، تجيك،
+# بيجي، يجينا...) must be caught even though they aren't a literal dict key — a plain
+# word-boundary/equality match on "يجي" alone lets "يجيك" through, which is exactly how it
+# shipped in the very first heart-of-the-beast draft (round-2 controller review). Matched as
+# a substring of the *token*, not a raw substring of the sentence, so it still respects word
+# boundaries (won't fire on an unrelated word that happens to contain "يجي" across a boundary).
+BANNED_ROOTS = {
+    "يجي": "إيي (أو تصريفها: تييك، إيينا... حسب المخاطَب)",
+    "تجي": "تصريف إيي المناسب للمخاطَب",
+}
+
+# A line that opens with "فيلم <title>" repeats a dull template the controller flagged twice
+# (pradhama-drishtya-kuttakkar, pressure, sacrifice, the-paradise all did it independently) —
+# checked structurally (start-of-string), not as a banned word, since "فيلم" mid-sentence is fine.
+_FILM_OPENER = re.compile(r"^\s*فيلم\b")
 
 ARABIC_INDIC_DIGITS = re.compile(r"[٠-٩]")
 TANWIN = re.compile(r"[ًٌٍ]")  # ً ٌ ٍ
@@ -107,14 +131,21 @@ def _dialect_violation(ar_text: str) -> str | None:
         return "Arabic-Indic digits (٠-٩) used — Western digits 0-9 only"
     if TANWIN.search(ar_text):
         return "tanwin (ً/ٌ/ٍ) in spoken text — never tanwin in the spoken register"
+    if _FILM_OPENER.match(ar_text):
+        return 'opens with "فيلم <title>" — a repeated, dull template; vary the opening'
     bare_text = _strip_diacritics(ar_text)
     for phrase in BANNED_PHRASES:
         if _strip_diacritics(phrase) in bare_text:
             return f'banned phrase "{phrase}" used — say "{BANNED_PHRASES[phrase]}" instead'
-    toks = set(_tokens(ar_text))
+    toks = _tokens(ar_text)
+    tok_set = set(toks)
     for bad_bare, (bad, good) in _BANNED_WORDS_BARE.items():
-        if bad_bare in toks:
+        if bad_bare in tok_set:
             return f'banned word "{bad}" used — say "{good}" instead'
+    for root, good in BANNED_ROOTS.items():
+        root_bare = _strip_diacritics(root)
+        if any(root_bare in tok for tok in toks):
+            return f'inflected form of banned root "{root}" used — say "{good}" instead'
     return None
 
 
@@ -155,7 +186,12 @@ EMIRATI_SYSTEM_NOTE = f"""أنت تكتب سطراً عربياً بلهجة إ�
   ولا Letterboxd — استعملهما فقط لو ما فيه رقم RT.
 - إذا ما فيه اسم عربي شائع للفيلم فاكتب العنوان الإنجليزي بحروف لاتينية داخل السطر العربي (لا
   تُترجم ولا تُعرِّب حرفياً)، وإلا استعمل الاسم العربي المعطى.
-- لا تبدأ أكثر من جملة أو أكثر من سطر بـ"فيلم <العنوان>" — التكرار مملّ، نوّع الصياغة.
+- **نفس القاعدة على أسماء الممثلين/المخرجين**: لا تخمّن كتابة عربية لاسم أجنبي (مثل ستاثام أو
+  أي اسم غير متأكد من رسمه بالعربي) — اكتبه بحروف لاتينية زي ما هو (Statham) بدل تعريب خاطئ.
+- **ممنوع تبدأ السطر بكلمة "فيلم"** (مثل "فيلم Digger...") — ابدأ باسم الفيلم مباشرة أو بحكم
+  أو برقم، ونوّع الصياغة.
+- تصريفات الأفعال الممنوعة ممنوعة هي وياها: "يجي" ممنوعة بكل صيغها (يجيك، تجيك، بيجي، يجينا...)
+  لا الفعل المجرد فقط — استعمل تصريف "إيي" المناسب دائماً.
 
 الأسلوب: جملتان قصيرتان كحد أقصى، كل جملة تحمل حقيقة واحدة (رقم أو حكم)، بلا حشو ولا مبالغة
 ("وايد" تُستخدم باعتدال لا في كل جملة). إذا لم تتوفر تقييمات كافية (أفلام هندية/فلبينية/عربية

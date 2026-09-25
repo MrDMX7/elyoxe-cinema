@@ -137,7 +137,7 @@ def test_dialect_check_rejects_tanwin():
 
 
 def test_dialect_check_accepts_clean_emirati_line():
-    assert _dialect_violation("فيلم حلو، النقاد عطوه 91% والجمهور مب بعيد عنهم.") is None
+    assert _dialect_violation("حلو وايد، النقاد عطوه 91% والجمهور مب بعيد عنهم.") is None
 
 
 # ---------- verdicts.py: write_missing ----------
@@ -217,3 +217,28 @@ def test_write_missing_only_fids_limits_regeneration(tmp_path, monkeypatch):
     assert calls == ["film-a"]
     assert set(results) == {"film-a"}
     assert json.loads((tmp_path / "film-b.json").read_text(encoding="utf-8"))["basis"] == "RT 90%"
+
+
+# ---------- verdicts.py: round-2 controller fixes (the exact strings flagged) ----------
+
+def test_dialect_check_rejects_round2_flagged_strings():
+    cases = [
+        "الفيلم يجيك بتقييم حلو.",                  # يجيك — inflected form of the "يجي" root
+        "يجي وقته لما تشوفه.",                       # يجي itself
+        "وودي وباز لين لسا يشدّون.",                  # لين لسا (phrase)
+        "لسا ما طلع تقييم رسمي.",                     # لسا alone
+        "والي تباها بتجربة الجمهور من يديد.",         # والي — typo for واللي
+        "شاهده في السينما لو تقدر.",                  # شاهده — MSA register
+        "الجمهور فرح فيه أكثر من النقاد.",            # فرح فيه (phrase)
+        "يصلح لمحبين ستاذم بس.",                      # ستاذم — garbled "Statham"
+        "فيلم Digger فيه آراء متضاربة.",              # "فيلم X" opener
+    ]
+    for text in cases:
+        assert _dialect_violation(text) is not None, text
+
+
+def test_dialect_check_catches_other_yiji_inflections_not_just_yijik():
+    # the controller's exact question: "يجيك" passing proved the check only matched the bare
+    # root — these are other inflections that must be caught by the same root-prefix rule.
+    for text in ("بيجي بكرة.", "تجيك النتيجة قريب.", "يجينا خبر منه."):
+        assert _dialect_violation(text) is not None, text
