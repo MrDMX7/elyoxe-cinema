@@ -97,35 +97,34 @@ Drupal AJAX callbacks used by anonymous site visitors). No documented rate
 limit; the reader uses `readers.common.Polite` at the default 1 req/s with
 retry-on-429/5xx, matching normal browsing pace.
 
-## Access from this dev network: Akamai blocks plain `requests`
+## Access from this dev network: Akamai blocks plain `requests` — fixed with `curl_cffi`
 
-**Important caveat found while probing:** this site sits behind Akamai. Every
-plain `requests.get()` call made directly against `theroxycinemas.com` from
-this workspace's network returned **HTTP 403 "Access Denied" (Akamai edge
-block)** — even for the plain homepage, regardless of `User-Agent`/`Accept`
-headers. The exact same URLs succeeded immediately (HTTP 200) when fetched
-from inside the built-in browser pane (a real browser context), which is how
-all the data above and the fixture were captured — via `fetch()` executed in
-the browser's own JS console against `location.origin` (same-origin, so no
-CORS issues), not via Python `requests`.
+**Important caveat found while probing, since fixed:** this site sits behind
+Akamai. Every plain `requests.get()` call made directly against
+`theroxycinemas.com` from this workspace's network returned **HTTP 403
+"Access Denied" (Akamai edge block)** — even for the plain homepage,
+regardless of `User-Agent`/`Accept` headers. This is a TLS-fingerprint-level
+block (same as VOX, see `docs/probe/vox.md`), not a header check, so no
+amount of header-spoofing on plain `requests` fixes it.
 
-This means `readers/roxy.py`'s `fetch()` — written straight against
-`requests`/`Polite` per the shared interface — may itself return 403s if run
-from a similarly-blocked network (e.g. common cloud/datacenter IP ranges that
-Akamai fingerprints as bots). It is expected to work fine from a normal
-residential/mobile IP, exactly like a real site visitor. If this becomes a
-recurring problem in production, the fix is routing through a browser-based
-fetch (headless browser or a residential proxy) rather than raw `requests` —
-noted here rather than silently worked around, since a datacenter environment
-running this reader unmodified will need that fix too.
+Fix: `readers/roxy.py` uses `curl_cffi.requests` with `impersonate="chrome"`
+instead of `readers.common.Polite` (which wraps plain `requests`).
+`curl_cffi` matches Chrome's real TLS fingerprint (JA3/ALPN/cipher order),
+which Akamai accepts as a normal browser. Confirmed working with a real
+unattended shell run — see the fix report appended to
+`.superpowers/sdd/2026-09-25-cinema/task-1-roxy-report.md` for the exact
+command and output (6 cinemas, 660 shows for today+tomorrow across the full
+now-showing catalogue, 0 priced as expected).
+
+`CITIES`, `HALLS`, `slug()` and `city_of()` are still reused from
+`readers.common` — only the HTTP transport changed.
 
 ## Fixture
 
-`fixtures/roxy.json` — 6 cinemas + 100 shows, captured live 2026-09-25 for
-2 now-showing movies ("Heart of the Beast", "Avengers Endgame: Encore")
-across all 6 cinemas and both dates (2026-09-25, 2026-09-26), via the browser
-pane as described above. This is a live-run sample (not all ~30 now-showing
-movies — the full daily catalogue is ~380 shows for 2 days, well under the
-≤400 cap, but a 2-movie/100-show slice already exercises every cinema, both
-dates, and every hall tier including the two irregular ones (`2L`,
-`Private Screen`).
+`fixtures/roxy.json` — 6 cinemas + 380 shows, resampled (seeded random,
+`random.seed(42)`) down from a real unattended `readers.roxy.fetch()` shell
+run on 2026-09-26 that returned 660 shows (full now-showing catalogue,
+today+tomorrow, all 6 cinemas). 380 was chosen to sit under the ≤400 cap
+while still exercising every cinema and every hall bucket. All shows have
+`"prices": null`, confirmed live (see fix report in
+`.superpowers/sdd/2026-09-25-cinema/task-1-roxy-report.md`).

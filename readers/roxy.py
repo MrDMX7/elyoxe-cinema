@@ -14,18 +14,31 @@ date, time, session. A single call returns *all* upcoming dates (today
 through +5 days) for that movie across *all* six cinemas, so fetch() makes
 one polite request per now-showing movie, not one per cinema x day.
 
+Akamai blocks plain `requests`/stdlib TLS from this machine (same as VOX —
+see readers/vox.py): a direct `requests.get()` against theroxycinemas.com
+returns HTTP 403 "Access Denied" even for the plain homepage, regardless of
+headers. `curl_cffi` with `impersonate="chrome"` matches Chrome's TLS
+fingerprint and gets a normal 200, so this reader uses that instead of
+readers.common.Polite (which wraps plain `requests` and would 403 here).
+CITIES, HALLS, slug() and city_of() are still reused from readers.common.
+
 See docs/probe/roxy.md for the full probe notes, including why prices are
-always None here (booking needs login -> seat hold) and the Akamai block
-seen when calling these endpoints from this dev network.
+always None here (booking needs login -> seat hold).
 """
 from __future__ import annotations
 
+import datetime
 import re
+import time
 from typing import Any
 
-from .common import CITIES, HALLS, Polite, city_of, slug
+from curl_cffi import requests as cr
+
+from readers.common import CITIES, HALLS, city_of, slug
 
 BASE = "https://www.theroxycinemas.com"
+UA_IMPERSONATE = "chrome"
+GAP = 1.0  # seconds between requests, stays at ~1 req/s
 
 # url-slug, site cinema-id, display name, google maps url (None if not found in probe)
 CINEMAS = [
@@ -40,6 +53,13 @@ CINEMAS = [
      "https://www.google.com/maps/place/Roxy+Cinemas+-+Boxpark/data=!4m2!3m1!1s0x0:0x43e1b42f4ce3ea05"),
     ("circle-mall", "0000000009", "Circle Mall", None),
 ]
+
+# Cinemas whose name/address don't carry a recognisable city word for common.city_of()
+# (e.g. "Al Khawaneej" is a Dubai neighborhood but isn't in common.py's _CITY_WORDS list).
+# Hand fallback here rather than editing common.py, which is shared across all chains.
+MANUAL_CITY = {
+    "al-khawaneej": "dubai",
+}
 
 # ROXY's own tier names -> the shared hall enum. Xtreme is Roxy's giant laser-screen
 # format (-> MAX); Platinum is the ultra-premium recliner tier (-> VIP per the brief's
@@ -74,6 +94,33 @@ MONTHS = {m: i + 1 for i, m in enumerate(
 )}
 
 
+class _Client:
+    """Minimal polite wrapper around curl_cffi (Polite in common.py uses plain requests,
+    which Akamai 403s here — see module docstring)."""
+
+    def __init__(self, gap: float = GAP):
+        self.s = cr.Session()
+        self.gap = gap
+        self._last = 0.0
+
+    def get(self, url: str, **kw):
+        wait = self.gap - (time.monotonic() - self._last)
+        if wait > 0:
+            time.sleep(wait)
+        for attempt in range(3):
+            self._last = time.monotonic()
+            try:
+                r = self.s.get(url, impersonate=UA_IMPERSONATE, timeout=30, **kw)
+                if r.status_code in (429, 500, 502, 503, 504) and attempt < 2:
+                    time.sleep(3 * (attempt + 1))
+                    continue
+                return r
+            except Exception:
+                if attempt == 2:
+                    raise
+                time.sleep(3 * (attempt + 1))
+
+
 def _hall(label: str) -> str:
     return HALL_MAP.get(label.strip().lower(), "OTHER")
 
@@ -94,16 +141,19 @@ def _cinemas() -> tuple[list[dict[str, Any]], dict[str, str]]:
     """Build the Cinema list and a site-cinema-id -> our-id lookup."""
     cinemas = []
     id_by_site_id = {}
-    for _url_slug, site_id, name, maps in CINEMAS:
+    for url_slug, site_id, name, maps in CINEMAS:
         address = f"{name}, Dubai, UAE"
         cid = f"roxy-{slug(name)}"
         id_by_site_id[site_id] = cid
+        city = MANUAL_CITY.get(url_slug) or city_of(address)
+        if city not in CITIES:
+            raise ValueError(f"roxy: could not determine city for cinema '{name}' ({url_slug!r})")
         cinemas.append({
             "id": cid,
             "chain": "roxy",
             "name": f"ROXY Cinemas {name}",
             "name_ar": None,
-            "city": city_of(address) or "dubai",
+            "city": city,
             "mall": name,
             "address": address,
             "maps": maps,
@@ -113,15 +163,15 @@ def _cinemas() -> tuple[list[dict[str, Any]], dict[str, str]]:
     return cinemas, id_by_site_id
 
 
-def _now_showing_slugs(session: Polite) -> list[str]:
-    r = session.get(f"{BASE}/en")
+def _now_showing_slugs(client: _Client) -> list[str]:
+    r = client.get(f"{BASE}/en")
     r.raise_for_status()
     return sorted(set(MOVIE_LINK_RE.findall(r.text)))
 
 
-def _movie_meta(session: Polite, movie_slug: str) -> tuple[str | None, dict[str, Any]]:
+def _movie_meta(client: _Client, movie_slug: str) -> tuple[str | None, dict[str, Any]]:
     """Return (nid, {title, runtime, lang, rating}) for one movie page."""
-    r = session.get(f"{BASE}/en/movie/{movie_slug}")
+    r = client.get(f"{BASE}/en/movie/{movie_slug}")
     r.raise_for_status()
     html = r.text
     nid_m = NID_RE.search(html)
@@ -152,12 +202,10 @@ def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
     """Fetch Roxy Cinemas UAE cinemas + showtimes for today + (days - 1) more days.
 
     Prices are always None: seeing a session's seat map/price requires logging in
-    (booking.theroxycinemas.com redirects to /en/login first), which is a seat-hold
-    flow we're not allowed to trigger. See docs/probe/roxy.md.
+    (the site shows "Please log in to continue" before any seat map or price), which
+    is a seat-hold flow we're not allowed to trigger. See docs/probe/roxy.md.
     """
-    import datetime
-
-    session = Polite(gap=1.0)
+    client = _Client()
     cinemas, id_by_site_id = _cinemas()
 
     today = datetime.date.today()
@@ -167,12 +215,12 @@ def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
     shows: list[dict[str, Any]] = []
     seen_slots: set[tuple[str, str, str, str]] = set()
 
-    for movie_slug in _now_showing_slugs(session):
-        nid, meta = _movie_meta(session, movie_slug)
+    for movie_slug in _now_showing_slugs(client):
+        nid, meta = _movie_meta(client, movie_slug)
         if not nid:
             continue
 
-        r = session.get(f"{BASE}/en/movie-schedule/ajax", params={"nid": nid, "promotion": ""})
+        r = client.get(f"{BASE}/en/movie-schedule/ajax", params={"nid": nid, "promotion": ""})
         if r.status_code != 200:
             continue
         try:
@@ -214,4 +262,7 @@ def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
 
 if __name__ == "__main__":
     import json
-    print(json.dumps(fetch(), ensure_ascii=False, indent=2))
+    import sys
+
+    result = fetch(days=int(sys.argv[1]) if len(sys.argv) > 1 else 2)
+    json.dump(result, sys.stdout, ensure_ascii=False, indent=2)
