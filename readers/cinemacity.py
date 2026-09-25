@@ -120,21 +120,21 @@ def _sample_prices(sess: Polite, session_uuid: str) -> list[dict] | None:
         if r.status_code != 200:
             return None
         groups = ((r.json().get("selectTicketsModel") or {}).get("groupedTicketTypes")) or []
-    except Exception:
+        out: dict[str, float] = {}
+        for g in groups:
+            for t in g.get("ticketTypeModels") or []:
+                if (t.get("isMemberTicket") or t.get("isRedemptionTicket") or t.get("isThirdPartyMemberTicket")
+                        or t.get("isCardPaymentPromotionTicket") or t.get("isLoyaltyCreditTicket")):
+                    continue
+                price = float(t.get("price") or 0)
+                if price <= 0:
+                    continue
+                seat = cat_name.get(t.get("areaCategoryCode")) or (t.get("displayName") or "").strip()
+                if seat and seat not in out:  # first listed ticket per seat class = the headline fare
+                    out[seat] = round(price / 100, 2)
+        return [{"seat": k, "aed": v} for k, v in out.items()] or None
+    except Exception:  # any HTTP/JSON/shape surprise leaves this hall unpriced, never fails the chain
         return None
-    out: dict[str, float] = {}
-    for g in groups:
-        for t in g.get("ticketTypeModels") or []:
-            if (t.get("isMemberTicket") or t.get("isRedemptionTicket") or t.get("isThirdPartyMemberTicket")
-                    or t.get("isCardPaymentPromotionTicket") or t.get("isLoyaltyCreditTicket")):
-                continue
-            price = t.get("price") or 0
-            if price <= 0:
-                continue
-            seat = cat_name.get(t.get("areaCategoryCode")) or (t.get("displayName") or "").strip()
-            if seat and seat not in out:  # first listed ticket per seat class = the site's headline fare
-                out[seat] = round(price / 100, 2)
-    return [{"seat": k, "aed": v} for k, v in out.items()] or None
 
 
 def _cinema_id(name: str) -> str:
@@ -203,6 +203,7 @@ def fetch(days: int = 2) -> dict:
 
     price_cache: dict[tuple[str, str], list[dict] | None] = {}
     price_tries: dict[tuple[str, str], int] = {}
+    health = {"attempted": 0, "priced": 0, "error": None}
     today_s, last_s = today.isoformat(), (today + timedelta(days=days - 1)).isoformat()
     shows = []
     for cid, sched in per_cinema_schedule.items():
@@ -232,6 +233,7 @@ def fetch(days: int = 2) -> dict:
                         price_tries[key] = price_tries.get(key, 0) + 1
                         uuid = _session_uuid(book)
                         price_cache[key] = _sample_prices(sess, uuid) if uuid else None
+                        health["attempted"] += 1
                     shows.append({
                         "cinema": cid,
                         "film_title": title,
@@ -250,7 +252,10 @@ def fetch(days: int = 2) -> dict:
         sh["prices"] = price_cache.get(sh["prices"])
     if not shows:
         raise RuntimeError("cinemacity: zero shows in the window — schedule API changed or blocked")
-    return {"cinemas": cinemas, "shows": shows}
+    health["priced"] = sum(1 for v in price_cache.values() if v)
+    if health["attempted"] and not health["priced"]:
+        health["error"] = f"0/{health['attempted']} seatpreview/GetTickets samples priced"
+    return {"cinemas": cinemas, "shows": shows, "price_health": health}
 
 
 if __name__ == "__main__":

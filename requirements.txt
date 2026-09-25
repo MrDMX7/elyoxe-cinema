@@ -10,3 +10,4 @@ anthropic
 boto3
 cryptography
 pycryptodome
+tzdata; sys_platform == "win32"

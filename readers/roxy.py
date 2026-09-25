@@ -240,6 +240,21 @@ def _movie_meta(client: _Client, movie_slug: str) -> tuple[str | None, dict[str,
     return nid, meta
 
 
+def _label_twin_sessions(shows: list[dict[str, Any]]) -> None:
+    """Two screens can run the same film at the same time in the same hall class. Roxy's
+    markup carries no screen name (only the class, e.g. "Silver", and a session id), so both
+    rows are kept and their hall_label gets the session id to tell them apart. Pops `_session`."""
+    groups: dict[tuple, list[dict[str, Any]]] = {}
+    for sh in shows:
+        groups.setdefault((sh["cinema"], sh["film_title"], sh["date"], sh["time"], sh["hall_label"]), []).append(sh)
+    for twins in groups.values():
+        if len(twins) > 1:
+            for sh in twins:
+                sh["hall_label"] = f"{sh['hall_label']} (session {sh['_session']})"
+    for sh in shows:
+        sh.pop("_session", None)
+
+
 def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
     """Fetch Roxy Cinemas UAE cinemas + showtimes for today + (days - 1) more days.
 
@@ -291,6 +306,7 @@ def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
             seen_slots.add(key)
 
             shows.append({
+                "_session": session_id,
                 "cinema": cid,
                 "film_title": meta["title"],
                 "film_lang": meta["lang"],
@@ -313,7 +329,10 @@ def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
     if not shows:
         raise RuntimeError("roxy: fetch produced zero shows")
 
-    return {"cinemas": cinemas, "shows": shows}
+    _label_twin_sessions(shows)
+    # Roxy has no hold-free price source (seat map is login-gated): nothing attempted, no error.
+    return {"cinemas": cinemas, "shows": shows,
+            "price_health": {"attempted": 0, "priced": 0, "error": None}}
 
 
 if __name__ == "__main__":

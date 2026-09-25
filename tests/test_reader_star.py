@@ -150,6 +150,7 @@ def test_fetch_raises_when_movie_shows_all_403(monkeypatch):
             return _FakeResp(403, {"isAuthorization": True, "message": "You are not authorized"})
         return _FakeResp(404)
 
+    monkeypatch.setattr(star, "BACKOFF_S", 0)
     monkeypatch.setattr(star.Polite, "get", fake_get)
     monkeypatch.setattr(star, "_refresh_token", lambda http: None)
 
@@ -201,8 +202,70 @@ def test_fetch_raises_naming_token_when_refresh_also_fails(monkeypatch):
             return _FakeResp(401, {"message": "not authorized"})
         return _FakeResp(404)
 
+    monkeypatch.setattr(star, "BACKOFF_S", 0)
     monkeypatch.setattr(star.Polite, "get", fake_get)
     monkeypatch.setattr(star, "_refresh_token", lambda http: None)
 
     with pytest.raises(RuntimeError, match="TOKEN"):
         star.fetch()
+
+
+# --- Review round 2: price_health + behavioural tests ---------------------------------------
+
+def _assert_health(out, attempted=None, priced=None, error_is_none=True):
+    h = out["price_health"]
+    assert set(h) == {"attempted", "priced", "error"}
+    assert isinstance(h["attempted"], int) and isinstance(h["priced"], int)
+    assert 0 <= h["priced"] <= h["attempted"]
+    if attempted is not None:
+        assert h["attempted"] == attempted
+    if priced is not None:
+        assert h["priced"] == priced
+    if error_is_none:
+        assert h["error"] is None
+    else:
+        assert isinstance(h["error"], str) and h["error"]
+
+
+def _star_payloads():
+    import datetime as _dt
+    from zoneinfo import ZoneInfo
+
+    tomorrow_noon = (_dt.datetime.now(ZoneInfo("Asia/Dubai")) + _dt.timedelta(days=1)).replace(
+        hour=12, minute=0, second=0, microsecond=0)
+    cinemas = {"Records": [{"cinema_id": 1, "cinema_name": "National Cinema - Abu Dhabi",
+                            "cinema_address": "Abu Dhabi", "cinema_location": "Abu Dhabi",
+                            "cinema_latitude": "24.1", "cinema_longitude": "54.3", "map_view_url": None}]}
+    movies = {"Records": {"data": [{"movie_id": 99, "rating": "PG13"}]}}
+    shows = {"Records": {"data": [{"cinema_id": 1, "ss_id": 5, "movie_title": "X", "screen_type_name": "NORMAL",
+                                   "ss_actual_start_date_time": int(tomorrow_noon.timestamp() * 1000)}]}}
+    seats = {"Records": [{"sst_seat_type": "Star Select", "seat_price": "45"}]}
+    return cinemas, movies, shows, seats
+
+
+def test_star_price_health_and_single_403_backoff(monkeypatch):
+    import readers.star as star
+
+    cinemas, movies, shows, seats = _star_payloads()
+    calls = {"cinemas": 0}
+
+    def fake_get(self, url, **kw):
+        if url.endswith("/cinemas"):
+            calls["cinemas"] += 1
+            return _FakeResp(403 if calls["cinemas"] == 1 else 200, cinemas)  # one transient 403
+        if url.endswith("/now-showing-movies"):
+            return _FakeResp(200, movies)
+        if "/movie-shows/" in url:
+            return _FakeResp(200, shows)
+        if "/seat-layout/" in url:
+            return _FakeResp(200, seats)
+        return _FakeResp(404)
+
+    refreshed = []
+    monkeypatch.setattr(star, "BACKOFF_S", 0)
+    monkeypatch.setattr(star.Polite, "get", fake_get)
+    monkeypatch.setattr(star, "_refresh_token", lambda http: refreshed.append(1) or None)
+    out = star.fetch(days=2)
+    assert calls["cinemas"] == 2 and not refreshed, "one 403 must back off and retry, not refresh the token"
+    assert out["shows"][0]["prices"] == [{"seat": "Star Select", "aed": 45.0}]
+    _assert_health(out, attempted=1, priced=1)

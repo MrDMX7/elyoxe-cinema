@@ -122,3 +122,92 @@ def test_reel_raises_on_zero_shows(monkeypatch):
     monkeypatch.setattr(reel, "Polite", FakePolite)
     with pytest.raises(RuntimeError):
         reel.fetch(days=2, prices=False)
+
+
+# --- Review round 2: price_health + behavioural tests ---------------------------------------
+
+def _assert_health(out, attempted=None, priced=None, error_is_none=True):
+    h = out["price_health"]
+    assert set(h) == {"attempted", "priced", "error"}
+    assert isinstance(h["attempted"], int) and isinstance(h["priced"], int)
+    assert 0 <= h["priced"] <= h["attempted"]
+    if attempted is not None:
+        assert h["attempted"] == attempted
+    if priced is not None:
+        assert h["priced"] == priced
+    if error_is_none:
+        assert h["error"] is None
+    else:
+        assert isinstance(h["error"], str) and h["error"]
+
+
+def test_reel_unknown_screen_has_its_own_price_key():
+    from readers.reel import _hall_of
+
+    hall, _, code = _hall_of({"SessionAttributesNames": ["2D"], "ScreenName": "Screen 99"})
+    assert hall == "OTHER" and code != "STANDARD"
+
+
+def test_reel_cancel_order_always_called_even_on_failure(monkeypatch):
+    from readers import reel
+
+    pc = reel._PriceClient()
+    paths = []
+
+    def fake_call(method, path, **kw):
+        paths.append(path)
+        if path.startswith("seats/getSeatLayout"):
+            return _Resp(200, {"statusCode": 11, "statusMessage": "problem"})
+        if path == "order/cancelOrder":
+            return _Resp(500, {"code": 500})
+        return _Resp(200, {})
+
+    monkeypatch.setattr(pc, "_call", fake_call)
+    with pytest.raises(reel._SampleError):
+        pc.sample("0001", "1", "STANDARD", "Screen 1")
+    assert paths[-1] == "order/cancelOrder"
+
+
+def test_reel_price_health_login_failure_sets_error(monkeypatch, capsys):
+    import datetime as _dt
+    from zoneinfo import ZoneInfo
+    from readers import reel
+
+    tmrw = (_dt.datetime.now(ZoneInfo("Asia/Dubai")) + _dt.timedelta(days=1)).date().isoformat()
+    feeds = {
+        "Cinemas.json": {"value": [{"ID": "0001", "Name": "Dubai Mall", "CinemaNationalId": "UAE"}]},
+        "Films.json": {"value": [{"ID": "F1", "Title": "X"}]},
+        "Sessions.json": {"value": [{"CinemaId": "0001", "SessionId": "7", "ScheduledFilmId": "F1",
+                                     "Showtime": f"{tmrw}T20:00:00", "ScreenName": "Screen 1",
+                                     "SessionAttributesNames": ["2D", "STANDARD"], "SeatsAvailable": 50}]},
+    }
+
+    class FakePolite:
+        def __init__(self, *a, **k):
+            pass
+
+        def get(self, url, **k):
+            return _Resp(200, feeds[url.rsplit("/", 1)[1]])
+
+    class FakeClient:
+        def login(self):
+            return "loginAsGuest failed: status=403 statusCode=None"
+
+    monkeypatch.setattr(reel, "Polite", FakePolite)
+    monkeypatch.setattr(reel, "_PriceClient", FakeClient)
+    out = reel.fetch(days=2)
+    assert out["shows"][0]["prices"] is None
+    _assert_health(out, attempted=0, priced=0, error_is_none=False)
+    assert "loginAsGuest" in capsys.readouterr().err
+
+    class GoodClient:
+        def login(self):
+            return None
+
+        def sample(self, *a):
+            return [{"seat": "Standard", "aed": 44.0}]
+
+    monkeypatch.setattr(reel, "_PriceClient", GoodClient)
+    out = reel.fetch(days=2)
+    assert out["shows"][0]["prices"] == [{"seat": "Standard", "aed": 44.0}]
+    _assert_health(out, attempted=1, priced=1)

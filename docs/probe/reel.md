@@ -108,7 +108,10 @@ chunk (`assets/index-Zpk_B4ZD.js`, `getSeatLayout`) and the showtime-click hook
 
 No seat is ever set (`seats/setSeat` / `seats/addTicket` never called). The site's
 `order/cancelOrder` (POST, `{OptionalClientId, CinemaId, UserSessionId}`) answers 500 for an order
-without seats, so the reader doesn't call it; the empty order lapses on its 300 s timer.
+without seats; the reader still calls it after every sample, in a `finally` (review round 2 ruling:
+abandon through the site's own path), and ignores the 500 — the order also lapses on its 300 s timer.
+Sampling health is returned as `price_health` (attempted / priced / error); a guest-login failure or
+an all-failed run sets `error` and is printed to stderr (so a rotated bundle key is visible).
 
 `readers/reel.py` samples once per cinema × experience code (STANDARD / PLATINUM / PREMIUM /
 DOLBY / SCREENX / IMAX / REELJUNIOR / INFINITY V) per run, on a session at least an hour away with

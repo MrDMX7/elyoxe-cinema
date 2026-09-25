@@ -11,6 +11,7 @@ import datetime
 import json
 import re
 import sys
+import time
 from zoneinfo import ZoneInfo
 
 from readers.common import CITIES, HALLS, Polite, city_of, slug
@@ -201,8 +202,18 @@ def _actual_start_dubai(rec: dict) -> datetime.datetime | None:
         return None
 
 
+# A single 401/403 is first treated as a transient rate-limit: back off and retry once before
+# blaming the token (the probe saw Star 403 bursts under load, not only token rot).
+BACKOFF_S = 30
+
+
 def _get_with_refresh(http: Polite, url: str, state: dict) -> "requests.Response | None":  # noqa: F821
     r = http.get(url)
+    if r is not None and r.status_code in (401, 403):
+        print(f"[readers.star] {url}: {r.status_code}, backing off {BACKOFF_S}s and retrying once",
+              file=sys.stderr)
+        time.sleep(BACKOFF_S)
+        r = http.get(url)
     if r is not None and r.status_code in (401, 403) and not state["refreshed"]:
         state["refreshed"] = True
         new_token = _refresh_token(Polite(gap=2.0))
@@ -249,6 +260,7 @@ def fetch(days: int = 2) -> dict:
     # brief's "at most one price call per cinema x hall per day" ceiling, since days<=2 share
     # one cached sample rather than re-sampling per day).
     price_cache: dict[tuple[int, str], object] = {}
+    health = {"attempted": 0, "priced": 0, "error": None}
     notes: list[str] = []
 
     shows: list[dict] = []
@@ -285,6 +297,7 @@ def fetch(days: int = 2) -> dict:
             if cache_key not in price_cache:
                 ss_id = rec.get("ss_id")
                 if ss_id:
+                    health["attempted"] += 1
                     pr = http.get(f"{BASE}/seat-layout/{ss_id}")
                     # Price-call failures never raise — they only ever leave prices null,
                     # per the binding rule (a 401/403 here is not the token-rot path; only
@@ -346,4 +359,7 @@ def fetch(days: int = 2) -> dict:
     if not shows:
         raise RuntimeError("star: fetch produced zero shows")
 
-    return {"cinemas": cinemas, "shows": shows}
+    health["priced"] = sum(1 for v in price_cache.values() if v)
+    if health["attempted"] and not health["priced"]:
+        health["error"] = f"0/{health['attempted']} seat-layout samples priced"
+    return {"cinemas": cinemas, "shows": shows, "price_health": health}

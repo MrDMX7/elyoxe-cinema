@@ -16,7 +16,8 @@ seat-selection page makes on load. It needs a guest session, which the site itse
 anonymously (`auth/loginAsGuest`, no personal data), plus the `CreateMovieCookie` call that tells
 the backend which session is being viewed. No seat is ever set (`seats/setSeat` is never
 called); the seat-less order times out on its own (`BookingTimer: 300` s in the response — the
-site's `order/cancelOrder` answers 500 for an order with no seats, so it isn't called). One sample per cinema x experience per run; any
+site's `order/cancelOrder` is still called after every sample, in a `finally` — it answers 500 for an
+order with no seats, which is ignored). One sample per cinema x experience per run; any
 failure leaves that hall's `prices` None and never fails the chain. The two header/body encodings
 (RSA "source-name", 3DES cookie value) are the site's own, lifted from its public bundle
 (assets/index-*.js); see docs/probe/reel.md.
@@ -27,8 +28,18 @@ import base64
 import hashlib
 import json
 import re
+import sys
+import time
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+
+# Price-path libraries are imported at module load on purpose: a missing library must fail
+# loudly here, not be swallowed into "prices: null" by the sampler.
+from Crypto.Cipher import DES3
+from Crypto.Util.Padding import pad
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from curl_cffi import requests as cr
 
 from readers.common import CITIES, HALLS, Polite, city_of, slug
 
@@ -81,9 +92,6 @@ _COOKIE_KEY_SEED = b"ReelCinemasWeb"
 
 def _source_name() -> str:
     """`source-name` header: base64(RSA-PKCS1v1.5("web")) with the bundle's public key."""
-    from cryptography.hazmat.primitives import serialization
-    from cryptography.hazmat.primitives.asymmetric import padding
-
     body = "\n".join(_RSA_PUB[i:i + 64] for i in range(0, len(_RSA_PUB), 64))
     pem = f"-----BEGIN RSA PUBLIC KEY-----\n{body}\n-----END RSA PUBLIC KEY-----\n".encode()
     key = serialization.load_pem_public_key(pem)
@@ -92,22 +100,20 @@ def _source_name() -> str:
 
 def _cookie_value(obj: dict) -> str:
     """CreateMovieCookie body: 3DES-ECB(md5 key) of the JSON, url-safe base64 — as the bundle's X1()."""
-    from Crypto.Cipher import DES3
-    from Crypto.Util.Padding import pad
-
     h = hashlib.md5(_COOKIE_KEY_SEED).hexdigest()
     key = bytes.fromhex(h + h[:16])
     ct = DES3.new(key, DES3.MODE_ECB).encrypt(pad(json.dumps(obj, separators=(",", ":")).encode(), 8))
     return base64.b64encode(ct).decode().replace("/", "_").replace("+", "-")
 
 
+class _SampleError(Exception):
+    pass
+
+
 class _PriceClient:
     """Guest session against apiuae.reelcinemas.com (curl_cffi: the API is behind Cloudflare)."""
 
     def __init__(self):
-        from curl_cffi import requests as cr
-        import time
-
         self._time = time
         self.s = cr.Session(impersonate="chrome")
         self.h = {"Origin": SITE, "Referer": SITE + "/", "Accept": "application/json, text/plain, */*"}
@@ -122,27 +128,53 @@ class _PriceClient:
         headers = {**self.h, "source-name": _source_name()}
         return self.s.request(method, f"{API}/{path}", headers=headers, timeout=30, **kw)
 
-    def login(self) -> bool:
+    def login(self) -> str | None:
+        """Open the anonymous guest session. Returns None on success, else an error string."""
         r = self._call("POST", "auth/loginAsGuest", json={})
-        body = r.json() if r.status_code == 200 else {}
+        try:
+            body = r.json() if r.status_code == 200 else {}
+        except ValueError:
+            body = {}
         token = (((body or {}).get("tokens") or {}).get("access") or {}).get("token")
         self.ok = bool(token) and body.get("statusCode") == 1
         if self.ok:  # the site's axios interceptor sends the guest access token as a Bearer
             self.h["Authorization"] = f"Bearer {token}"
-        return self.ok
+            return None
+        return f"loginAsGuest failed: status={r.status_code} statusCode={(body or {}).get('statusCode')}"
 
     def sample(self, cinema_id: str, session_id: str, experience: str, screen: str) -> list[dict] | None:
+        """Read one session's ticket list. Raises _SampleError with the step that failed."""
         info = {"CinemaId": cinema_id, "SessionId": session_id, "Experience": experience, "ScreenName": screen}
-        r = self._call("POST", "booking/CreateMovieCookie", json={"value": _cookie_value(info)})
-        if r.status_code != 200:
-            return None
-        r = self._call("POST", "seats/getSeatLayout?IsCancel=false&sessionId=", json={})
-        if r.status_code != 200:
-            return None
-        body = r.json() or {}
-        src = body.get("Sourcedata") or {}
-        if body.get("statusCode") != 1 or not isinstance(src, dict):
-            return None
+        user_session = ""
+        try:
+            r = self._call("POST", "booking/CreateMovieCookie", json={"value": _cookie_value(info)})
+            if r.status_code != 200:
+                raise _SampleError(f"CreateMovieCookie status={r.status_code} (cookie key rotated?)")
+            r = self._call("POST", "seats/getSeatLayout?IsCancel=false&sessionId=", json={})
+            if r.status_code != 200:
+                raise _SampleError(f"getSeatLayout status={r.status_code}")
+            body = r.json() or {}
+            src = body.get("Sourcedata") or {}
+            if body.get("statusCode") != 1 or not isinstance(src, dict):
+                raise _SampleError(f"getSeatLayout statusCode={body.get('statusCode')} "
+                                   f"{str(body.get('statusMessage'))[:80]!r}")
+            try:
+                user_session = json.loads(src.get("BInfo") or "{}").get("UserSessionId") or ""
+            except (TypeError, ValueError):
+                user_session = ""
+            return self._parse(src)
+        finally:
+            # abandon the guest order through the site's own cancel call, every time (ruling
+            # 2026-09-26). It answers 500 for an order with no seats; that is expected and ignored.
+            try:
+                self._call("POST", "order/cancelOrder",
+                           json={"OptionalClientId": "211.111.111.200", "CinemaId": cinema_id,
+                                 "UserSessionId": user_session})
+            except Exception as e:  # network error on the courtesy cancel: note it, carry on
+                print(f"[readers.reel] cancelOrder failed: {e!r}", file=sys.stderr)
+
+    @staticmethod
+    def _parse(src: dict) -> list[dict] | None:
         areas = {a.get("AreaCode"): (a.get("AreaDescription") or "").strip()
                  for a in src.get("AreaEntityList") or []}
         out: dict[str, float] = {}
@@ -167,7 +199,8 @@ def _hall_of(session: dict) -> tuple[str, str, str]:
     for needle, hall, code in _NAME_FALLBACK:
         if needle in up:
             return hall, screen_name or needle.title(), code
-    return "OTHER", screen_name or "Standard", "STANDARD"
+    # unrecognised screen: its own price key, never shared with real Standard screens
+    return "OTHER", screen_name or "Standard", f"OTHER:{screen_name}"
 
 
 def _slugify(title: str) -> str:
@@ -248,12 +281,13 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
         hall, hall_label, code = _hall_of(s)
         if hall not in HALLS:
             hall = "OTHER"
-        key = (s["CinemaId"], code)
+        key = (s["CinemaId"], hall, code)  # resolved hall in the key: no OTHER<->Standard sharing
         # sample a session that hasn't started (an hour's margin) and still sells seats
         start = datetime.fromisoformat(showtime).replace(tzinfo=DUBAI)
         if (key not in sample_for and start > now + timedelta(hours=1)
                 and (s.get("SeatsAvailable") or 0) > 0 and s.get("AllowTicketSales", True)):
-            sample_for[key] = (s["CinemaId"], s["SessionId"], code, (s.get("ScreenName") or "").strip())
+            cookie_exp = "STANDARD" if code.startswith("OTHER:") else code
+            sample_for[key] = (s["CinemaId"], s["SessionId"], cookie_exp, (s.get("ScreenName") or "").strip())
         film_id = film["ID"]
         shows.append({
             "cinema": cinema_id_of[s["CinemaId"]],
@@ -273,21 +307,38 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
         raise RuntimeError("reel: zero shows in the window — Sessions.json stale or feed moved")
 
     price_of: dict = {}
+    health = {"attempted": 0, "priced": 0, "error": None}
     if prices and sample_for:
+        pc = _PriceClient()
         try:
-            pc = _PriceClient()
-            if pc.login():
-                for key, (cid, sid, code, screen) in sample_for.items():
-                    try:
-                        price_of[key] = pc.sample(cid, sid, code, screen)
-                    except Exception:
-                        price_of[key] = None
-        except Exception:
-            pass  # price failure never fails the chain
+            err = pc.login()
+        except Exception as e:  # network/Cloudflare/crypto failure while opening the guest session
+            err = f"loginAsGuest raised {e!r}"
+        if err:
+            health["error"] = err
+            print(f"[readers.reel] price sampling skipped: {err}", file=sys.stderr)
+        else:
+            errors = []
+            for key, (cid, sid, code, screen) in sample_for.items():
+                health["attempted"] += 1
+                try:
+                    price_of[key] = pc.sample(cid, sid, code, screen)
+                except _SampleError as e:
+                    price_of[key] = None
+                    errors.append(f"{cid}/{sid}: {e}")
+                except Exception as e:  # network error on one sample: that hall stays None
+                    price_of[key] = None
+                    errors.append(f"{cid}/{sid}: {e!r}")
+                if price_of.get(key):
+                    health["priced"] += 1
+            for e in errors:
+                print(f"[readers.reel] price sample failed: {e}", file=sys.stderr)
+            if health["attempted"] and not health["priced"]:
+                health["error"] = f"0/{health['attempted']} samples priced; first: {errors[0] if errors else 'empty ticket lists'}"
     for sh in shows:
         sh["prices"] = price_of.get(sh["prices"])
 
-    return {"cinemas": cinemas, "shows": shows}
+    return {"cinemas": cinemas, "shows": shows, "price_health": health}
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@ def data():
 
 
 def test_fixture_exists_and_has_both_top_level_keys(data):
-    assert set(data.keys()) == {"cinemas", "shows"}
+    assert {"cinemas", "shows"} <= set(data.keys()) <= {"cinemas", "shows", "price_health"}
     assert isinstance(data["cinemas"], list) and len(data["cinemas"]) > 0
     assert isinstance(data["shows"], list) and len(data["shows"]) > 0
 
@@ -187,22 +187,56 @@ def test_fetch_raises_when_showtimes_all_fail(monkeypatch):
         cineroyal.fetch()
 
 
-def test_price_cache_key_is_cinema_hall_date_not_screen_ref():
-    """Two different screenRefIds sharing the same hall class on the same day must reuse one
-    cached price sample (X: price cache key must be (cinema, hall, date))."""
+def _cineroyal_fake(monkeypatch):
+    """Two STANDARD screens at one cinema, same day, plus a post-midnight show that both
+    date queries return. Records every getSeatsByScreenRef call."""
+    import datetime as _dt
     import readers.cineroyal as cineroyal
-    import inspect
+    from zoneinfo import ZoneInfo
 
-    src = inspect.getsource(cineroyal.fetch)
-    assert "price_key = (cinema_ref, hall, show_date_iso)" in src
+    today = _dt.datetime.now(ZoneInfo("Asia/Dubai")).date()
+    tomorrow = today + _dt.timedelta(days=1)
+    now_showing_html = ('<a href="/home/chooseScreen?prettyUrl=heart-of-the-beast" class="movie__title">'
+                        "HEART OF THE BEAST<")
+    showtimes = {"film": {"rating": "PG13", "length": "120 min", "language": "English"},
+                 "shows": [{"cinemaRefId": 2, "screenType": "STANDARD", "filmShowTimeList": [
+                     {"screenRefId": 11, "showDate": today.isoformat(), "formattedShowTime": "10:00AM"},
+                     {"screenRefId": 12, "showDate": today.isoformat(), "formattedShowTime": "1:00PM"},
+                     {"screenRefId": 11, "showDate": tomorrow.isoformat(), "formattedShowTime": "12:15AM"},
+                 ]}]}
+    seat_calls = []
+
+    def fake_get(self, url, **kw):
+        return _FakeResp(200, text=now_showing_html)
+
+    def fake_post(self, url, **kw):
+        if url.endswith("/getShowTimesByFilmAndShowDate"):
+            return _FakeResp(200, showtimes)
+        if url.endswith("/getSeatsByScreenRef"):
+            seat_calls.append(json.loads(kw["data"]))
+            return _FakeResp(200, {"rowSeats": {"A": {"seats": [{"tierName": "Standard", "unitPrice": 40}]}}})
+        return _FakeResp(404)
+
+    monkeypatch.setattr(cineroyal.Polite, "get", fake_get)
+    monkeypatch.setattr(cineroyal.Polite, "post", fake_post)
+    return cineroyal, seat_calls, today, tomorrow
 
 
-def test_dedup_key_present_in_source():
-    import inspect
-    import readers.cineroyal as cineroyal
+def test_price_sampled_once_per_cinema_hall_day_not_per_screen(monkeypatch):
+    cineroyal, seat_calls, today, tomorrow = _cineroyal_fake(monkeypatch)
+    out = cineroyal.fetch(days=2)
+    # screens 11 and 12 share one sample for today; the post-midnight show is tomorrow's one sample
+    assert sorted(c["showDate"] for c in seat_calls) == [today.isoformat(), tomorrow.isoformat()]
+    assert all(sh["prices"] == [{"seat": "Standard", "aed": 40.0}] for sh in out["shows"])
+    _assert_health(out, attempted=2, priced=2)
 
-    src = inspect.getsource(cineroyal.fetch)
-    assert "dedup_key = (cinema_id, film_title, show_date_iso, time_24, hall)" in src
+
+def test_post_midnight_show_returned_by_both_queries_is_kept_once(monkeypatch):
+    cineroyal, _, _, tomorrow = _cineroyal_fake(monkeypatch)
+    out = cineroyal.fetch(days=2)
+    keys = [(sh["cinema"], sh["date"], sh["time"]) for sh in out["shows"]]
+    assert len(keys) == len(set(keys)) == 3
+    assert (out["shows"][0]["cinema"], tomorrow.isoformat(), "00:15") in keys
 
 
 def test_royal_plus_is_not_gold():
@@ -210,3 +244,20 @@ def test_royal_plus_is_not_gold():
     from readers.cineroyal import SCREEN_TYPE_TO_HALL
 
     assert SCREEN_TYPE_TO_HALL["ROYAL PLUS"] != "GOLD"
+
+
+# --- Review round 2: price_health + behavioural tests ---------------------------------------
+
+def _assert_health(out, attempted=None, priced=None, error_is_none=True):
+    h = out["price_health"]
+    assert set(h) == {"attempted", "priced", "error"}
+    assert isinstance(h["attempted"], int) and isinstance(h["priced"], int)
+    assert 0 <= h["priced"] <= h["attempted"]
+    if attempted is not None:
+        assert h["attempted"] == attempted
+    if priced is not None:
+        assert h["priced"] == priced
+    if error_is_none:
+        assert h["error"] is None
+    else:
+        assert isinstance(h["error"], str) and h["error"]

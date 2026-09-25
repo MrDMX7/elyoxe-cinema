@@ -128,3 +128,62 @@ def test_vox_raises_when_showtimes_blocked(monkeypatch):
     monkeypatch.setattr(vox, "_Client", FakeClient)
     with pytest.raises(RuntimeError):
         vox.fetch(days=2)
+
+
+# --- Review round 2: price_health + behavioural tests ---------------------------------------
+
+def _assert_health(out, attempted=None, priced=None, error_is_none=True):
+    h = out["price_health"]
+    assert set(h) == {"attempted", "priced", "error"}
+    assert isinstance(h["attempted"], int) and isinstance(h["priced"], int)
+    assert 0 <= h["priced"] <= h["attempted"]
+    if attempted is not None:
+        assert h["attempted"] == attempted
+    if priced is not None:
+        assert h["priced"] == priced
+    if error_is_none:
+        assert h["error"] is None
+    else:
+        assert isinstance(h["error"], str) and h["error"]
+
+
+def test_vox_price_health_from_mocked_guest_path(monkeypatch):
+    import datetime as _dt
+    from zoneinfo import ZoneInfo
+    from readers import vox
+
+    tmrw = (_dt.datetime.now(ZoneInfo("Asia/Dubai")) + _dt.timedelta(days=1)).date()
+    listing = ('<article class="cinema-summary" data-slug="yas-mall"><h3><a>Yas Mall</a></h3>'
+               '<p>Address: Yas Island, Abu Dhabi</p><a href="/showtimes/yas-mall">Showtimes</a></article>')
+    showtimes = ('<article class="movie-compare"><aside class="movie-hero"><h2>X</h2></aside>'
+                 '<div class="dates"><ol class="showtimes"><li><strong>Private Cinema <a class="tooltip">i</a>'
+                 '<div style="display:none">This session can be customized</div></strong>'
+                 '<ol><li><a class="showtime" href="/booking/0002-1">8:00pm</a></li></ol></li></ol></div></article>')
+    legend = '<li class="seat standard" data-label="Regular" data-price="50.00 AED per ticket"></li>'
+    order = "u-u-i-d_0002-1"
+    visited = []
+
+    class FakeClient:
+        def __init__(self, *a, **k):
+            pass
+
+        def get(self, url, **k):
+            visited.append(url)
+            if url.endswith("/cinemas"):
+                return _Resp(200, text=listing, url=url)
+            if "/showtimes/" in url:
+                return _Resp(200, text=showtimes if f"d={tmrw:%Y%m%d}" in url else "", url=url)
+            if url.endswith("/booking/0002-1"):
+                return _Resp(200, text="", url=f"https://uae.voxcinemas.com/booking/{order}/guest")
+            if url.endswith("/seats/fetch"):
+                return _Resp(200, text="", url=f"https://uae.voxcinemas.com/booking/{order}/seats/processing")
+            if url.endswith("/seats"):
+                return _Resp(200, text=legend, url=url)
+            return _Resp(302, text="", url=url)
+
+    monkeypatch.setattr(vox, "_Client", FakeClient)
+    out = vox.fetch(days=2)
+    assert out["shows"][0]["hall_label"] == "Private Cinema"
+    assert out["shows"][0]["prices"] == [{"seat": "Regular", "aed": 50.0}]
+    assert any("/abandon" in u for u in visited), "guest order must be abandoned"
+    _assert_health(out, attempted=1, priced=1)

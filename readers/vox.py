@@ -287,6 +287,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
 
     # prices: one legend read per cinema x hall_label, on a session at least an hour away
     price_of: dict[tuple[str, str], list[dict] | None] = {}
+    health = {"attempted": 0, "priced": 0, "error": None}
     if prices:
         tries: dict[tuple[str, str], int] = {}
         for sh in sorted(shows, key=lambda x: (x["date"], x["time"])):
@@ -297,16 +298,21 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
             if start < now + timedelta(hours=1):
                 continue
             tries[key] = tries.get(key, 0) + 1
+            health["attempted"] += 1
             try:
                 price_of[key] = _sample_prices(client, sh["book"])
             except _Blocked as e:
-                print(f"[readers.vox] price sampling stopped: {e}", file=sys.stderr)
+                health["error"] = f"price sampling stopped on a block: {e}"
+                print(f"[readers.vox] {health['error']}", file=sys.stderr)
                 break
             except Exception:
                 price_of[key] = None
     for sh in shows:
         sh["prices"] = price_of.get((sh["cinema"], sh["hall_label"]))
-    return {"cinemas": cinemas, "shows": shows}
+    health["priced"] = sum(1 for v in price_of.values() if v)
+    if health["attempted"] and not health["priced"] and not health["error"]:
+        health["error"] = f"0/{health['attempted']} seat-map legend samples priced"
+    return {"cinemas": cinemas, "shows": shows, "price_health": health}
 
 
 if __name__ == "__main__":

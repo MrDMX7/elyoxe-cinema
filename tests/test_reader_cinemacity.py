@@ -125,3 +125,64 @@ def test_cinemacity_raises_on_zero_shows(monkeypatch):
     monkeypatch.setattr(cinemacity, "Polite", FakePolite)
     with pytest.raises(RuntimeError):
         cinemacity.fetch(days=2)
+
+
+# --- Review round 2: price_health + behavioural tests ---------------------------------------
+
+def _assert_health(out, attempted=None, priced=None, error_is_none=True):
+    h = out["price_health"]
+    assert set(h) == {"attempted", "priced", "error"}
+    assert isinstance(h["attempted"], int) and isinstance(h["priced"], int)
+    assert 0 <= h["priced"] <= h["attempted"]
+    if attempted is not None:
+        assert h["attempted"] == attempted
+    if priced is not None:
+        assert h["priced"] == priced
+    if error_is_none:
+        assert h["error"] is None
+    else:
+        assert isinstance(h["error"], str) and h["error"]
+
+
+def test_cinemacity_price_health_and_parse_failure_is_contained(monkeypatch):
+    import datetime as _dt
+    from zoneinfo import ZoneInfo
+    from readers import cinemacity
+
+    tmrw = (_dt.datetime.now(ZoneInfo("Asia/Dubai")) + _dt.timedelta(days=1)).date().isoformat()
+    uuid = "90bb7723-7ca3-5bec-8bd9-e0c1d7d20810"
+    show = {"startsAt": f"{tmrw}T12:00:00", "tags": [], "isExpired": False,
+            "data": {"ticketing": [{"provider": "default",
+                                    "urls": [f"https://booking.cinemacity.ae/launch/ticketing/{uuid}"]}]}}
+    first = cinemacity.CINEMAS_RAW[0][0]
+
+    def run(tickets_payload):
+        class FakePolite:
+            def __init__(self, *a, **k):
+                pass
+
+            def get(self, url, params=None, **k):
+                if url.endswith("/schedule"):
+                    code = params["theaters"].split('"id":"')[1].split('"')[0]
+                    sched = {"m1": {tmrw: [show]}} if code == first else {}
+                    return _Resp(200, {code: {"schedule": sched}})
+                return _Resp(200, [{"id": "m1", "title": "X", "runtime": 5400}])
+
+            def post(self, url, json=None, **k):
+                if "seatpreview" in url:
+                    return _Resp(200, {"dataToken": "t", "selectSeatsModel": {"seatsLayoutModel": {
+                        "areas": [{"areaNumber": "1", "name": "Deluxe"}],
+                        "rows": [{"seats": [{"areaId": "1", "areaCategoryCode": "C1"}]}]}}})
+                return _Resp(200, tickets_payload)
+
+        monkeypatch.setattr(cinemacity, "Polite", FakePolite)
+        return cinemacity.fetch(days=2)
+
+    ok = run({"selectTicketsModel": {"groupedTicketTypes": [{"ticketTypeModels": [
+        {"areaCategoryCode": "C1", "price": 5000, "displayName": "AQ Deluxe"}]}]}})
+    assert ok["shows"][0]["prices"] == [{"seat": "Deluxe", "aed": 50.0}]
+    _assert_health(ok, attempted=1, priced=1)
+
+    bad = run({"selectTicketsModel": {"groupedTicketTypes": ["not-a-dict"]}})  # parse error
+    assert bad["shows"][0]["prices"] is None
+    assert bad["price_health"]["priced"] == 0 and bad["price_health"]["error"]

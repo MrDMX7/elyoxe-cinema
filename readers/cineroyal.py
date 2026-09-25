@@ -194,6 +194,7 @@ def fetch(days: int = 2) -> dict:
     dates = [today + datetime.timedelta(days=i) for i in range(max(days, 1))]
     want_dates = {d.strftime("%Y-%m-%d") for d in dates}
     price_cache: dict[tuple, list[dict] | None] = {}
+    health = {"attempted": 0, "priced": 0, "error": None}
     shows: list[dict] = []
     seen_shows: set[tuple] = set()
 
@@ -245,6 +246,7 @@ def fetch(days: int = 2) -> dict:
                     # cinema must not each cost their own call).
                     price_key = (cinema_ref, hall, show_date_iso)
                     if price_key not in price_cache:
+                        health["attempted"] += 1
                         price_cache[price_key] = _get_seat_prices(
                             s, screen_ref, cinema_ref, show_date_iso, formatted_time, pretty_url
                         )
@@ -282,7 +284,10 @@ def fetch(days: int = 2) -> dict:
     if not shows:
         raise RuntimeError("cineroyal: fetch produced zero shows")
 
-    return {"cinemas": cinemas, "shows": shows}
+    health["priced"] = sum(1 for v in price_cache.values() if v)
+    if health["attempted"] and not health["priced"]:
+        health["error"] = f"0/{health['attempted']} getSeatsByScreenRef samples priced"
+    return {"cinemas": cinemas, "shows": shows, "price_health": health}
 
 
 def _to_24h(formatted: str) -> str | None:

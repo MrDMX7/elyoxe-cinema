@@ -117,3 +117,67 @@ def test_novo_raises_when_sessions_are_blocked(monkeypatch):
     monkeypatch.setattr(novo, "Polite", FakePolite)
     with pytest.raises(RuntimeError):
         novo.fetch(days=2)
+
+
+# --- Review round 2: price_health + behavioural tests ---------------------------------------
+
+def _assert_health(out, attempted=None, priced=None, error_is_none=True):
+    h = out["price_health"]
+    assert set(h) == {"attempted", "priced", "error"}
+    assert isinstance(h["attempted"], int) and isinstance(h["priced"], int)
+    assert 0 <= h["priced"] <= h["attempted"]
+    if attempted is not None:
+        assert h["attempted"] == attempted
+    if priced is not None:
+        assert h["priced"] == priced
+    if error_is_none:
+        assert h["error"] is None
+    else:
+        assert isinstance(h["error"], str) and h["error"]
+
+
+def test_novo_price_health_midnight_and_window(monkeypatch):
+    import datetime as _dt
+    from zoneinfo import ZoneInfo
+    from readers import novo
+
+    today = _dt.datetime.now(ZoneInfo("Asia/Dubai")).date()
+    yday, tmrw = today - _dt.timedelta(days=1), today + _dt.timedelta(days=1)
+    key = "Buhairah Centre~9~false~x"
+
+    def sess(sid, t, midnight=False):
+        return {"show_time": t, "experience": "2D", "cinemaId": 9, "session_id": sid,
+                "sessionDisabled": False, "isMidnightShow": midnight}
+
+    by_day = {
+        yday.isoformat(): [sess("1", "12:30 AM", True)],          # really today 00:30 -> kept
+        today.isoformat(): [],
+        tmrw.isoformat(): [sess("2", "08:00 PM"), sess("3", "01:00 AM", True)],  # 3 -> day+2, dropped
+    }
+    layouts = []
+
+    class FakePolite:
+        def __init__(self, *a, **k):
+            pass
+
+        def get(self, url, params=None, **k):
+            if url.endswith("/cinemas"):
+                return _Resp(200, {"data": [{"name": "Buhairah Centre", "name_ar": "", "lat": "", "long": "", "address": ""}]})
+            if url.endswith("/movies"):
+                return _Resp(200, {"data": {"movies": [{"movie_id": 1, "movie_title": "X"}]}})
+            if "/seat-layout/" in url:
+                layouts.append(url)
+                return _Resp(200, {"success": True, "data": {"areas": [{"name": "COOL", "priceInCents": 3675}]}})
+            d = url.rsplit("/", 1)[1]
+            rows = by_day.get(d) or []
+            if not rows:
+                return _Resp(400, {"success": False, "message": "No sessions found"})
+            return _Resp(200, {"success": True, "data": {"sessions": {d: {key: rows}}}})
+
+    monkeypatch.setattr(novo, "Polite", FakePolite)
+    out = novo.fetch(days=2)
+    got = sorted((sh["date"], sh["time"]) for sh in out["shows"])
+    assert got == [(today.isoformat(), "00:30"), (tmrw.isoformat(), "20:00")]
+    assert all(sh["prices"] == [{"seat": "COOL", "aed": 36.75}] for sh in out["shows"])
+    assert len(layouts) == 1
+    _assert_health(out, attempted=1, priced=1)

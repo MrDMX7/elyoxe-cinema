@@ -15,8 +15,9 @@ returns real, live prices (cineroyal, star) is never second-guessed by this tabl
 """
 from __future__ import annotations
 
-from datetime import date
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import yaml
 
@@ -49,9 +50,9 @@ def fill(data_or_reader_output: dict, table: dict, today: str | None = None) -> 
     `table[chain]["*"][hall]`. A show already carrying live prices (not None) is left
     untouched. A hall/cinema/chain missing from `table` is left `None` — no invention.
     On every show it fills, sets `price_source: "table"` and `price_checked: today`
-    (ISO date, defaults to the real today). Returns how many shows were filled.
+    (ISO date, defaults to today in Asia/Dubai). Returns how many shows were filled.
     """
-    today = today or date.today().isoformat()
+    today = today or datetime.now(ZoneInfo("Asia/Dubai")).date().isoformat()
     cinema_chain = _cinema_chain_map(data_or_reader_output)
     filled = 0
 

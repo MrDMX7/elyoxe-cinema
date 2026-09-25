@@ -188,3 +188,50 @@ def test_fetch_raises_when_ajax_all_fail(monkeypatch):
 
     with pytest.raises(RuntimeError, match="ajax"):
         roxy.fetch()
+
+
+# --- Review round 2: price_health + behavioural tests ---------------------------------------
+
+def _assert_health(out, attempted=None, priced=None, error_is_none=True):
+    h = out["price_health"]
+    assert set(h) == {"attempted", "priced", "error"}
+    assert isinstance(h["attempted"], int) and isinstance(h["priced"], int)
+    assert 0 <= h["priced"] <= h["attempted"]
+    if attempted is not None:
+        assert h["attempted"] == attempted
+    if priced is not None:
+        assert h["priced"] == priced
+    if error_is_none:
+        assert h["error"] is None
+    else:
+        assert isinstance(h["error"], str) and h["error"]
+
+
+def test_roxy_twin_sessions_get_distinct_labels_and_price_health(monkeypatch):
+    import datetime as _dt
+    import readers.roxy as roxy
+    from zoneinfo import ZoneInfo
+
+    today = _dt.datetime.now(ZoneInfo("Asia/Dubai")).date()
+    raw = f"{today:%b} {today.day} {today:%a}"
+    home_html = '<a href="/en/movie/smurfs">Smurfs</a>'
+    movie_html = '<div data-history-node-id="178226"><h1>Smurfs</h1></div>'
+    slot = ('cinema-name="Dubai Hills Mall" cinema-id="0000000007" screen="Silver" nid="178226" '
+            'date="{raw}" time="23:05" session="{sid}"')
+    ajax = {"html": slot.format(raw=raw, sid="151749") + " " + slot.format(raw=raw, sid="151750")}
+
+    def fake_get(self, url, **kw):
+        if url.endswith("/en"):
+            return _FakeResp(200, text=home_html)
+        if "movie-schedule/ajax" in url:
+            return _FakeResp(200, ajax)
+        if "/en/movie/" in url:
+            return _FakeResp(200, text=movie_html)
+        return _FakeResp(404, text="")
+
+    monkeypatch.setattr(roxy._Client, "get", fake_get)
+    out = roxy.fetch(days=2)
+    labels = sorted(sh["hall_label"] for sh in out["shows"])
+    assert labels == ["Silver (session 151749)", "Silver (session 151750)"]
+    assert all("_session" not in sh for sh in out["shows"])
+    _assert_health(out, attempted=0, priced=0)

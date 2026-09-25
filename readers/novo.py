@@ -146,11 +146,16 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
 
     now = datetime.now(DUBAI)
     dates = [(now.date() + timedelta(days=i)).isoformat() for i in range(max(days, 1))]
+    window = set(dates)
+    # Novo files after-midnight shows under the previous business day, so today's 00:xx shows
+    # live in yesterday's list: query it too and keep only what lands inside the window.
+    query_dates = [(now.date() - timedelta(days=1)).isoformat()] + dates
 
     shows = []
     calls = failed = 0
     price_cache: dict[tuple[str, str], list[dict] | None] = {}
     price_tries: dict[tuple[str, str], int] = {}
+    health = {"attempted": 0, "priced": 0, "error": None}
     for movie in movies:
         mid = movie["movie_id"]
         title = movie["movie_title"]
@@ -159,7 +164,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
         runtime = movie.get("movie_duration") or None
         book = _book_url(mid, title)
 
-        for d in dates:
+        for d in query_dates:
             r = s.get(f"{API}/sessions/{mid}/date/{d}", params={
                 "cinemaId": "null", "languageId": "", "timing": "", "formatId": "",
                 "country_id": 2, "channel": "web", "v": 2,
@@ -194,10 +199,13 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
                     if sess.get("isMidnightShow") and t < "06:00":
                         start += timedelta(days=1)
                     cal_date = start.date().isoformat()
+                    if cal_date not in window:
+                        continue
                     if (prices and price_cache.get(key) is None and price_tries.get(key, 0) < 2
                             and start > now + timedelta(hours=1) and sess.get("session_id")):
                         price_tries[key] = price_tries.get(key, 0) + 1
                         price_cache[key] = _sample_prices(s, sess.get("cinemaId"), sess["session_id"])
+                        health["attempted"] += 1
                     shows.append({
                         "cinema": cinema_id,
                         "film_title": title,
@@ -218,7 +226,10 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
         raise RuntimeError("novo: zero shows in the window — sessions API returned nothing usable")
     for sh in shows:
         sh["prices"] = price_cache.get(sh["prices"])
-    return {"cinemas": cinemas, "shows": shows}
+    health["priced"] = sum(1 for v in price_cache.values() if v)
+    if health["attempted"] and not health["priced"]:
+        health["error"] = f"0/{health['attempted']} seat-layout samples priced"
+    return {"cinemas": cinemas, "shows": shows, "price_health": health}
 
 
 if __name__ == "__main__":
