@@ -8,9 +8,13 @@ slug()) so "Heart of the Beast" and "HEART OF THE BEAST (PG13)" become one film.
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from readers.common import slug
+
+# All reader-supplied show date/time strings are Asia/Dubai local time (no reader emits an
+# offset), and Dubai has stayed at a fixed UTC+4 with no DST, so a fixed-offset tzinfo is exact.
+_DUBAI_TZ = timezone(timedelta(hours=4))
 
 # Bracketed/parenthesised suffixes and trailing release-format tags to drop when matching a
 # film across chains — but never "Encore": that is a different release of the same title, not
@@ -18,7 +22,7 @@ from readers.common import slug
 _TRAILING_PARENS = re.compile(r"\s*\([^)]*\)\s*$")
 _TRAILING_BRACKETS = re.compile(r"\s*\[[^\]]*\]\s*$")
 _TRAILING_IMAX = re.compile(r"\s*-?\s*IMAX\s*$", re.IGNORECASE)
-_TRAILING_3D2D = re.compile(r"\s+[23]D\s*$", re.IGNORECASE)
+_TRAILING_3D2D = re.compile(r"\s*-?\s*[23]D\s*$", re.IGNORECASE)
 _TRAILING_DUBBED = re.compile(r"\s*-\s*Dubbed\s*$", re.IGNORECASE)
 
 
@@ -47,7 +51,21 @@ def _better_title(candidate: str, current: str) -> bool:
 
 
 def _show_dt(show: dict) -> datetime:
+    """A show's date+time as Asia/Dubai local time (naive — readers never emit an offset)."""
     return datetime.fromisoformat(f"{show['date']}T{show['time']}")
+
+
+def _local_now(now: str) -> datetime:
+    """Parse `now` (naive or tz-aware ISO) into a naive Asia/Dubai local datetime.
+
+    A naive string is already assumed to be Dubai local time (same convention as show
+    date/time). A tz-aware string is converted to Dubai local time first, so a UTC or other
+    offset `now` compares correctly against the naive show times.
+    """
+    dt = datetime.fromisoformat(now)
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(_DUBAI_TZ).replace(tzinfo=None)
+    return dt
 
 
 def merge(results: dict[str, dict | None], previous: dict | None, now: str) -> dict:
@@ -71,7 +89,7 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str) -> d
 
     def add_film(chain: str, show: dict) -> str:
         cleaned = clean_title(show["film_title"])
-        fid = slug(cleaned)
+        fid = film_fid(show["film_title"])
         acc = films_acc.setdefault(
             fid,
             {
@@ -112,9 +130,19 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str) -> d
         )
         acc["chains"].add(chain)
 
+    def carry_over_chain(chain: str) -> None:
+        """Restore a chain's cinemas + shows from `previous` verbatim (failed or not run)."""
+        prev_chain_cinema_ids = {cid for cid, c in prev_cinemas.items() if c.get("chain") == chain}
+        for cid in prev_chain_cinema_ids:
+            cinemas_out[cid] = prev_cinemas[cid]
+        for show in prev_shows:
+            if show.get("cinema") in prev_chain_cinema_ids:
+                shows_out.append(dict(show))
+                if show.get("film"):
+                    add_prev_film(chain, show["film"])
+
     for chain, result in results.items():
         prev_chain_info = prev_chains.get(chain, {})
-        prev_chain_cinema_ids = {cid for cid, c in prev_cinemas.items() if c.get("chain") == chain}
         ok = isinstance(result, dict)
 
         if ok:
@@ -133,16 +161,21 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str) -> d
                 "at": prev_chain_info.get("at", now),
                 "error": error or "no data",
             }
-            for cid in prev_chain_cinema_ids:
-                cinemas_out[cid] = prev_cinemas[cid]
-            for show in prev_shows:
-                if show.get("cinema") in prev_chain_cinema_ids:
-                    shows_out.append(dict(show))
-                    if show.get("film"):
-                        add_prev_film(chain, show["film"])
+            carry_over_chain(chain)
 
-    now_dt = datetime.fromisoformat(now)
-    cutoff = now_dt - timedelta(minutes=30)
+    # A chain that was refreshed before but isn't in `results` at all this run (e.g. its reader
+    # crashed before returning, or was skipped) is stale, not silently dropped.
+    for chain, prev_chain_info in prev_chains.items():
+        if chain in results:
+            continue
+        chains_out[chain] = {
+            "ok": False,
+            "at": prev_chain_info.get("at", now),
+            "error": "not run",
+        }
+        carry_over_chain(chain)
+
+    cutoff = _local_now(now) - timedelta(minutes=30)
     shows_out = [s for s in shows_out if _show_dt(s) >= cutoff]
     shows_out.sort(key=lambda s: (s["date"], s["time"]))
 

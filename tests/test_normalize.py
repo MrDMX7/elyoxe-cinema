@@ -148,6 +148,76 @@ def test_past_shows_are_dropped():
     assert data["shows"][0]["time"] == "19:30"
 
 
+def test_tz_aware_now_is_treated_as_dubai_local():
+    # 2026-09-26T01:00:00+04:00 == 2026-09-25T21:00:00+00:00 (same instant, Dubai is UTC+4).
+    # Cutoff (30 min before) is Dubai-local 2026-09-26 00:30. A show at 00:45 is kept, one at
+    # 23:00 the previous evening is dropped. This must not raise even though `now` is aware
+    # while show date/time strings are naive (normalize.py:146 TypeError, now fixed).
+    results = {
+        "vox": {
+            "cinemas": [VOX_CINEMA],
+            "shows": [
+                show(date="2026-09-26", time="00:45"),
+                show(date="2026-09-25", time="23:00"),
+            ],
+        }
+    }
+    for now in ("2026-09-26T01:00:00+04:00", "2026-09-25T21:00:00+00:00"):
+        data = normalize.merge(results, previous=None, now=now)
+        assert len(data["shows"]) == 1, now
+        assert data["shows"][0]["time"] == "00:45", now
+
+
+def test_trailing_3d_dash_is_fully_stripped():
+    assert normalize.clean_title("Heart of the Beast - 3D") == "Heart of the Beast"
+    assert normalize.clean_title("Heart of the Beast 3D") == "Heart of the Beast"
+    # "Encore" is a different release, never stripped.
+    assert normalize.clean_title("Avengers Endgame: Encore") == "Avengers Endgame: Encore"
+
+
+def test_chain_absent_from_results_is_marked_stale_not_dropped():
+    previous = {
+        "generated": "2026-09-25T14:00:00",
+        "chains": {
+            "vox": {"ok": True, "at": "2026-09-25T14:00:00", "error": None},
+            "star": {"ok": True, "at": "2026-09-25T14:00:00", "error": None},
+        },
+        "cinemas": {"vox-al-jimi-mall": VOX_CINEMA, "star-bawadi-mall": STAR_CINEMA},
+        "films": {
+            "heart-of-the-beast": {
+                "title": "Heart of the Beast",
+                "lang": "English",
+                "rating": "PG13",
+                "runtime": 105,
+                "genres": None,
+                "poster": None,
+                "chains": ["star"],
+            }
+        },
+        "shows": [
+            {
+                "cinema": "star-bawadi-mall",
+                "film": "heart-of-the-beast",
+                "date": "2026-09-25",
+                "time": "22:00",
+                "hall": "Standard",
+                "hall_label": "STAR SELECT",
+                "prices": [{"seat": "STAR SELECT", "aed": 42.0}],
+                "book": "https://starcinemas.ae/book/2",
+            }
+        ],
+    }
+
+    # "star" is not run this cycle at all — not even a None entry.
+    results = {"vox": {"cinemas": [VOX_CINEMA], "shows": []}}
+    data = normalize.merge(results, previous=previous, now=NOW)
+
+    assert data["chains"]["star"] == {"ok": False, "at": "2026-09-25T14:00:00", "error": "not run"}
+    assert data["cinemas"]["star-bawadi-mall"] == STAR_CINEMA
+    assert len(data["shows"]) == 1
+    assert data["shows"][0]["cinema"] == "star-bawadi-mall"
+
+
 def test_city_slices_only_contains_its_city():
     dubai_cinema = {**VOX_CINEMA, "id": "vox-mall-of-the-emirates", "city": "dubai"}
     results = {
