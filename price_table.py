@@ -49,8 +49,11 @@ def fill(data_or_reader_output: dict, table: dict, today: str | None = None) -> 
     Looks up `table[chain][cinema_id][hall]` first, then falls back to
     `table[chain]["*"][hall]`. A show already carrying live prices (not None) is left
     untouched. A hall/cinema/chain missing from `table` is left `None` — no invention.
-    On every show it fills, sets `price_source: "table"` and `price_checked: today`
-    (ISO date, defaults to today in Asia/Dubai). Returns how many shows were filled.
+    On every show it fills, sets `price_source: "table"` and `price_checked`: the TABLE
+    entry's own `checked` date (when that price was actually seen), never today — the site
+    shows it as «السعر بتاريخ <date>» and never under a live «updated X min ago». `today`
+    (ISO date, Asia/Dubai) is only the fallback for an entry that carries no date.
+    Returns how many shows were filled.
     """
     today = today or datetime.now(ZoneInfo("Asia/Dubai")).date().isoformat()
     cinema_chain = _cinema_chain_map(data_or_reader_output)
@@ -76,7 +79,7 @@ def fill(data_or_reader_output: dict, table: dict, today: str | None = None) -> 
 
         show["prices"] = [dict(s) for s in entry["seats"]]
         show["price_source"] = "table"
-        show["price_checked"] = today
+        show["price_checked"] = str(entry.get("checked") or today)
         filled += 1
 
     return filled

@@ -48,7 +48,15 @@ def test_cinema_specific_entry_wins_over_star_entry():
     show = data["shows"][0]
     assert show["prices"] == [{"seat": "Regular", "aed": 46}]
     assert show["price_source"] == "table"
-    assert show["price_checked"]
+    # the date the TABLE price was seen, not the day of the run: the site prints «السعر بتاريخ <date>»
+    assert show["price_checked"] == "2026-09-25"
+
+
+def test_price_checked_is_the_entry_date_even_on_a_later_run():
+    data = {"cinemas": {"vox-al-jimi-mall": _cinema("vox-al-jimi-mall", "vox")},
+            "shows": [_show("vox-al-jimi-mall", "Standard")]}
+    price_table.fill(data, TABLE, today="2026-10-30")
+    assert data["shows"][0]["price_checked"] == "2026-09-25"
 
 
 def test_star_entry_used_when_no_cinema_specific_entry():
