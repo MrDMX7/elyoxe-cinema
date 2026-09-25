@@ -50,7 +50,7 @@
   // HTML: the percentage sits in its own isolated span, or an Arabic run prints «خصم %20»
   function offer(r) {
     if (r.type === "bogo") return esc(lang === "ar" ? "تذكرتين بسعر وحدة" : "Buy one, get one");
-    var v = '<span class="num">' + esc(+r.value) + "%</span>";
+    var v = '<span class="num" dir="ltr">' + esc(+r.value) + "%</span>";
     return lang === "ar" ? "خصم " + v : v + " off";
   }
   function weak(r) { return r && (r.confidence === "third-party" || r.confidence === "unconfirmed"); }
@@ -200,32 +200,53 @@
     if (page === "film") renderFilm();
   }
 
-  /* ---------------- pickers: each select is as wide as the word it shows, so the sentence reads as one line */
+  /* ---------------- pickers: each select is as wide as the word it shows, so the sentence reads as one line.
+     Measured in the select's own font once that font is actually loaded (document.fonts.load for the
+     exact text), plus both paddings, the border and the arrow's room; CSS min-inline-size is the floor
+     if any of this fails, so a city can never be clipped to its first letter. */
   function fit(sel) {
     var o = sel.options[sel.selectedIndex]; if (!o) return;
     var cs = getComputedStyle(sel), s = document.createElement("span");
-    s.style.cssText = "position:absolute;visibility:hidden;white-space:pre";
+    s.style.cssText = "position:absolute;visibility:hidden;white-space:pre;inset-block-start:0";
+    s.style.font = cs.font; s.style.letterSpacing = cs.letterSpacing;
     s.style.fontFamily = cs.fontFamily; s.style.fontSize = cs.fontSize; s.style.fontWeight = cs.fontWeight;
+    s.setAttribute("dir", document.documentElement.dir || "rtl");
     s.textContent = o.text; document.body.appendChild(s);
-    sel.style.inlineSize = Math.ceil(s.getBoundingClientRect().width + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2) + "px";
+    var px = function (v) { return parseFloat(v) || 0; };
+    var w = s.getBoundingClientRect().width + px(cs.paddingLeft) + px(cs.paddingRight) + px(cs.borderLeftWidth) + px(cs.borderRightWidth);
     s.remove();
+    sel.style.inlineSize = Math.ceil(w + 6) + "px";
   }
-  function fitAll() { qa(".sel select").forEach(fit); }
+  function fitWhenLoaded(sel) {
+    fit(sel);
+    var o = sel.options[sel.selectedIndex];
+    if (o && document.fonts && document.fonts.load) {
+      var cs = getComputedStyle(sel);
+      document.fonts.load(cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily, o.text).then(function () { fit(sel); }, function () {});
+    }
+  }
+  function fitAll() { qa(".sel select").forEach(fitWhenLoaded); }
   qa("select[data-city]").forEach(function (sel) {
     sel.value = city;
     sel.addEventListener("change", function () {
       city = sel.value; set("city", city);
-      fit(sel);
+      fitWhenLoaded(sel);
       if (pageCity) { location.href = C.base + city + "/"; return; }
       if (page === "home") loadCity(); else render();
     });
   });
   qa("select[data-card]").forEach(function (sel) {
     sel.value = card;
-    sel.addEventListener("change", function () { card = sel.value; set("card", card); qa("select[data-card]").forEach(function (o) { o.value = card; fit(o); }); render(); });
+    sel.addEventListener("change", function () { card = sel.value; set("card", card); qa("select[data-card]").forEach(function (o) { o.value = card; fitWhenLoaded(o); }); render(); });
   });
 
-  fitAll(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll);
+  fitAll();
+  if (document.fonts) {
+    if (document.fonts.ready) document.fonts.ready.then(fitAll);
+    if (document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", fitAll);
+  }
+  window.addEventListener("load", fitAll);
+  window.addEventListener("resize", fitAll);
   marks(); ages();
   fetch("/cinema/data/discounts.json").then(function (r) { return r.ok ? r.json() : null; })
     .then(function (j) { D = j; render(); }).catch(function () {});

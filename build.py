@@ -79,7 +79,9 @@ PCT = re.compile(r"(?<![\w.])(\d+(?:\.\d+)?\s?%)")
 def dates(h):
     """escaped text -> the same with every ISO date and every percentage isolated. Inside an Arabic run a
     number turns Arabic (UBA W2), so «خصم 20%» would print «خصم %20» and 2027-08-05 as 05-08-2027."""
-    return PCT.sub(r'<span class="num">\1</span>', DATE.sub(r'<bdi class="num">\1</bdi>', h))
+    # dir="ltr": span.num is unicode-bidi:plaintext in base.css, which falls back to the page's RTL for a
+    # run with no strong letter — «88%» alone would still print «%88»; base.css isolates span.num[dir=ltr]
+    return PCT.sub(r'<span class="num" dir="ltr">\1</span>', DATE.sub(r'<bdi class="num">\1</bdi>', h))
 
 
 def money(x):
@@ -87,7 +89,32 @@ def money(x):
 
 
 def num(x, cls="num"):
-    return f'<span class="{cls}">{esc(x)}</span>'
+    d = ' dir="ltr"' if "%" in str(x) else ""
+    return f'<span class="{cls}"{d}>{esc(x)}</span>'
+
+
+ARABIC = re.compile(r"[؀-ۿ]")
+RERELEASE = ("إعادة عرض", "Re-release")
+
+
+def clean_reader_name(name):
+    """A raw reader cinema name made presentable when cinemas.yaml has no entry: «Al Foah -Al Ain» -> «Al Foah - Al Ain»."""
+    n = re.sub(r"\s*-\s*", " - ", (name or "").strip())
+    return re.sub(r"\s+", " ", n).strip()
+
+
+def load_cinema_names(path):
+    if not path or not os.path.exists(path): return {}
+    return (yaml.safe_load(open(path, encoding="utf-8")) or {}).get("cinemas") or {}
+
+
+def genre_words(genres, lang):
+    """Enriched genres are {"ar": [...], "en": [...]}; older data has a plain English list."""
+    if isinstance(genres, dict):
+        words = genres.get(lang) or ([] if lang == "en" else [GENRES.get(g, g) for g in genres.get("en") or []])
+    else:
+        words = [GENRES.get(g, g) if lang == "ar" else g for g in genres or []]
+    return [w for w in words if w]
 
 
 # ---------------------------------------------------------------- relative time (same wording as cinema.js)
@@ -237,12 +264,18 @@ class Site:
         self.shows = [s for s in data.get("shows", []) if s.get("cinema") in self.cinemas and s.get("film") in self.films]
         self.tpl = open(os.path.join(SRC, "page.html"), encoding="utf-8").read()
         self.urls, self.hashes, self.lastmod_path = [], {}, None
+        self.names = load_cinema_names(os.path.join(ROOT, "cinemas.yaml"))
         self.v = hashlib.sha1(b"".join(open(os.path.join(SRC, f), "rb").read() for f in sorted(os.listdir(SRC)))).hexdigest()[:10]
 
     # -------- names
     def cname(self, cid, lang):
+        """cinemas.yaml «chain — mall» first; else the reader's Arabic name (ar); else its cleaned name."""
+        n = self.names.get(cid) or {}
         c = self.cinemas[cid]
-        return (c.get("name_ar") if lang == "ar" else None) or c.get("name") or cid
+        return n.get(lang) or (c.get("name_ar") if lang == "ar" else None) or clean_reader_name(c.get("name")) or cid
+
+    def cname_is_en(self, cid, lang):
+        return lang == "ar" and not ARABIC.search(self.cname(cid, lang))
 
     def ftitle(self, fid, lang):
         f = self.films[fid]
@@ -378,7 +411,8 @@ class Site:
                  f'<span class="amt"><span class="num">{money(best[0])}</span> <small>{esc(L(T["aed"], lang))}</small></span>'
                  f'<span class="where">{esc(self.cname(best[1]["cinema"], lang))}</span>') if best else \
                 f'<span class="lbl">{esc(L(T["box"], lang))}</span>'
-        meta = " ".join(x for x in [num(f["rating"]) if f.get("rating") else "",
+        meta = " ".join(x for x in [f'<span class="rr">{esc(L(RERELEASE, lang))}</span>' if f.get("rerelease") else "",
+                                    num(f["rating"]) if f.get("rating") else "",
                                     num(f"{f['runtime']}") + (" د" if lang == "ar" else " min") if f.get("runtime") else ""] if x)
         return (f'<a class="film v-{v}" href="{P(lang, "film", fid)}" data-fid="{esc(fid)}">{poster}<span class="fbody">'
                 f'<span class="top"><span class="v">{esc(L(VERDICT.get(v, VERDICT["unknown"]), lang))}</span><span class="meta">{meta}</span></span>'
@@ -463,7 +497,7 @@ class Site:
                         halls = [k for k in pr if k != "Standard"]
                         hn = ("، " if lang == "ar" else ", ").join(self.h.name(c["chain"], pr[k]["code"], pr[k]["label"], lang) for k in halls)
                         body += (f'<div class="row cin"><a class="nm" href="{P(lang, city, cid)}">{self.cname_html(cid, lang)}</a>'
-                                 f'<span class="sub"><bdi>{esc(c.get("mall") or "")}{(" · " + esc(hn)) if hn else ""}</bdi> {self.fresh(c["chain"], lang)}</span>'
+                                 f'<span class="sub">{("<bdi>" + esc(hn) + "</bdi>") if hn else ""} {self.fresh(c["chain"], lang)}</span>'
                                  f'<span class="from">{("من " if lang == "ar" else "from ") + self.pcell(low[0], c["chain"], low[1], low[2]) if low else self.box(lang)}</span></div>')
                     body += '</div></section>'
                     for mode in ("links", "plain"):
@@ -505,7 +539,7 @@ class Site:
     def cname_html(self, cid, lang):
         """The cinema's name, marked English when an Arabic page has only the English name."""
         n = esc(self.cname(cid, lang))
-        return f'<bdi lang="en">{n}</bdi>' if lang == "ar" and not self.cinemas[cid].get("name_ar") else n
+        return f'<bdi lang="en">{n}</bdi>' if self.cname_is_en(cid, lang) else n
 
     def hall_html(self, s, lang):
         n = self.hname(s, lang)
@@ -540,11 +574,12 @@ class Site:
             for lang in ("ar", "en"):
                 cn, name = L(CITY.get(city, (city, city)), lang), self.cname(cid, lang)
                 body = self.crumbs(lang, (cn, P(lang, city)), (name, None))
-                body += f'<h1{" lang=\"en\"" if lang == "ar" and not c.get("name_ar") else ""}>{esc(name)}</h1>'
-                addr = " · ".join(esc(x) for x in [c.get("mall"), c.get("address")] if x)
-                addr = f"<bdi>{addr}</bdi>" if addr else ""
+                body += f'<h1{" lang=\"en\"" if self.cname_is_en(cid, lang) else ""}>{esc(name)}</h1>'
+                # the name already says the mall; the reader's address is English, isolated
+                addr = esc(c.get("address") or ("" if cid in self.names else c.get("mall")) or "")
+                addr = f'<bdi lang="en">{addr}</bdi>' if addr else ""
                 maps = c.get("maps") or ("https://www.google.com/maps/search/?api=1&query=" + re.sub(r"\s+", "+", c.get("name") or cid))
-                body += (f'<p class="lead">{addr} — <a href="{esc(maps)}" rel="noopener" target="_blank">{"افتح في الخريطة" if lang == "ar" else "Open in Maps"}</a></p>'
+                body += (f'<p class="lead">{addr}{" — " if addr else ""}<a href="{esc(maps)}" rel="noopener" target="_blank">{"افتح في الخريطة" if lang == "ar" else "Open in Maps"}</a></p>'
                          f'<p class="freshline">{self.fresh(chain, lang, always=True)}</p>')
                 body += self.picker(lang, city, show_city=False)
                 # halls: explained + prices
@@ -620,16 +655,20 @@ class Site:
                 attr = ' lang="en" dir="ltr"' if lang == "ar" and not f.get("title_ar") else ""
                 body += f'<h1{attr}>{esc(t)}</h1>'
                 if lang == "ar" and f.get("title_ar") and f.get("title"): body += f'<p class="te" lang="en" dir="ltr">{esc(f["title"])}</p>'
+                if f.get("rerelease"):
+                    yr = f' <span class="num">{esc(f["year"])}</span>' if f.get("year") else ""
+                    body += f'<p class="rr">{esc(L(RERELEASE, lang))}{" — من سنة" if lang == "ar" and yr else (" — first released" if yr else "")}{yr}</p>'
                 facts = []
                 if f.get("rating"): facts.append(("التصنيف", "Rating", num(f["rating"])))
                 if f.get("runtime"): facts.append(("المدة", "Runtime", num(f["runtime"]) + (" دقيقة" if lang == "ar" else " min")))
                 if f.get("lang"): facts.append(("اللغة", "Language", esc(L(LANGS.get(f["lang"], (f["lang"], f["lang"])), lang))))
-                if f.get("genres"): facts.append(("النوع", "Genre", esc(("، " if lang == "ar" else ", ").join(GENRES.get(g, g) if lang == "ar" else g for g in f["genres"]))))
+                gw = genre_words(f.get("genres"), lang)
+                if gw: facts.append(("النوع", "Genre", esc(("، " if lang == "ar" else ", ").join(gw))))
                 rt = f.get("rt") or {}
                 if rt.get("critics") is not None: facts.append(("نقاد Rotten Tomatoes", "Rotten Tomatoes critics", num(f'{rt["critics"]}%')))
                 if rt.get("audience") is not None: facts.append(("جمهور Rotten Tomatoes", "Rotten Tomatoes audience", num(f'{rt["audience"]}%')))
                 body += (f'<section class="verdict v-{v}"><p class="word">{esc(L(VERDICT.get(v, VERDICT["unknown"]), lang))}</p>'
-                         + (f'<p class="say">{dates(esc(vd.get("ar") if lang == "ar" else vd.get("en")))}</p>' if (vd.get("ar") if lang == "ar" else vd.get("en")) and v != "unknown" else "")
+                         + (f'<p class="say">{dates(esc(vd.get("ar") if lang == "ar" else vd.get("en")))}</p>' if (vd.get("ar") if lang == "ar" else vd.get("en")) else "")
                          + (f'<p class="basis"><bdi dir="ltr">{dates(esc(vd["basis"]))}</bdi></p>' if vd.get("basis") else "")
                          + '</section>')
                 body += '<dl class="facts">' + "".join(f'<div><dt>{esc(a if lang == "ar" else e)}</dt><dd>{val}</dd></div>' for a, e, val in facts) + '</dl>'
@@ -653,10 +692,12 @@ class Site:
                 if BCP47.get(f.get("lang")): movie["inLanguage"] = BCP47[f["lang"]]
                 if f.get("title_ar"): movie["alternateName"] = f["title_ar"]
                 if f.get("runtime"): movie["duration"] = f"PT{int(f['runtime'])}M"
-                if f.get("genres"): movie["genre"] = f["genres"]
+                if genre_words(f.get("genres"), "en"): movie["genre"] = genre_words(f.get("genres"), "en")
                 if f.get("poster"): movie["image"] = f["poster"]
                 if f.get("rating"): movie["contentRating"] = f["rating"]
-                if f.get("imdb"): movie["sameAs"] = f"https://www.imdb.com/title/{f['imdb']}/"
+                if f.get("year"): movie["dateCreated"] = str(f["year"])
+                imdb = f["imdb"].get("id") if isinstance(f.get("imdb"), dict) else f.get("imdb")
+                if imdb: movie["sameAs"] = f"https://www.imdb.com/title/{imdb}/"
                 graph = [movie] + [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:30] + [self.breadcrumb_ld(lang, (t, P(lang, "film", fid)))]
                 self.page(lang, ("film", fid), title, desc, body, graph, "film", f' data-chains="{" ".join(sorted({self.cinemas[s["cinema"]]["chain"] for s in shows}))}"')
 
@@ -757,7 +798,7 @@ class Site:
                 cells = ""
                 for ch in chains:
                     r = rule_for(self.rules, ch, card["id"]); st = rule_state(r, self.today)
-                    txt = (f'<b class="num">{"1+1" if r.get("type") == "bogo" else f'{r.get("value", 0):g}%'}</b>' + ("<sup>*</sup>" if weak(r) else "")) if st == "ok" else \
+                    txt = (f'<b class="num" dir="ltr">{"1+1" if r.get("type") == "bogo" else f'{r.get("value", 0):g}%'}</b>' + ("<sup>*</sup>" if weak(r) else "")) if st == "ok" else \
                           (f'<span class="nil">{esc(L(T["none_found"], lang))}</span>' if st == "none_found" else f'<span class="nil">{esc(L(T["expired"], lang))}</span>' if st == "expired" else "")
                     cells += f"<td>{txt}</td>"
                 rows += f'<tr><th scope="row"><a href="{P(lang, "cards", card["id"])}">{esc(card["name_ar"] if lang == "ar" else card["name_en"])}</a></th>{cells}</tr>'

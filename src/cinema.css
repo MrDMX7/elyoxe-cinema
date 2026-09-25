@@ -17,13 +17,15 @@
 .cinema h2 small{font-family:var(--mono);font-size:.8125rem;color:var(--stone);font-weight:400}
 .cinema h2 a{text-decoration:none}
 .te{color:var(--stone);margin:.25rem 0 0}
+p.rr{color:var(--ink);margin:.5rem 0 0;font-weight:600}
+.film .meta .rr{color:var(--ink);font-weight:600}
 p.te{font-size:1.125rem}
 
 /* the picker — a sentence you complete: «أنا في [العين] ومعي [فزعة]» */
 .pick{display:flex;flex-wrap:wrap;align-items:baseline;gap:.35rem .6rem;margin-block:1.75rem 0;color:var(--stone)}
 .pick.big{font-size:clamp(1.5rem,1.05rem + 2.2vw,2.5rem);line-height:1.45;color:var(--ink);padding-block:1.1rem;border-block:1px solid var(--ink);margin-block-start:2.25rem}
 .sel{position:relative;display:inline-flex}
-.sel select{appearance:none;-webkit-appearance:none;background:transparent;border:0;border-block-end:2px solid var(--saffron);border-radius:0;color:var(--ink);font-weight:600;padding-block:0;padding-inline:.1em 1.05em;cursor:pointer;max-inline-size:100%;line-height:1.3}
+.sel select{appearance:none;-webkit-appearance:none;background:transparent;border:0;border-block-end:2px solid var(--saffron);border-radius:0;color:var(--ink);font-weight:600;padding-block:0;padding-inline:.1em 1.05em;cursor:pointer;max-inline-size:100%;min-inline-size:4.5ch;box-sizing:border-box;line-height:1.3}
 .pick.big .sel select{font-size:inherit}
 .sel::after{content:"";position:absolute;inset-inline-end:.1em;inset-block-end:.55em;border-inline:.28em solid transparent;border-block-start:.34em solid var(--saffron);pointer-events:none}
 .pick.big .sel::after{inset-block-end:.6em}

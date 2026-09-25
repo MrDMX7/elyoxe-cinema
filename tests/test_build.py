@@ -157,9 +157,10 @@ def test_percentages_are_isolated_in_arabic(site):
         h = open(f, encoding="utf-8").read()
         body = re.sub(r"<script.*?</script>", "", h.split("<body", 1)[1], flags=re.S)
         for m in re.finditer(r"\d+(?:\.\d+)?\s?%", body):
-            assert re.search(r'class="num">\s*$', body[:m.start()][-40:]), (f, body[m.start() - 60:m.end() + 10])
-    assert '<span class="num">20%</span>' in read(out, "cinema", "cards", "fazaa")
-    assert '<b class="num">20%</b>' in read(out, "cinema", "cards")
+            # dir="ltr" too: span.num is unicode-bidi:plaintext, which alone still prints «%88» in an RTL page
+            assert re.search(r'class="num" dir="ltr">\s*$', body[:m.start()][-40:]), (f, body[m.start() - 60:m.end() + 10])
+    assert '<span class="num" dir="ltr">20%</span>' in read(out, "cinema", "cards", "fazaa")
+    assert '<b class="num" dir="ltr">20%</b>' in read(out, "cinema", "cards")
 
 
 def test_hall_labels_are_cleaned():
@@ -225,3 +226,77 @@ def test_poster_used_when_present(tmp_path):
     p = tmp_path / "d.json"; p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     build.build(str(p), DISC, str(tmp_path / "o"))
     assert 'src="https://image.example/crawlers.jpg"' in read(str(tmp_path / "o"), "cinema")
+
+
+# ---------------------------------------------------------------- fix wave: B (re-release), C (template line), G (names), H (genres, %)
+
+def _built(tmp_path, mutate):
+    data = json.load(open(DATA, encoding="utf-8"))
+    mutate(data)
+    p = tmp_path / "d.json"; p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    out = str(tmp_path / "o")
+    build.build(str(p), DISC, out)
+    return out
+
+
+def test_enriched_genres_render_as_words_and_empty_hides_the_cell(tmp_path):
+    def m(d):
+        d["films"]["crawlers"]["genres"] = {"ar": ["رعب", "إثارة"], "en": ["horror film", "thriller film"]}
+        d["films"]["resident-evil"]["genres"] = {"ar": [], "en": []}
+    out = _built(tmp_path, m)
+    ar, en = read(out, "cinema", "film", "crawlers"), read(out, "en", "cinema", "film", "crawlers")
+    assert "<dt>النوع</dt><dd>رعب، إثارة</dd>" in ar and "ar، en" not in ar
+    assert "<dt>Genre</dt><dd>horror film, thriller film</dd>" in en
+    assert "<dt>النوع</dt>" not in read(out, "cinema", "film", "resident-evil")
+    ld = re.search(r'<script type="application/ld\+json">(.*?)</script>', en, re.S).group(1)
+    assert json.loads(ld)["@graph"][0]["genre"] == ["horror film", "thriller film"]
+
+
+def test_a_percentage_inside_a_verdict_is_isolated(tmp_path):
+    def m(d):
+        d["films"]["crawlers"]["verdict"] = {"verdict": "yes", "ar": "قلب الوحش ياب بتقييم نقاد 88%.", "en": "88% of critics.",
+                                             "basis": "RT 88% (124 نقد)"}
+    out = _built(tmp_path, m)
+    ar = read(out, "cinema", "film", "crawlers")
+    assert 'بتقييم نقاد <span class="num" dir="ltr">88%</span>' in ar
+    assert 'RT <span class="num" dir="ltr">88%</span>' in ar
+
+
+def test_rerelease_is_labelled_in_both_languages(tmp_path):
+    def m(d):
+        d["films"]["crawlers"].update(rerelease=True, year=2008)
+    out = _built(tmp_path, m)
+    assert "إعادة عرض" in read(out, "cinema", "film", "crawlers") and "إعادة عرض" in read(out, "cinema")
+    assert "Re-release" in read(out, "en", "cinema", "film", "crawlers") and "Re-release" in read(out, "en", "cinema")
+    assert "إعادة عرض" not in read(out, "cinema", "film", "resident-evil")
+
+
+def test_template_verdict_line_is_shown_for_an_unknown_film(tmp_path):
+    def m(d):
+        d["films"]["crawlers"]["verdict"] = {"verdict": "unknown", "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
+                                             "en": "Not enough ratings yet.", "basis": "", "by": "template"}
+    out = _built(tmp_path, m)
+    assert "ما لقينا تقييمات كافية لهالفيلم للحين." in read(out, "cinema", "film", "crawlers")
+    assert "Not enough ratings yet." in read(out, "en", "cinema", "film", "crawlers")
+
+
+def test_every_real_cinema_has_a_display_name_in_both_languages():
+    names = build.load_cinema_names(os.path.join(ROOT, "cinemas.yaml"))
+    ids = set(merged_real()["cinemas"]) | set(json.load(open(DATA, encoding="utf-8"))["cinemas"])
+    missing = sorted(i for i in ids if not (names.get(i) or {}).get("ar") or not (names.get(i) or {}).get("en"))
+    assert missing == []
+    for i, n in names.items():
+        assert build.ARABIC.search(n["ar"]) and " — " in n["ar"] and " — " in n["en"], i
+
+
+def test_arabic_pages_use_the_arabic_cinema_name(tmp_path):
+    data = merged_real()
+    p = tmp_path / "real.json"; p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    out = str(tmp_path / "o")
+    build.build(str(p), os.path.join(ROOT, "discounts.yaml"), out)
+    city = read(out, "cinema", "al-ain")
+    assert "ستار — الفوعة مول" in city and "فوكس — الجيمي مول" in city
+    for raw in ("Al Foah -Al Ain", "Mall of Al Ain - Al Ain", "Barari Outlet Mall -Al Ain", "VOX Cinemas Al Jimi Mall"):
+        assert raw not in city, raw
+    assert "Star — Al Foah Mall" in read(out, "en", "cinema", "al-ain")
+    assert build.clean_reader_name("Al Foah -Al Ain") == "Al Foah - Al Ain"

@@ -1,0 +1,85 @@
+# cinemas.yaml — the display name of every cinema, «chain — mall» in both languages (build.py).
+#
+# Readers give raw names ("Al Foah -Al Ain", "VOX Cinemas Kempinski- Mall of Emirates"); pages use
+# these. Chain names follow halls.yaml (فوكس، ستار، ريل، سينما سيتي، سيني رويال، روكسي، نوفو); mall
+# names are the Arabic the malls themselves use on their signs, sites and Google Maps labels. A cinema
+# id missing here falls back to a cleaned reader name, and tests/test_build.py fails for any cinema in
+# the real fixtures that has no entry — add it here when a chain opens one.
+cinemas:
+  # --- Cinemacity
+  cinemacity-alqana:                 {ar: "سينما سيتي — القناة",                 en: "Cinemacity — Al Qana"}
+  cinemacity-arabian-centre:         {ar: "سينما سيتي — المركز العربي",          en: "Cinemacity — Arabian Centre"}
+  cinemacity-fountain-views:         {ar: "سينما سيتي — فاونتن فيوز، دبي مول",   en: "Cinemacity — Fountain Views, The Dubai Mall"}
+  cinemacity-rahmania:               {ar: "سينما سيتي — الرحمانية مول",          en: "Cinemacity — Rahmania Mall"}
+  cinemacity-starlight:              {ar: "سينما سيتي — ستارلايت، مارينا مول",   en: "Cinemacity — Starlight, Marina Mall"}
+  cinemacity-zero-6-mall:            {ar: "سينما سيتي — زيرو 6 مول",             en: "Cinemacity — Zero 6 Mall"}
+  cinemacity-zero6-mall:             {ar: "سينما سيتي — زيرو 6 مول",             en: "Cinemacity — Zero 6 Mall"}
+  # --- Cine Royal
+  cineroyal-al-dhannah-mall:         {ar: "سيني رويال — الظنة مول",              en: "Cine Royal — Al Dhannah Mall"}
+  cineroyal-dalma-mall:              {ar: "سيني رويال — دلما مول",               en: "Cine Royal — Dalma Mall"}
+  cineroyal-deerfields-mall:         {ar: "سيني رويال — ديرفيلدز مول",           en: "Cine Royal — Deerfields Mall"}
+  cineroyal-khalidiyah-mall:         {ar: "سيني رويال — الخالدية مول",           en: "Cine Royal — Khalidiyah Mall"}
+  cineroyal-wtc-mall-abu-dhabi:      {ar: "سيني رويال — مول المركز التجاري العالمي", en: "Cine Royal — WTC Mall"}
+  # --- Novo
+  novo-bas-mall-baniyas:             {ar: "نوفو — باس مول، بني ياس",             en: "Novo — BAS Mall, Baniyas"}
+  novo-buhairah-centre:              {ar: "نوفو — مركز البحيرة",                 en: "Novo — Buhairah Centre"}
+  novo-dragon-mart:                  {ar: "نوفو — دراغون مارت",                  en: "Novo — Dragon Mart"}
+  novo-img-worlds:                   {ar: "نوفو — آي إم جي وورلدز",              en: "Novo — IMG Worlds"}
+  novo-manar-mall:                   {ar: "نوفو — المنار مول",                   en: "Novo — Manar Mall"}
+  novo-mega-mall:                    {ar: "نوفو — ميغا مول",                     en: "Novo — Mega Mall"}
+  novo-sahara-centre:                {ar: "نوفو — مركز صحارى",                   en: "Novo — Sahara Centre"}
+  # --- Reel
+  reel-dubai-mall:                   {ar: "ريل — دبي مول",                       en: "Reel — The Dubai Mall"}
+  reel-dubai-marina-mall:            {ar: "ريل — دبي مارينا مول",                en: "Reel — Dubai Marina Mall"}
+  reel-the-springs-souk:             {ar: "ريل — ذا سبرينغز سوق",                en: "Reel — The Springs Souk"}
+  # --- Roxy
+  roxy-al-khawaneej:                 {ar: "روكسي — الخوانيج ووك",                en: "Roxy — Al Khawaneej Walk"}
+  roxy-boxpark:                      {ar: "روكسي — بوكس بارك",                   en: "Roxy — Boxpark"}
+  roxy-circle-mall:                  {ar: "روكسي — سيركل مول",                   en: "Roxy — Circle Mall"}
+  roxy-city-walk:                    {ar: "روكسي — سيتي ووك",                    en: "Roxy — City Walk"}
+  roxy-dubai-hills-mall:             {ar: "روكسي — دبي هيلز مول",                en: "Roxy — Dubai Hills Mall"}
+  roxy-the-beach-jbr:                {ar: "روكسي — ذا بيتش، جي بي آر",           en: "Roxy — The Beach, JBR"}
+  # --- Star
+  star-al-foah-al-ain:               {ar: "ستار — الفوعة مول",                   en: "Star — Al Foah Mall"}
+  star-al-ghurair-centre-dubai:      {ar: "ستار — مركز الغرير",                  en: "Star — Al Ghurair Centre"}
+  star-al-raha-abu-dhabi:            {ar: "ستار — الراحة مول",                   en: "Star — Al Raha Mall"}
+  star-al-wahda-mall-abu-dhabi:      {ar: "ستار — الوحدة مول",                   en: "Star — Al Wahda Mall"}
+  star-barari-outlet-mall-al-ain:    {ar: "ستار — براري أوتلت مول",              en: "Star — Barari Outlet Mall"}
+  star-bawadi-mall-al-ain:           {ar: "ستار — بوادي مول",                    en: "Star — Bawadi Mall"}
+  star-bawadi-mall:                  {ar: "ستار — بوادي مول",                    en: "Star — Bawadi Mall"}
+  star-central-mall-kc-abu-dhabi:    {ar: "ستار — سنترال مول، مدينة خليفة",      en: "Star — Central Mall, Khalifa City"}
+  star-century-mall-fujairah:        {ar: "ستار — سنشري مول",                    en: "Star — Century Mall"}
+  star-dana-plaza-fujairah:          {ar: "ستار — دانة بلازا",                   en: "Star — Dana Plaza"}
+  star-grand-mall-ajman:             {ar: "ستار — جراند مول",                    en: "Star — Grand Mall"}
+  star-grand-safeer-abu-dhabi:       {ar: "ستار — جراند سفير مول",               en: "Star — Grand Safeer Mall"}
+  star-junction-mall-dip-dubai:      {ar: "ستار — جنكشن مول، مجمع دبي للاستثمار", en: "Star — Junction Mall, DIP"}
+  star-makani-zakher-mall-al-ain:    {ar: "ستار — مكاني زاخر مول",               en: "Star — Makani Zakher Mall"}
+  star-mall-of-al-ain-al-ain:        {ar: "ستار — العين مول",                    en: "Star — Al Ain Mall"}
+  star-mall-of-uaq-umm-al-quwain:    {ar: "ستار — مول أم القيوين",               en: "Star — Mall of UAQ"}
+  star-national-cinema-abu-dhabi:    {ar: "ستار — السينما الوطنية",              en: "Star — National Cinema"}
+  star-star-cinemas-ras-al-khaimah:  {ar: "ستار — رأس الخيمة",                   en: "Star — Ras Al Khaimah"}
+  # --- VOX
+  vox-abu-dhabi-mall-abu-dhabi:      {ar: "فوكس — أبوظبي مول",                   en: "VOX — Abu Dhabi Mall"}
+  vox-al-hamra-mall-ras-al-khaimah:  {ar: "فوكس — الحمرا مول",                   en: "VOX — Al Hamra Mall"}
+  vox-al-jimi-mall:                  {ar: "فوكس — الجيمي مول",                   en: "VOX — Al Jimi Mall"}
+  vox-burjuman:                      {ar: "فوكس — برجمان",                       en: "VOX — BurJuman"}
+  vox-city-centre-ajman:             {ar: "فوكس — سيتي سنتر عجمان",              en: "VOX — City Centre Ajman"}
+  vox-city-centre-al-zahia:          {ar: "فوكس — سيتي سنتر الزاهية",            en: "VOX — City Centre Al Zahia"}
+  vox-city-centre-deira:             {ar: "فوكس — سيتي سنتر ديرة",               en: "VOX — City Centre Deira"}
+  vox-city-centre-fujairah:          {ar: "فوكس — سيتي سنتر الفجيرة",            en: "VOX — City Centre Fujairah"}
+  vox-city-centre-meaisem:           {ar: "فوكس — سيتي سنتر معيصم",              en: "VOX — City Centre Me'aisem"}
+  vox-city-centre-mirdif:            {ar: "فوكس — سيتي سنتر مردف",               en: "VOX — City Centre Mirdif"}
+  vox-city-centre-sharjah:           {ar: "فوكس — سيتي سنتر الشارقة",            en: "VOX — City Centre Sharjah"}
+  vox-city-centre-shindagha:         {ar: "فوكس — سيتي سنتر الشندغة",            en: "VOX — City Centre Shindagha"}
+  vox-dubai-festival-city-mall:      {ar: "فوكس — دبي فستيفال سيتي مول",         en: "VOX — Dubai Festival City Mall"}
+  vox-kempinski-mall-of-emirates:    {ar: "فوكس — كمبينسكي، مول الإمارات",       en: "VOX — Kempinski, Mall of the Emirates"}
+  vox-mall-of-the-emirates:          {ar: "فوكس — مول الإمارات",                 en: "VOX — Mall of the Emirates"}
+  vox-megaplex-cineplex-grand-hyatt: {ar: "فوكس — ميغابلكس، جراند حياة",         en: "VOX — Megaplex, Grand Hyatt"}
+  vox-mercato:                       {ar: "فوكس — مركاتو",                       en: "VOX — Mercato"}
+  vox-nation-towers-abu-dhabi:       {ar: "فوكس — نيشن تاورز",                   en: "VOX — Nation Towers"}
+  vox-palm-jumeirah-mall:            {ar: "فوكس — مول نخلة جميرا",               en: "VOX — Palm Jumeirah Mall"}
+  vox-reem-mall-abu-dhabi:           {ar: "فوكس — ريم مول",                      en: "VOX — Reem Mall"}
+  vox-the-galleria-al-maryah-island: {ar: "فوكس — الغاليريا، جزيرة الماريه",     en: "VOX — The Galleria, Al Maryah Island"}
+  vox-wafi-mall-at-wafi-city:        {ar: "فوكس — وافي مول",                     en: "VOX — Wafi Mall"}
+  vox-yas-mall-abu-dhabi:            {ar: "فوكس — ياس مول",                      en: "VOX — Yas Mall"}
+  vox-yas-mall:                      {ar: "فوكس — ياس مول",                      en: "VOX — Yas Mall"}
