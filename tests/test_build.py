@@ -300,3 +300,47 @@ def test_arabic_pages_use_the_arabic_cinema_name(tmp_path):
         assert raw not in city, raw
     assert "Star — Al Foah Mall" in read(out, "en", "cinema", "al-ain")
     assert build.clean_reader_name("Al Foah -Al Ain") == "Al Foah - Al Ain"
+
+
+def test_table_prices_carry_their_own_date_not_live_freshness(tmp_path):
+    """Final review, Important 4: a price filled from prices.yaml shows «السعر بتاريخ <entry date>» on
+    its cell (and in the slices cinema.js reads), never under a live «updated X min ago»."""
+    data = json.load(open(DATA, encoding="utf-8"))
+    for s in data["shows"]:
+        if s["cinema"] == "vox-al-jimi-mall":
+            s["price_source"], s["price_checked"] = "table", "2026-09-25"
+    p = tmp_path / "d.json"; p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    out = str(tmp_path / "o")
+    build.build(str(p), DISC, out)
+    cin = read(out, "cinema", "al-ain", "vox-al-jimi-mall")
+    cells = re.findall(r'<span class="p"[^>]*>.*?</span></span>', cin)
+    assert cells and all('data-asof="2026-09-25"' in c and "السعر بتاريخ" in c for c in cells)
+    assert "Price as of" in read(out, "en", "cinema", "al-ain", "vox-al-jimi-mall")
+    city = read(out, "cinema", "al-ain")
+    assert re.search(r'data-cin="vox-al-jimi-mall" data-asof="2026-09-25"', city)
+    # a live-priced cinema carries no date note
+    star = read(out, "cinema", "al-ain", "star-bawadi-mall")
+    assert 'data-asof="' not in star and '<small class="asof">' not in star
+    # slices: the table date rides on the show row for the home tiles and «starting now»
+    sl = json.load(open(os.path.join(out, "cinema", "data", "al-ain-2026-09-25.json"), encoding="utf-8"))
+    ci = [c[0] for c in sl["C"]].index("vox-al-jimi-mall")
+    rows = [r for r in sl["S"] if r[0] == ci and r[4] >= 0]
+    assert rows and all(len(r) == 8 and r[7] == "2026-09-25" for r in rows)
+    assert all(len(r) == 7 for r in sl["S"] if r[0] != ci)
+    ct = re.search(r"window\.CT = (\{.*?\});</script>", read(out, "cinema"))
+    assert ct and json.loads(ct.group(1))["asof"] == "السعر بتاريخ {date}"
+
+
+def test_bogo_price_says_per_person_with_two_tickets(tmp_path):
+    """Final review, Important 6: wherever a BOGO price appears it reads «للشخص — بشرط تذكرتين»."""
+    assert build.T["per_person"] == ("للشخص — بشرط تذكرتين", "per person, with 2 tickets")
+    out = str(tmp_path / "o")
+    build.build(DATA, os.path.join(ROOT, "discounts.yaml"), out)
+    assert "للشخص — بشرط تذكرتين" in read(out, "cinema", "cards", "enbd")       # the worked example
+    assert "per person, with 2 tickets" in read(out, "en", "cinema", "cards", "enbd")
+    js = open(os.path.join(ROOT, "src", "cinema.js"), encoding="utf-8").read()
+    home = js[js.index("function renderHome"):js.index("function slice")]
+    # the «starting now» strip and the «cheapest for you» tile both append the per-person note
+    assert home.count("ppNote(b.r)") == 2
+    assert "ppNote(x.r)" in js[js.index("function renderPrices"):js.index("function renderNote")]
+    assert "r: x.a != null ? x.r : null" in js                                   # best() keeps the rule

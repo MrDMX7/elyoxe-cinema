@@ -42,6 +42,10 @@ p.te{font-size:1.125rem}
 .p s{color:var(--stone);font-size:.8em;margin-inline-end:.4em;text-decoration-thickness:1px}
 .p b{color:var(--saffron);font-weight:500;font-family:var(--mono)}
 .p small{color:var(--stone);font-size:.75rem;margin-inline-start:.35em;white-space:normal}
+.per,.asof{display:inline-block;color:var(--stone);font-size:.75rem;font-family:var(--font);margin-inline-start:.35em;white-space:normal}
+.film .amt .per{display:block;margin:0;font-size:.8125rem}
+.film .cheap .asof,.p .asof{display:block;margin-inline-start:0}
+.ex .per{font-size:.8125rem}
 .na{color:var(--stone);font-size:.875rem}
 
 /* on now */

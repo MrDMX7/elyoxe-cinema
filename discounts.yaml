@@ -8,8 +8,14 @@
 # status: none_found marks a chain×card pair that WAS checked and has no offer, so the site can
 # say "ما لقينا خصم" (we found no discount) instead of implying the chain refuses the card.
 #
-# type: percent (value = % off) | bogo (buy one get one free, price becomes price/2).
-# excluded_halls / included_halls: hall names from readers/common.py HALLS.
+# type: percent (value = % off) | bogo (buy one get one free, price becomes price/2 — per person,
+#       only with 2 tickets) | fixed (the offer sets the ticket price itself: value = AED incl. VAT;
+#       the site shows min(real price, value)).
+# excluded_halls / included_halls: a hall CODE from readers/common.py HALLS (what the reader emits
+#   in show["hall"]) or a halls.yaml KEY (what build.py resolves from the chain's own label — e.g.
+#   Novo «SKY», whose code is VIP, so excluding "VIP" would wrongly hit Novo's other VIP halls).
+# included_cinemas: cinema ids (as the readers emit them) when an offer names its branches.
+# Semantics: discounts.py compute(); src/cinema.js mirrors it; tests/test_parity.py holds them equal.
 # Research date for every entry below: 2026-09-25 (seeded from
 # research_notes/أفلام سينمات العين سبتمبر 2026/{discounts.md,tickets_prices.md}, then extended
 # live for reel/roxy/cinemacity and the bank offers).
@@ -152,7 +158,7 @@ rules:
       value: 20
       max_tickets: 6
       valid_until: "2027-07-05"
-      excluded_halls: ["IMAX"]
+      excluded_halls: ["IMAX", "SKY"]   # IMAX by hall code; SKY by halls.yaml key (Novo SKY's code is VIP)
       note_ar: "لا يشمل قاعتي IMAX وSKY"
       source: "https://uae.novocinemas.com/promotions/15"
       checked: "2026-09-25"
@@ -209,24 +215,37 @@ rules:
       checked: "2026-09-25"
       confidence: official
     fab:
-      type: percent
-      value: 20
-      note_ar: "خصم 20% في كل فروع Royal Cinemas"
+      # The page sets the ticket PRICE (AED 20 excl. VAT) at four branches — the 20% is on food only.
+      # "valid only for regular 2D tickets … not for VIP/Pearl Suite/Premier shows/3D movies".
+      type: fixed
+      value: 21
+      included_halls: ["Standard"]
+      included_cinemas: [cineroyal-khalidiyah-mall, cineroyal-dalma-mall, cineroyal-al-dhannah-mall, cineroyal-deerfields-mall]
+      note_ar: "التذكرة العادية 2D بـ20 درهم + الضريبة في خالدية ودلما والظنة وديرفيلدز (مب WTC)، وخصم 20% على الأكل؛ بحد صرف شهري حسب البطاقة"
       source: "https://cineroyal.ae/home/FABOffers"
-      checked: "2026-09-25"
+      checked: "2026-09-26"
       confidence: official
     enbd:
+      # "Get one 2D standard class movie ticket complimentary on purchase of the first one" — online/app,
+      # 3 free a month, AED 5,000 minimum spend. Some cards also cover 2D VIP; Standard is what all cover.
       type: bogo
-      note_ar: "اشترِ تذكرة عادية وخذ الثانية مجاناً + خصم 15% على المأكولات"
+      included_halls: ["Standard"]
+      note_ar: "على التذكرة العادية 2D بس: اشترِ وحدة وخذ الثانية مجاناً، أونلاين وبالتطبيق، 3 مجانية بالشهر بحد صرف 5000 درهم + خصم 15% على المأكولات"
       source: "https://cineroyal.ae/home/ENBDOffers"
-      checked: "2026-09-25"
+      checked: "2026-09-26"
       confidence: official
     rakbank:
+      # "Offer is valid till 23 May 2026 … only valid on 2D Standard and 2D VIP movie tickets … up to 20%
+      # Sun-Wed and up to 10% Thu-Sat … at kiosk only … max 4 tickets a month" — ended.
       type: percent
       value: 20
-      note_ar: "خصم 20% على تذاكر 2D"
+      valid_until: "2026-05-23"
+      included_halls: ["Standard", "VIP"]
+      box_office_only: true
+      max_tickets: 4
+      note_ar: "على تذاكر 2D العادية وVIP بس: 20% من الأحد للأربعاء و10% من الخميس للسبت، من الكشك، 4 تذاكر بالشهر"
       source: "https://www.rakbank.ae/en/cards/card-offers/cine-royal-cinema"
-      checked: "2026-09-25"
+      checked: "2026-09-26"
       confidence: official
 
   reel:
@@ -259,16 +278,26 @@ rules:
       checked: "2026-09-25"
       confidence: official
     fab:
-      type: bogo
-      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً + خصم 20% على المأكولات"
-      source: "https://masarif.ae/promotions/hsbc-bank-middle-east-reel-cinemas-offer"
-      checked: "2026-09-25"
-      confidence: third-party
+      # Was a BOGO sourced from an HSBC page. FAB's own T&C: a fixed ticket price for regular 2D only —
+      # AED 15 + VAT Mon-Thu, AED 20 + VAT Fri-Sun and holidays — at Dubai Mall, Dubai Marina Mall,
+      # The Springs Souk and Al Ghurair (not read by us). The site shows the weekend price (21), the
+      # most a holder pays; the weekday price is in the note.
+      type: fixed
+      value: 21
+      included_halls: ["Standard"]
+      included_cinemas: [reel-dubai-mall, reel-dubai-marina-mall, reel-the-springs-souk]
+      note_ar: "التذكرة العادية 2D بـ15 درهم + الضريبة من الاثنين للخميس، و20 + الضريبة الجمعة للأحد والعطل (نعرض سعر نهاية الأسبوع)؛ بحد صرف شهري حسب البطاقة + خصم 20% على الأكل"
+      source: "https://www.bankfab.com/-/media/fabgroup/home/personal/cards/terms-and-conditions-pdfs/lifestyle-benefits/07_reel_cinema.pdf"
+      checked: "2026-09-26"
+      confidence: official
     standard_chartered:
+      # SC's table: Standard, Standard Plus, Dolby, ScreenX, Reel Junior, MX4D (by card) — not the
+      # Platinum Suites / Premium halls; online or the app, logged in as a member (not as a guest).
       type: bogo
-      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً + خصم 20% على المأكولات"
+      included_halls: ["Standard", "OTHER", "KIDS", "SCREENX"]
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً في القاعات العادية وDolby وScreenX وJunior (مب Platinum Suites)، أونلاين أو بالتطبيق مسجّل دخول + خصم 20% على المأكولات"
       source: "https://www.sc.com/ae/promotions/cinema-offers/"
-      checked: "2026-09-25"
+      checked: "2026-09-26"
       confidence: official
 
   roxy:
@@ -327,12 +356,13 @@ rules:
       checked: "2026-09-25"
       confidence: official
     esaad:
-      type: percent
-      value: 20
-      note_ar: "تحتاج توثيق البطاقة عند مدير الفرع أول مرة قبل الحجز أونلاين"
+      # The cited page lists Fazaa (20%) and Ministry of Education (22%) — no Esaad offer at all; the
+      # old note was Fazaa's verification step.
+      status: none_found
+      note_ar: "صفحة العروض الرسمية تذكر فزعة بس — ما لقينا خصم إسعاد"
       source: "https://www.cinemacity.ae/offers-and-promotions/"
-      checked: "2026-09-25"
-      confidence: third-party
+      checked: "2026-09-26"
+      confidence: official
     homat:
       status: none_found
       note_ar: "ما لقينا خصم"

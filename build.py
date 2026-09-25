@@ -47,7 +47,8 @@ T = {  # strings shared with cinema.js (window.CT)
     "cheap_tonight": ("أرخص تذكرة لك الليلة", "Cheapest for you tonight"), "cheap_tomorrow": ("أرخص تذكرة لك بكرة", "Cheapest for you tomorrow"),
     "not_in_city": ("ما يعرض في {city}", "Not showing in {city}"), "now_empty": ("ما في عرض يبدأ خلال ساعتين في {city}. أقرب عرض: {next}.", "Nothing starts in the next 2 hours in {city}. Next: {next}."),
     "now_none": ("ما في عروض باقية اليوم في {city}.", "No shows left today in {city}."),
-    "updated": ("آخر تحديث", "Last updated"), "weak": CONF_WEAK, "per_person": ("للشخص", "per person"),
+    "updated": ("آخر تحديث", "Last updated"), "weak": CONF_WEAK, "per_person": ("للشخص — بشرط تذكرتين", "per person, with 2 tickets"),
+    "asof": ("السعر بتاريخ {date}", "Price as of {date}"),
     "with": ("مع {card}", "with {card}"), "ago_m": ("قبل {n} دقيقة", "{n} min ago"), "ago_h": ("قبل {n}", "{n} ago"),
 }
 CITY_T = {k: v for k, v in CITY.items()}
@@ -148,35 +149,28 @@ def load_discounts(path):
 
 
 def rule_for(rules, chain, card):
-    return ((rules or {}).get((chain or "").lower()) or {}).get((card or "").lower())
+    return _disc.rule(rules, chain, card)
 
 
 def rule_state(r, today):
-    if not r: return "unchecked"
-    if r.get("status") == "none_found": return "none_found"
-    if r.get("valid_until") and str(r["valid_until"]) < today: return "expired"
-    if r.get("type") in ("percent", "bogo"): return "ok"
-    return "none_found"
+    return _disc.state(r, today)
 
 
 def weak(r):
     return bool(r) and r.get("confidence") in ("third-party", "unconfirmed")
 
 
-def after(price, chain, hall, card, rules, today):
-    """Price after `card` at `chain` in `hall` (a hall code) on `today` — discounts.apply() plus expiry."""
-    r = rule_for(rules, chain, card)
-    if rule_state(r, today) != "ok":
-        return None, rule_state(r, today)
-    # discounts.apply reads excluded_halls; accept the halls_excluded spelling too
-    if r.get("halls_excluded") and not r.get("excluded_halls"):
-        r = dict(r, excluded_halls=r["halls_excluded"]); rules = {chain: {card: r}}
-    return _disc.apply(price, chain, hall, card, rules)
+def after(price, chain, hall, card, rules, today, hall_key=None, cinema=None):
+    """(price after `card` at `chain` in `hall` (a hall code; `hall_key` its halls.yaml key) at `cinema`
+    on `today`, state) — discounts.compute(), the one semantics cinema.js mirrors."""
+    a, st, _ = _disc.compute(price, chain, hall, card, rules, hall_key=hall_key, cinema=cinema, today=today)
+    return a, st
 
 
 def rule_offer(r, lang):
     if r.get("type") == "bogo": return "تذكرتين بسعر وحدة" if lang == "ar" else "Buy one, get one"
-    v = f'{r.get("value", 0):g}'
+    v = f'{float(r.get("value") or 0):g}'
+    if r.get("type") == "fixed": return f"التذكرة بـ{v} درهم" if lang == "ar" else f"Tickets at AED {v}"
     return f"خصم {v}%" if lang == "ar" else f"{v}% off"
 
 
@@ -186,8 +180,10 @@ def rule_terms(r, lang):
     if r.get("box_office_only") and "الشباك" not in note: t.append("من الشباك فقط" if lang == "ar" else "Box office only")
     if r.get("max_tickets") and not re.search("تذاكر|تذكرة", note): t.append(f'{r["max_tickets"]} تذاكر بالحد' if lang == "ar" else f'Up to {r["max_tickets"]} tickets')
     inc, exc = r.get("included_halls"), r.get("excluded_halls") or r.get("halls_excluded")
-    if inc: t.append("يشمل " + "، ".join(inc) + " فقط" if lang == "ar" else "Only " + ", ".join(inc))
-    if exc: t.append(("ما يشمل " + "، ".join(exc)) if lang == "ar" else "Excludes " + ", ".join(exc))
+    hn = lambda hs: [("القاعة العادية" if h == "Standard" else h) if lang == "ar" else h for h in hs]
+    if inc: t.append("يشمل " + "، ".join(hn(inc)) + " فقط" if lang == "ar" else "Only " + ", ".join(inc))
+    if exc: t.append(("ما يشمل " + "، ".join(hn(exc))) if lang == "ar" else "Excludes " + ", ".join(exc))
+    if r.get("included_cinemas") is not None: t.append("في فروع محددة بس" if lang == "ar" else "Selected branches only")
     if r.get("valid_until"): t.append((f'لين {r["valid_until"]}') if lang == "ar" else f'Until {r["valid_until"]}')
     if lang == "ar" and r.get("note_ar") and r.get("type"): t.append(r["note_ar"])
     return t
@@ -236,6 +232,9 @@ class Halls:
         return ("عادية" if lang == "ar" else "Standard") if k == "Standard" else n
 
 
+SAFE_URL = re.compile(r"^https?://", re.I)
+
+
 # a label that only names a projection format or a screen number is the regular hall
 FORMAT_ONLY = re.compile(r"^(?:[234]D|[234]L|2D/3D|NORMAL|STANDARD|REGULAR|SILVER|DIGITAL|(?:SCREEN|HALL|CINEMA)\s*\d*|\d+)?$", re.I)
 
@@ -262,6 +261,11 @@ class Site:
         self.tomorrow = (self.now.date() + dt.timedelta(days=1)).isoformat()
         self.films, self.cinemas = data.get("films", {}), data.get("cinemas", {})
         self.shows = [s for s in data.get("shows", []) if s.get("cinema") in self.cinemas and s.get("film") in self.films]
+        for s in self.shows:  # a chain's booking URL is a link on our page: http(s) only, never javascript:
+            if s.get("book") and not SAFE_URL.match(str(s["book"])): s["book"] = None
+        for f in self.films.values():  # v lands in class="v-…": a hand-edited verdict file must not inject
+            vd = f.get("verdict")
+            if isinstance(vd, dict) and vd.get("verdict") not in VERDICT: f["verdict"] = dict(vd, verdict="unknown")
         self.tpl = open(os.path.join(SRC, "page.html"), encoding="utf-8").read()
         self.urls, self.hashes, self.lastmod_path = [], {}, None
         self.names = load_cinema_names(os.path.join(ROOT, "cinemas.yaml"))
@@ -309,27 +313,48 @@ class Site:
         return f'<span class="{cls}" data-at="{esc(ch["at"])}">{esc(L(T["updated"], lang))} {esc(ago(at, self.now, lang))}</span>{why}'
 
     # -------- price cells
-    def pcell(self, aed, chain, code, hkey):
-        return (f'<span class="p" data-aed="{money(aed)}" data-chain="{esc(chain)}" data-hall="{esc(code)}" data-hk="{esc(hkey)}">'
-                f'<span class="num">{money(aed)}</span></span>')
+    def pcell(self, aed, chain, code, hkey, cid, asof=None, lang="ar"):
+        """A price cell cinema.js rewrites after the visitor's card. `asof` marks a price from the fallback
+        table (prices.yaml): it carries its own date («السعر بتاريخ …») instead of the live freshness."""
+        a = f' data-asof="{esc(asof)}"' if asof else ""
+        return (f'<span class="p" data-aed="{money(aed)}" data-chain="{esc(chain)}" data-hall="{esc(code)}" data-hk="{esc(hkey)}" data-cin="{esc(cid)}"{a}>'
+                f'<span class="num">{money(aed)}</span>{self.asof_html(asof, lang)}</span>')
+
+    def asof_html(self, asof, lang):
+        return f'<small class="asof">{dates(esc(L(T["asof"], lang).format(date=asof)))}</small>' if asof else ""
+
+    @staticmethod
+    def table_date(s):
+        """The table entry's date for a show priced from prices.yaml, else None (a live price)."""
+        return s.get("price_checked") if s.get("price_source") == "table" else None
 
     def box(self, lang):
         return f'<span class="na">{esc(L(T["box"], lang))}</span>'
 
     def cinema_prices(self, cid):
-        """hall key -> {code, label, seats{seat: aed}} from today's shows first, then any day."""
+        """hall key -> {code, label, seats{seat: aed}, asof} from today's shows first, then any day.
+        Live prices win over the fallback table; a hall priced only from the table carries `asof`
+        (the table entry's date) so its cells say «السعر بتاريخ …» instead of borrowing the live freshness."""
         out = {}
         shows = [s for s in self.shows if s["cinema"] == cid]
         for s in sorted(shows, key=lambda s: s["date"] != self.today):
             k = self.hkey(s); code, label = self.hall_code_label(s)
-            h = out.setdefault(k, {"code": code, "label": label, "seats": {}, "sample": s})
+            h = out.setdefault(k, {"code": code, "label": label, "seats": {}, "sample": s, "asof": None, "_table": {}})
+            asof = self.table_date(s)
+            seats = h["_table"] if asof else h["seats"]
             for p in s.get("prices") or []:
                 if p.get("aed") and p["aed"] > 0:
-                    cur = h["seats"].get(p["seat"])
-                    h["seats"][p["seat"]] = p["aed"] if cur is None else min(cur, p["aed"])
+                    cur = seats.get(p["seat"])
+                    seats[p["seat"]] = p["aed"] if cur is None else min(cur, p["aed"])
+            if asof and (h["asof"] is None or asof < h["asof"]): h["asof"] = asof
+        for h in out.values():
+            tbl = h.pop("_table")
+            if h["seats"]: h["asof"] = None
+            elif tbl: h["seats"] = tbl
+            else: h["asof"] = None
         for code in self.cinemas[cid].get("halls") or []:
             if isinstance(code, str) and not any(v["code"] == code for v in out.values()) and code not in ("OTHER",):
-                out.setdefault(self.h.key(self.cinemas[cid]["chain"], code, ""), {"code": code, "label": "", "seats": {}, "sample": None})
+                out.setdefault(self.h.key(self.cinemas[cid]["chain"], code, ""), {"code": code, "label": "", "seats": {}, "sample": None, "asof": None})
         order = lambda kv: (kv[1]["code"] != "Standard", min(kv[1]["seats"].values()) if kv[1]["seats"] else 9999)
         return dict(sorted(out.items(), key=order))
 
@@ -409,7 +434,7 @@ class Site:
         best = self.min_price([s for s in shows if s["film"] == fid and s["date"] == self.today])
         cheap = (f'<span class="lbl">{"أرخص تذكرة اليوم" if lang == "ar" else "Cheapest today"}</span>'
                  f'<span class="amt"><span class="num">{money(best[0])}</span> <small>{esc(L(T["aed"], lang))}</small></span>'
-                 f'<span class="where">{esc(self.cname(best[1]["cinema"], lang))}</span>') if best else \
+                 f'<span class="where">{esc(self.cname(best[1]["cinema"], lang))}</span>' + self.asof_html(self.table_date(best[1]), lang)) if best else \
                 f'<span class="lbl">{esc(L(T["box"], lang))}</span>'
         meta = " ".join(x for x in [f'<span class="rr">{esc(L(RERELEASE, lang))}</span>' if f.get("rerelease") else "",
                                     num(f["rating"]) if f.get("rating") else "",
@@ -493,12 +518,12 @@ class Site:
                     for cid in cids:
                         c = self.cinemas[cid]; pr = self.cinema_prices(cid)
                         # the lowest known price in any hall (an unpriced Standard hall must not hide a priced one)
-                        low = min(((a, h["code"], k) for k, h in pr.items() for a in h["seats"].values()), default=None)
+                        low = min(((a, h["code"], k, h["asof"]) for k, h in pr.items() for a in h["seats"].values()), default=None)
                         halls = [k for k in pr if k != "Standard"]
                         hn = ("، " if lang == "ar" else ", ").join(self.h.name(c["chain"], pr[k]["code"], pr[k]["label"], lang) for k in halls)
                         body += (f'<div class="row cin"><a class="nm" href="{P(lang, city, cid)}">{self.cname_html(cid, lang)}</a>'
                                  f'<span class="sub">{("<bdi>" + esc(hn) + "</bdi>") if hn else ""} {self.fresh(c["chain"], lang)}</span>'
-                                 f'<span class="from">{("من " if lang == "ar" else "from ") + self.pcell(low[0], c["chain"], low[1], low[2]) if low else self.box(lang)}</span></div>')
+                                 f'<span class="from">{("من " if lang == "ar" else "from ") + self.pcell(low[0], c["chain"], low[1], low[2], cid, low[3], lang) if low else self.box(lang)}</span></div>')
                     body += '</div></section>'
                     for mode in ("links", "plain"):
                         sched = f'<section><h2>{"اليوم في " + cn if lang == "ar" else "Today in " + cn}</h2><div class="sched">'
@@ -592,7 +617,7 @@ class Site:
                     if e and e.get("confidence") == "low":
                         note = f' <small class="weak">{"ما تأكدنا من التفاصيل" if lang == "ar" else "details not confirmed"}</small>'
                     src = f' <a class="src" href="{esc(e["source"])}" rel="noopener" target="_blank">{"المصدر" if lang == "ar" else "Source"}</a>' if e and e.get("source") else ""
-                    seats = "".join(f'<tr><th scope="row">{esc(seat)}</th><td>{self.pcell(aed, chain, h["code"], k)}</td></tr>'
+                    seats = "".join(f'<tr><th scope="row">{esc(seat)}</th><td>{self.pcell(aed, chain, h["code"], k, cid, h["asof"], lang)}</td></tr>'
                                     for seat, aed in sorted(h["seats"].items(), key=lambda x: x[1])) or f'<tr><td colspan="2">{self.box(lang)}</td></tr>'
                     body += (f'<div class="hall"><h3{" lang=\"en\"" if lang == "ar" and re.search("[A-Za-z]", hn) else ""}>{esc(hn)}</h3>' + (f'<p>{dates(esc(what))}{note}{src}</p>' if what else "") +
                              f'<table class="prices"><thead><tr><th scope="col">{"الفئة" if lang == "ar" else "Seat"}</th><th scope="col">{"السعر" if lang == "ar" else "Price"} <small>{esc(L(T["aed"], lang))}</small></th></tr></thead><tbody>{seats}</tbody></table></div>')
@@ -629,7 +654,7 @@ class Site:
         cname = label or (card["name_ar"] if lang == "ar" else card["name_en"])
         head = f'<a class="nm" href="{card_href}">{esc(cname)}</a>' if card_href else f'<span class="nm">{esc(cname)}</span>'
         if st == "ok":
-            val = f'<b class="off{" txt" if r.get("type") == "bogo" else ""}">{dates(esc(rule_offer(r, lang)))}</b>'
+            val = f'<b class="off{" txt" if r.get("type") in ("bogo", "fixed") else ""}">{dates(esc(rule_offer(r, lang)))}</b>'
             terms = rule_terms(r, lang)
         elif st == "expired":
             val = f'<span class="nil">{esc(L(T["expired"], lang))}</span>'; terms = [f'{"كان" if lang == "ar" else "Was"} {rule_offer(r, lang)}, {"لين" if lang == "ar" else "until"} {r.get("valid_until")}']
@@ -716,8 +741,9 @@ class Site:
                 out.append(f'<div class="fcin"><h3><a href="{P(lang, city, cid)}">{self.cname_html(cid, lang)}</a> {self.fresh(chain, lang)}</h3>')
                 for k in dict.fromkeys(self.hkey(s) for s in ss):
                     hs = [s for s in ss if self.hkey(s) == k]
-                    priced = next((s for s in hs if any((p.get("aed") or 0) > 0 for p in s.get("prices") or [])), None)
-                    pc = ("".join(f'<span class="seat"><small>{esc(p["seat"])}</small> {self.pcell(p["aed"], chain, priced.get("hall") or "OTHER", k)}</span>'
+                    withp = [s for s in hs if any((p.get("aed") or 0) > 0 for p in s.get("prices") or [])]
+                    priced = next((s for s in withp if not self.table_date(s)), None) or next(iter(withp), None)  # live first
+                    pc = ("".join(f'<span class="seat"><small>{esc(p["seat"])}</small> {self.pcell(p["aed"], chain, priced.get("hall") or "OTHER", k, cid, self.table_date(priced), lang)}</span>'
                                   for p in sorted((p for p in priced["prices"] if (p.get("aed") or 0) > 0), key=lambda p: p["aed"])) if priced else self.box(lang))
                     tl = "".join(f'<span class="dd"><i>{esc(L(lab, lang))}</i>{self.times([s for s in hs if s["date"] == d], lang, links=mode != "plain")}</span>'
                                  for d, lab in days if any(s["date"] == d for s in hs))
@@ -735,7 +761,7 @@ class Site:
         for s in self.shows:
             if self.cinemas[s["cinema"]]["chain"] != chain: continue
             for p in s.get("prices") or []:
-                a, _ = after(p["aed"], chain, s.get("hall") or "OTHER", card, self.rules, self.today)
+                a, _ = after(p["aed"], chain, s.get("hall") or "OTHER", card, self.rules, self.today, self.hkey(s), s["cinema"])
                 if a is not None and (best is None or (s.get("hall") == "Standard", -p["aed"]) > (best[2].get("hall") == "Standard", -best[0])):
                     best = (p["aed"], a, s, p["seat"])
         if not best: return ""
@@ -744,7 +770,8 @@ class Site:
         what = (f"تذكرة {self.h.chain_name(chain, lang)} {'العادية' if s.get('hall') == 'Standard' else hn} ({seat})" if lang == "ar"
                 else f"A {self.h.chain_name(chain, lang)} {'Standard' if s.get('hall') == 'Standard' else hn} ticket ({seat})")
         arrow = "←" if lang == "ar" else "→"
-        return f'<p class="ex">{esc(what)} <s class="num">{money(aed)}</s> {arrow} <b class="num">{money(a)}</b> <small>{esc(L(T["aed"], lang))}</small></p>'
+        pp = f' <small class="per">{esc(L(T["per_person"], lang))}</small>' if (rule_for(self.rules, chain, card) or {}).get("type") == "bogo" else ""
+        return f'<p class="ex">{esc(what)} <s class="num">{money(aed)}</s> {arrow} <b class="num">{money(a)}</b> <small>{esc(L(T["aed"], lang))}</small>{pp}</p>'
 
     def card_pages(self):
         chains = sorted({c["chain"] for c in self.cinemas.values()} | set(self.rules))
@@ -798,7 +825,7 @@ class Site:
                 cells = ""
                 for ch in chains:
                     r = rule_for(self.rules, ch, card["id"]); st = rule_state(r, self.today)
-                    txt = (f'<b class="num" dir="ltr">{"1+1" if r.get("type") == "bogo" else f'{r.get("value", 0):g}%'}</b>' + ("<sup>*</sup>" if weak(r) else "")) if st == "ok" else \
+                    txt = (f'<b class="num" dir="ltr">{"1+1" if r.get("type") == "bogo" else (f'{float(r.get("value") or 0):g} AED' if r.get("type") == "fixed" else f'{r.get("value", 0):g}%')}</b>' + ("<sup>*</sup>" if weak(r) else "")) if st == "ok" else \
                           (f'<span class="nil">{esc(L(T["none_found"], lang))}</span>' if st == "none_found" else f'<span class="nil">{esc(L(T["expired"], lang))}</span>' if st == "expired" else "")
                     cells += f"<td>{txt}</td>"
                 rows += f'<tr><th scope="row"><a href="{P(lang, "cards", card["id"])}">{esc(card["name_ar"] if lang == "ar" else card["name_en"])}</a></th>{cells}</tr>'
@@ -845,7 +872,8 @@ class Site:
     def slices(self):
         """/cinema/data/<city>-<date>.json per city and day, holding only what cinema.js reads, as indexed arrays:
         C[[cid, chain, ar, en]] F[[fid, ar, en]] H[[hall code, key, ar, en]] P[[[seat, aed]…]] B[booking URL prefixes]
-        S[[cinema i, film i, "HH:MM", hall i, price i|-1, prefix i|-1, url tail]]."""
+        S[[cinema i, film i, "HH:MM", hall i, price i|-1, prefix i|-1, url tail(, table date)]] — the 8th
+        element is present only when the price came from prices.yaml, and is that entry's date."""
         ddir = os.path.join(self.out, "cinema", "data")
         for city, _, _ in CITIES:
             cids = {cid for cid, c in self.cinemas.items() if c.get("city") == city}
@@ -872,10 +900,12 @@ class Site:
                         pre, _, tail = s["book"].rpartition("/")
                         bi = at("B", pre + "/", pre + "/") if pre else -1
                         if not pre: tail = s["book"]
-                    S.append([ci, fi, s["time"], hi, pi, bi, tail])
+                    row = [ci, fi, s["time"], hi, pi, bi, tail]
+                    if pr and self.table_date(s): row.append(self.table_date(s))  # a table price carries its date
+                    S.append(row)
                 j = {"g": self.d.get("generated"), **lists, "S": S}
                 self.write(os.path.join(ddir, f"{city}-{day}.json"), json.dumps(j, ensure_ascii=False, separators=(",", ":")))
-        rules = {ch: {card: {k: v for k, v in r.items() if k in ("status", "type", "value", "excluded_halls", "halls_excluded", "included_halls", "valid_until", "confidence", "box_office_only", "max_tickets")}
+        rules = {ch: {card: {k: v for k, v in r.items() if k in ("status", "type", "value", "excluded_halls", "halls_excluded", "included_halls", "included_cinemas", "valid_until", "confidence", "box_office_only", "max_tickets")}
                       for card, r in (cards or {}).items()} for ch, cards in self.rules.items()}
         chains = {ch: self.h.chain_name(ch, "ar") for ch in set(self.rules) | {c["chain"] for c in self.cinemas.values()}}
         chains_en = {ch: self.h.chain_name(ch, "en") for ch in chains}

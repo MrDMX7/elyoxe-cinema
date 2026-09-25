@@ -2,8 +2,8 @@
    Reads the visitor's city + card (localStorage, optional), loads /cinema/data/discounts.json (+ the city's
    slice on the home page), rewrites every .p price cell to the price after the card, fills «starting in
    the next 2 hours» and «cheapest for you tonight», marks past/soon showtimes and refreshes «updated X ago».
-   Discount semantics are build.py's: percent -> price×(1-v/100); bogo -> price/2 per person;
-   excluded_halls / included_halls by hall code; valid_until past -> none; status none_found -> «ما لقينا خصم».
+   Discount semantics are discounts.py's (compute): the block between disc:begin and disc:end mirrors it line
+   for line, and tests/test_parity.py runs that block in node against Python on one matrix.
    ?now=2026-09-25T19:00 pretends it is that UAE time (for checking the page). */
 (function () {
   "use strict";
@@ -31,25 +31,50 @@
   if (C.cards && card && !C.cards[card]) card = "";
   if (pageCity) set("city", pageCity);
 
-  /* ---------------- discounts (mirror of build.after) */
-  function rule(chain, c) { return D && D.rules && D.rules[chain] && D.rules[chain][c] || null; }
-  function state(r) {
+  /* ---------------- discounts */
+  /* disc:begin — a pure mirror of discounts.py compute(); tests/test_parity.py runs this block in node */
+  function discRule(rules, chain, c) { return rules && rules[chain] && rules[chain][c] || null; }
+  function discState(r, today) {
     if (!r) return "unchecked";
     if (r.status === "none_found") return "none_found";
-    if (r.valid_until && String(r.valid_until) < TODAY) return "expired";
-    return r.type === "percent" || r.type === "bogo" ? "ok" : "none_found";
+    if (r.valid_until && String(r.valid_until) < today) return "expired";
+    return r.type === "percent" || r.type === "bogo" || r.type === "fixed" ? "ok" : "none_found";
   }
-  function after(aed, chain, hall, c) {
-    var r = rule(chain, c), st = state(r);
+  function discCovers(r, hall, hk, cin) {
+    var names = [hall, hk].filter(function (h) { return h; }), ex = r.excluded_halls || r.halls_excluded || [], inc = r.included_halls;
+    var any = function (list) { return names.some(function (h) { return list.indexOf(h) >= 0; }); };
+    if (any(ex)) return false;
+    if (inc != null && !any(inc)) return false;
+    if (r.included_cinemas != null && r.included_cinemas.indexOf(cin) < 0) return false;
+    return true;
+  }
+  function discR2(x) { return Math.round(x * 100) / 100; }
+  function discPrice(r, aed) {
+    if (r.type === "bogo") return discR2(aed / 2);
+    if (r.type === "fixed") return discR2(Math.min(aed, +r.value || 0));
+    return discR2(aed * (1 - (+r.value || 0) / 100));
+  }
+  // hk: a halls.yaml key, or the slices' «chain|key» (the key is after the bar)
+  function discAfter(rules, today, aed, chain, hall, hk, cin, c) {
+    var r = discRule(rules, chain, c), st = discState(r, today);
+    if (hk && hk.indexOf("|") >= 0) hk = hk.slice(hk.indexOf("|") + 1);
     if (st !== "ok") return { a: null, st: st, r: r };
-    var ex = r.excluded_halls || r.halls_excluded || [], inc = r.included_halls;
-    if (ex.indexOf(hall) >= 0 || (inc && inc.indexOf(hall) < 0)) return { a: null, st: "excluded", r: r };
-    var a = r.type === "bogo" ? aed / 2 : aed * (1 - (+r.value || 0) / 100);
-    return { a: Math.round(a * 100) / 100, st: "ok", r: r };
+    if (!discCovers(r, hall, hk, cin)) return { a: null, st: "excluded", r: r };
+    return { a: discPrice(r, aed), st: "ok", r: r };
   }
+  // what a paid price needs said next to it: BOGO is per person and only with 2 tickets
+  function discPayNote(r, strings) { return r && r.type === "bogo" ? strings.per_person : ""; }
+  /* disc:end */
+  function rule(chain, c) { return discRule(D && D.rules, chain, c); }
+  function state(r) { return discState(r, TODAY); }
+  function after(aed, chain, hall, c, hk, cin) { return discAfter(D && D.rules, TODAY, aed, chain, hall, hk, cin, c); }
+  function ppNote(r) { var n = discPayNote(r, C); return n ? "<small class=\"per\">" + esc(n) + "</small>" : ""; }
+  // a price from the fallback table (prices.yaml) carries the date it was seen, never the live «updated X ago»
+  function asofNote(d) { return d ? '<small class="asof">' + sub(esc(C.asof), { date: '<bdi class="num">' + esc(d) + "</bdi>" }) + "</small>" : ""; }
   // HTML: the percentage sits in its own isolated span, or an Arabic run prints «خصم %20»
   function offer(r) {
     if (r.type === "bogo") return esc(lang === "ar" ? "تذكرتين بسعر وحدة" : "Buy one, get one");
+    if (r.type === "fixed") { var f = '<span class="num" dir="ltr">' + esc(+r.value) + "</span>"; return lang === "ar" ? "التذكرة بـ" + f + " درهم" : "Tickets at AED " + f; }
     var v = '<span class="num" dir="ltr">' + esc(+r.value) + "%</span>";
     return lang === "ar" ? "خصم " + v : v + " off";
   }
@@ -58,11 +83,11 @@
   /* ---------------- price cells */
   function renderPrices() {
     qa(".p").forEach(function (el) {
-      var aed = +el.getAttribute("data-aed"), base = '<span class="num">' + fmt(aed) + "</span>";
-      if (!card || !D) { el.innerHTML = base; return; }
-      var x = after(aed, el.getAttribute("data-chain"), el.getAttribute("data-hall"), card);
-      if (x.a != null) el.innerHTML = '<s class="num">' + fmt(aed) + "</s><b>" + fmt(x.a) + "</b>" + (x.r.type === "bogo" ? "<small>" + esc(C.per_person) + "</small>" : "");
-      else el.innerHTML = base + (x.st === "excluded" ? "<small>" + esc(C.excluded) + "</small>" : "");
+      var aed = +el.getAttribute("data-aed"), base = '<span class="num">' + fmt(aed) + "</span>", asof = asofNote(el.getAttribute("data-asof"));
+      if (!card || !D) { el.innerHTML = base + asof; return; }
+      var x = after(aed, el.getAttribute("data-chain"), el.getAttribute("data-hall"), card, el.getAttribute("data-hk"), el.getAttribute("data-cin"));
+      if (x.a != null) el.innerHTML = '<s class="num">' + fmt(aed) + "</s><b>" + fmt(x.a) + "</b>" + ppNote(x.r) + asof;
+      else el.innerHTML = base + (x.st === "excluded" ? "<small>" + esc(C.excluded) + "</small>" : "") + asof;
     });
   }
   function renderNote(chains) {
@@ -113,9 +138,9 @@
     var b = null;
     shows.forEach(function (s) {
       (s.p || []).forEach(function (p) {
-        var x = card ? after(p[1], S.cinemas[s.c].chain, s.h, card) : { a: null };
+        var x = card ? after(p[1], S.cinemas[s.c].chain, s.h, card, s.k, s.c) : { a: null };
         var pay = x.a != null ? x.a : p[1];
-        if (!b || pay < b.pay) b = { pay: pay, aed: p[1], off: x.a != null, s: s };
+        if (!b || pay < b.pay) b = { pay: pay, aed: p[1], off: x.a != null, r: x.a != null ? x.r : null, s: s };
       });
     });
     return b;
@@ -130,11 +155,11 @@
     var soon = up.filter(function (s) { return start(s) <= n + 2 * 3600e3; }).slice(0, 14);
     if (list) list.innerHTML = soon.map(function (s) {
       var c = S.cinemas[s.c], b = best([s]), mins = Math.round((start(s) - n) / 60000);
-      return '<li><a href="' + esc(s.b || C.base + "film/" + s.f + "/") + '" rel="nofollow noopener" target="_blank">' +
+      return '<li><a href="' + esc(/^https?:\/\//i.test(s.b || "") ? s.b : C.base + "film/" + s.f + "/") + '" rel="nofollow noopener" target="_blank">' +
         '<span class="tt">' + esc(s.t) + "</span>" + '<span class="in">' + (mins < 1 ? (lang === "ar" ? "الحين" : "now") : lang === "ar" ? "بعد " + mins + " دقيقة" : "in " + mins + " min") + "</span>" +
         '<span class="ft">' + esc(nm(S.films[s.f])) + "</span>" +
         '<span class="pl">' + esc(nm(c)) + (s.h !== "Standard" ? " · " + esc(nm({ ar: S.halls[s.k][0], en: S.halls[s.k][1] })) : "") + "</span>" +
-        '<span class="pp">' + (b ? '<span class="num">' + fmt(b.pay) + "</span> " + esc(C.aed) : esc(C.box)) + "</span></a></li>";
+        '<span class="pp">' + (b ? '<span class="num">' + fmt(b.pay) + "</span> " + esc(C.aed) + ppNote(b.r) + asofNote(s.asof) : esc(C.box)) + "</span></a></li>";
     }).join("");
     if (empty) {
       var today = up.filter(function (s) { return s.d === TODAY; });
@@ -154,8 +179,8 @@
       if (!b) { box.innerHTML = '<span class="lbl">' + esc(C.box) + "</span>"; return; }
       box.innerHTML = '<span class="lbl">' + esc(tonight.length ? C.cheap_tonight : C.cheap_tomorrow) + "</span>" +
         '<span class="amt' + (b.off ? " you" : "") + '"><span class="num">' + fmt(b.pay) + "</span> <small>" + esc(C.aed) + "</small>" +
-        (b.off ? '<s class="num">' + fmt(b.aed) + "</s>" : "") + "</span>" +
-        '<span class="where">' + esc(nm(S.cinemas[b.s.c])) + " · " + '<span class="num">' + esc(b.s.t) + "</span></span>";
+        (b.off ? '<s class="num">' + fmt(b.aed) + "</s>" : "") + ppNote(b.r) + "</span>" +
+        '<span class="where">' + esc(nm(S.cinemas[b.s.c])) + " · " + '<span class="num">' + esc(b.s.t) + "</span></span>" + asofNote(b.s.asof);
     });
     if (grid) inCity.concat(out).forEach(function (el) { grid.appendChild(el); });
     renderNote(Object.keys(S.cinemas).map(function (k) { return S.cinemas[k].chain; }));
@@ -178,7 +203,7 @@
         j.H.forEach(function (h) { o.halls[h[1]] = [h[2], h[3]]; });
         j.S.forEach(function (a) {
           var h = j.H[a[3]];
-          o.shows.push({ c: j.C[a[0]][0], f: j.F[a[1]][0], d: d, t: a[2], h: h[0], k: h[1], p: a[4] >= 0 ? j.P[a[4]] : null, b: a[5] >= 0 ? j.B[a[5]] + a[6] : (a[6] || null) });
+          o.shows.push({ c: j.C[a[0]][0], f: j.F[a[1]][0], d: d, t: a[2], h: h[0], k: h[1], p: a[4] >= 0 ? j.P[a[4]] : null, b: a[5] >= 0 ? j.B[a[5]] + a[6] : (a[6] || null), asof: a[7] || null });
         });
       });
       S = o; renderHome();
