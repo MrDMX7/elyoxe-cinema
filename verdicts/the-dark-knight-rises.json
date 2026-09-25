@@ -1,0 +1,14 @@
+{
+  "ar": "خاتمة ثلاثية Christopher Nolan إيت قوية، 87% من النقاد و90% من الجمهور معاها. Christian Bale وTom Hardy يقدّمون أكشن ودراما بمستوى وايد عالي.",
+  "basis": "RT 87% (377 نقد) · الجمهور 90%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 87,
+    "rt_count": 377
+  },
+  "by": "claude",
+  "en": "The Dark Knight Rises closes Nolan's trilogy with critical acclaim, 87% from critics and 90% from audiences. Bale and Hardy deliver a potent, ambitious action finale.",
+  "fid": "the-dark-knight-rises",
+  "verdict": "yes",
+  "written": "2026-09-26"
+}

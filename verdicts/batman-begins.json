@@ -1,0 +1,14 @@
+{
+  "ar": "بداية باتمان يفهم جوهر البطل الخارق بجدية وذكاء، وكريستيان بيل يقدّم قصة نشأة قوية. 85% من النقاد يمدحونه وجمهور Rotten Tomatoes عند 94%.",
+  "basis": "RT 85% (285 نقد) · الجمهور 94%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 85,
+    "rt_count": 285
+  },
+  "by": "claude",
+  "en": "Batman Begins understands the essence of the superhero with brooding intensity and smarts, anchored by Christian Bale's origin story. Critics score it 85% and audiences 94% on Rotten Tomatoes.",
+  "fid": "batman-begins",
+  "verdict": "yes",
+  "written": "2026-09-26"
+}

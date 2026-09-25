@@ -1,8 +1,13 @@
 {
-  "ar": "عناكب سامة تحاصر عمارة سكنية بالكامل، بطولة ماتيلدا لوتزي ومدته ساعة و26 دقيقة. ما لقينا تقييمات كافية لهالفيلم للحين لأنه يعرض بالإمارات قبل أمريكا.",
-  "basis": "يعرض بالإمارات قبل أمريكا، لا يوجد تقييم نقدي بعد",
-  "by": "claude",
-  "en": "A venomous spider infestation locks down an apartment building, starring Matilda Lutz, runtime 1h26. No ratings yet since it opens in the UAE before its US release.",
+  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
+  "basis": "",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": null,
+    "rt_count": null
+  },
+  "by": "template",
+  "en": "Not enough ratings yet.",
   "fid": "crawlers",
   "verdict": "unknown",
   "written": "2026-09-26"
