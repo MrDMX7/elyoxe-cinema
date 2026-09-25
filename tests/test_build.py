@@ -132,15 +132,91 @@ def test_unconfirmed_rule_is_marked(site):
     assert "غير مؤكد" in read(out, "cinema", "cards", "esaad")
 
 
-def test_city_slices_for_the_client(site):
+def test_city_day_slices_for_the_client(site):
     out, data = site
     for city in {c["city"] for c in data["cinemas"].values()}:
-        j = json.load(open(os.path.join(out, "cinema", "data", city + ".json"), encoding="utf-8"))
-        assert j["shows"] and all(s["c"] in j["cinemas"] for s in j["shows"])
+        for day in ("2026-09-25", "2026-09-26"):
+            j = json.load(open(os.path.join(out, "cinema", "data", f"{city}-{day}.json"), encoding="utf-8"))
+            assert j["S"]
+            for ci, fi, t, hi, pi, bi, tail in j["S"]:
+                assert j["C"][ci][0] in data["cinemas"] and j["F"][fi][0] in data["films"] and re.match(r"^\d\d:\d\d$", t)
+                assert j["H"][hi][0] and "|" in j["H"][hi][1]
+                assert pi == -1 or j["P"][pi][0][1] > 0
+                assert bi == -1 or (j["B"][bi] + tail).startswith("https://")
     d = json.load(open(os.path.join(out, "cinema", "data", "discounts.json"), encoding="utf-8"))
     assert d["rules"]["star"]["fazaa"]["value"] == 20
     js = os.path.getsize(os.path.join(out, "cinema", "assets", "cinema.js"))
     assert js < 25 * 1024
+
+
+def test_percentages_are_isolated_in_arabic(site):
+    """«خصم 20%» in one bidi run prints «خصم %20»: every percentage in visible text sits in its own .num span."""
+    out, _ = site
+    for f in all_files(out):
+        if not f.endswith(".html"): continue
+        h = open(f, encoding="utf-8").read()
+        body = re.sub(r"<script.*?</script>", "", h.split("<body", 1)[1], flags=re.S)
+        for m in re.finditer(r"\d+(?:\.\d+)?\s?%", body):
+            assert re.search(r'class="num">\s*$', body[:m.start()][-40:]), (f, body[m.start() - 60:m.end() + 10])
+    assert '<span class="num">20%</span>' in read(out, "cinema", "cards", "fazaa")
+    assert '<b class="num">20%</b>' in read(out, "cinema", "cards")
+
+
+def test_hall_labels_are_cleaned():
+    h = build.Halls(os.path.join(ROOT, "halls.yaml"))
+    assert build.clean_label("Private CinemaiThis session can be customized after you book (content, F&B)") == "Private Cinema"
+    assert h.name("vox", "OTHER", "Private CinemaiThis session can be customized after you book (content, F&B)", "en") == "Private Cinema"
+    assert h.key("vox", "OTHER", "Premium") == h.key("vox", "OTHER", "Premier") == "PREMIER"
+    assert h.key("star", "OTHER", "2D") == "Standard" and h.name("star", "OTHER", "2D", "ar") == "عادية"
+    assert h.key("roxy", "OTHER", "2L") == "Standard"
+    assert h.key("reel", "Standard", "Screen 11") == "Standard"
+    assert h.key("reel", "VIP", "Dolby Screen 7") == "DOLBY"
+    key, name, e, clean = h.resolve("vox", "OTHER", "Some Brand New Thing 12")
+    assert name == "Some Brand New Thing" and not clean
+
+
+def merged_real():
+    import normalize
+    res = {c: json.load(open(os.path.join(ROOT, "fixtures", c + ".json"), encoding="utf-8"))
+           for c in ("vox", "star", "novo", "reel", "roxy", "cineroyal", "cinemacity")
+           if os.path.exists(os.path.join(ROOT, "fixtures", c + ".json"))}
+    return normalize.merge(res, None, "2026-09-25T00:00:00")
+
+
+def sizes_ok(out, page_max=200_000, slice_max=150_000):
+    big = []
+    for f in all_files(out):
+        n = os.path.getsize(f)
+        if f.endswith(".html") and n > page_max: big.append((f, n))
+        if os.sep + "data" + os.sep in f and f.endswith(".json") and n > slice_max: big.append((f, n))
+    return big
+
+
+def test_real_fixtures_build_within_budget(tmp_path):
+    data = merged_real()
+    p = tmp_path / "real.json"; p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    out = str(tmp_path / "o")
+    build.build(str(p), os.path.join(ROOT, "discounts.yaml"), out)
+    assert sizes_ok(out) == []
+    junk = re.compile(r"This session|customized after")
+    for f in all_files(out):
+        if f.endswith((".html", ".json")): assert not junk.search(open(f, encoding="utf-8").read()), f
+
+
+def test_scaled_volume_stays_within_budget(tmp_path):
+    """The fixtures cap each chain at ~400 shows; real volume is ~3,500 per 2 days. Triple every show."""
+    data = merged_real()
+    extra = []
+    for s in data["shows"]:
+        for shift in (7, 14):
+            h, m = map(int, s["time"].split(":")); m += shift
+            extra.append(dict(s, time=f"{(h + m // 60) % 24:02d}:{m % 60:02d}", book=(s.get("book") or "") + f"?x={shift}"))
+    data["shows"] += extra
+    assert len(data["shows"]) > 6000
+    p = tmp_path / "big.json"; p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    out = str(tmp_path / "o")
+    build.build(str(p), os.path.join(ROOT, "discounts.yaml"), out)
+    assert sizes_ok(out) == []
 
 
 def test_poster_used_when_present(tmp_path):

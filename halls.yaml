@@ -61,12 +61,21 @@ chains:
         source: https://uae.voxcinemas.com/ways-to-watch/kids
         confidence: high
       - key: PREMIER
-        match: premier
+        match: 'premi(er|um)'
         name: PREMIER
         name_ar: بريمير
         what_ar: كراسي جلد تنسدح بتعديل كهربائي، بين العادية وجولد في السعر.
         what_en: Powered leather recliners, priced between Standard and GOLD.
         source: https://uae.voxcinemas.com/ways-to-watch/premier
+        confidence: medium
+
+      - key: PRIVATE
+        match: 'private'
+        name: Private Cinema
+        name_ar: سينما خاصة
+        what_ar: "قاعة صغيرة تحجزها كاملة لك ولربعك، وتختار المحتوى والأكل بعد الحجز."
+        what_en: "A small hall you book whole for your group; content and food are arranged after booking."
+        source: https://ksa.voxcinemas.com/ways-to-watch/family-and-friends
         confidence: medium
 
   star:
@@ -98,6 +107,23 @@ chains:
         what_en: Motion seats with wind and water effects, at Bawadi.
         source: https://www.bawadimall.com/cinema/
         confidence: medium
+
+      - key: ATMOS
+        match: atmos
+        name: Dolby Atmos
+        name_ar: دولبي أتموس
+        what_ar: "صوت Dolby Atmos من فوق ومن الجوانب، بنفس كراسي القاعة العادية."
+        what_en: "Dolby Atmos sound from above and around, with regular seating."
+        source: https://www.starcinemas.ae/
+        confidence: low
+      - key: DOLBY
+        match: dolby
+        name: Dolby
+        name_ar: دولبي
+        what_ar: "قاعة بصوت Dolby؛ ما لقينا وصف رسمي لمحتواها."
+        what_en: "A Dolby sound hall; no official description found."
+        source: https://www.starcinemas.ae/
+        confidence: low
 
   novo:
     name: Novo Cinemas
@@ -149,6 +175,41 @@ chains:
         name_ar: بريمير
         what_ar: درجة بين العادية والبلاتينيوم؛ ما لقينا وصف رسمي.
         what_en: A tier between Standard and Platinum; no official description found.
+        source: https://www.theroxycinemas.com/
+        confidence: low
+
+      - key: GOLD
+        codes: [GOLD]
+        match: '^gold'
+        name: Gold
+        name_ar: جولد
+        what_ar: "درجة روكسي بين العادية والبلاتينيوم؛ ما لقينا وصف رسمي لمحتواها."
+        what_en: "Roxy's tier between Standard and Platinum; no official description found."
+        source: https://www.theroxycinemas.com/
+        confidence: low
+      - key: XTREME
+        codes: [MAX]
+        match: xtreme
+        name: Xtreme
+        name_ar: إكستريم
+        what_ar: "في دبي هيلز مول، من أكبر الشاشات في المنطقة."
+        what_en: "At Dubai Hills Mall, one of the largest screens in the region."
+        source: https://www.dubaiholding.com/en/media-hub/press-releases/roxy-cinemas-set-to-open-the-biggest-cinema-screen-in-mena-at-dubai-hills-mall
+        confidence: medium
+      - key: PRIVATE
+        match: 'private'
+        name: Private Screen
+        name_ar: شاشة خاصة
+        what_ar: "قاعة تحجزها كاملة لك ولربعك."
+        what_en: "A hall you book whole for your group."
+        source: https://www.theroxycinemas.com/
+        confidence: low
+      - key: BRONZE
+        match: bronze
+        name: Bronze
+        name_ar: برونز
+        what_ar: "اسم تستعمله روكسي لدرجة قاعة؛ ما لقينا وصف رسمي."
+        what_en: "A tier name Roxy uses; no official description found."
         source: https://www.theroxycinemas.com/
         confidence: low
 
@@ -205,7 +266,7 @@ chains:
     halls:
       - key: VIP
         codes: [VIP, SUITES]
-        match: 'royal suite|vip'
+        match: 'royal (suite|class)|vip'
         name: Royal Suites
         name_ar: رويال سويتس
         what_ar: كراسي جلد تنسدح مع طاولة جنبك وخادم يوصل لك الأكل، ومدخل وشباك تذاكر ولوبي خاص.
@@ -220,6 +281,16 @@ chains:
         what_en: Dolby Atmos sound and 4K projection with regular seating.
         source: https://www.thenationalnews.com/arts-culture/4-options-for-vip-cinema-experiences-in-the-uae-1.30721
         confidence: medium
+
+      - key: KIDS
+        codes: [KIDS]
+        match: kids
+        name: Royal Kids
+        name_ar: رويال كيدز
+        what_ar: "قاعة للعيال وأفلام العائلة."
+        what_en: "A children's hall for family films."
+        source: https://cineroyal.ae/
+        confidence: low
 
   cinemacity:
     name: Cinemacity

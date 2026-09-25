@@ -78,8 +78,7 @@ p.te{font-size:1.125rem}
 .film .amt small{font-family:var(--font);font-size:.875rem;color:var(--stone)}
 .film .amt s{font-size:.9375rem;color:var(--stone);margin-inline-start:.5rem}
 .film .where{color:var(--stone);font-size:.8125rem}
-.film.off{opacity:.5}
-.film.off:hover{opacity:.8}
+.film.off .t,.film.off .v,.film.off .rt .num,.film.off .amt{color:var(--stone)}
 
 /* lists of cities, cards, sources */
 .clist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(13rem,100%),1fr));column-gap:2rem}
@@ -126,12 +125,13 @@ p.te{font-size:1.125rem}
 .sc p:last-child{margin:0}
 .sc .cn,.hn{font-size:.875rem;color:var(--stone);min-inline-size:7rem}
 .sc .cn{text-decoration:none}
+/* showtimes: <span class="times" data-d><a>19:30</a>…</span> — lean markup, one list per day */
 .times{display:inline-flex;flex-wrap:wrap;gap:.35rem}
-.tm{display:inline-flex;align-items:baseline;gap:.35rem;padding:.1rem .5rem;border:1px solid var(--rule);text-decoration:none;font-size:.9375rem;transition:border-color .2s var(--ease)}
-.tm:hover{border-color:var(--ink)}
-.tm small{color:var(--stone);font-size:.75rem}
-.tm.past{opacity:.35}
-.tm.soon{border-color:var(--now);color:var(--now)}
+.times > *{display:inline-flex;align-items:baseline;gap:.35rem;padding:.1rem .5rem;border:1px solid var(--rule);text-decoration:none;font-family:var(--mono);font-size:.9375rem;line-height:1.6;transition:border-color .2s var(--ease)}
+.times > a:hover{border-color:var(--ink)}
+.times small{color:var(--stone);font-size:.75rem;font-family:var(--font)}
+.times > .past{color:var(--stone);border-color:var(--rule-soft);text-decoration:line-through;text-decoration-color:var(--rule)}
+.times > .nowish{border-color:var(--now);color:var(--now)}
 
 /* halls explained + price tables */
 .halls{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(20rem,100%),1fr));column-gap:2.5rem}
@@ -161,9 +161,12 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:.9375rem}
 .fcin{padding-block:.75rem 1rem;border-block-end:1px solid var(--rule)}
 .fcin h3{font-size:1.0625rem;font-weight:600;margin:0 0 .5rem;display:flex;flex-wrap:wrap;gap:.25rem .75rem;align-items:baseline}
 .fcin h3 a{text-decoration:none}
-.line{display:grid;grid-template-columns:3.5rem minmax(6rem,9rem) minmax(0,1fr) auto;gap:.4rem 1rem;align-items:baseline;padding-block:.35rem}
-.line .day{color:var(--stone);font-size:.8125rem}
-.line .pr{display:flex;flex-wrap:wrap;gap:.25rem 1rem;justify-content:flex-end}
+.line{display:grid;grid-template-columns:minmax(7rem,10rem) minmax(0,1fr);gap:.35rem 1rem;align-items:baseline;padding-block:.5rem;border-block-start:1px solid var(--rule-soft)}
+.line:first-of-type{border-block-start:0}
+.line .hn{grid-row:span 3}
+.line .pr{display:flex;flex-wrap:wrap;gap:.25rem 1rem}
+.line .dd{display:flex;flex-wrap:wrap;align-items:baseline;gap:.35rem .6rem}
+.line .dd i{font-style:normal;color:var(--stone);font-size:.8125rem;min-inline-size:2.75rem}
 .seat{display:inline-flex;align-items:baseline;gap:.35rem}
 .seat > small{color:var(--stone);font-size:.75rem}
 .fcity.here > h2::after{content:"";inline-size:.5rem;block-size:.5rem;background:var(--saffron);align-self:center}
@@ -181,8 +184,8 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:.9375rem}
 
 @media (max-width:720px){
   .srow{grid-template-columns:minmax(0,1fr)}
-  .line{grid-template-columns:auto minmax(0,1fr);grid-template-areas:"day hn" "tm tm" "pr pr"}
-  .line .day{grid-area:day}.line .hn{grid-area:hn;min-inline-size:0}.line .times{grid-area:tm}.line .pr{grid-area:pr;justify-content:flex-start}
+  .line{grid-template-columns:minmax(0,1fr)}
+  .line .hn{grid-row:auto;font-weight:500;color:var(--ink)}
   .row{grid-template-areas:"nm" "sub" "val";grid-template-columns:minmax(0,1fr)}
   .row .from,.row .val{text-align:start;align-self:start}
   .crd .val{align-items:flex-start}

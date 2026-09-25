@@ -69,9 +69,17 @@ def P(lang, *parts):
 DATE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 
 
+SCHED_BUDGET = 110_000   # bytes of schedule markup per page; with the chrome a page stays under ~150 KB
+BCP47 = {"English": "en", "Arabic": "ar", "Hindi": "hi", "Telugu": "te", "Malayalam": "ml", "Tamil": "ta", "Tagalog": "tl",
+         "Urdu": "ur", "Bengali": "bn", "Kannada": "kn", "French": "fr", "Spanish": "es", "Japanese": "ja", "Korean": "ko",
+         "Chinese": "zh", "Russian": "ru", "Turkish": "tr", "Persian": "fa", "Filipino": "tl", "Punjabi": "pa", "Marathi": "mr"}
+PCT = re.compile(r"(?<![\w.])(\d+(?:\.\d+)?\s?%)")
+
+
 def dates(h):
-    """escaped text -> the same with every ISO date isolated (RTL would otherwise print 2027-08-05 as 05-08-2027)."""
-    return DATE.sub(r'<bdi class="num">\1</bdi>', h)
+    """escaped text -> the same with every ISO date and every percentage isolated. Inside an Arabic run a
+    number turns Arabic (UBA W2), so «خصم 20%» would print «خصم %20» and 2027-08-05 as 05-08-2027."""
+    return PCT.sub(r'<span class="num">\1</span>', DATE.sub(r'<bdi class="num">\1</bdi>', h))
 
 
 def money(x):
@@ -162,6 +170,7 @@ def rule_terms(r, lang):
 class Halls:
     def __init__(self, path):
         self.y = (yaml.safe_load(open(path, encoding="utf-8")) or {}).get("chains", {}) if path and os.path.exists(path) else {}
+        self._cache = {}
 
     def chain_name(self, chain, lang):
         c = self.y.get(chain) or {}
@@ -175,18 +184,45 @@ class Halls:
             if code in (e.get("codes") or []): return e
         return None
 
+    def resolve(self, chain, code, label):
+        """(key, display name, halls.yaml entry|None, clean) for a reader's hall code + raw label.
+
+        Order: a halls.yaml entry for this chain (by label regex, then code) → Standard for format-only
+        labels («2D», «NORMAL», «Screen 4») → the reader's hall code → the cleaned label. `clean` is
+        False when the name came from a raw label (kept out of JSON-LD)."""
+        ck = (chain, code, label)
+        if ck in self._cache: return self._cache[ck]
+        lab = clean_label(label)
+        e = self.match(chain, code, lab)
+        if e: r = (e["key"], e.get("name") or e["key"], e, True)
+        elif code == "Standard" or (code in ("OTHER", "", None) and FORMAT_ONLY.match(lab or "2D")): r = ("Standard", "Standard", None, True)
+        elif code and code != "OTHER": r = (code, code, None, True)
+        else: r = (lab.upper(), lab, None, False)
+        self._cache[ck] = r
+        return r
+
     def key(self, chain, code, label):
-        e = self.match(chain, code, label)
-        if e: return e["key"]
-        if code and code != "OTHER": return code
-        return re.sub(r"\s+\d+$", "", (label or "OTHER").strip())[:28] or "OTHER"
+        return self.resolve(chain, code, label)[0]
 
     def name(self, chain, code, label, lang):
-        e = self.match(chain, code, label)
-        if e: return e.get("name") or e["key"]
-        if code == "Standard": return "عادية" if lang == "ar" else "Standard"
-        if code and code != "OTHER": return code
-        return re.sub(r"\s+\d+$", "", (label or "").strip())[:28] or ("قاعة" if lang == "ar" else "Hall")
+        k, n, _, _ = self.resolve(chain, code, label)
+        return ("عادية" if lang == "ar" else "Standard") if k == "Standard" else n
+
+
+# a label that only names a projection format or a screen number is the regular hall
+FORMAT_ONLY = re.compile(r"^(?:[234]D|[234]L|2D/3D|NORMAL|STANDARD|REGULAR|SILVER|DIGITAL|(?:SCREEN|HALL|CINEMA)\s*\d*|\d+)?$", re.I)
+
+
+def clean_label(label):
+    """Raw reader label -> a short display label: drops tooltip text glued on («Private CinemaiThis session
+    can be…» -> «Private Cinema»), trailing screen numbers, and anything past 24 characters."""
+    s = (label or "").strip()
+    m = re.search(r"[a-z](i?)[A-Z]", s)      # a lower→upper run-on is where a tooltip was glued on (the «i» is its info icon)
+    if m: s = s[:m.start(1)]
+    s = re.split(r"\s*[(\[|:;.]\s*|\s+[-–—]\s+", s)[0]
+    s = re.sub(r"\s+\d+$", "", re.sub(r"\s+", " ", s)).strip()
+    if len(s) > 24: s = s[:24].rsplit(" ", 1)[0]
+    return s
 
 
 # ---------------------------------------------------------------- the site
@@ -200,7 +236,7 @@ class Site:
         self.films, self.cinemas = data.get("films", {}), data.get("cinemas", {})
         self.shows = [s for s in data.get("shows", []) if s.get("cinema") in self.cinemas and s.get("film") in self.films]
         self.tpl = open(os.path.join(SRC, "page.html"), encoding="utf-8").read()
-        self.urls = []
+        self.urls, self.hashes, self.lastmod_path = [], {}, None
         self.v = hashlib.sha1(b"".join(open(os.path.join(SRC, f), "rb").read() for f in sorted(os.listdir(SRC)))).hexdigest()[:10]
 
     # -------- names
@@ -316,6 +352,7 @@ class Site:
             "strings": json.dumps(strings, ensure_ascii=False).replace("</", "<\\/"),
             "body": body,
         })
+        self.hashes[P(lang, *parts)] = hashlib.sha1((title + desc + body).encode()).hexdigest()[:12]
         out = re.sub(r"\{\{(\w+)\}\}", lambda m: str(vals.get(m.group(1), m.group(0))), self.tpl)
         self.write(os.path.join(self.out, *(["en"] if lang == "en" else []), "cinema", *parts, "index.html"), out)
         if lang == "ar": self.urls.append(parts)
@@ -361,7 +398,7 @@ class Site:
                     + self.picker(lang, "dubai")
                     + f'<section class="now" data-now><h2><i class="live" aria-hidden="true"></i>{"يبدأ خلال ساعتين" if lang == "ar" else "Starting in the next 2 hours"} <span data-now-city></span></h2>'
                       f'<ul class="strip" data-now-list></ul><p class="hint" data-now-empty>{"فعّل الجافاسكربت عشان تشوف العروض الجاية في مدينتك." if lang == "ar" else "Turn on JavaScript to see what starts soon in your city."}</p></section>'
-                    + f'<section class="films"><h2>{"أفلام الأسبوع" if lang == "ar" else "This week’s films"} <small class="num">{len(films)}</small></h2>'
+                    + f'<section class="films"><h2>{"الأفلام المعروضة" if lang == "ar" else "Now showing"} <small class="num">{len(films)}</small></h2>'
                       f'<div class="fgrid">{"".join(self.film_tile(fid, lang, self.shows) for fid in films)}</div></section>'
                     + f'<section class="cities" id="cities"><h2>{"المدن" if lang == "ar" else "Cities"}</h2><ul class="clist">'
                     + "".join(f'<li><a href="{P(lang, c)}">{esc(L((a, e), lang))}</a> <span class="n">{num(by_city[c])} {"سينما" if lang == "ar" else ("cinema" if by_city[c] == 1 else "cinemas")}</span></li>' for c, a, e in CITIES)
@@ -421,26 +458,29 @@ class Site:
                     body += f'<section><h2>{"السينمات" if lang == "ar" else "Cinemas"}</h2><div class="rows">'
                     for cid in cids:
                         c = self.cinemas[cid]; pr = self.cinema_prices(cid)
-                        std = next(iter(pr.values()), None)
-                        low = min(std["seats"].items(), key=lambda x: x[1]) if std and std["seats"] else None
-                        halls = [k for k in pr if pr[k]["code"] != "Standard"]
-                        hn = "، ".join(self.h.name(c["chain"], pr[k]["code"], pr[k]["label"], lang) for k in halls) if lang == "ar" else ", ".join(self.h.name(c["chain"], pr[k]["code"], pr[k]["label"], lang) for k in halls)
-                        body += (f'<div class="row cin"><a class="nm" href="{P(lang, city, cid)}">{esc(self.cname(cid, lang))}</a>'
-                                 f'<span class="sub">{esc(c.get("mall") or "")}{(" · " + esc(hn)) if hn else ""} {self.fresh(c["chain"], lang)}</span>'
-                                 f'<span class="from">{("من " if lang == "ar" else "from ") + self.pcell(low[1], c["chain"], std["code"], next(iter(pr))) if low else self.box(lang)}</span></div>')
+                        # the lowest known price in any hall (an unpriced Standard hall must not hide a priced one)
+                        low = min(((a, h["code"], k) for k, h in pr.items() for a in h["seats"].values()), default=None)
+                        halls = [k for k in pr if k != "Standard"]
+                        hn = ("، " if lang == "ar" else ", ").join(self.h.name(c["chain"], pr[k]["code"], pr[k]["label"], lang) for k in halls)
+                        body += (f'<div class="row cin"><a class="nm" href="{P(lang, city, cid)}">{self.cname_html(cid, lang)}</a>'
+                                 f'<span class="sub"><bdi>{esc(c.get("mall") or "")}{(" · " + esc(hn)) if hn else ""}</bdi> {self.fresh(c["chain"], lang)}</span>'
+                                 f'<span class="from">{("من " if lang == "ar" else "from ") + self.pcell(low[0], c["chain"], low[1], low[2]) if low else self.box(lang)}</span></div>')
                     body += '</div></section>'
-                    body += f'<section><h2>{"اليوم في " + cn if lang == "ar" else "Today in " + cn}</h2><div class="sched">'
-                    for fid in fids:
-                        fs = [s for s in today if s["film"] == fid]
-                        v = ((self.films[fid].get("verdict") or {}).get("verdict")) or "unknown"
-                        body += (f'<div class="srow"><div class="sf"><a href="{P(lang, "film", fid)}">{self.title_html(fid, lang, "b", "t")}</a>'
-                                 f'<span class="v v-{v}">{esc(L(VERDICT.get(v, VERDICT["unknown"]), lang))}</span></div><div class="sc">')
-                        for cid in cids:
-                            cs = [s for s in fs if s["cinema"] == cid]
-                            if not cs: continue
-                            body += f'<p><a class="cn" href="{P(lang, city, cid)}">{esc(self.cname(cid, lang))}</a> {self.times(cs, lang, tag_halls=True)}</p>'
-                        body += '</div></div>'
-                    body += '</div></section>'
+                    for mode in ("links", "plain"):
+                        sched = f'<section><h2>{"اليوم في " + cn if lang == "ar" else "Today in " + cn}</h2><div class="sched">'
+                        for fid in fids:
+                            fs = [s for s in today if s["film"] == fid]
+                            v = ((self.films[fid].get("verdict") or {}).get("verdict")) or "unknown"
+                            sched += (f'<div class="srow"><div class="sf"><a href="{P(lang, "film", fid)}">{self.title_html(fid, lang, "b", "t")}</a>'
+                                      f'<span class="v v-{v}">{esc(L(VERDICT.get(v, VERDICT["unknown"]), lang))}</span></div><div class="sc">')
+                            for cid in cids:
+                                cs = [s for s in fs if s["cinema"] == cid]
+                                if not cs: continue
+                                sched += f'<p><a class="cn" href="{P(lang, city, cid)}">{self.cname_html(cid, lang)}</a> {self.times(cs, lang, tag_halls=True, links=mode == "links")}</p>'
+                            sched += '</div></div>'
+                        sched += '</div></section>'
+                        if len(sched.encode()) <= SCHED_BUDGET: break
+                    body += sched
                 title = (f"سينما {cn} اليوم — الأفلام والأسعار وخصم فزعة" if lang == "ar" else f"{cn} cinemas today — films, prices and card discounts")
                 names = ("، " if lang == "ar" else ", ").join(self.cname(c, lang) for c in cids[:6])
                 desc = (f"أفلام سينمات {cn} اليوم ومواعيدها، سعر التذكرة لكل قاعة، والسعر بعد خصم فزعة وإسعاد وحماة الوطن والبنوك. {names}" if lang == "ar"
@@ -448,17 +488,28 @@ class Site:
                 graph = [{"@type": "ItemList", "name": title, "itemListElement": [
                     {"@type": "ListItem", "position": i + 1, "item": self.theater_ld(cid, lang)} for i, cid in enumerate(cids)]},
                     self.breadcrumb_ld(lang, (cn, P(lang, city)))]
-                self.page(lang, (city,), title, desc, body, graph, "city", f' data-city="{city}"')
+                self.page(lang, (city,), title, desc, body, graph, "city", f' data-city="{city}" data-chains="{" ".join(sorted({self.cinemas[c]["chain"] for c in cids}))}"')
 
-    def times(self, shows, lang, tag_halls=False):
+    def times(self, shows, lang, tag_halls=False, links=True):
+        """Showtimes as one lean list per day: <span class="times" data-d="…"><a href=booking>19:30</a>…</span>.
+        cinema.js reads the day from data-d and the time from each item's first 5 characters."""
         out = []
-        for s in sorted(shows, key=lambda s: s["time"]):
-            tag = ""
-            if tag_halls and s.get("hall") != "Standard":
-                tag = f' <small>{esc(self.hname(s, lang))}</small>'
-            out.append(f'<a class="tm" href="{esc(s.get("book") or "#")}" rel="nofollow noopener" target="_blank" data-start="{s["date"]}T{s["time"]}">'
-                       f'<span class="num">{esc(s["time"])}</span>{tag}</a>')
-        return f'<span class="times">{"".join(out)}</span>'
+        for d in sorted({s["date"] for s in shows}):
+            items = []
+            for s in sorted((s for s in shows if s["date"] == d), key=lambda s: s["time"]):
+                tag = f'<small>{self.hall_html(s, lang)}</small>' if tag_halls and self.hkey(s) != "Standard" else ""
+                items.append(f'<a href="{esc(s["book"])}">{esc(s["time"])}{tag}</a>' if links and s.get("book") else f'<span>{esc(s["time"])}{tag}</span>')
+            out.append(f'<span class="times" data-d="{d}">{"".join(items)}</span>')
+        return "".join(out)
+
+    def cname_html(self, cid, lang):
+        """The cinema's name, marked English when an Arabic page has only the English name."""
+        n = esc(self.cname(cid, lang))
+        return f'<bdi lang="en">{n}</bdi>' if lang == "ar" and not self.cinemas[cid].get("name_ar") else n
+
+    def hall_html(self, s, lang):
+        n = self.hname(s, lang)
+        return f'<bdi lang="en">{esc(n)}</bdi>' if lang == "ar" and re.search(r"[A-Za-z]", n) else esc(n)
 
     def theater_ld(self, cid, lang):
         c = self.cinemas[cid]
@@ -469,9 +520,13 @@ class Site:
 
     def screening_ld(self, s, lang):
         e = {"@type": "ScreeningEvent", "name": self.ftitle(s["film"], lang), "startDate": f'{s["date"]}T{s["time"]}:00+04:00',
-             "location": {"@type": "MovieTheater", "name": self.cname(s["cinema"], lang)},
+             "location": {k: v for k, v in self.theater_ld(s["cinema"], lang).items() if k in ("@type", "name", "url", "address")},
              "workPresented": {"@type": "Movie", "name": self.films[s["film"]].get("title") or s["film"]},
-             "videoFormat": self.hname(s, "en"), "eventStatus": "https://schema.org/EventScheduled"}
+             "eventStatus": "https://schema.org/EventScheduled"}
+        chain = self.cinemas[s["cinema"]]["chain"]; code, label = self.hall_code_label(s)
+        key, name, _, clean = self.h.resolve(chain, code, label)
+        if clean: e["videoFormat"] = name       # never a raw reader label
+        if BCP47.get(self.films[s["film"]].get("lang")): e["inLanguage"] = BCP47[self.films[s["film"]]["lang"]]
         ps = [p["aed"] for p in s.get("prices") or [] if p.get("aed")]
         if ps: e["offers"] = {"@type": "Offer", "price": money(min(ps)), "priceCurrency": "AED", "url": s.get("book") or SITE, "availability": "https://schema.org/InStock"}
         return e
@@ -485,7 +540,7 @@ class Site:
             for lang in ("ar", "en"):
                 cn, name = L(CITY.get(city, (city, city)), lang), self.cname(cid, lang)
                 body = self.crumbs(lang, (cn, P(lang, city)), (name, None))
-                body += f'<h1>{esc(name)}</h1>'
+                body += f'<h1{" lang=\"en\"" if lang == "ar" and not c.get("name_ar") else ""}>{esc(name)}</h1>'
                 addr = " · ".join(esc(x) for x in [c.get("mall"), c.get("address")] if x)
                 addr = f"<bdi>{addr}</bdi>" if addr else ""
                 maps = c.get("maps") or ("https://www.google.com/maps/search/?api=1&query=" + re.sub(r"\s+", "+", c.get("name") or cid))
@@ -504,7 +559,7 @@ class Site:
                     src = f' <a class="src" href="{esc(e["source"])}" rel="noopener" target="_blank">{"المصدر" if lang == "ar" else "Source"}</a>' if e and e.get("source") else ""
                     seats = "".join(f'<tr><th scope="row">{esc(seat)}</th><td>{self.pcell(aed, chain, h["code"], k)}</td></tr>'
                                     for seat, aed in sorted(h["seats"].items(), key=lambda x: x[1])) or f'<tr><td colspan="2">{self.box(lang)}</td></tr>'
-                    body += (f'<div class="hall"><h3>{esc(hn)}</h3>' + (f'<p>{esc(what)}{note}{src}</p>' if what else "") +
+                    body += (f'<div class="hall"><h3{" lang=\"en\"" if lang == "ar" and re.search("[A-Za-z]", hn) else ""}>{esc(hn)}</h3>' + (f'<p>{dates(esc(what))}{note}{src}</p>' if what else "") +
                              f'<table class="prices"><thead><tr><th scope="col">{"الفئة" if lang == "ar" else "Seat"}</th><th scope="col">{"السعر" if lang == "ar" else "Price"} <small>{esc(L(T["aed"], lang))}</small></th></tr></thead><tbody>{seats}</tbody></table></div>')
                 body += f'</div><p class="hint"><a href="{P(lang, "halls")}">{"كل القاعات المميزة في الإمارات، مقارنة" if lang == "ar" else "Every premium hall in the UAE, compared"}</a></p></section>'
                 # cards
@@ -524,7 +579,7 @@ class Site:
                         body += f'<div class="srow"><div class="sf"><a href="{P(lang, "film", fid)}">{self.title_html(fid, lang)}</a></div><div class="sc">'
                         for k in dict.fromkeys(self.hkey(s) for s in fs):
                             hs = [s for s in fs if self.hkey(s) == k]
-                            body += f'<p><span class="hn">{esc(self.hname(hs[0], lang))}</span> {self.times(hs, lang)}</p>'
+                            body += f'<p><span class="hn">{self.hall_html(hs[0], lang)}</span> {self.times(hs, lang)}</p>'
                         body += '</div></div>'
                     body += '</div></section>'
                 title = (f"{name} — أسعار التذاكر ومواعيد اليوم وخصم البطاقات" if lang == "ar" else f"{name} — ticket prices, today’s showtimes and card discounts")
@@ -533,13 +588,13 @@ class Site:
                 th = self.theater_ld(cid, lang)
                 th["event"] = [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:40]
                 graph = [th, self.breadcrumb_ld(lang, (cn, P(lang, city)), (name, P(lang, city, cid)))]
-                self.page(lang, (city, cid), title, desc, body, graph, "cinema", f' data-city="{city}"')
+                self.page(lang, (city, cid), title, desc, body, graph, "cinema", f' data-city="{city}" data-chains="{chain}"')
 
     def card_row(self, card, chain, r, st, lang, card_href=None, label=None):
         cname = label or (card["name_ar"] if lang == "ar" else card["name_en"])
         head = f'<a class="nm" href="{card_href}">{esc(cname)}</a>' if card_href else f'<span class="nm">{esc(cname)}</span>'
         if st == "ok":
-            val = f'<b class="off{" txt" if r.get("type") == "bogo" else ""}">{esc(rule_offer(r, lang))}</b>'
+            val = f'<b class="off{" txt" if r.get("type") == "bogo" else ""}">{dates(esc(rule_offer(r, lang)))}</b>'
             terms = rule_terms(r, lang)
         elif st == "expired":
             val = f'<span class="nil">{esc(L(T["expired"], lang))}</span>'; terms = [f'{"كان" if lang == "ar" else "Was"} {rule_offer(r, lang)}, {"لين" if lang == "ar" else "until"} {r.get("valid_until")}']
@@ -574,8 +629,8 @@ class Site:
                 if rt.get("critics") is not None: facts.append(("نقاد Rotten Tomatoes", "Rotten Tomatoes critics", num(f'{rt["critics"]}%')))
                 if rt.get("audience") is not None: facts.append(("جمهور Rotten Tomatoes", "Rotten Tomatoes audience", num(f'{rt["audience"]}%')))
                 body += (f'<section class="verdict v-{v}"><p class="word">{esc(L(VERDICT.get(v, VERDICT["unknown"]), lang))}</p>'
-                         + (f'<p class="say">{esc(vd.get("ar") if lang == "ar" else vd.get("en"))}</p>' if (vd.get("ar") if lang == "ar" else vd.get("en")) and v != "unknown" else "")
-                         + (f'<p class="basis"><bdi dir="ltr">{esc(vd["basis"])}</bdi></p>' if vd.get("basis") else "")
+                         + (f'<p class="say">{dates(esc(vd.get("ar") if lang == "ar" else vd.get("en")))}</p>' if (vd.get("ar") if lang == "ar" else vd.get("en")) and v != "unknown" else "")
+                         + (f'<p class="basis"><bdi dir="ltr">{dates(esc(vd["basis"]))}</bdi></p>' if vd.get("basis") else "")
                          + '</section>')
                 body += '<dl class="facts">' + "".join(f'<div><dt>{esc(a if lang == "ar" else e)}</dt><dd>{val}</dd></div>' for a, e, val in facts) + '</dl>'
                 syn = f.get("synopsis_ar") if lang == "ar" else None
@@ -585,29 +640,17 @@ class Site:
                 cities = [c for c, _, _ in CITIES if any(self.cinemas[s["cinema"]].get("city") == c for s in shows)]
                 if not cities:
                     body += f'<p class="lead">{"ما لقينا عروض لهذا الفيلم في اليومين الجايين." if lang == "ar" else "No shows for this film in the next two days."}</p>'
-                for city in cities:
-                    cs = [s for s in shows if self.cinemas[s["cinema"]].get("city") == city]
-                    body += f'<section class="fcity" data-city="{city}"><h2><a href="{P(lang, city)}">{esc(L(CITY[city], lang))}</a></h2>'
-                    for cid in dict.fromkeys(s["cinema"] for s in cs):
-                        chain = self.cinemas[cid]["chain"]
-                        ss = [s for s in cs if s["cinema"] == cid]
-                        body += f'<div class="fcin"><h3><a href="{P(lang, city, cid)}">{esc(self.cname(cid, lang))}</a> {self.fresh(chain, lang)}</h3>'
-                        for day, lab in ((self.today, ("اليوم", "Today")), (self.tomorrow, ("بكرة", "Tomorrow"))):
-                            ds = [s for s in ss if s["date"] == day]
-                            for k in dict.fromkeys(self.hkey(s) for s in ds):
-                                hs = [s for s in ds if self.hkey(s) == k]
-                                prices = hs[0].get("prices")
-                                pc = ("".join(f'<span class="seat"><small>{esc(p["seat"])}</small> {self.pcell(p["aed"], chain, hs[0].get("hall") or "OTHER", k)}</span>'
-                                              for p in sorted(prices, key=lambda p: p["aed"])) if prices else self.box(lang))
-                                body += (f'<div class="line"><span class="day">{esc(L(lab, lang))}</span><span class="hn">{esc(self.hname(hs[0], lang))}</span>'
-                                         f'{self.times(hs, lang)}<span class="pr">{pc}</span></div>')
-                        body += '</div>'
-                    body += '</section>'
+                # the schedule is most of the page's weight: render it as richly as the budget allows
+                for mode in ("full", "today", "plain"):
+                    sched = self.film_schedule(shows, cities, lang, mode)
+                    if len(sched.encode()) <= SCHED_BUDGET: break
+                body += sched
                 vword = L(VERDICT.get(v, VERDICT["unknown"]), lang)
                 title = (f"فيلم {t} في سينما الإمارات — المواعيد والأسعار، ويستاهل؟" if lang == "ar" else f"{t} in UAE cinemas — showtimes, prices and is it worth it?")
                 desc = (f"{t}: {vword}. مواعيد العرض في سينمات الإمارات اليوم وبكرة، سعر التذكرة لكل قاعة، والسعر بعد خصم بطاقتك." if lang == "ar"
                         else f"{t}: {vword}. Showtimes in UAE cinemas today and tomorrow, ticket prices per hall, and the price after your card discount.")
-                movie = {"@type": "Movie", "name": f.get("title") or t, "url": SITE + P(lang, "film", fid), "inLanguage": f.get("lang")}
+                movie = {"@type": "Movie", "name": f.get("title") or t, "url": SITE + P(lang, "film", fid)}
+                if BCP47.get(f.get("lang")): movie["inLanguage"] = BCP47[f["lang"]]
                 if f.get("title_ar"): movie["alternateName"] = f["title_ar"]
                 if f.get("runtime"): movie["duration"] = f"PT{int(f['runtime'])}M"
                 if f.get("genres"): movie["genre"] = f["genres"]
@@ -615,7 +658,34 @@ class Site:
                 if f.get("rating"): movie["contentRating"] = f["rating"]
                 if f.get("imdb"): movie["sameAs"] = f"https://www.imdb.com/title/{f['imdb']}/"
                 graph = [movie] + [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:30] + [self.breadcrumb_ld(lang, (t, P(lang, "film", fid)))]
-                self.page(lang, ("film", fid), title, desc, body, graph, "film")
+                self.page(lang, ("film", fid), title, desc, body, graph, "film", f' data-chains="{" ".join(sorted({self.cinemas[s["cinema"]]["chain"] for s in shows}))}"')
+
+    def film_schedule(self, shows, cities, lang, mode):
+        """city → cinema → hall: prices once per hall, then today's (and tomorrow's) times as one compact list.
+        mode full = today + tomorrow, times linked to booking; today = today only; plain = today, unlinked."""
+        days = [(self.today, ("اليوم", "Today"))] + ([(self.tomorrow, ("بكرة", "Tomorrow"))] if mode == "full" else [])
+        out = []
+        for city in cities:
+            cs = [s for s in shows if self.cinemas[s["cinema"]].get("city") == city and s["date"] in (d for d, _ in days)]
+            if not cs: continue
+            out.append(f'<section class="fcity" data-city="{city}"><h2><a href="{P(lang, city)}">{esc(L(CITY[city], lang))}</a></h2>')
+            for cid in dict.fromkeys(s["cinema"] for s in cs):
+                chain = self.cinemas[cid]["chain"]
+                ss = [s for s in cs if s["cinema"] == cid]
+                out.append(f'<div class="fcin"><h3><a href="{P(lang, city, cid)}">{self.cname_html(cid, lang)}</a> {self.fresh(chain, lang)}</h3>')
+                for k in dict.fromkeys(self.hkey(s) for s in ss):
+                    hs = [s for s in ss if self.hkey(s) == k]
+                    priced = next((s for s in hs if any((p.get("aed") or 0) > 0 for p in s.get("prices") or [])), None)
+                    pc = ("".join(f'<span class="seat"><small>{esc(p["seat"])}</small> {self.pcell(p["aed"], chain, priced.get("hall") or "OTHER", k)}</span>'
+                                  for p in sorted((p for p in priced["prices"] if (p.get("aed") or 0) > 0), key=lambda p: p["aed"])) if priced else self.box(lang))
+                    tl = "".join(f'<span class="dd"><i>{esc(L(lab, lang))}</i>{self.times([s for s in hs if s["date"] == d], lang, links=mode != "plain")}</span>'
+                                 for d, lab in days if any(s["date"] == d for s in hs))
+                    out.append(f'<div class="line"><span class="hn">{self.hall_html(hs[0], lang)}</span><span class="pr">{pc}</span>{tl}</div>')
+                out.append('</div>')
+            out.append('</section>')
+        if mode != "full" and len(days) == 1:
+            out.append(f'<p class="hint">{"مواعيد بكرة في صفحة كل سينما." if lang == "ar" else "Tomorrow’s times are on each cinema’s page."}</p>')
+        return "".join(out)
 
     # -------------------------------------------------- cards
     def example(self, chain, card, lang):
@@ -687,7 +757,7 @@ class Site:
                 cells = ""
                 for ch in chains:
                     r = rule_for(self.rules, ch, card["id"]); st = rule_state(r, self.today)
-                    txt = (f'<b class="num">{"1+1" if r.get("type") == "bogo" else str(r.get("value", 0)).rstrip("0").rstrip(".") + "%"}</b>' + ("<sup>*</sup>" if weak(r) else "")) if st == "ok" else \
+                    txt = (f'<b class="num">{"1+1" if r.get("type") == "bogo" else f'{r.get("value", 0):g}%'}</b>' + ("<sup>*</sup>" if weak(r) else "")) if st == "ok" else \
                           (f'<span class="nil">{esc(L(T["none_found"], lang))}</span>' if st == "none_found" else f'<span class="nil">{esc(L(T["expired"], lang))}</span>' if st == "expired" else "")
                     cells += f"<td>{txt}</td>"
                 rows += f'<tr><th scope="row"><a href="{P(lang, "cards", card["id"])}">{esc(card["name_ar"] if lang == "ar" else card["name_en"])}</a></th>{cells}</tr>'
@@ -715,7 +785,7 @@ class Site:
                     what = e.get("what_ar") if lang == "ar" else e.get("what_en")
                     conf = {"high": "", "medium": ("من مصدر غير رسمي" if lang == "ar" else "from a non-official source"),
                             "low": ("ما تأكدنا من التفاصيل" if lang == "ar" else "details not confirmed")}.get(e.get("confidence"), "")
-                    body += (f'<div class="hall"><h3>{esc(e.get("name") or e["key"])}</h3><p>{esc(what)}'
+                    body += (f'<div class="hall"><h3>{esc(e.get("name") or e["key"])}</h3><p>{dates(esc(what))}'
                              + (f' <small class="weak">{esc(conf)}</small>' if conf else "")
                              + (f' <a class="src" href="{esc(e["source"])}" rel="noopener" target="_blank">{"المصدر" if lang == "ar" else "Source"}</a>' if e.get("source") else "") + '</p>'
                              + (f'<p class="rng">{"اليوم" if lang == "ar" else "Today"} {rng}</p>' if rng else "")
@@ -732,23 +802,38 @@ class Site:
 
     # -------------------------------------------------- data for cinema.js, sitemap, assets
     def slices(self):
+        """/cinema/data/<city>-<date>.json per city and day, holding only what cinema.js reads, as indexed arrays:
+        C[[cid, chain, ar, en]] F[[fid, ar, en]] H[[hall code, key, ar, en]] P[[[seat, aed]…]] B[booking URL prefixes]
+        S[[cinema i, film i, "HH:MM", hall i, price i|-1, prefix i|-1, url tail]]."""
         ddir = os.path.join(self.out, "cinema", "data")
         for city, _, _ in CITIES:
-            cids = [cid for cid, c in self.cinemas.items() if c.get("city") == city]
-            ss = [s for s in self.shows if s["cinema"] in cids]
-            halls = {}
-            shows = []
-            for s in ss:
-                k = self.cinemas[s["cinema"]]["chain"] + "|" + self.hkey(s)
-                halls[k] = [self.hname(s, "ar"), self.hname(s, "en")]
-                shows.append({"c": s["cinema"], "f": s["film"], "d": s["date"], "t": s["time"], "h": s.get("hall") or "OTHER", "k": k,
-                              "p": [[p["seat"], p["aed"]] for p in s.get("prices") or [] if p.get("aed")] or None, "b": s.get("book")})
-            j = {"city": city, "generated": self.d.get("generated"),
-                 "chains": {k: {"ok": v.get("ok", True), "at": v.get("at")} for k, v in self.d.get("chains", {}).items()},
-                 "cinemas": {cid: {"chain": self.cinemas[cid]["chain"], "ar": self.cname(cid, "ar"), "en": self.cname(cid, "en"), "u": city + "/" + cid} for cid in cids},
-                 "films": {fid: {"ar": self.ftitle(fid, "ar"), "en": self.ftitle(fid, "en")} for fid in sorted({s["film"] for s in ss})},
-                 "halls": halls, "shows": shows}
-            self.write(os.path.join(ddir, city + ".json"), json.dumps(j, ensure_ascii=False, separators=(",", ":")))
+            cids = {cid for cid, c in self.cinemas.items() if c.get("city") == city}
+            for day in sorted({s["date"] for s in self.shows if s["cinema"] in cids}):
+                ss = sorted((s for s in self.shows if s["cinema"] in cids and s["date"] == day), key=lambda s: s["time"])
+                lists = {"C": [], "F": [], "H": [], "P": [], "B": []}
+                idx = {k: {} for k in lists}
+
+                def at(kind, key, row):
+                    if key not in idx[kind]: idx[kind][key] = len(lists[kind]); lists[kind].append(row)
+                    return idx[kind][key]
+                S = []
+                for s in ss:
+                    cid, fid, chain = s["cinema"], s["film"], self.cinemas[s["cinema"]]["chain"]
+                    code = s.get("hall") or "OTHER"
+                    ci = at("C", cid, [cid, chain, self.cname(cid, "ar"), self.cname(cid, "en")])
+                    fi = at("F", fid, [fid, self.ftitle(fid, "ar"), self.ftitle(fid, "en")])
+                    hk = self.hkey(s)
+                    hi = at("H", (chain, hk, code), [code, chain + "|" + hk, self.hname(s, "ar"), self.hname(s, "en")])
+                    pr = [[p["seat"], p["aed"]] for p in s.get("prices") or [] if (p.get("aed") or 0) > 0]
+                    pi = at("P", json.dumps(pr), pr) if pr else -1
+                    bi, tail = -1, ""
+                    if s.get("book"):
+                        pre, _, tail = s["book"].rpartition("/")
+                        bi = at("B", pre + "/", pre + "/") if pre else -1
+                        if not pre: tail = s["book"]
+                    S.append([ci, fi, s["time"], hi, pi, bi, tail])
+                j = {"g": self.d.get("generated"), **lists, "S": S}
+                self.write(os.path.join(ddir, f"{city}-{day}.json"), json.dumps(j, ensure_ascii=False, separators=(",", ":")))
         rules = {ch: {card: {k: v for k, v in r.items() if k in ("status", "type", "value", "excluded_halls", "halls_excluded", "included_halls", "valid_until", "confidence", "box_office_only", "max_tickets")}
                       for card, r in (cards or {}).items()} for ch, cards in self.rules.items()}
         chains = {ch: self.h.chain_name(ch, "ar") for ch in set(self.rules) | {c["chain"] for c in self.cinemas.values()}}
@@ -757,14 +842,27 @@ class Site:
                                                                     ensure_ascii=False, separators=(",", ":"), default=str))
 
     def sitemap(self):
+        """hreflang pairs + x-default; lastmod moves only when the page's content hash changes (lastmod_path keeps them)."""
+        known = {}
+        if self.lastmod_path and os.path.exists(self.lastmod_path):
+            try: known = json.load(open(self.lastmod_path, encoding="utf-8"))
+            except ValueError: known = {}
         sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">']
         for parts in self.urls:
             for lang in ("ar", "en"):
-                sm.append(f"<url><loc>{SITE + P(lang, *parts)}</loc><lastmod>{self.today}</lastmod>"
+                u = P(lang, *parts); h = self.hashes.get(u, "")
+                prev = known.get(u)
+                day = prev[1] if prev and prev[0] == h else self.today
+                known[u] = [h, day]
+                sm.append(f"<url><loc>{SITE + u}</loc><lastmod>{day}</lastmod>"
                           f'<xhtml:link rel="alternate" hreflang="ar" href="{SITE + P("ar", *parts)}"/>'
-                          f'<xhtml:link rel="alternate" hreflang="en" href="{SITE + P("en", *parts)}"/></url>')
+                          f'<xhtml:link rel="alternate" hreflang="en" href="{SITE + P("en", *parts)}"/>'
+                          f'<xhtml:link rel="alternate" hreflang="x-default" href="{SITE + P("ar", *parts)}"/></url>')
         sm.append("</urlset>")
         self.write(os.path.join(self.out, "cinema", "sitemap.xml"), "\n".join(sm))
+        if self.lastmod_path:
+            os.makedirs(os.path.dirname(self.lastmod_path), exist_ok=True)
+            json.dump(known, open(self.lastmod_path, "w", encoding="utf-8"), ensure_ascii=False, indent=0, sort_keys=True)
 
     def assets(self):
         adir = os.path.join(self.out, "cinema", "assets")
@@ -778,13 +876,14 @@ class Site:
         return len(self.urls)
 
 
-def build(data_path, discounts_path, out, halls_path=None, preview=False):
+def build(data_path, discounts_path, out, halls_path=None, preview=False, lastmod_path=None):
     data = json.load(open(data_path, encoding="utf-8"))
     disc = load_discounts(discounts_path)
     halls = Halls(halls_path or os.path.join(ROOT, "halls.yaml"))
     for sub in ("cinema", os.path.join("en", "cinema")):
         shutil.rmtree(os.path.join(out, sub), ignore_errors=True)
-    n = Site(data, disc, halls, out).run()
+    site = Site(data, disc, halls, out); site.lastmod_path = lastmod_path
+    n = site.run()
     if preview:   # local server only: the live site gets base.css from saas/tools
         base = os.path.join(ROOT, "..", "tools", "src", "assets", "base.css")
         os.makedirs(os.path.join(out, "tools", "assets"), exist_ok=True)
@@ -801,7 +900,7 @@ def main():
     ap.add_argument("--out", default=os.path.join(ROOT, "out"))
     ap.add_argument("--preview", action="store_true", help="copy ../tools base.css into out/ for a local server")
     a = ap.parse_args()
-    n = build(a.data, a.discounts, a.out, a.halls, a.preview)
+    n = build(a.data, a.discounts, a.out, a.halls, a.preview, os.path.join(ROOT, "data", "lastmod.json"))
     print(f"built {n} pages ×2 languages from {os.path.relpath(a.data, ROOT)} + {os.path.relpath(a.discounts, ROOT)} -> {a.out}")
 
 

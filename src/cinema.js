@@ -22,7 +22,7 @@
   function nm(o) { return o ? (lang === "ar" ? o.ar : o.en) : ""; }
 
   var NOW = (function () { var m = /[?&]now=([^&]+)/.exec(location.search); var d = m && uae(decodeURIComponent(m[1])); return d && !isNaN(d) ? d : new Date(); })();
-  var TODAY = day(NOW);
+  var TODAY = day(NOW), TOMORROW = day(new Date(NOW.getTime() + 864e5));
   function param(k) { var m = new RegExp("[?&]" + k + "=([^&]+)").exec(location.search); return m ? decodeURIComponent(m[1]) : null; }
   if (param("city")) set("city", param("city"));
   if (param("card") != null) set("card", param("card"));
@@ -47,9 +47,11 @@
     var a = r.type === "bogo" ? aed / 2 : aed * (1 - (+r.value || 0) / 100);
     return { a: Math.round(a * 100) / 100, st: "ok", r: r };
   }
+  // HTML: the percentage sits in its own isolated span, or an Arabic run prints «خصم %20»
   function offer(r) {
-    if (r.type === "bogo") return lang === "ar" ? "تذكرتين بسعر وحدة" : "Buy one, get one";
-    return lang === "ar" ? "خصم " + r.value + "%" : r.value + "% off";
+    if (r.type === "bogo") return esc(lang === "ar" ? "تذكرتين بسعر وحدة" : "Buy one, get one");
+    var v = '<span class="num">' + esc(+r.value) + "%</span>";
+    return lang === "ar" ? "خصم " + v : v + " off";
   }
   function weak(r) { return r && (r.confidence === "third-party" || r.confidence === "unconfirmed"); }
 
@@ -67,7 +69,7 @@
     var box = document.querySelector("[data-cardnote]");
     if (!box) return;
     if (!card || !D) { box.hidden = true; box.innerHTML = ""; return; }
-    chains = chains || qa(".p").map(function (e) { return e.getAttribute("data-chain"); });
+    chains = chains || (body.getAttribute("data-chains") || "").split(" ").filter(Boolean).concat(qa(".p").map(function (e) { return e.getAttribute("data-chain"); }));
     // one line per chain with an offer; chains with the same «no» answer share one line
     var seen = {}, out = [], groups = {}, order = [];
     function cname(ch) { return (D.chains && D.chains[lang] && D.chains[lang][ch]) || ch; }
@@ -75,8 +77,8 @@
       if (seen[ch]) return; seen[ch] = 1;
       var r = rule(ch, card), st = state(r);
       if (st === "ok") {
-        var t = offer(r) + (r.box_office_only ? (lang === "ar" ? "، من الشباك فقط" : ", box office only") : "") + (weak(r) ? " — " + C.weak : "");
-        out.push("<span><b>" + esc(cname(ch)) + "</b> " + esc(t) + "</span>");
+        var t = offer(r) + esc((r.box_office_only ? (lang === "ar" ? "، من الشباك فقط" : ", box office only") : "") + (weak(r) ? " — " + C.weak : ""));
+        out.push("<span><b>" + esc(cname(ch)) + "</b> " + t + "</span>");
       } else { if (!groups[st]) { groups[st] = []; order.push(st); } groups[st].push(cname(ch)); }
     });
     order.forEach(function (st) { out.push("<span><b>" + esc(groups[st].join(lang === "ar" ? "، " : ", ")) + "</b> " + esc(C[st] || C.unchecked) + "</span>"); });
@@ -88,10 +90,13 @@
   /* ---------------- times and ages */
   function marks() {
     var soon = NOW.getTime() + 2 * 3600e3;
-    qa(".tm[data-start]").forEach(function (a) {
-      var t = uae(a.getAttribute("data-start")).getTime();
-      a.classList.toggle("past", t < NOW.getTime());
-      a.classList.toggle("soon", t >= NOW.getTime() && t <= soon);
+    qa(".times[data-d]").forEach(function (box) {
+      var d = box.getAttribute("data-d");
+      [].forEach.call(box.children, function (a) {
+        var t = uae(d + "T" + a.textContent.slice(0, 5)).getTime();
+        a.classList.toggle("past", t < NOW.getTime());
+        a.classList.toggle("nowish", t >= NOW.getTime() && t <= soon);
+      });
     });
   }
   function ago(at) {
@@ -139,12 +144,13 @@
     var grid = document.querySelector(".fgrid"), tiles = qa(".film[data-fid]"), inCity = [], out = [];
     tiles.forEach(function (el) {
       var fid = el.getAttribute("data-fid"), mine = up.filter(function (s) { return s.f === fid; });
-      var tonight = mine.filter(function (s) { return s.d === TODAY; }), pool = tonight.length ? tonight : mine;
+      var tonight = mine.filter(function (s) { return s.d === TODAY; }), tmr = mine.filter(function (s) { return s.d === TOMORROW; });
+      var pool = tonight.length ? tonight : tmr;
       var b = best(pool), box = el.querySelector("[data-cheap]");
-      el.classList.toggle("off", !mine.length);
-      (mine.length ? inCity : out).push(el);
+      el.classList.toggle("off", !pool.length);
+      (pool.length ? inCity : out).push(el);
       if (!box) return;
-      if (!mine.length) { box.innerHTML = '<span class="lbl">' + esc(sub(C.not_in_city, { city: cn })) + "</span>"; return; }
+      if (!pool.length) { box.innerHTML = '<span class="lbl">' + esc(sub(C.not_in_city, { city: cn })) + "</span>"; return; }
       if (!b) { box.innerHTML = '<span class="lbl">' + esc(C.box) + "</span>"; return; }
       box.innerHTML = '<span class="lbl">' + esc(tonight.length ? C.cheap_tonight : C.cheap_tomorrow) + "</span>" +
         '<span class="amt' + (b.off ? " you" : "") + '"><span class="num">' + fmt(b.pay) + "</span> <small>" + esc(C.aed) + "</small>" +
@@ -154,9 +160,29 @@
     if (grid) inCity.concat(out).forEach(function (el) { grid.appendChild(el); });
     renderNote(Object.keys(S.cinemas).map(function (k) { return S.cinemas[k].chain; }));
   }
+  // /cinema/data/<city>-<date>.json (indexed arrays, see build.slices): C[[cid,chain,ar,en]] F[[fid,ar,en]]
+  // H[[code,key,ar,en]] P[prices] B[url prefixes] S[[cinema i, film i, time, hall i, price i|-1, prefix i|-1, url tail]]
+  function slice(d) {
+    return fetch("/cinema/data/" + city + "-" + d + ".json").then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+  }
   function loadCity() {
-    return fetch("/cinema/data/" + city + ".json").then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) { S = j; renderHome(); }).catch(function () {});
+    var want = city;
+    return Promise.all([slice(TODAY), slice(TOMORROW)]).then(function (js) {
+      if (want !== city) return;
+      var o = { cinemas: {}, films: {}, halls: {}, shows: [] };
+      js.forEach(function (j, i) {
+        if (!j) return;
+        var d = i ? TOMORROW : TODAY;
+        j.C.forEach(function (c) { o.cinemas[c[0]] = { chain: c[1], ar: c[2], en: c[3] }; });
+        j.F.forEach(function (f) { o.films[f[0]] = { ar: f[1], en: f[2] }; });
+        j.H.forEach(function (h) { o.halls[h[1]] = [h[2], h[3]]; });
+        j.S.forEach(function (a) {
+          var h = j.H[a[3]];
+          o.shows.push({ c: j.C[a[0]][0], f: j.F[a[1]][0], d: d, t: a[2], h: h[0], k: h[1], p: a[4] >= 0 ? j.P[a[4]] : null, b: a[5] >= 0 ? j.B[a[5]] + a[6] : (a[6] || null) });
+        });
+      });
+      S = o; renderHome();
+    });
   }
 
   /* ---------------- film page: your city first */
