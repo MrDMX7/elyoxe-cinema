@@ -53,8 +53,22 @@ def _notes_for(title: str, text: str) -> str | None:
     return "\n".join(hits) if hits else None
 
 
+# Wikidata search hints for titles that collide with an older or unrelated work of the same
+# name — the displayed title stays the UAE listing's own title; only the lookup query changes.
+_SEARCH_TITLE_HINTS = {
+    "The Odyssey": "Christopher Nolan The Odyssey",  # else matches a 2016 Jérôme Salle film
+    "Insidious": "Insidious: Out of the Further",     # "Insidious" alone is the whole franchise
+}
+
+
 def build_data() -> dict:
-    return {"films": {slug(t): {"title": t} for t in FILMS}}
+    films = {}
+    for t in FILMS:
+        f = {"title": t}
+        if t in _SEARCH_TITLE_HINTS:
+            f["search_title"] = _SEARCH_TITLE_HINTS[t]
+        films[slug(t)] = f
+    return {"films": films}
 
 
 def main():

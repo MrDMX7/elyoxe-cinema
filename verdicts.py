@@ -129,7 +129,8 @@ def _film_prompt(fid: str, film: dict, extra_notes: str | None) -> str:
     lines.append(
         "\nرد بـJSON فقط بهذا الشكل بلا أي نص آخر: "
         '{"verdict": "yes|mixed|skip|unknown", "ar": "جملة أو جملتان بالإماراتية", '
-        '"en": "one or two sentences in English", "basis": "short citation of the numbers used, e.g. \'RT 91% (37 نقد) · الجمهور 88%\'"}'
+        '"en": "one or two sentences in English", '
+        '"basis": "SHORT citation under 15 words, e.g. \'RT 91% (37 نقد) · الجمهور 88%\'"}'
     )
     return "\n".join(lines)
 
@@ -151,7 +152,7 @@ def _generate_one(client, fid: str, film: dict, extra_notes: str | None) -> dict
             sys_note += f"\n\nمحاولتك السابقة رُفضت لأن: {last_reason}. أعد الصياغة بلا هذه المخالفة."
         resp = client.messages.create(
             model=MODEL,
-            max_tokens=400,
+            max_tokens=700,
             system=sys_note,
             messages=[{"role": "user", "content": prompt}],
         )

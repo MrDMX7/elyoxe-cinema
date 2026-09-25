@@ -145,20 +145,32 @@ def _claim_year(entity, prop="P577"):
     return None
 
 
-def _find_film_qid(title):
-    """Best-effort Wikidata match: instance-of film, 2025/2026 publication preferred."""
-    hits = _wikidata_search(title)
+_DESC_FILM = re.compile(r"\bfilm\b", re.IGNORECASE)
+_DESC_NOT_FILM = re.compile(r"video game|soundtrack|\bscore\b|franchise|universe|book|novel", re.IGNORECASE)
+
+
+def _looks_like_a_film(hit, ent):
+    """P31 in FILM_QIDS covers plain "film"; Wikidata also has many film subtypes (animated
+    film, documentary film, ...) not worth enumerating one by one, so fall back to the search
+    hit's own description ("2026 animated film directed by ...") when P31 doesn't match.
+    """
+    instances = {v.get("id") for v in _claim_values(ent, "P31")}
+    if instances & FILM_QIDS:
+        return True
+    desc = hit.get("description") or ""
+    return bool(_DESC_FILM.search(desc)) and not _DESC_NOT_FILM.search(desc)
+
+
+def _best_film_in_hits(hits):
+    """Given wbsearchentities hits, returns (qid, is_recent) for the best film match, or (None, False)."""
     if not hits:
-        return None
+        return None, False
     entities = _wikidata_entities([h["id"] for h in hits])
     best, best_recent = None, False
     for h in hits:
         qid = h["id"]
         ent = entities.get(qid)
-        if not ent:
-            continue
-        instances = {v.get("id") for v in _claim_values(ent, "P31")}
-        if not instances & FILM_QIDS:
+        if not ent or not _looks_like_a_film(h, ent):
             continue
         recent = _claim_year(ent) in (2025, 2026)
         if best is None:
@@ -167,7 +179,29 @@ def _find_film_qid(title):
             best, best_recent = qid, recent
         if recent:
             break
-    return best
+    return best, best_recent
+
+
+def _find_film_qid(title):
+    """Best-effort Wikidata match: instance-of film, 2025/2026 publication preferred.
+
+    A plain title search often loses to a franchise/game entity of the same name (e.g.
+    "Resident Evil" the video-game franchise outranks the 2026 film), or finds an older
+    film with the same title (e.g. an "The Odyssey" from 2016). So: try the plain title
+    first; if it doesn't land on a 2025/2026 film, retry with a "(2026 film)"/"(2025 film)"
+    disambiguator, which is how Wikidata titles most just-released films. Fall back to
+    whatever the plain search found (even if not recent) rather than nothing.
+    """
+    hits = _wikidata_search(title)
+    qid, recent = _best_film_in_hits(hits)
+    if recent:
+        return qid
+    for suffix in (" (2026 film)", " (2025 film)"):
+        more_hits = _wikidata_search(title + suffix)
+        more_qid, more_recent = _best_film_in_hits(more_hits)
+        if more_recent:
+            return more_qid
+    return qid
 
 
 def _wikidata_ids(title):
@@ -209,7 +243,9 @@ def _wikidata_ids(title):
                            if _label(side_entities, d, "en")), None),
         "cast": [_label(side_entities, c, "en") for c in cast_ids if _label(side_entities, c, "en")],
         "imdb_id": imdb_ids[0] if imdb_ids else None,
-        "rt_id": rt_ids[0] if rt_ids else None,
+        # Wikidata's P1258 value is sometimes bare ("heart_of_the_beast") and sometimes
+        # already prefixed with the RT URL segment ("m/heart_of_the_beast") — normalise to bare.
+        "rt_id": re.sub(r"^m/", "", rt_ids[0]) if rt_ids else None,
     }
 
 
@@ -291,7 +327,11 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
 
     for fid, film in films.items():
         _blank_film_fields(film)
-        title = film.get("title") or fid
+        # search_title is an optional override for the Wikidata/Wikipedia query only — the
+        # displayed film["title"] never changes. Useful when the UAE listing's title is
+        # ambiguous (e.g. "Insidious" for a franchise with six films, "The Odyssey" which
+        # collides with several older works of the same name).
+        title = film.get("search_title") or film.get("title") or fid
         entry = cache.get(fid, {})
         ids = entry.get("ids")
 

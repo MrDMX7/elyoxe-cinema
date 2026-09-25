@@ -81,3 +81,128 @@ def test_star_has_at_least_one_priced_show(data):
 def test_star_covers_multiple_cities(data):
     cities = {c["city"] for c in data["cinemas"]}
     assert len(cities) >= 3, f"expected Star cinemas spread across several cities, got {cities}"
+
+
+# --- Unit tests: no network, no fixture --------------------------------------------------
+
+
+def test_extract_token_from_bundle_snippet():
+    """The token-refresh regex must find STARCINEMAS_TOKEN="..." in a real (trimmed) bundle
+    snippet, not just in the hand-written hardcoded string."""
+    from readers.star import extract_token
+
+    snippet = (Path(__file__).parent / "fixtures" / "star_bundle_snippet.js").read_text(encoding="utf-8")
+    token = extract_token(snippet)
+    assert token is not None
+    assert token.startswith("eyJ")
+    assert "ROTATEDfake" in token  # the fixture's deliberately-different token, not the real one
+
+
+def test_extract_token_fallback_bare_token_var():
+    from readers.star import extract_token
+
+    snippet = 'a=1,b=2,TOKEN="eyJhbGciOiJIUzI1NiJ9.fake.sig",c=3'
+    assert extract_token(snippet) == "eyJhbGciOiJIUzI1NiJ9.fake.sig"
+
+
+def test_extract_token_missing_returns_none():
+    from readers.star import extract_token
+
+    assert extract_token("no token anywhere in this bundle") is None
+
+
+class _FakeResp:
+    def __init__(self, status_code, payload=None, text=""):
+        self.status_code = status_code
+        self._payload = payload or {}
+        self.text = text
+
+    def json(self):
+        return self._payload
+
+
+def test_fetch_raises_when_movie_shows_all_403(monkeypatch):
+    """A rotated token (or any block) that 403s every listing call must raise RuntimeError,
+    not silently return zero shows — X1/star token-rot fix."""
+    import readers.star as star
+
+    cinemas_payload = {
+        "Records": [
+            {
+                "cinema_id": 1,
+                "cinema_name": "National Cinema - Abu Dhabi",
+                "cinema_address": "Abu Dhabi",
+                "cinema_location": "Abu Dhabi",
+                "cinema_latitude": "24.1",
+                "cinema_longitude": "54.3",
+                "map_view_url": None,
+            }
+        ]
+    }
+    movies_payload = {"Records": {"data": [{"movie_id": 99, "rating": "PG13"}]}}
+
+    def fake_get(self, url, **kw):
+        if url.endswith("/cinemas"):
+            return _FakeResp(200, cinemas_payload)
+        if url.endswith("/now-showing-movies"):
+            return _FakeResp(200, movies_payload)
+        if "/movie-shows/" in url:
+            return _FakeResp(403, {"isAuthorization": True, "message": "You are not authorized"})
+        return _FakeResp(404)
+
+    monkeypatch.setattr(star.Polite, "get", fake_get)
+    monkeypatch.setattr(star, "_refresh_token", lambda http: None)
+
+    with pytest.raises(RuntimeError, match="movie-shows"):
+        star.fetch()
+
+
+def test_fetch_raises_on_zero_shows(monkeypatch):
+    """Everything 200s but no show lands in the requested window -> still must raise, not
+    return {"cinemas": [...], "shows": []}."""
+    import readers.star as star
+
+    cinemas_payload = {
+        "Records": [
+            {
+                "cinema_id": 1,
+                "cinema_name": "National Cinema - Abu Dhabi",
+                "cinema_address": "Abu Dhabi",
+                "cinema_location": "Abu Dhabi",
+                "cinema_latitude": "24.1",
+                "cinema_longitude": "54.3",
+                "map_view_url": None,
+            }
+        ]
+    }
+    movies_payload = {"Records": {"data": [{"movie_id": 99, "rating": "PG13"}]}}
+
+    def fake_get(self, url, **kw):
+        if url.endswith("/cinemas"):
+            return _FakeResp(200, cinemas_payload)
+        if url.endswith("/now-showing-movies"):
+            return _FakeResp(200, movies_payload)
+        if "/movie-shows/" in url:
+            return _FakeResp(200, {"Records": {"data": []}})
+        return _FakeResp(404)
+
+    monkeypatch.setattr(star.Polite, "get", fake_get)
+
+    with pytest.raises(RuntimeError, match="zero shows"):
+        star.fetch()
+
+
+def test_fetch_raises_naming_token_when_refresh_also_fails(monkeypatch):
+    """A 401 that survives the refresh attempt must raise a message naming the token."""
+    import readers.star as star
+
+    def fake_get(self, url, **kw):
+        if url.endswith("/cinemas"):
+            return _FakeResp(401, {"message": "not authorized"})
+        return _FakeResp(404)
+
+    monkeypatch.setattr(star.Polite, "get", fake_get)
+    monkeypatch.setattr(star, "_refresh_token", lambda http: None)
+
+    with pytest.raises(RuntimeError, match="TOKEN"):
+        star.fetch()
