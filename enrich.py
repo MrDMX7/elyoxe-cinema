@@ -16,10 +16,29 @@ data["films"][fid] in place, adding: title_ar, year, genres{ar,en}, director, ca
 runtime (only if missing), synopsis_en, wikidata{qid}, imdb{id}, imdb_score(None),
 rt{critics, critics_count, audience, consensus, url}. `poster` is left untouched.
 
-Cache (data/films_cache.json, gitignored): per-fid {"ids": {...permanent...},
-"ratings": {...}, "ratings_at": ISO}. ids are cached forever once found; ratings
-(the RT numbers) expire after 3 days and are refetched. offline=True never touches
-the network — whatever is in the cache (or nothing) is used.
+Cache (data/films_cache.json, gitignored): per-fid {"ids": {...}, "ids_status":
+"found"|"not_found"|"error", "ids_checked_at": ISO, "ratings": {...}, "ratings_at": ISO}.
+"found" is permanent (never re-queried). "not_found" (a genuine, successfully-queried empty
+result) is retried after NOT_FOUND_TTL — a title with no Wikidata item today may get one once
+the film is a few days old. "error" (a network/HTTP/parse failure — we couldn't tell either
+way) is retried much sooner, after ERROR_TTL, specifically so a transient outage during a
+film's first-ever lookup doesn't get treated as "confirmed absent" and left that way forever
+(round-3 controller review, 2026-09-26). Ratings (the RT numbers) expire after RATINGS_TTL
+regardless of ids status. offline=True never touches the network — whatever is in the cache
+(or nothing) is used.
+
+Wikidata matching only ever accepts a film-shaped hit whose own publication year is in
+`accepted_years` — the current/previous calendar year by default, or a single explicit
+`{film["year_hint"]}` when a reader/caller supplies one. There is no fallback to "the best
+non-matching-year hit anyway": a title collision with an older or unrelated work (e.g. "The
+Odyssey" 2016 vs the 2026 Nolan film, "Insidious" the franchise vs one specific 2026 entry)
+must return no match rather than silently attach the wrong film's data — a wrong match is
+worse than none (round-3 controller review; the per-title `search_title` override in
+seed_verdicts.py is still how a title that doesn't surface its correct match in the top
+search hits at all gets there, orthogonal to this year filter). The Rotten Tomatoes fetch has
+the same guard: a page's own `releaseYear` (read out of its `where-to-watch-json` block) must
+match the Wikidata-recorded year for that same qid, or the rating is dropped rather than
+attached to the wrong film.
 """
 import json
 import os
@@ -32,9 +51,17 @@ import requests
 UA = "elyoxe-cinema/1.0 (+https://elyoxe.com/cinema; contact hello@elyoxe.com)"
 GAP_SECONDS = 2.0
 RATINGS_TTL = timedelta(days=3)
+NOT_FOUND_TTL = timedelta(days=3)
+ERROR_TTL = timedelta(hours=6)
 FILM_QIDS = {"Q11424", "Q24862", "Q24869"}  # film, short film, television film
 
 _last_call = [0.0]
+
+
+class LookupFailed(Exception):
+    """A Wikidata call failed at the network/HTTP/JSON-parse level — distinct from a
+    legitimate empty result (HTTP 200, zero hits), so the caller can avoid caching a
+    transient failure as a permanent "not found" for this film."""
 
 
 def _polite_get(url, **kw):
@@ -72,7 +99,7 @@ def _save_cache(path, cache):
     os.replace(tmp, path)
 
 
-def _fresh(iso_ts):
+def _fresh(iso_ts, ttl):
     if not iso_ts:
         return False
     try:
@@ -81,10 +108,17 @@ def _fresh(iso_ts):
         return False
     if t.tzinfo is None:
         t = t.replace(tzinfo=timezone.utc)
-    return datetime.now(timezone.utc) - t < RATINGS_TTL
+    return datetime.now(timezone.utc) - t < ttl
 
 
 # ---------- Wikidata ----------
+#
+# _wikidata_search/_wikidata_entities raise LookupFailed on a network/HTTP/parse failure —
+# they do NOT swallow it into an empty list/dict the way they used to, because an empty dict
+# from "the request failed" and an empty dict from "Wikidata legitimately has zero hits" used
+# to be indistinguishable to the caller, and the caller (enrich()) cached both as the same
+# permanent "not found". A real empty *result* (HTTP 200, `{"search": []}`) still returns []
+# normally — that's not a failure, it's an answer.
 
 def _wikidata_search(title):
     r = _polite_get(
@@ -92,12 +126,14 @@ def _wikidata_search(title):
         params={"action": "wbsearchentities", "search": title, "language": "en",
                 "format": "json", "type": "item", "limit": 6},
     )
-    if r is None or r.status_code != 200:
-        return []
+    if r is None:
+        raise LookupFailed("network error calling wbsearchentities")
+    if r.status_code != 200:
+        raise LookupFailed(f"wbsearchentities HTTP {r.status_code}")
     try:
         return r.json().get("search", [])
-    except ValueError:
-        return []
+    except ValueError as e:
+        raise LookupFailed(f"bad JSON from wbsearchentities: {e}") from e
 
 
 def _wikidata_entities(ids):
@@ -109,12 +145,14 @@ def _wikidata_entities(ids):
         params={"action": "wbgetentities", "ids": "|".join(ids), "format": "json",
                 "languages": "en|ar", "props": "labels|claims"},
     )
-    if r is None or r.status_code != 200:
-        return {}
+    if r is None:
+        raise LookupFailed("network error calling wbgetentities")
+    if r.status_code != 200:
+        raise LookupFailed(f"wbgetentities HTTP {r.status_code}")
     try:
         return r.json().get("entities", {})
-    except ValueError:
-        return {}
+    except ValueError as e:
+        raise LookupFailed(f"bad JSON from wbgetentities: {e}") from e
 
 
 def _label(entities, qid, lang):
@@ -161,52 +199,60 @@ def _looks_like_a_film(hit, ent):
     return bool(_DESC_FILM.search(desc)) and not _DESC_NOT_FILM.search(desc)
 
 
-def _best_film_in_hits(hits):
-    """Given wbsearchentities hits, returns (qid, is_recent) for the best film match, or (None, False)."""
+def _best_film_in_hits(hits, accepted_years):
+    """Given wbsearchentities hits, returns the qid of the first film-shaped hit whose own
+    publication year is in `accepted_years`, or None.
+
+    No "best guess" fallback: a film-shaped hit whose year is wrong (or unknown) is not
+    returned even if it's the only film-shaped hit. Round-3 controller review — the previous
+    version returned the best film-shaped hit regardless of year when nothing recent was
+    found, which is how "The Odyssey" silently resolved to a 2016 film. Wrong match is worse
+    than no match: the caller treats None as "not found" and moves on, rather than attaching
+    another film's title_ar/genres/cast/runtime/ids to this listing.
+    """
     if not hits:
-        return None, False
+        return None
     entities = _wikidata_entities([h["id"] for h in hits])
-    best, best_recent = None, False
     for h in hits:
         qid = h["id"]
         ent = entities.get(qid)
         if not ent or not _looks_like_a_film(h, ent):
             continue
-        recent = _claim_year(ent) in (2025, 2026)
-        if best is None:
-            best, best_recent = qid, recent
-        if recent and not best_recent:
-            best, best_recent = qid, recent
-        if recent:
-            break
-    return best, best_recent
+        if _claim_year(ent) in accepted_years:
+            return qid
+    return None
 
 
-def _find_film_qid(title):
-    """Best-effort Wikidata match: instance-of film, 2025/2026 publication preferred.
+def _find_film_qid(title, accepted_years):
+    """Wikidata match: instance-of film, publication year in `accepted_years`, or None.
 
     A plain title search often loses to a franchise/game entity of the same name (e.g.
-    "Resident Evil" the video-game franchise outranks the 2026 film), or finds an older
-    film with the same title (e.g. an "The Odyssey" from 2016). So: try the plain title
-    first; if it doesn't land on a 2025/2026 film, retry with a "(2026 film)"/"(2025 film)"
-    disambiguator, which is how Wikidata titles most just-released films. Fall back to
-    whatever the plain search found (even if not recent) rather than nothing.
+    "Resident Evil" the video-game franchise outranks the 2026 film), or surfaces an older
+    film with the same title (e.g. "The Odyssey" 2016) ahead of or instead of the current
+    one. So: try the plain title first; if it doesn't land on a hit whose year is in
+    `accepted_years`, retry with a "(2026 film)"/"(2025 film)" disambiguator, which is how
+    Wikidata titles most just-released films. If neither lands on an accepted year, return
+    None — never the best non-matching hit (see _best_film_in_hits).
     """
     hits = _wikidata_search(title)
-    qid, recent = _best_film_in_hits(hits)
-    if recent:
+    qid = _best_film_in_hits(hits, accepted_years)
+    if qid:
         return qid
     for suffix in (" (2026 film)", " (2025 film)"):
         more_hits = _wikidata_search(title + suffix)
-        more_qid, more_recent = _best_film_in_hits(more_hits)
-        if more_recent:
+        more_qid = _best_film_in_hits(more_hits, accepted_years)
+        if more_qid:
             return more_qid
-    return qid
+    return None
 
 
-def _wikidata_ids(title):
-    """Returns a permanent-cacheable dict of ids/labels for a title, or {} if unmatched."""
-    qid = _find_film_qid(title)
+def _wikidata_ids(title, accepted_years):
+    """Returns a permanent-cacheable dict of ids/labels for a title, or {} if unmatched.
+
+    May raise LookupFailed if a Wikidata call fails at the network/HTTP/parse level — the
+    caller (enrich()) must not treat that the same as a confirmed empty match.
+    """
+    qid = _find_film_qid(title, accepted_years)
     if not qid:
         return {}
     entities = _wikidata_entities([qid])
@@ -251,12 +297,37 @@ def _wikidata_ids(title):
 
 # ---------- Rotten Tomatoes ----------
 
-def _rt_ratings(rt_id):
-    """Scrape the RT page for tomatometer/popcornmeter numbers and the consensus line."""
+def _rt_release_year(html):
+    """Pulls the release year RT itself prints for this page, from the `where-to-watch-json`
+    block's `"releaseYear":"2026"` field. Not present under every id, so a miss returns None
+    (treated as "can't verify" by the caller, not as a mismatch)."""
+    m = re.search(r'"releaseYear"\s*:\s*"(\d{4})"', html)
+    if not m:
+        return None
+    try:
+        return int(m.group(1))
+    except ValueError:
+        return None
+
+
+def _rt_ratings(rt_id, expected_year=None):
+    """Scrape the RT page for tomatometer/popcornmeter numbers and the consensus line.
+
+    If `expected_year` is given and the page's own release year is readable and differs,
+    the whole result is dropped (None) rather than attached to the wrong film — this is the
+    Wikidata-recorded rt_id turning out to point at the wrong RT entry (rare, but the exact
+    shape of bug that put a 2016 "The Odyssey" number on the 2026 Nolan film before the
+    Wikidata-side year guard existed). A page where the year can't be read at all is
+    accepted leniently — we already trust the qid it came from.
+    """
     r = _polite_get(f"https://www.rottentomatoes.com/m/{rt_id}")
     if r is None or r.status_code != 200:
         return None
     html = r.text
+    if expected_year is not None:
+        page_year = _rt_release_year(html)
+        if page_year is not None and page_year != expected_year:
+            return None
     m = re.search(r'id="media-scorecard-json"[^>]*>(.*?)</script>', html, re.S)
     if not m:
         return None
@@ -324,6 +395,7 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
     films = data.get("films", {})
     cache = _load_cache(cache_path)
     dirty = False
+    current_year = datetime.now(timezone.utc).year
 
     for fid, film in films.items():
         _blank_film_fields(film)
@@ -332,17 +404,57 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
         # ambiguous (e.g. "Insidious" for a franchise with six films, "The Odyssey" which
         # collides with several older works of the same name).
         title = film.get("search_title") or film.get("title") or fid
+        # A reader/caller can pin the exact expected year (e.g. from its own listing data);
+        # otherwise accept the current or previous calendar year, which covers both a film
+        # that opened late last year and is still in UAE cinemas, and one opening this year.
+        year_hint = film.get("year_hint")
+        accepted_years = {year_hint} if year_hint else {current_year, current_year - 1}
+
         entry = cache.get(fid, {})
         ids = entry.get("ids")
+        # Backward-compatible status inference for a cache written before ids_status existed:
+        # a truthy "ids" is treated as a confirmed "found" (unchanged behavior); a falsy one
+        # with no status is unknown-provenance (could be an old permanent "not found" or a
+        # pre-upgrade write) and is simply re-attempted once, which is always safe.
+        ids_status = entry.get("ids_status") or ("found" if ids else None)
+        ids_checked_at = entry.get("ids_checked_at")
 
-        if ids is None and not offline:
+        if ids_status == "found":
+            should_attempt = False  # a confirmed match is permanent, never re-queried
+        elif ids_status == "not_found":
+            should_attempt = not _fresh(ids_checked_at, NOT_FOUND_TTL)
+        elif ids_status == "error":
+            should_attempt = not _fresh(ids_checked_at, ERROR_TTL)
+        else:  # never attempted
+            should_attempt = True
+
+        if should_attempt and not offline:
+            now_iso = datetime.now(timezone.utc).isoformat()
             try:
-                found = _wikidata_ids(title)
+                found = _wikidata_ids(title, accepted_years)
+            except LookupFailed:
+                # Transient failure — do NOT overwrite a previously-found `ids` (there isn't
+                # one, by construction of should_attempt, except in the "not_found"-retry
+                # case where ids is already {} anyway) and do NOT mark this "not_found" — a
+                # network blip must not permanently poison a film that was never actually
+                # confirmed absent from Wikidata. Retried again after ERROR_TTL.
+                entry["ids_status"] = "error"
+                entry["ids_checked_at"] = now_iso
+                dirty = True
+                found = ids or {}
             except Exception:
-                found = {}
-            ids = found or {}
-            entry["ids"] = ids
-            dirty = True
+                # An unexpected bug in our own parsing is not proof the film has no Wikidata
+                # entry either — same conservative "error" treatment, not "not_found".
+                entry["ids_status"] = "error"
+                entry["ids_checked_at"] = now_iso
+                dirty = True
+                found = ids or {}
+            else:
+                entry["ids"] = found
+                entry["ids_status"] = "found" if found else "not_found"
+                entry["ids_checked_at"] = now_iso
+                dirty = True
+            ids = found
 
             if not offline:
                 try:
@@ -376,10 +488,12 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
         rt_id = ids.get("rt_id")
         ratings = entry.get("ratings")
         ratings_at = entry.get("ratings_at")
-        need_ratings = rt_id and not offline and (ratings is None or not _fresh(ratings_at))
+        need_ratings = rt_id and not offline and (ratings is None or not _fresh(ratings_at, RATINGS_TTL))
         if need_ratings:
+            # Guard against a stale/wrong Wikidata rt_id: the RT page's own release year must
+            # match the year Wikidata recorded for this same qid, or the rating is dropped.
             try:
-                fresh_ratings = _rt_ratings(rt_id)
+                fresh_ratings = _rt_ratings(rt_id, expected_year=ids.get("year"))
             except Exception:
                 fresh_ratings = None
             if fresh_ratings:

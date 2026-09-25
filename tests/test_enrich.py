@@ -102,11 +102,11 @@ def test_stale_ratings_are_refetched_ids_are_not(tmp_path, monkeypatch):
 
     called = {"wikidata": False, "rt": False}
 
-    def fake_wikidata_ids(title):
+    def fake_wikidata_ids(title, accepted_years=None):
         called["wikidata"] = True
         return {}
 
-    def fake_rt_ratings(rt_id):
+    def fake_rt_ratings(rt_id, expected_year=None):
         called["rt"] = True
         return {"critics": 77, "critics_count": 50, "audience": 80, "consensus": "Better now.",
                 "url": "https://www.rottentomatoes.com/m/some_film"}
@@ -242,3 +242,126 @@ def test_dialect_check_catches_other_yiji_inflections_not_just_yijik():
     # root — these are other inflections that must be caught by the same root-prefix rule.
     for text in ("بيجي بكرة.", "تجيك النتيجة قريب.", "يجينا خبر منه."):
         assert _dialect_violation(text) is not None, text
+
+
+# ---------- enrich.py: round-3 controller review (no stale-year matches, no caching errors) ----------
+
+def test_best_film_in_hits_rejects_old_same_title_film_no_fallback():
+    """Two film-shaped hits for one title: one from an accepted year, one old. The old one
+    must never come back, even as a "best we found" fallback — a wrong-film match (e.g. the
+    2016 "The Odyssey" instead of the 2026 one) is worse than no match at all."""
+    hits = [
+        {"id": "Q_OLD", "description": "2016 film directed by Someone Else"},
+        {"id": "Q_NEW", "description": "2026 film directed by Christopher Nolan"},
+    ]
+
+    def fake_entities(ids):
+        by_id = {
+            "Q_OLD": {"claims": {
+                "P31": [{"mainsnak": {"datavalue": {"value": {"id": "Q11424"}}}}],
+                "P577": [{"mainsnak": {"datavalue": {"value": {"time": "+2016-01-01T00:00:00Z"}}}}],
+            }},
+            "Q_NEW": {"claims": {
+                "P31": [{"mainsnak": {"datavalue": {"value": {"id": "Q11424"}}}}],
+                "P577": [{"mainsnak": {"datavalue": {"value": {"time": "+2026-01-01T00:00:00Z"}}}}],
+            }},
+        }
+        return {i: by_id[i] for i in ids if i in by_id}
+
+    enrich_mod._wikidata_entities = fake_entities
+    try:
+        # Only the old film is available this round — must return None, not Q_OLD.
+        assert enrich_mod._best_film_in_hits([hits[0]], {2025, 2026}) is None
+        # With both available, the accepted-year one is returned.
+        assert enrich_mod._best_film_in_hits(hits, {2025, 2026}) == "Q_NEW"
+    finally:
+        enrich_mod._wikidata_entities = _real_wikidata_entities
+
+
+_real_wikidata_entities = enrich_mod._wikidata_entities
+
+
+def test_find_film_qid_returns_none_when_only_an_old_match_exists(monkeypatch):
+    """End-to-end through _find_film_qid: plain search and both "(2026 film)"/"(2025 film)"
+    retries only ever turn up the old film — the function must give up with None, not return
+    the old qid as a last resort."""
+    old_hit = {"id": "Q_OLD", "description": "2016 film directed by Someone Else"}
+
+    def fake_search(title):
+        return [old_hit]
+
+    def fake_entities(ids):
+        return {"Q_OLD": {"claims": {
+            "P31": [{"mainsnak": {"datavalue": {"value": {"id": "Q11424"}}}}],
+            "P577": [{"mainsnak": {"datavalue": {"value": {"time": "+2016-01-01T00:00:00Z"}}}}],
+        }}}
+
+    monkeypatch.setattr(enrich_mod, "_wikidata_search", fake_search)
+    monkeypatch.setattr(enrich_mod, "_wikidata_entities", fake_entities)
+
+    assert enrich_mod._find_film_qid("The Odyssey", {2025, 2026}) is None
+
+
+def test_network_failure_on_first_lookup_is_not_cached_as_not_found(tmp_path, monkeypatch):
+    """A transient error during a film's first-ever Wikidata lookup must be retried on a
+    future run, not permanently recorded as "confirmed absent" the way a real empty result
+    is."""
+    cache_path = tmp_path / "films_cache.json"
+
+    def raise_lookup_failed(title, accepted_years):
+        raise enrich_mod.LookupFailed("simulated outage")
+
+    monkeypatch.setattr(enrich_mod, "_wikidata_ids", raise_lookup_failed)
+    monkeypatch.setattr(enrich_mod, "_wikipedia_summary", lambda title: None)
+
+    data = {"films": {"new-film": {"title": "Brand New Film"}}}
+    enrich(data, cache_path=str(cache_path))
+
+    cache = json.loads(cache_path.read_text(encoding="utf-8"))
+    entry = cache["new-film"]
+    assert entry["ids_status"] == "error"          # not "not_found"
+    assert entry.get("ids") in (None, {}, [])       # nothing was confirmed, nothing invented
+    assert entry["ids_checked_at"]                  # timestamped so ERROR_TTL can expire it
+
+    # Once the error TTL has passed and the network is healthy again, it must retry and
+    # succeed — proving it wasn't permanently poisoned.
+    stale_error_at = (datetime.now(timezone.utc) - timedelta(hours=7)).isoformat()
+    cache["new-film"]["ids_checked_at"] = stale_error_at
+    cache_path.write_text(json.dumps(cache), encoding="utf-8")
+
+    def fake_wikidata_ids(title, accepted_years):
+        return {"qid": "Q123", "title_ar": "فيلم يديد", "genres": {"ar": [], "en": []}}
+
+    monkeypatch.setattr(enrich_mod, "_wikidata_ids", fake_wikidata_ids)
+
+    data2 = {"films": {"new-film": {"title": "Brand New Film"}}}
+    out2 = enrich(data2, cache_path=str(cache_path))
+    assert out2["films"]["new-film"]["title_ar"] == "فيلم يديد"
+
+    cache2 = json.loads(cache_path.read_text(encoding="utf-8"))
+    assert cache2["new-film"]["ids_status"] == "found"
+
+
+def test_genuine_not_found_is_retried_after_its_own_ttl(tmp_path, monkeypatch):
+    """A real (successfully-queried) empty result is cached, but only for NOT_FOUND_TTL —
+    unlike "found", it is not permanent, since a brand-new release may gain a Wikidata item
+    a few days later."""
+    cache_path = tmp_path / "films_cache.json"
+    stale_not_found_at = (datetime.now(timezone.utc) - timedelta(days=4)).isoformat()
+    cache_path.write_text(json.dumps({
+        "obscure-film": {"ids": {}, "ids_status": "not_found", "ids_checked_at": stale_not_found_at},
+    }), encoding="utf-8")
+
+    called = {"wikidata": False}
+
+    def fake_wikidata_ids(title, accepted_years):
+        called["wikidata"] = True
+        return {"qid": "Q999", "genres": {"ar": [], "en": []}}
+
+    monkeypatch.setattr(enrich_mod, "_wikidata_ids", fake_wikidata_ids)
+    monkeypatch.setattr(enrich_mod, "_wikipedia_summary", lambda title: None)
+
+    data = {"films": {"obscure-film": {"title": "Obscure Film"}}}
+    enrich(data, cache_path=str(cache_path))
+
+    assert called["wikidata"] is True  # 4 days > NOT_FOUND_TTL (3 days) — retried
