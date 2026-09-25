@@ -1,0 +1,341 @@
+# Cinema discounts by chain × card, maintained by hand (spec: docs/superpowers/specs/2026-09-25-cinema-design.md).
+#
+# confidence:
+#   official      — read live on the cinema chain's or card programme's own page.
+#   third-party   — a blog/aggregator, no official page found or the official page could not be read.
+#   unconfirmed   — no source at all, or the only source is stale/expired/inferred.
+#
+# status: none_found marks a chain×card pair that WAS checked and has no offer, so the site can
+# say "ما لقينا خصم" (we found no discount) instead of implying the chain refuses the card.
+#
+# type: percent (value = % off) | bogo (buy one get one free, price becomes price/2).
+# excluded_halls / included_halls: hall names from readers/common.py HALLS.
+# Research date for every entry below: 2026-09-25 (seeded from
+# research_notes/أفلام سينمات العين سبتمبر 2026/{discounts.md,tickets_prices.md}, then extended
+# live for reel/roxy/cinemacity and the bank offers).
+
+cards:
+  - {id: fazaa, name_ar: "فزعة", name_en: "Fazaa", kind: gov}
+  - {id: esaad, name_ar: "إسعاد", name_en: "Esaad", kind: gov}
+  - {id: homat, name_ar: "حماة الوطن", name_en: "Homat Al Watan", kind: gov}
+  - {id: fab, name_ar: "بنك أبوظبي الأول", name_en: "FAB", kind: bank}
+  - {id: adcb, name_ar: "بنك أبوظبي التجاري", name_en: "ADCB", kind: bank}
+  - {id: enbd, name_ar: "بنك الإمارات دبي الوطني", name_en: "Emirates NBD", kind: bank}
+  - {id: hsbc, name_ar: "إتش إس بي سي", name_en: "HSBC", kind: bank}
+  - {id: mashreq, name_ar: "بنك المشرق", name_en: "Mashreq", kind: bank}
+  - {id: rakbank, name_ar: "بنك رأس الخيمة الوطني", name_en: "RAKBANK", kind: bank}
+  - {id: cbd, name_ar: "بنك دبي التجاري", name_en: "CBD", kind: bank}
+  - {id: standard_chartered, name_ar: "ستاندرد تشارترد", name_en: "Standard Chartered", kind: bank}
+  - {id: citibank, name_ar: "سيتي بنك", name_en: "Citibank", kind: bank}
+  - {id: arab_bank, name_ar: "البنك العربي", name_en: "Arab Bank", kind: bank}
+  - {id: adnoc, name_ar: "مكافآت أدنوك", name_en: "ADNOC Rewards", kind: bank}
+  - {id: etisalat_smiles, name_ar: "اتصالات سمايلز", name_en: "Etisalat Smiles", kind: bank}
+
+rules:
+  star:
+    fazaa:
+      type: percent
+      value: 20
+      box_office_only: true
+      max_tickets: 4
+      valid_until: "2027-08-05"
+      note_ar: "من الشباك فقط، 4 تذاكر باليوم"
+      source: "https://www.starcinemas.ae/offers"
+      checked: "2026-09-25"
+      confidence: official
+    esaad:
+      type: percent
+      value: 20
+      note_ar: "بالبطاقة الفعلية فقط — ستار لا تذكر إسعاد في صفحتها الرسمية"
+      source: "https://www.manafethme.com/blog/esaad-card"
+      checked: "2026-09-25"
+      confidence: third-party
+    homat:
+      status: none_found
+      note_ar: "ما لقينا خصم"
+      source: "https://www.starcinemas.ae/offers"
+      checked: "2026-09-25"
+      confidence: official
+    fab:
+      type: percent
+      value: 50
+      valid_until: "2026-12-30"
+      note_ar: "خصم 50% على التذكرة"
+      source: "https://www.starcinemas.ae/offers"
+      checked: "2026-09-25"
+      confidence: official
+
+  vox:
+    fazaa:
+      status: none_found
+      note_ar: "ما لقينا عرض فزعة قائم الآن — الرابط الرسمي رجع Page Not Found"
+      source: "https://uae.voxcinemas.com/ticket-offer/summary"
+      checked: "2026-09-25"
+      confidence: official
+    esaad:
+      status: none_found
+      note_ar: "ما لقينا خصم"
+      source: "https://uae.voxcinemas.com/ticket-offer/summary"
+      checked: "2026-09-25"
+      confidence: official
+    homat:
+      status: none_found
+      note_ar: "ما لقينا خصم"
+      source: "https://uae.voxcinemas.com/ticket-offer/summary"
+      checked: "2026-09-25"
+      confidence: official
+    enbd:
+      type: bogo
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
+      source: "https://uae.voxcinemas.com/ticket-offer/summary"
+      checked: "2026-09-25"
+      confidence: official
+    fab:
+      type: bogo
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
+      source: "https://uae.voxcinemas.com/ticket-offer/summary"
+      checked: "2026-09-25"
+      confidence: official
+    adcb:
+      type: bogo
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
+      source: "https://uae.voxcinemas.com/ticket-offer/summary"
+      checked: "2026-09-25"
+      confidence: official
+    mashreq:
+      type: percent
+      value: 50
+      note_ar: "خصم 50% على التذكرة"
+      source: "https://uae.voxcinemas.com/ticket-offer/summary"
+      checked: "2026-09-25"
+      confidence: official
+    rakbank:
+      type: percent
+      value: 50
+      note_ar: "خصم 50% على التذكرة"
+      source: "https://uae.voxcinemas.com/ticket-offer/summary"
+      checked: "2026-09-25"
+      confidence: official
+    cbd:
+      type: percent
+      value: 50
+      note_ar: "خصم 50% على التذكرة"
+      source: "https://uae.voxcinemas.com/ticket-offer/summary"
+      checked: "2026-09-25"
+      confidence: official
+    hsbc:
+      type: bogo
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً + خصم 25% على المأكولات"
+      source: "https://uae.voxcinemas.com/ticket-offer/summary"
+      checked: "2026-09-25"
+      confidence: official
+    standard_chartered:
+      type: bogo
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
+      source: "https://uae.voxcinemas.com/ticket-offer/summary"
+      checked: "2026-09-25"
+      confidence: official
+
+  novo:
+    fazaa:
+      type: percent
+      value: 20
+      box_office_only: false
+      max_tickets: 4
+      valid_until: "2026-12-31"
+      note_ar: "ترقية مجانية لحجم المشروب أو الفشار، والبطاقة تشتغل لأفراد العائلة"
+      source: "https://uae.novocinemas.com/promotions/17"
+      checked: "2026-09-25"
+      confidence: official
+    esaad:
+      type: percent
+      value: 20
+      max_tickets: 6
+      valid_until: "2027-07-05"
+      excluded_halls: ["IMAX"]
+      note_ar: "لا يشمل قاعتي IMAX وSKY"
+      source: "https://uae.novocinemas.com/promotions/15"
+      checked: "2026-09-25"
+      confidence: official
+    homat:
+      status: none_found
+      note_ar: "ما لقينا خصم"
+      source: "https://uae.novocinemas.com/promotions"
+      checked: "2026-09-25"
+      confidence: official
+    adnoc:
+      type: percent
+      value: 15
+      valid_until: "2026-12-31"
+      note_ar: "مقابل 2000 نقطة أدنوك، القسيمة صالحة 14 يوماً"
+      source: "https://uae.novocinemas.com/promotions/16"
+      checked: "2026-09-25"
+      confidence: official
+    etisalat_smiles:
+      type: percent
+      value: 25
+      note_ar: "على حزمة تذكرة + وجبة عبر تطبيق سمايلز"
+      source: "https://uae.novocinemas.com/promotions"
+      checked: "2026-09-25"
+      confidence: official
+    enbd:
+      type: percent
+      value: 15
+      note_ar: "خصم 15% على التذكرة"
+      source: "https://uae.novocinemas.com/promotions"
+      checked: "2026-09-25"
+      confidence: official
+
+  cineroyal:
+    fazaa:
+      type: percent
+      value: 20
+      box_office_only: true
+      max_tickets: 4
+      note_ar: "من الشباك فقط، لا يشمل العطل الرسمية — البطاقة الأساسية (البيضاء) تاخذ 10% بس"
+      source: "https://cineroyal.ae/home/fazaa"
+      checked: "2026-09-25"
+      confidence: official
+    esaad:
+      status: none_found
+      note_ar: "ما لقينا خصم"
+      source: "https://cineroyal.ae/home/fazaa"
+      checked: "2026-09-25"
+      confidence: official
+    homat:
+      status: none_found
+      note_ar: "ما لقينا خصم"
+      source: "https://cineroyal.ae/home/fazaa"
+      checked: "2026-09-25"
+      confidence: official
+    fab:
+      type: percent
+      value: 20
+      note_ar: "خصم 20% في كل فروع Royal Cinemas"
+      source: "https://cineroyal.ae/home/FABOffers"
+      checked: "2026-09-25"
+      confidence: official
+    enbd:
+      type: bogo
+      note_ar: "اشترِ تذكرة عادية وخذ الثانية مجاناً + خصم 15% على المأكولات"
+      source: "https://cineroyal.ae/home/ENBDOffers"
+      checked: "2026-09-25"
+      confidence: official
+    rakbank:
+      type: percent
+      value: 20
+      note_ar: "خصم 20% على تذاكر 2D"
+      source: "https://www.rakbank.ae/en/cards/card-offers/cine-royal-cinema"
+      checked: "2026-09-25"
+      confidence: official
+
+  reel:
+    fazaa:
+      type: percent
+      value: 25
+      included_halls: ["SUITES"]
+      box_office_only: true
+      valid_until: "2026-12-16"
+      note_ar: "عند الشباك يشمل قاعات SUITES فقط — للتذاكر العادية اشترِ حزمة عبر تطبيق فزعة"
+      source: "https://www.fazaa.ae/offers/view/reel-cinema"
+      checked: "2026-09-25"
+      confidence: official
+    esaad:
+      status: none_found
+      note_ar: "ما لقينا خصم"
+      source: "https://www.reelcinemas.com/en-ae/offers/"
+      checked: "2026-09-25"
+      confidence: unconfirmed
+    homat:
+      status: none_found
+      note_ar: "ما لقينا خصم"
+      source: "https://www.reelcinemas.com/en-ae/offers/"
+      checked: "2026-09-25"
+      confidence: unconfirmed
+    hsbc:
+      type: bogo
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً + خصم 20% على المأكولات"
+      source: "https://www.hsbc.ae/credit-cards/cinema-offers/"
+      checked: "2026-09-25"
+      confidence: official
+    fab:
+      type: bogo
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً + خصم 20% على المأكولات"
+      source: "https://masarif.ae/promotions/hsbc-bank-middle-east-reel-cinemas-offer"
+      checked: "2026-09-25"
+      confidence: third-party
+    standard_chartered:
+      type: bogo
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً + خصم 20% على المأكولات"
+      source: "https://www.sc.com/ae/promotions/cinema-offers/"
+      checked: "2026-09-25"
+      confidence: official
+
+  roxy:
+    fazaa:
+      status: none_found
+      note_ar: "صفحة فزعة الرسمية رجعت Page Not Found وقت الفحص — عرض قديم بنسبة 20% قد يكون انتهى"
+      source: "https://www.fazaa.ae/offers/view/the-roxy-cinemas"
+      checked: "2026-09-25"
+      confidence: unconfirmed
+    esaad:
+      status: none_found
+      note_ar: "ما لقينا خصم"
+      source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
+      checked: "2026-09-25"
+      confidence: unconfirmed
+    homat:
+      status: none_found
+      note_ar: "ما لقينا خصم"
+      source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
+      checked: "2026-09-25"
+      confidence: unconfirmed
+    hsbc:
+      type: bogo
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
+      source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
+      checked: "2026-09-25"
+      confidence: official
+    fab:
+      type: bogo
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
+      source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
+      checked: "2026-09-25"
+      confidence: official
+    arab_bank:
+      type: bogo
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
+      source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
+      checked: "2026-09-25"
+      confidence: official
+    citibank:
+      type: bogo
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
+      source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
+      checked: "2026-09-25"
+      confidence: official
+
+  cinemacity:
+    fazaa:
+      type: percent
+      value: 20
+      box_office_only: true
+      max_tickets: 4
+      valid_until: "2026-11-16"
+      note_ar: "من الشباك فقط، 4 تذاكر باليوم"
+      source: "https://www.fazaa.ae/offers/view/cinemacity-alqana"
+      checked: "2026-09-25"
+      confidence: official
+    esaad:
+      type: percent
+      value: 20
+      note_ar: "تحتاج توثيق البطاقة عند مدير الفرع أول مرة قبل الحجز أونلاين"
+      source: "https://www.cinemacity.ae/offers-and-promotions/"
+      checked: "2026-09-25"
+      confidence: third-party
+    homat:
+      status: none_found
+      note_ar: "ما لقينا خصم"
+      source: "https://www.cinemacity.ae/offers-and-promotions/"
+      checked: "2026-09-25"
+      confidence: unconfirmed
