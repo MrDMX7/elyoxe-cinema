@@ -63,19 +63,6 @@
   ],
   "shows": [
     {
-      "cinema": "cineroyal-khalidiyah-mall",
-      "film_title": "Heart Of The Beast",
-      "film_lang": null,
-      "film_rating": "PG13",
-      "runtime": 105,
-      "date": "2026-09-25",
-      "time": "23:40",
-      "hall": "GOLD",
-      "hall_label": "ROYAL PLUS",
-      "prices": null,
-      "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
-    },
-    {
       "cinema": "cineroyal-al-dhannah-mall",
       "film_title": "Heart Of The Beast",
       "film_lang": null,
@@ -85,7 +72,24 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -98,7 +102,20 @@
       "time": "23:59",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -111,7 +128,20 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -124,7 +154,20 @@
       "time": "10:30",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -137,7 +180,20 @@
       "time": "12:40",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -150,7 +206,20 @@
       "time": "14:50",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -163,7 +232,20 @@
       "time": "17:00",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -176,7 +258,20 @@
       "time": "19:10",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -189,7 +284,20 @@
       "time": "21:20",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -202,7 +310,20 @@
       "time": "23:30",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -215,7 +336,12 @@
       "time": "14:00",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -228,7 +354,12 @@
       "time": "16:10",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -241,7 +372,12 @@
       "time": "20:30",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -254,7 +390,12 @@
       "time": "14:20",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -267,7 +408,12 @@
       "time": "18:40",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -280,7 +426,12 @@
       "time": "16:30",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -293,7 +444,12 @@
       "time": "18:40",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -306,7 +462,12 @@
       "time": "20:50",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -319,7 +480,12 @@
       "time": "23:00",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -332,7 +498,20 @@
       "time": "10:40",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -345,7 +524,20 @@
       "time": "12:50",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -358,7 +550,20 @@
       "time": "15:00",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -371,7 +576,20 @@
       "time": "17:10",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -384,7 +602,20 @@
       "time": "19:20",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -397,7 +628,20 @@
       "time": "21:30",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -410,7 +654,20 @@
       "time": "23:40",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -423,7 +680,24 @@
       "time": "12:20",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Sky",
+          "aed": 69.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -436,7 +710,24 @@
       "time": "23:30",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Sky",
+          "aed": 69.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -449,7 +740,24 @@
       "time": "11:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -462,7 +770,24 @@
       "time": "15:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -475,7 +800,24 @@
       "time": "17:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -488,7 +830,24 @@
       "time": "19:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -501,7 +860,24 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -514,7 +890,12 @@
       "time": "13:50",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -527,7 +908,12 @@
       "time": "16:00",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -540,7 +926,12 @@
       "time": "18:10",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -553,7 +944,12 @@
       "time": "20:20",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -566,7 +962,12 @@
       "time": "22:30",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -579,7 +980,20 @@
       "time": "11:00",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -592,7 +1006,20 @@
       "time": "13:10",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -605,7 +1032,20 @@
       "time": "15:20",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -618,7 +1058,20 @@
       "time": "17:30",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -631,7 +1084,20 @@
       "time": "23:15",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -644,7 +1110,20 @@
       "time": "20:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -657,7 +1136,20 @@
       "time": "22:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -670,7 +1162,20 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=heart-of-the-beast"
     },
     {
@@ -683,7 +1188,12 @@
       "time": "23:55",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -696,7 +1206,12 @@
       "time": "23:59",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -709,7 +1224,12 @@
       "time": "18:20",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -722,7 +1242,12 @@
       "time": "22:40",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -735,7 +1260,12 @@
       "time": "23:00",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -748,7 +1278,12 @@
       "time": "17:45",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -761,7 +1296,12 @@
       "time": "19:50",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -774,7 +1314,12 @@
       "time": "21:50",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -787,7 +1332,12 @@
       "time": "23:55",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -800,7 +1350,24 @@
       "time": "10:20",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Sky",
+          "aed": 69.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -813,7 +1380,24 @@
       "time": "14:30",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Sky",
+          "aed": 69.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -826,7 +1410,20 @@
       "time": "09:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -839,7 +1436,20 @@
       "time": "15:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -852,7 +1462,12 @@
       "time": "17:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -865,7 +1480,12 @@
       "time": "21:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -878,7 +1498,16 @@
       "time": "13:05",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -891,7 +1520,20 @@
       "time": "14:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -904,7 +1546,16 @@
       "time": "17:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -917,7 +1568,20 @@
       "time": "20:35",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -930,7 +1594,16 @@
       "time": "22:35",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -943,7 +1616,24 @@
       "time": "13:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -956,7 +1646,24 @@
       "time": "18:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -969,7 +1676,24 @@
       "time": "21:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -982,7 +1706,20 @@
       "time": "20:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -995,7 +1732,12 @@
       "time": "16:00",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -1008,7 +1750,12 @@
       "time": "18:00",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -1021,7 +1768,12 @@
       "time": "20:00",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -1034,7 +1786,12 @@
       "time": "22:00",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -1047,7 +1804,12 @@
       "time": "23:59",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -1060,7 +1822,20 @@
       "time": "11:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -1073,7 +1848,20 @@
       "time": "13:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -1086,7 +1874,20 @@
       "time": "15:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -1099,7 +1900,20 @@
       "time": "17:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -1112,7 +1926,20 @@
       "time": "19:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -1125,7 +1952,20 @@
       "time": "21:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -1138,7 +1978,20 @@
       "time": "23:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=resident-evil"
     },
     {
@@ -1151,7 +2004,20 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1164,7 +2030,24 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1177,7 +2060,20 @@
       "time": "11:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1190,7 +2086,20 @@
       "time": "20:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1203,7 +2112,20 @@
       "time": "10:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1216,7 +2138,20 @@
       "time": "13:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1229,7 +2164,20 @@
       "time": "17:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1242,7 +2190,20 @@
       "time": "20:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1255,7 +2216,20 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1268,7 +2242,24 @@
       "time": "12:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1281,7 +2272,24 @@
       "time": "18:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1294,7 +2302,24 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1307,7 +2332,20 @@
       "time": "10:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1320,7 +2358,24 @@
       "time": "13:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1333,7 +2388,20 @@
       "time": "18:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1346,7 +2414,24 @@
       "time": "19:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1359,7 +2444,20 @@
       "time": "22:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1372,7 +2470,16 @@
       "time": "13:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1385,7 +2492,16 @@
       "time": "20:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-paradise-telugu"
     },
     {
@@ -1398,7 +2514,20 @@
       "time": "23:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1411,7 +2540,20 @@
       "time": "13:35",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1424,7 +2566,20 @@
       "time": "17:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1437,7 +2592,20 @@
       "time": "20:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1450,7 +2618,20 @@
       "time": "23:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1463,7 +2644,20 @@
       "time": "10:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1476,7 +2670,20 @@
       "time": "13:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1489,7 +2696,20 @@
       "time": "16:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1502,7 +2722,20 @@
       "time": "20:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1515,7 +2748,20 @@
       "time": "23:15",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1528,7 +2774,24 @@
       "time": "20:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1541,7 +2804,24 @@
       "time": "23:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1554,7 +2834,24 @@
       "time": "10:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1567,7 +2864,24 @@
       "time": "16:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1580,7 +2894,20 @@
       "time": "19:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1593,7 +2920,24 @@
       "time": "23:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1606,7 +2950,16 @@
       "time": "13:35",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1619,7 +2972,16 @@
       "time": "20:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pradhama-drishtya-kuttakkar-malayalam"
     },
     {
@@ -1632,7 +2994,12 @@
       "time": "16:30",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1645,7 +3012,12 @@
       "time": "20:50",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1658,7 +3030,12 @@
       "time": "19:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1671,7 +3048,16 @@
       "time": "13:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1684,7 +3070,16 @@
       "time": "17:25",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1697,7 +3092,16 @@
       "time": "21:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1710,7 +3114,24 @@
       "time": "12:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1723,7 +3144,24 @@
       "time": "20:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1736,7 +3174,20 @@
       "time": "20:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1749,7 +3200,12 @@
       "time": "14:50",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1762,7 +3218,12 @@
       "time": "19:00",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1775,7 +3236,12 @@
       "time": "23:10",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1788,7 +3254,20 @@
       "time": "12:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1801,7 +3280,20 @@
       "time": "16:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1814,7 +3306,20 @@
       "time": "21:15",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=shish-dou-arabic"
     },
     {
@@ -1827,7 +3332,20 @@
       "time": "23:55",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -1840,7 +3358,16 @@
       "time": "10:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -1853,7 +3380,16 @@
       "time": "21:15",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -1866,7 +3402,16 @@
       "time": "10:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -1879,7 +3424,16 @@
       "time": "15:15",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -1892,7 +3446,20 @@
       "time": "18:15",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -1905,7 +3472,16 @@
       "time": "20:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -1918,7 +3494,16 @@
       "time": "23:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -1931,7 +3516,24 @@
       "time": "10:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -1944,7 +3546,20 @@
       "time": "13:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -1957,7 +3572,20 @@
       "time": "23:55",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -1970,7 +3598,16 @@
       "time": "10:35",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -1983,7 +3620,16 @@
       "time": "17:05",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -1996,7 +3642,16 @@
       "time": "23:35",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=dhoomakethu-malayalam"
     },
     {
@@ -2009,7 +3664,16 @@
       "time": "12:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2022,7 +3686,16 @@
       "time": "15:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2035,7 +3708,16 @@
       "time": "18:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2048,7 +3730,16 @@
       "time": "21:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2061,7 +3752,20 @@
       "time": "10:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2074,7 +3778,20 @@
       "time": "15:35",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2087,7 +3804,20 @@
       "time": "21:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2100,7 +3830,24 @@
       "time": "21:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2113,7 +3860,20 @@
       "time": "10:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2126,7 +3886,20 @@
       "time": "17:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2139,7 +3912,20 @@
       "time": "10:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2152,7 +3938,20 @@
       "time": "15:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2165,7 +3964,20 @@
       "time": "20:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2178,7 +3990,20 @@
       "time": "23:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-vvaan-force-of-the-forrest-hindi"
     },
     {
@@ -2191,7 +4016,20 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2204,7 +4042,24 @@
       "time": "16:30",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Sky",
+          "aed": 69.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2217,7 +4072,24 @@
       "time": "20:00",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Sky",
+          "aed": 69.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2230,7 +4102,20 @@
       "time": "10:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2243,7 +4128,20 @@
       "time": "16:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2256,7 +4154,20 @@
       "time": "23:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2269,7 +4180,20 @@
       "time": "11:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2282,7 +4206,20 @@
       "time": "22:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2295,7 +4232,20 @@
       "time": "22:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2308,7 +4258,20 @@
       "time": "19:40",
       "hall": "GOLD",
       "hall_label": "ROYAL PLUS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2321,7 +4284,20 @@
       "time": "10:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2334,7 +4310,20 @@
       "time": "13:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2347,7 +4336,20 @@
       "time": "17:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2360,7 +4362,20 @@
       "time": "20:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2373,7 +4388,20 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=avengers-endgame-encore-infinity-vision"
     },
     {
@@ -2386,7 +4414,20 @@
       "time": "23:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2399,7 +4440,16 @@
       "time": "11:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2412,7 +4462,16 @@
       "time": "15:15",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2425,7 +4484,16 @@
       "time": "21:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2438,7 +4506,16 @@
       "time": "23:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2451,7 +4528,20 @@
       "time": "11:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2464,7 +4554,20 @@
       "time": "13:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2477,7 +4580,20 @@
       "time": "16:15",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2490,7 +4606,20 @@
       "time": "18:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2503,7 +4632,20 @@
       "time": "21:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2516,7 +4658,20 @@
       "time": "23:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2529,7 +4684,24 @@
       "time": "15:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2542,7 +4714,20 @@
       "time": "10:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2555,7 +4740,20 @@
       "time": "19:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2568,7 +4766,16 @@
       "time": "10:35",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2581,7 +4788,16 @@
       "time": "17:05",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2594,7 +4810,16 @@
       "time": "23:35",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=aaram-malayalam"
     },
     {
@@ -2607,7 +4832,12 @@
       "time": "12:05",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2620,7 +4850,12 @@
       "time": "18:10",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2633,7 +4868,12 @@
       "time": "12:00",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2646,7 +4886,12 @@
       "time": "15:50",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2659,7 +4904,12 @@
       "time": "17:40",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2672,7 +4922,12 @@
       "time": "19:30",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2685,7 +4940,24 @@
       "time": "10:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2698,7 +4970,24 @@
       "time": "12:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2711,7 +5000,24 @@
       "time": "14:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2724,7 +5030,24 @@
       "time": "16:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2737,7 +5060,20 @@
       "time": "11:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2750,7 +5086,20 @@
       "time": "17:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2763,7 +5112,20 @@
       "time": "10:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2776,7 +5138,20 @@
       "time": "12:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2789,7 +5164,20 @@
       "time": "14:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2802,7 +5190,20 @@
       "time": "16:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2815,7 +5216,20 @@
       "time": "18:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-smurfs-timeless-adventure-volume-2"
     },
     {
@@ -2828,7 +5242,20 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=bethlahem-kudumba-unit-malayalam"
     },
     {
@@ -2841,7 +5268,16 @@
       "time": "15:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=bethlahem-kudumba-unit-malayalam"
     },
     {
@@ -2854,7 +5290,12 @@
       "time": "20:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=bethlahem-kudumba-unit-malayalam"
     },
     {
@@ -2867,7 +5308,12 @@
       "time": "23:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=bethlahem-kudumba-unit-malayalam"
     },
     {
@@ -2880,7 +5326,20 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=bethlahem-kudumba-unit-malayalam"
     },
     {
@@ -2893,7 +5352,12 @@
       "time": "10:00",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=buttery-effect-azzam-arabic"
     },
     {
@@ -2906,7 +5370,12 @@
       "time": "14:10",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=buttery-effect-azzam-arabic"
     },
     {
@@ -2919,7 +5388,12 @@
       "time": "18:20",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=buttery-effect-azzam-arabic"
     },
     {
@@ -2932,7 +5406,12 @@
       "time": "10:00",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=buttery-effect-azzam-arabic"
     },
     {
@@ -2945,7 +5424,12 @@
       "time": "16:00",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=buttery-effect-azzam-arabic"
     },
     {
@@ -2958,7 +5442,12 @@
       "time": "10:00",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=buttery-effect-azzam-arabic"
     },
     {
@@ -2971,7 +5460,12 @@
       "time": "13:50",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=buttery-effect-azzam-arabic"
     },
     {
@@ -2984,7 +5478,20 @@
       "time": "12:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=buttery-effect-azzam-arabic"
     },
     {
@@ -2997,7 +5504,20 @@
       "time": "18:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=buttery-effect-azzam-arabic"
     },
     {
@@ -3010,7 +5530,12 @@
       "time": "23:20",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=bloody-tennis"
     },
     {
@@ -3023,7 +5548,12 @@
       "time": "10:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=bloody-tennis"
     },
     {
@@ -3036,7 +5566,12 @@
       "time": "14:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=bloody-tennis"
     },
     {
@@ -3049,7 +5584,12 @@
       "time": "18:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=bloody-tennis"
     },
     {
@@ -3062,7 +5602,16 @@
       "time": "13:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=bloody-tennis"
     },
     {
@@ -3075,7 +5624,16 @@
       "time": "17:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=bloody-tennis"
     },
     {
@@ -3088,7 +5646,16 @@
       "time": "21:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=bloody-tennis"
     },
     {
@@ -3101,7 +5668,16 @@
       "time": "23:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=sacrifice"
     },
     {
@@ -3114,7 +5690,24 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=sacrifice"
     },
     {
@@ -3127,7 +5720,12 @@
       "time": "10:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=sacrifice"
     },
     {
@@ -3140,7 +5738,12 @@
       "time": "23:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=sacrifice"
     },
     {
@@ -3153,7 +5756,16 @@
       "time": "11:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=sacrifice"
     },
     {
@@ -3166,7 +5778,16 @@
       "time": "15:15",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=sacrifice"
     },
     {
@@ -3179,7 +5800,24 @@
       "time": "17:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=sacrifice"
     },
     {
@@ -3192,7 +5830,24 @@
       "time": "23:59",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=sacrifice"
     },
     {
@@ -3205,7 +5860,20 @@
       "time": "13:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=sacrifice"
     },
     {
@@ -3218,7 +5886,20 @@
       "time": "10:15",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=sacrifice"
     },
     {
@@ -3231,7 +5912,20 @@
       "time": "14:35",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=sacrifice"
     },
     {
@@ -3244,7 +5938,20 @@
       "time": "19:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=sacrifice"
     },
     {
@@ -3257,7 +5964,20 @@
       "time": "23:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=sacrifice"
     },
     {
@@ -3270,7 +5990,16 @@
       "time": "10:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=tutt-paini-english-ne-punjabi"
     },
     {
@@ -3283,7 +6012,12 @@
       "time": "10:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=tutt-paini-english-ne-punjabi"
     },
     {
@@ -3296,7 +6030,12 @@
       "time": "16:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=tutt-paini-english-ne-punjabi"
     },
     {
@@ -3309,7 +6048,12 @@
       "time": "22:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=tutt-paini-english-ne-punjabi"
     },
     {
@@ -3322,7 +6066,16 @@
       "time": "13:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=meesaya-murukku-2-telugu"
     },
     {
@@ -3335,7 +6088,16 @@
       "time": "23:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=meesaya-murukku-2-telugu"
     },
     {
@@ -3348,7 +6110,16 @@
       "time": "11:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=meesaya-murukku-2-telugu"
     },
     {
@@ -3361,7 +6132,16 @@
       "time": "17:25",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=meesaya-murukku-2-telugu"
     },
     {
@@ -3374,7 +6154,16 @@
       "time": "20:15",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=meesaya-murukku-2-telugu"
     },
     {
@@ -3387,7 +6176,16 @@
       "time": "23:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=meesaya-murukku-2-telugu"
     },
     {
@@ -3400,7 +6198,16 @@
       "time": "12:55",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=meesaya-murukku-2-telugu"
     },
     {
@@ -3413,7 +6220,16 @@
       "time": "20:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=meesaya-murukku-2-telugu"
     },
     {
@@ -3426,7 +6242,16 @@
       "time": "14:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=enna-vilai-tamil"
     },
     {
@@ -3439,7 +6264,24 @@
       "time": "15:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=enna-vilai-tamil"
     },
     {
@@ -3452,7 +6294,20 @@
       "time": "22:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=enna-vilai-tamil"
     },
     {
@@ -3465,7 +6320,12 @@
       "time": "21:20",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=crawlers"
     },
     {
@@ -3478,7 +6338,12 @@
       "time": "15:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=crawlers"
     },
     {
@@ -3491,7 +6356,12 @@
       "time": "12:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=crawlers"
     },
     {
@@ -3504,7 +6374,12 @@
       "time": "16:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=crawlers"
     },
     {
@@ -3517,7 +6392,24 @@
       "time": "22:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=crawlers"
     },
     {
@@ -3530,7 +6422,20 @@
       "time": "15:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=crawlers"
     },
     {
@@ -3543,7 +6448,20 @@
       "time": "22:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=crawlers"
     },
     {
@@ -3556,7 +6474,12 @@
       "time": "17:00",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=crawlers"
     },
     {
@@ -3569,7 +6492,12 @@
       "time": "21:10",
       "hall": "VIP",
       "hall_label": "ROYAL CLASS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Royal",
+          "aed": 150.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=crawlers"
     },
     {
@@ -3582,7 +6510,16 @@
       "time": "11:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=crawlers"
     },
     {
@@ -3595,7 +6532,16 @@
       "time": "15:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=crawlers"
     },
     {
@@ -3608,7 +6554,16 @@
       "time": "19:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=crawlers"
     },
     {
@@ -3621,7 +6576,16 @@
       "time": "23:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=crawlers"
     },
     {
@@ -3634,7 +6598,12 @@
       "time": "13:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=mandaadi-tamil"
     },
     {
@@ -3647,7 +6616,12 @@
       "time": "19:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=mandaadi-tamil"
     },
     {
@@ -3660,7 +6634,20 @@
       "time": "13:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=mandaadi-tamil"
     },
     {
@@ -3673,7 +6660,20 @@
       "time": "21:35",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-uprising"
     },
     {
@@ -3686,7 +6686,20 @@
       "time": "12:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-uprising"
     },
     {
@@ -3699,7 +6712,20 @@
       "time": "18:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-uprising"
     },
     {
@@ -3712,7 +6738,16 @@
       "time": "17:55",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=hanuman-ansh-hindi"
     },
     {
@@ -3725,7 +6760,20 @@
       "time": "10:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=hanuman-ansh-hindi"
     },
     {
@@ -3738,7 +6786,20 @@
       "time": "16:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=hanuman-ansh-hindi"
     },
     {
@@ -3751,7 +6812,12 @@
       "time": "00:15",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=runner"
     },
     {
@@ -3764,7 +6830,12 @@
       "time": "22:30",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=runner"
     },
     {
@@ -3777,7 +6848,12 @@
       "time": "00:15",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=runner"
     },
     {
@@ -3790,7 +6866,12 @@
       "time": "22:05",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=runner"
     },
     {
@@ -3803,7 +6884,12 @@
       "time": "00:15",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=runner"
     },
     {
@@ -3816,7 +6902,16 @@
       "time": "10:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=red-flag-arabic"
     },
     {
@@ -3829,7 +6924,16 @@
       "time": "18:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=red-flag-arabic"
     },
     {
@@ -3842,7 +6946,12 @@
       "time": "12:30",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=lenin-pandiyan-tamil"
     },
     {
@@ -3855,7 +6964,20 @@
       "time": "13:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=lenin-pandiyan-tamil"
     },
     {
@@ -3868,7 +6990,20 @@
       "time": "23:40",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=lenin-pandiyan-tamil"
     },
     {
@@ -3881,7 +7016,24 @@
       "time": "10:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "DELUXE",
+          "aed": 45.0
+        },
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=lenin-pandiyan-tamil"
     },
     {
@@ -3894,7 +7046,20 @@
       "time": "13:20",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=lenin-pandiyan-tamil"
     },
     {
@@ -3907,7 +7072,16 @@
       "time": "18:25",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pension-patta-nepali"
     },
     {
@@ -3920,7 +7094,20 @@
       "time": "16:10",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=pressure"
     },
     {
@@ -3933,7 +7120,12 @@
       "time": "13:55",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=tad-and-the-magic-lamp"
     },
     {
@@ -3946,7 +7138,12 @@
       "time": "20:00",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=tad-and-the-magic-lamp"
     },
     {
@@ -3959,7 +7156,16 @@
       "time": "15:45",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-weight"
     },
     {
@@ -3972,7 +7178,16 @@
       "time": "23:15",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=the-weight"
     },
     {
@@ -3985,7 +7200,12 @@
       "time": "20:20",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=fall-2-deadpoint"
     },
     {
@@ -3998,7 +7218,20 @@
       "time": "16:00",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=spider-man-brand-new-day"
     },
     {
@@ -4011,7 +7244,12 @@
       "time": "12:00",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=coyote-vs-acme"
     },
     {
@@ -4024,7 +7262,12 @@
       "time": "16:10",
       "hall": "KIDS",
       "hall_label": "ROYAL KIDS",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Standard.",
+          "aed": 45.0
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=coyote-vs-acme"
     },
     {
@@ -4037,7 +7280,20 @@
       "time": "14:50",
       "hall": "Standard",
       "hall_label": "STANDARD",
-      "prices": null,
+      "prices": [
+        {
+          "seat": "Premium",
+          "aed": 59.0
+        },
+        {
+          "seat": "Standard",
+          "aed": 40.25
+        },
+        {
+          "seat": "VIP",
+          "aed": 51.75
+        }
+      ],
       "book": "https://cineroyal.ae/home/chooseScreen?prettyUrl=coyote-vs-acme"
     }
   ]

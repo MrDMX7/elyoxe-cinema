@@ -198,7 +198,6 @@ def fetch(days: int = 2) -> dict:
                 if not cinema_id:
                     continue
                 for st in cinema_block.get("filmShowTimeList", []):
-                    screen_type = (st.get("screen") or cinema_block.get("screenType") or "").upper()
                     hall = SCREEN_TYPE_TO_HALL.get(
                         (cinema_block.get("screenType") or "").upper(), "OTHER"
                     )
