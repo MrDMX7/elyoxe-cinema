@@ -1,0 +1,5 @@
+.superpowers/
+out/
+__pycache__/
+.env
+data/films_cache.json
