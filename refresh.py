@@ -177,13 +177,34 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
         if ok:
             price_table.fill(raw, table, today=now[:10])
             total = len(raw.get("shows", []))
-            priced = sum(1 for s in raw.get("shows", []) if s.get("prices") is not None)
-            pct = (priced / total * 100) if total else 0.0
+
+            # A reader may report its own price accounting via a top-level "price_health"
+            # {"attempted","priced","error"} — preferred when present since it can count seat
+            # samples the reader tried and failed on, not just shows[].prices. Tolerated as
+            # absent (older readers/fixtures): falls back to counting shows[].prices directly.
+            # Never copied into `raw` itself past this point, so it can't leak into latest.json
+            # (normalize.merge only ever reads raw["cinemas"]/raw["shows"]).
+            reader_price_health = raw.get("price_health") or {}
+            if reader_price_health.get("attempted"):
+                attempted = reader_price_health["attempted"]
+                priced = reader_price_health.get("priced") or 0
+            else:
+                attempted = total
+                priced = sum(1 for s in raw.get("shows", []) if s.get("prices") is not None)
+            pct = (priced / attempted * 100) if attempted else 0.0
+            degraded = bool(attempted and (priced / attempted) < 0.5)
+
             results[chain] = raw
-            health[chain] = {"ok": True, "at": now, "error": None, "shows": total}
+            health[chain] = {"ok": True, "at": now, "error": None, "shows": total,
+                              "prices_degraded": degraded}
+            if reader_price_health:
+                health[chain]["price_health"] = {
+                    "attempted": attempted, "priced": priced,
+                    "error": reader_price_health.get("error"),
+                }
             summaries.append(
                 f"{chain}: ok  cinemas={len(raw.get('cinemas', []))}  shows={total}  "
-                f"priced={pct:.0f}%  {seconds:.1f}s"
+                f"priced={pct:.0f}%{'  DEGRADED' if degraded else ''}  {seconds:.1f}s"
             )
         else:
             results[chain] = error

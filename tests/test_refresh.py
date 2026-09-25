@@ -178,6 +178,47 @@ def test_fresh_raw_file_is_reused_without_refetching(sandbox, monkeypatch):
     assert health["vox"]["ok"] is True
 
 
+def test_price_health_passthrough_and_degraded_flag(sandbox, monkeypatch):
+    """A reader's top-level "price_health" (new field, some readers don't have it yet) drives
+    health.json's priced accounting and prices_degraded flag, and never leaks into latest.json."""
+    data_dir, _ = sandbox
+    monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
+
+    def vox_with_price_health(days=2):
+        data = json.loads((REAL_FIXTURES_DIR / "vox.json").read_text(encoding="utf-8"))
+        data["price_health"] = {"attempted": 10, "priced": 3, "error": None}  # < 50% -> degraded
+        return data
+
+    _fake_readers(monkeypatch)
+    monkeypatch.setattr(refresh, "CHAIN_READERS", {**refresh.CHAIN_READERS, "vox": vox_with_price_health})
+
+    code = refresh.refresh(chains=["vox"], offline=False, no_verdicts=True)
+
+    assert code == 0
+    health = json.loads((data_dir / "health.json").read_text(encoding="utf-8"))
+    assert health["vox"]["price_health"] == {"attempted": 10, "priced": 3, "error": None}
+    assert health["vox"]["prices_degraded"] is True
+
+    latest = json.loads((data_dir / "latest.json").read_text(encoding="utf-8"))
+    assert "price_health" not in latest
+    assert all("price_health" not in s for s in latest["shows"])
+
+
+def test_price_health_absent_falls_back_to_show_counts(sandbox, monkeypatch):
+    """A chain whose reader doesn't emit price_health yet (all current fixtures) still gets a
+    sane priced accounting and prices_degraded computed off shows[].prices."""
+    data_dir, _ = sandbox
+    monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
+    _fake_readers(monkeypatch)
+
+    code = refresh.refresh(chains=["vox"], offline=False, no_verdicts=True)
+
+    assert code == 0
+    health = json.loads((data_dir / "health.json").read_text(encoding="utf-8"))
+    assert "price_health" not in health["vox"]  # nothing to pass through
+    assert "prices_degraded" in health["vox"]  # still computed, off shows[].prices
+
+
 def test_force_ignores_fresh_raw_file(sandbox, monkeypatch):
     data_dir, _ = sandbox
     monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
