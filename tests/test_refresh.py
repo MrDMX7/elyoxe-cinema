@@ -372,9 +372,12 @@ def test_zero_attempted_price_health_is_never_degraded(sandbox, monkeypatch):
     assert health["roxy"]["prices_degraded"] is False
 
 
-def test_vox_gets_a_longer_timeout_than_the_others():
-    assert refresh.chain_timeout("vox") == 900
-    assert all(refresh.chain_timeout(c) == 480 for c in refresh.ALL_CHAINS if c != "vox")
+def test_chain_timeouts_fit_per_day_price_sampling():
+    # VOX took ~490 s on the Fold sampling once per run; per-day sampling roughly doubles it
+    assert refresh.chain_timeout("vox") >= 1500
+    assert refresh.chain_timeout("vox") == max(refresh.chain_timeout(c) for c in refresh.ALL_CHAINS)
+    assert all(refresh.chain_timeout(c) >= 480 for c in refresh.ALL_CHAINS)
+    assert refresh.chain_timeout("star") >= 2 * 185
 
 
 def test_merged_away_verdict_files_are_folded(sandbox, monkeypatch):

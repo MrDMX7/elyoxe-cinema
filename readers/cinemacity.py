@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 from datetime import datetime, timedelta, timezone
 
-from readers.common import CITIES, HALLS, Polite, city_of, slug
+from readers.common import CITIES, HALLS, Polite, city_of, slug, fmt3d as _fmt3d
 
 CHAIN = "cinemacity"
 BASE = "https://www.cinemacity.ae/api/gatsby-source-boxofficeapi"
@@ -201,7 +201,7 @@ def fetch(days: int = 2) -> dict:
         for m in r.json():
             movies_meta[m["id"]] = m
 
-    price_cache: dict[tuple[str, str], list[dict] | None] = {}
+    price_cache: dict[tuple, list[dict] | None] = {}
     price_tries: dict[tuple[str, str], int] = {}
     health = {"attempted": 0, "priced": 0, "error": None}
     today_s, last_s = today.isoformat(), (today + timedelta(days=days - 1)).isoformat()
@@ -226,8 +226,9 @@ def fetch(days: int = 2) -> dict:
                     if not (today_s <= date <= last_s):
                         continue
                     book = _book_url(s) or "https://www.cinemacity.ae/our-locations/"
-                    key = (cid, hall_label)
-                    # one successful sample per cinema x hall per run; a failed sample is retried on
+                    key = (cid, hall_label, date, _fmt3d(title))
+                    # one successful sample per cinema x hall x show date (weekday/weekend prices
+                    # differ; a 3D title is its own key); a failed sample is retried on
                     # the next show of that hall, at most twice, then the hall stays unpriced
                     if price_cache.get(key) is None and price_tries.get(key, 0) < 2:
                         price_tries[key] = price_tries.get(key, 0) + 1

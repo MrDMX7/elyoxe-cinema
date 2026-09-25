@@ -68,8 +68,11 @@ CHAIN_READERS = {
 ALL_CHAINS = list(CHAIN_READERS)
 
 DEFAULT_TIMEOUT = 8 * 60.0
-# VOX reads one showtimes page per cinema per day plus ~80 seat-map samples: ~490 s on the Fold.
-CHAIN_TIMEOUTS = {"vox": 15 * 60.0}
+# Prices are sampled once per cinema x hall x show DATE (weekday/weekend prices differ), so the
+# chains that sample doubled their request count on 2026-09-26. Measured on the Fold before that:
+# VOX ~490 s (one showtimes page per cinema per day + ~80 seat-map samples, now ~160), Star ~185 s.
+# cineroyal already sampled per day; roxy samples nothing (login-gated).
+CHAIN_TIMEOUTS = {"vox": 30 * 60.0, "star": 15 * 60.0, "reel": 15 * 60.0, "novo": 12 * 60.0, "cinemacity": 12 * 60.0}
 RAW_REUSE_WINDOW = timedelta(hours=3)
 DUBAI_TZ = ZoneInfo("Asia/Dubai")
 PRICES_DEGRADED_THRESHOLD = 0.5  # priced/attempted below this -> health[chain]["prices_degraded"]
@@ -199,8 +202,8 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             force: bool = False, timeout: float | None = None) -> int:
     """Runs the full pipeline once. Returns the process exit code (0 ok, 1 all chains failed).
 
-    `timeout` (seconds) overrides every chain's own wall-clock limit (chain_timeout: VOX 900 s,
-    the rest 480 s) — the tests use it."""
+    `timeout` (seconds) overrides every chain's own wall-clock limit (chain_timeout: CHAIN_TIMEOUTS,
+    else 480 s) — the tests use it."""
     chains = list(chains) if chains else list(ALL_CHAINS)
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 

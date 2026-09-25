@@ -34,7 +34,7 @@ from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 from curl_cffi import requests as cr
 
-from readers.common import CITIES, HALLS, city_of, slug as _slug
+from readers.common import CITIES, HALLS, city_of, slug as _slug, fmt3d as _fmt3d
 
 BASE = "https://uae.voxcinemas.com"
 UA_IMPERSONATE = "chrome"
@@ -285,13 +285,16 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
     if not shows:
         raise RuntimeError("vox: zero shows parsed -- showtime markup changed")
 
-    # prices: one legend read per cinema x hall_label, on a session at least an hour away
-    price_of: dict[tuple[str, str], list[dict] | None] = {}
+    # prices: one legend read per cinema x hall_label x show date (weekday/weekend prices differ; a
+    # 3D title is its own key), on a session at least an hour away
+    def pkey(sh):
+        return (sh["cinema"], sh["hall_label"], sh["date"], _fmt3d(sh.get("film_title")))
+    price_of: dict[tuple, list[dict] | None] = {}
     health = {"attempted": 0, "priced": 0, "error": None}
     if prices:
-        tries: dict[tuple[str, str], int] = {}
+        tries: dict[tuple, int] = {}
         for sh in sorted(shows, key=lambda x: (x["date"], x["time"])):
-            key = (sh["cinema"], sh["hall_label"])
+            key = pkey(sh)
             if price_of.get(key) or tries.get(key, 0) >= 2:
                 continue
             start = datetime.strptime(f"{sh['date']} {sh['time']}", "%Y-%m-%d %H:%M").replace(tzinfo=DUBAI)
@@ -308,7 +311,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
             except Exception:
                 price_of[key] = None
     for sh in shows:
-        sh["prices"] = price_of.get((sh["cinema"], sh["hall_label"]))
+        sh["prices"] = price_of.get(pkey(sh))
     health["priced"] = sum(1 for v in price_of.values() if v)
     if health["attempted"] and not health["priced"] and not health["error"]:
         health["error"] = f"0/{health['attempted']} seat-map legend samples priced"

@@ -14,7 +14,7 @@ import sys
 import time
 from zoneinfo import ZoneInfo
 
-from readers.common import CITIES, HALLS, Polite, city_of, slug
+from readers.common import CITIES, HALLS, Polite, city_of, slug, fmt3d as _fmt3d
 
 BASE = "https://web-api.starcinemas.ae/api/v3/external"
 SITE = "https://www.starcinemas.ae"
@@ -255,11 +255,10 @@ def fetch(days: int = 2) -> dict:
     movie_ids = sorted({m["movie_id"] for m in movies if m.get("movie_id")})
     rating_by_movie = {m["movie_id"]: (m.get("rating") or None) for m in movies if m.get("movie_id")}
 
-    # price cache: (cinema_id, hall_label) -> [{"seat": ..., "aed": ...}, ...] | None
-    # At most one seat-layout read per cinema x hall for the whole run (well inside the
-    # brief's "at most one price call per cinema x hall per day" ceiling, since days<=2 share
-    # one cached sample rather than re-sampling per day).
-    price_cache: dict[tuple[int, str], object] = {}
+    # price cache: (cinema_id, hall_label, show date, "3D"|"") -> [{"seat": ..., "aed": ...}, ...] | None
+    # One seat-layout read per cinema x hall per show date (the brief's "one price call per
+    # cinema x hall per day" ceiling), because weekday and weekend prices differ.
+    price_cache: dict[tuple, object] = {}
     health = {"attempted": 0, "priced": 0, "error": None}
     notes: list[str] = []
 
@@ -293,7 +292,8 @@ def fetch(days: int = 2) -> dict:
             time_str = start.strftime("%H:%M")
             hall, hall_label = _hall_from_show(rec)
 
-            cache_key = (cid_num, hall_label)
+            # one sample per cinema x hall x show date (weekday/weekend prices differ); 3D titles apart
+            cache_key = (cid_num, hall_label, date, _fmt3d(rec.get("movie_title")))
             if cache_key not in price_cache:
                 ss_id = rec.get("ss_id")
                 if ss_id:

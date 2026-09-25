@@ -41,7 +41,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from curl_cffi import requests as cr
 
-from readers.common import CITIES, HALLS, Polite, arabic_title, city_of, slug
+from readers.common import CITIES, HALLS, Polite, arabic_title, city_of, slug, fmt3d as _fmt3d
 
 BASE = "https://storage.googleapis.com/eeg-prod-reelcinema-sb/web/vista/json"
 API = "https://apiuae.reelcinemas.com/webapi/api"
@@ -281,7 +281,9 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
         hall, hall_label, code = _hall_of(s)
         if hall not in HALLS:
             hall = "OTHER"
-        key = (s["CinemaId"], hall, code)  # resolved hall in the key: no OTHER<->Standard sharing
+        # resolved hall in the key (no OTHER<->Standard sharing), and the show date: weekday/weekend
+        # prices differ, so each cinema x hall is sampled once per day; a 3D title is its own key
+        key = (s["CinemaId"], hall, code, date_part, _fmt3d(film.get("Title")))
         # sample a session that hasn't started (an hour's margin) and still sells seats
         start = datetime.fromisoformat(showtime).replace(tzinfo=DUBAI)
         if (key not in sample_for and start > now + timedelta(hours=1)

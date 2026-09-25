@@ -38,6 +38,15 @@ def arabic_title(s):
     return t or None
 
 
+_3D = re.compile(r"(?<![A-Za-z0-9])3D(?![A-Za-z0-9])", re.I)
+
+
+def fmt3d(title) -> str:
+    """"3D" when a film title carries the 3D format (several chains mark it only there), else "".
+    Part of every reader's price-sample key, so a 2D sample never prices a 3D show."""
+    return "3D" if title and _3D.search(title) else ""
+
+
 def slug(s: str) -> str:
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-")

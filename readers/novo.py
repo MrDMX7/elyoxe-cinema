@@ -153,7 +153,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
 
     shows = []
     calls = failed = 0
-    price_cache: dict[tuple[str, str], list[dict] | None] = {}
+    price_cache: dict[tuple[str, str, str], list[dict] | None] = {}
     price_tries: dict[tuple[str, str], int] = {}
     health = {"attempted": 0, "priced": 0, "error": None}
     for movie in movies:
@@ -192,7 +192,6 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
                     if t is None:
                         continue
                     hall_label = sess.get("experience") or "2D"
-                    key = (cinema_id, hall_label)
                     start = datetime.strptime(f"{d} {t}", "%Y-%m-%d %H:%M").replace(tzinfo=DUBAI)
                     # Novo lists after-midnight shows under the previous business day
                     # (isMidnightShow); the Show carries the calendar date of the real start.
@@ -201,6 +200,8 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
                     cal_date = start.date().isoformat()
                     if cal_date not in window:
                         continue
+                    # one sample per cinema x hall x show date: weekday and weekend prices differ
+                    key = (cinema_id, hall_label, cal_date)
                     if (prices and price_cache.get(key) is None and price_tries.get(key, 0) < 2
                             and start > now + timedelta(hours=1) and sess.get("session_id")):
                         price_tries[key] = price_tries.get(key, 0) + 1

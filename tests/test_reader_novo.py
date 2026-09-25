@@ -178,6 +178,11 @@ def test_novo_price_health_midnight_and_window(monkeypatch):
     out = novo.fetch(days=2)
     got = sorted((sh["date"], sh["time"]) for sh in out["shows"])
     assert got == [(today.isoformat(), "00:30"), (tmrw.isoformat(), "20:00")]
-    assert all(sh["prices"] == [{"seat": "COOL", "aed": 36.75}] for sh in out["shows"])
+    # prices are sampled per cinema x hall x show DATE: tomorrow's show gets its own sample; today's
+    # 00:30 show has already started (inside the one-hour margin), so today stays unpriced rather than
+    # borrowing tomorrow's (possibly weekend) price
+    by_date = {sh["date"]: sh["prices"] for sh in out["shows"]}
+    assert by_date[tmrw.isoformat()] == [{"seat": "COOL", "aed": 36.75}]
+    assert by_date[today.isoformat()] is None
     assert len(layouts) == 1
     _assert_health(out, attempted=1, priced=1)
