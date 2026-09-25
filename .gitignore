@@ -9,3 +9,4 @@ data/health.json
 data/lastmod.json
 data/*.json
 star_bundle.js
+data/.run.lock
