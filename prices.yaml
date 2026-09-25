@@ -1,0 +1,74 @@
+# Fallback ticket prices for chains whose readers ship "prices": null (vox, novo, reel, roxy,
+# cinemacity — see each chain's docs/probe/<chain>.md "Prices — why null" section for the
+# booking-flow trap that stops the reader itself from getting one). Read by price_table.py.
+#
+# Research pass 2026-09-26: cineroyal and star are NOT here — their readers already return
+# real, live per-show prices (getSeatsByScreenRef / seat-layout, both hold-free), so this
+# table would never be consulted for them (price_table.fill only looks at shows whose
+# `prices` is already null). Every other chain was checked in this order (binding rule in
+# the task): (1) an official price list / FAQ / ticket-prices / app-or-API endpoint that
+# doesn't require a seat hold, (2) a reputable named source (Time Out Dubai, Khaleej Times,
+# Gulf News, The National, a chain's own press release) or a third-party listing that shows
+# real per-cinema price RANGES, (3) one seat-click sample in the built-in browser, released
+# immediately, on a session hours away with free seats.
+#
+# What was found:
+#   - VOX: no official price-list page or API endpoint (checked /ticket-prices, /faq,
+#     /experiences — none carry per-hall AED figures); every generic blog/aggregator result
+#     (propertyfinder, cinematicketprices.com, dubaivisitsvisa.com, discountdeals.ae) gave
+#     only vague ranges ("AED 35-45", "AED 75-95 for IMAX") with no cinema attached, not
+#     usable as a real number. The one number set we do have is the task's own prior
+#     seat-click sample at Al Jimi Mall (2026-09-25) — verified against the seat-map legend
+#     ("Regular"/"Premium"/"Preferred View") reachable via guest checkout without login.
+#     A follow-up seat-click attempt this pass (Mall of the Emirates, Premier/OTHER hall,
+#     2026-09-29 11:20am, well clear of any hold — released by simply navigating away
+#     without ever confirming a seat) reached the same seat-map/legend shape but the
+#     automated click never registered a selection (canvas-drawn seat grid), so no new
+#     number was captured; not guessed.
+#   - novo / reel / roxy / cinemacity: no official price-list endpoint found (see each
+#     chain's probe doc — novo and reel's real per-seat pricing sits behind a Vista/booking
+#     session; roxy is login-gated before any seat map, so seat sampling is skipped there
+#     per the task's own rule; cinemacity's booking widget is the same Vista pattern as vox
+#     but wasn't sampled this pass). The only web hits were aggregator pages
+#     (kinoafisha.info cinema pages, cobone/platinumlist deal listings) whose only number was
+#     a flat "from 4.00 DH" placeholder repeated across every cinema and every chain —
+#     obviously not a real price, so not recorded here either.
+#
+# confidence: official (a chain's own page/API/app, or a verified seat-map legend) |
+#             third-party (a named outlet's article with a real per-cinema figure).
+# method: official_page | app_api | third_party | seat_sample.
+
+vox:
+  vox-al-jimi-mall:
+    Standard:
+      seats:
+        - {seat: Regular, aed: 46}
+        - {seat: Premium, aed: 56}
+        - {seat: Preferred View, aed: 61}
+      source: "seat-map legend at booking.voxcinemas — /booking/<id>/seats (guest checkout, one seat clicked and released, no login, no payment)"
+      checked: "2026-09-25"
+      method: seat_sample
+      confidence: official
+    MAX:
+      seats:
+        - {seat: Regular, aed: 52}
+        - {seat: Premium, aed: 65}
+        - {seat: Preferred View, aed: 70}
+      source: "seat-map legend at booking.voxcinemas — /booking/<id>/seats (guest checkout, one seat clicked and released, no login, no payment)"
+      checked: "2026-09-25"
+      method: seat_sample
+      confidence: official
+    KIDS:
+      seats:
+        - {seat: Regular, aed: 46}
+      source: "seat-map legend at booking.voxcinemas — /booking/<id>/seats (guest checkout, one seat clicked and released, no login, no payment)"
+      checked: "2026-09-25"
+      method: seat_sample
+      confidence: official
+    THEATRE:
+      seats:
+        - {seat: Theatre, aed: 195}
+      source: "seat-map legend at booking.voxcinemas — /booking/<id>/seats (guest checkout, one seat clicked and released, no login, no payment); price includes a popcorn/drink combo per VOX's own THEATRE product description"
+      checked: "2026-09-25"
+      method: seat_sample
+      confidence: official
