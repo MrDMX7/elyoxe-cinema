@@ -233,3 +233,119 @@ def test_force_ignores_fresh_raw_file(sandbox, monkeypatch):
 
     assert code == 0
     assert calls.get("vox", 0) == 1  # refetched despite the fresh file on disk
+
+
+def _verdict_json(fid, verdict="yes"):
+    return {"fid": fid, "verdict": verdict, "ar": "زين", "en": "Good.", "basis": "test",
+            "written": "2026-09-25", "by": "claude"}
+
+
+def test_verdicts_success_path_is_attached(sandbox, monkeypatch):
+    """verdicts_mod.write_missing is actually called (not just skipped, as every other test
+    runs with no_verdicts=True) on the success path, and its output ends up attached."""
+    data_dir, verdicts_dir = sandbox
+    monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
+    _fake_readers(monkeypatch)
+    calls = []
+
+    def fake_write_missing(data, force=False, notes=None):
+        for fid in data.get("films", {}):
+            calls.append(fid)
+            path = verdicts_dir / f"{fid}.json"
+            if not path.exists():
+                path.write_text(json.dumps(_verdict_json(fid)), encoding="utf-8")
+        return {}
+
+    monkeypatch.setattr(verdicts_mod, "write_missing", fake_write_missing)
+
+    code = refresh.refresh(chains=["vox"], offline=False, no_verdicts=False)
+
+    assert code == 0
+    assert calls, "write_missing was never invoked"
+    latest = json.loads((data_dir / "latest.json").read_text(encoding="utf-8"))
+    assert latest["films"], "expected films from the vox fixture"
+    for film in latest["films"].values():
+        assert film["verdict"]["verdict"] == "yes"
+
+    health = json.loads((data_dir / "health.json").read_text(encoding="utf-8"))
+    assert health["verdicts"]["ok"] is True
+    assert health["verdicts"]["failed"] == []
+    assert health["verdicts"]["succeeded"] == health["verdicts"]["attempted"]
+
+
+def test_verdicts_failure_degrades_but_still_writes_latest(sandbox, monkeypatch):
+    """The critical fix: write_missing raising (Anthropic API error, or dialect-retry
+    exhaustion — verdicts.py's own RuntimeError) must not abort refresh() — latest.json is
+    still written, and the failure is recorded in health.json instead."""
+    data_dir, _ = sandbox
+    monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
+    _fake_readers(monkeypatch)
+
+    def raising_write_missing(data, force=False, notes=None):
+        raise RuntimeError("anthropic api boom")
+
+    monkeypatch.setattr(verdicts_mod, "write_missing", raising_write_missing)
+
+    code = refresh.refresh(chains=["vox"], offline=False, no_verdicts=False)
+
+    assert code == 0  # the vox chain fetch itself still succeeded — only verdicts degraded
+    latest_path = data_dir / "latest.json"
+    assert latest_path.exists(), "latest.json must still be written despite verdicts failing"
+    latest = json.loads(latest_path.read_text(encoding="utf-8"))
+    assert latest["shows"], "the chain's freshly-fetched shows must not be discarded"
+
+    health = json.loads((data_dir / "health.json").read_text(encoding="utf-8"))
+    assert health["verdicts"]["ok"] is False
+    assert "boom" in health["verdicts"]["error"]
+    assert health["verdicts"]["failed"]  # every attempted film recorded as failed
+    assert health["verdicts"]["succeeded"] == 0
+
+
+def test_verdicts_one_bad_film_does_not_stop_the_others(sandbox, monkeypatch):
+    """Per-film isolation: write_missing() is called once per film from refresh.py (not once
+    for the whole batch), so one film raising doesn't stop the rest from getting a verdict."""
+    data_dir, verdicts_dir = sandbox
+    monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
+    _fake_readers(monkeypatch)
+
+    bad_fid = "resident-evil"  # present in fixtures/vox.json
+
+    def flaky_write_missing(data, force=False, notes=None):
+        (fid, _film), = data["films"].items()  # refresh.py calls this once per film
+        if fid == bad_fid:
+            raise RuntimeError("dialect retries exhausted")
+        path = verdicts_dir / f"{fid}.json"
+        if not path.exists():
+            path.write_text(json.dumps(_verdict_json(fid)), encoding="utf-8")
+        return {}
+
+    monkeypatch.setattr(verdicts_mod, "write_missing", flaky_write_missing)
+
+    code = refresh.refresh(chains=["vox"], offline=False, no_verdicts=False)
+
+    assert code == 0
+    latest = json.loads((data_dir / "latest.json").read_text(encoding="utf-8"))
+    assert bad_fid in latest["films"]
+    assert "verdict" not in latest["films"][bad_fid]  # no verdict invented for the bad film
+    others = [f for fid, f in latest["films"].items() if fid != bad_fid]
+    assert others and all(f.get("verdict", {}).get("verdict") == "yes" for f in others)
+
+    health = json.loads((data_dir / "health.json").read_text(encoding="utf-8"))
+    assert health["verdicts"]["ok"] is False
+    assert health["verdicts"]["failed"] == [bad_fid]
+    assert health["verdicts"]["succeeded"] == health["verdicts"]["attempted"] - 1
+
+
+def test_hung_chain_exit_code_ignores_enrich_verdicts_health(sandbox, monkeypatch):
+    """The exit code must key off the requested chains only — an "enrich"/"verdicts" pseudo
+    entry with ok:True in health.json must never mask every real chain having failed."""
+    data_dir, _ = sandbox
+    monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
+    _fake_readers(monkeypatch, hang=["novo"])
+
+    code = refresh.refresh(chains=["novo"], offline=False, no_verdicts=True, timeout=0.3)
+
+    assert code == 1
+    health = json.loads((data_dir / "health.json").read_text(encoding="utf-8"))
+    assert health["novo"]["ok"] is False
+    assert health["enrich"]["ok"] is True  # the stub never raises

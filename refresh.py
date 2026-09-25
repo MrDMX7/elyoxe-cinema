@@ -13,9 +13,18 @@ cinemas/shows, marked stale — see normalize.merge), enrich()ed (hits the netwo
 new film's verdict. Every film that has a verdicts/<fid>.json (written just now or long ago)
 gets it attached as data["films"][fid]["verdict"], exactly what build.py reads.
 
+Neither enrich nor verdicts can abort the publish: both are wrapped, their failures printed
+to stderr and recorded into data/health.json (keys "enrich"/"verdicts": {ok, error, ...}) —
+latest.json is still written with whatever enrichment/verdicts already succeeded. verdicts is
+additionally isolated per film (write_missing() is called once per film, not once for the
+whole batch) so one film hitting a rate limit or exhausting its dialect-compliance retries
+doesn't stop every other film's verdict from being generated.
+
 data/latest.json and data/<city>.json (normalize.city_slices) are written atomically
-(tmp + os.replace). data/health.json is {chain: {ok, at, error, shows}} for the notifier.
-Exit code: 0 if at least one chain in this run is ok, 1 if every one of them failed.
+(tmp + os.replace). data/health.json is {chain: {ok, at, error, shows}, "enrich": {...},
+"verdicts": {...}} for the notifier. Exit code: 0 if at least one requested *chain* is ok
+(enrich/verdicts failures alone never flip this to 1 — they degrade, not abort), 1 if every
+chain failed.
 
 --offline: no reader is ever called — fixtures/<chain>.json stand in for the raw fetch (used
 by the tests, and for a local build with no network).
@@ -61,6 +70,7 @@ ALL_CHAINS = list(CHAIN_READERS)
 DEFAULT_TIMEOUT = 8 * 60.0
 RAW_REUSE_WINDOW = timedelta(hours=3)
 DUBAI_TZ = ZoneInfo("Asia/Dubai")
+PRICES_DEGRADED_THRESHOLD = 0.5  # priced/attempted below this -> health[chain]["prices_degraded"]
 
 
 def now_iso() -> str:
@@ -150,6 +160,35 @@ def _attach_verdicts(data: dict) -> None:
             film["verdict"] = verdict
 
 
+def _write_verdicts_isolated(data: dict) -> dict:
+    """Calls verdicts.write_missing() once per film instead of once for the whole batch, so a
+    single film's Anthropic API error or exhausted dialect-compliance retries
+    (verdicts.py's own RuntimeError after MAX_ATTEMPTS) can't stop every other film's verdict
+    from being generated. verdicts.py itself is out of scope for refresh.py's task and is not
+    touched — this is the per-film isolation done from the caller's side instead.
+
+    Returns {"ok", "attempted", "succeeded", "failed": [fid, ...], "error": last error str|None}
+    — never raises.
+    """
+    attempted = 0
+    succeeded = 0
+    failed: list[str] = []
+    last_error = None
+
+    for fid, film in list(data.get("films", {}).items()):
+        attempted += 1
+        try:
+            verdicts_mod.write_missing({"films": {fid: film}})
+            succeeded += 1
+        except Exception as e:  # noqa: BLE001 - one bad film must not stop the others
+            failed.append(fid)
+            last_error = f"{fid}: {e}"
+            print(f"refresh: verdicts for {fid!r} failed: {e}", file=sys.stderr)
+
+    return {"ok": not failed, "attempted": attempted, "succeeded": succeeded,
+            "failed": failed, "error": last_error}
+
+
 def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days: int = 2,
             force: bool = False, timeout: float = DEFAULT_TIMEOUT) -> int:
     """Runs the full pipeline once. Returns the process exit code (0 ok, 1 all chains failed)."""
@@ -192,7 +231,7 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
                 attempted = total
                 priced = sum(1 for s in raw.get("shows", []) if s.get("prices") is not None)
             pct = (priced / attempted * 100) if attempted else 0.0
-            degraded = bool(attempted and (priced / attempted) < 0.5)
+            degraded = bool(attempted and (priced / attempted) < PRICES_DEGRADED_THRESHOLD)
 
             results[chain] = raw
             health[chain] = {"ok": True, "at": now, "error": None, "shows": total,
@@ -212,10 +251,26 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             summaries.append(f"{chain}: FAILED  {error}  {seconds:.1f}s")
 
     merged = normalize.merge(results, previous, now)
-    enrich_mod.enrich(merged, cache_path=str(FILMS_CACHE_PATH), offline=offline)
+
+    # enrich() is already exception-safe per film internally, but is wrapped here too
+    # (defensively — e.g. a cache-file I/O error) so nothing it does can abort the publish;
+    # merged.films still get written with whatever enrichment happened before any failure.
+    try:
+        enrich_mod.enrich(merged, cache_path=str(FILMS_CACHE_PATH), offline=offline)
+        health["enrich"] = {"ok": True, "error": None}
+    except Exception as e:  # noqa: BLE001 - enrichment failing must degrade, not abort
+        health["enrich"] = {"ok": False, "error": str(e)}
+        print(f"refresh: enrich failed: {e}", file=sys.stderr)
+        summaries.append(f"enrich: FAILED  {e}")
 
     if not offline and not no_verdicts:
-        verdicts_mod.write_missing(merged)
+        verdict_health = _write_verdicts_isolated(merged)
+        health["verdicts"] = verdict_health
+        if not verdict_health["ok"]:
+            summaries.append(
+                f"verdicts: {verdict_health['succeeded']}/{verdict_health['attempted']} ok, "
+                f"failed: {', '.join(verdict_health['failed'])}"
+            )
     _attach_verdicts(merged)
 
     _write_json_atomic(LATEST_PATH, merged)
@@ -226,7 +281,9 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
     for line in summaries:
         print(line)
 
-    return 0 if any(h["ok"] for h in health.values()) else 1
+    # Only the requested chains decide the exit code: an enrich/verdicts degrade never flips
+    # a run with at least one healthy chain to a failure exit.
+    return 0 if any(health[chain]["ok"] for chain in chains) else 1
 
 
 def main(argv=None) -> int:
@@ -234,7 +291,7 @@ def main(argv=None) -> int:
     ap.add_argument("--chains", help=f"comma-separated subset of {','.join(ALL_CHAINS)} (default: all)")
     ap.add_argument("--offline", action="store_true", help="use fixtures/<chain>.json instead of calling readers")
     ap.add_argument("--no-verdicts", action="store_true", help="skip verdicts.write_missing()")
-    ap.add_argument("--days", type=int, default=2)
+    ap.add_argument("--days", type=int, default=2, help="days ahead each reader fetches showtimes for")
     ap.add_argument("--force", action="store_true", help="ignore any reusable data/raw/<chain>.json")
     args = ap.parse_args(argv)
 
