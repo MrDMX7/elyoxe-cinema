@@ -2,7 +2,8 @@
    switch's «أخفِ العروض المتقاطعة», and the sort (price after your card, soonest, best reviewed).
    «مع منو رايح؟» is a preset over the same controls. Anything filtered out gets class x (display:none);
    a cinema, hall or film left with no time disappears with it, and an empty list says so. */
-var GENRE_ON = !!q("[data-filter]");
+/* the genre filter in force here: the remembered one if this page has its chip, else «الكل» */
+function filt() { return effectiveFilter(ST.filt, qa("[data-filter]").map(function (b) { return b.getAttribute("data-filter"); })); }
 function tmOn(a) { return !a.classList.contains("x") && !a.classList.contains("past") && !a.closest(".times[hidden]"); }
 function anyTm(el) { return qa(".tm[data-start]", el).some(tmOn); }
 function firstStart(el) {
@@ -22,16 +23,20 @@ function sortKey(el) {
 function sortIn(box, sel) {
   if (!box) return;
   var els = qa(sel, box).filter(function (e) { return e.parentNode === box; });
-  els.map(function (e) { return [sortKey(e), e]; }).sort(function (a, b) { return a[0] - b[0]; }).forEach(function (p) { box.appendChild(p[1]); });
+  var to = els.map(function (e) { return [sortKey(e), e]; }).sort(function (a, b) { return a[0] - b[0]; });
+  if (to.every(function (p, i) { return p[1] === els[i]; })) return;   /* already in order: no reflow, focus kept */
+  to.forEach(function (p) { box.appendChild(p[1]); });
 }
 function markControls() {
-  qa("[data-filter]").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-filter") === ST.filt ? "true" : "false"); });
+  var f = filt();
+  qa("[data-filter]").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-filter") === f ? "true" : "false"); });
   qa("[data-who]").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-who") === ST.who ? "true" : "false"); });
   qa("[data-sort]").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-sort") === ST.sort ? "true" : "false"); });
   qa("select[data-ends-before]").forEach(function (s) { s.value = ST.before; if (s.value !== ST.before) s.value = ""; s.parentNode.classList.toggle("on", !!ST.before); });
 }
 
 function applyFilters() {
+  markControls();   /* first: the empty-state line reads the controls' state */
   var late = whoPreset(ST.who).late, hide = ST.prayer && ST.hide, timeOn = !!(ST.before || late || hide);
   qa(".tm[data-start]").forEach(function (a) {
     var sp = spanOf(a);
@@ -44,7 +49,7 @@ function applyFilters() {
     if (el.closest(".similar")) return;
     var src = el.hasAttribute("data-genres") ? el : q('.film[data-fid="' + el.getAttribute("data-fid") + '"]') || el;
     var f = { genres: (src.getAttribute("data-genres") || "").split(" "), family: src.getAttribute("data-family") === "1", kids: src.getAttribute("data-kids") === "1" };
-    var ok = !GENRE_ON || filmOk(f, ST.filt);
+    var ok = filmOk(f, filt());
     if (ok && timeOn) ok = el.classList.contains("film") ? !S || el.getAttribute("data-fit") !== "0" : anyTm(el);
     el.classList.toggle("x", !ok);
   });
@@ -55,9 +60,18 @@ function applyFilters() {
   var none = list.length > 0 && !list.some(function (el) { return !el.classList.contains("x") && !el.closest(".x"); });
   qa("[data-empty]").forEach(function (e) {
     e.hidden = !none;
-    if (none && !e.firstChild) e.innerHTML = esc(TX.empty) + ' <button type="button" class="lnk" data-reset>' + esc(TX.reset) + "</button>";
+    if (none) e.innerHTML = esc(TX.empty) + (active() ? " " + esc(sub(TX.active, { f: active() })) : "") + ' <button type="button" class="lnk" data-reset>' + esc(TX.reset) + "</button>";
   });
   markControls();
+}
+/* what is filtering, in words: the pressed chips and the chosen time */
+function active() {
+  var out = [], f = filt(), b = f !== "all" && q('[data-filter="' + f + '"]'), w = ST.who && q('[data-who="' + ST.who + '"]'), s = q("select[data-ends-before]");
+  if (w) out.push(w.textContent);
+  if (b) out.push(b.textContent);
+  if (ST.before && s && s.selectedIndex > 0) out.push(sub(TX.ends_b, { t: s.options[s.selectedIndex].text }));
+  if (ST.prayer && ST.hide) out.push(TX.no_clash);
+  return out.join(TX.sep);
 }
 function resetFilters() { save("filt", "all"); save("before", ""); save("who", ""); save("sort", ""); save("hide", false); applyPrayer(); }
 function bindFilters() {

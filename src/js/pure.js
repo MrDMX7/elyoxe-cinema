@@ -24,20 +24,21 @@ function kmText(km, lg) {
   return v + (lg === "en" ? " km" : " كم");
 }
 
-/* times as minutes after the show date's midnight; a show starting before 06:00 belongs to the night
-   before it on the listings (00:30 is «late tonight»), so it counts past 24:00 */
+/* times as minutes after the show date's midnight. One convention everywhere (the data's, marks(), the
+   ticket, prayer times): a show's date is its calendar date — a 00:30 show dated the 27th starts in the
+   first minutes of the 27th. An end before the start is past midnight (+24 h). */
 function toMin(t) { var m = /^(\d\d):(\d\d)$/.exec(t || ""); return m ? +m[1] * 60 + +m[2] : null; }
 function showSpan(start, ends, runtime) {
   var s = toMin(start), e = toMin(ends);
   if (s == null) return null;
-  if (s < 360) s += 1440;
   if (e == null) e = s + (runtime ? +runtime + 15 : 150);
   else { while (e < s) e += 1440; }
   return [s, e];
 }
 /* «يخلص قبل»: "" = any time, "24:00" = midnight */
 function endsOk(span, before) { var b = toMin(before); return b == null || !span || span[1] <= b; }
-function lateOk(span, late) { return !late || !span || span[0] >= 21 * 60; }
+/* ربعي's late shows: from 21:00, and the small hours (before 06:00) count as late too */
+function lateOk(span, late) { return !late || !span || span[0] >= 21 * 60 || span[0] < 6 * 60; }
 /* a show overlaps a prayer when the prayer falls inside it, or the show starts in the prayer's first
    `win` minutes (the time it takes to pray in congregation) */
 function overlaps(span, p, win) { return !!span && p != null && span[0] < p + (win || 0) && span[1] > p; }
@@ -50,6 +51,9 @@ function filmOk(f, filt) {
   if (filt.indexOf("genre:") === 0) return (f.genres || []).indexOf(filt.slice(6)) >= 0;
   return true;
 }
+/* a remembered filter applies only where the page offers it (each page has its own genre chips):
+   anything else reads as «الكل» there, and stays remembered for the pages that have it */
+function effectiveFilter(filt, offered) { return filt && offered.indexOf(filt) >= 0 ? filt : "all"; }
 /* «مع منو رايح؟»: each companion is a preset over the same controls */
 function whoPreset(who) {
   return who === "family" ? { filt: "family", before: "", late: false, sort: "time" }

@@ -42,7 +42,7 @@ def test_show_span_and_time_filters(tmp_path):
     got = run(tmp_path, """[showSpan('21:00','23:15'), showSpan('23:30','01:40'), showSpan('00:30','02:30'), showSpan('19:00',null,120), showSpan('19:00',null,null),
       endsOk(showSpan('21:00','23:15'),'23:00'), endsOk(showSpan('21:00','22:50'),'23:00'), endsOk(showSpan('23:30','01:40'),'24:00'), endsOk(showSpan('21:00','22:50'),''),
       endsOk(showSpan('22:00','23:59'),'24:00'), lateOk(showSpan('20:59','23:00'),true), lateOk(showSpan('21:00','23:00'),true), lateOk(showSpan('00:30','02:00'),true), lateOk(showSpan('14:00','16:00'),false)]""")
-    assert got[:5] == [[1260, 1395], [1410, 1540], [1470, 1590], [1140, 1275], [1140, 1290]]
+    assert got[:5] == [[1260, 1395], [1410, 1540], [30, 150], [1140, 1275], [1140, 1290]]   # calendar dates: 00:30 is early that day
     assert got[5:] == [False, True, False, True, True, False, True, True, True]
 
 
@@ -51,6 +51,12 @@ def test_prayer_overlap(tmp_path):
     got = run(tmp_path, """[overlaps(showSpan('17:00','19:00'),1090,20), overlaps(showSpan('18:20','20:30'),1090,20), overlaps(showSpan('18:31','20:30'),1090,20),
       overlaps(showSpan('16:00','18:09'),1090,20), overlaps(showSpan('16:00','18:11'),1090,20), overlaps(null,1090,20), overlaps(showSpan('17:00','19:00'),null,20)]""")
     assert got == [True, True, False, False, True, False, False]
+
+
+def test_a_remembered_filter_falls_back_to_all_where_the_page_has_no_chip(tmp_path):
+    got = run(tmp_path, """[effectiveFilter('genre:thriller', ['all','family','kids','genre:action']), effectiveFilter('genre:action', ['all','genre:action']),
+      effectiveFilter('family', ['all','family','kids']), effectiveFilter('', ['all']), effectiveFilter('kids', [])]""")
+    assert got == ["all", "genre:action", "family", "all", "all"]
 
 
 def test_film_filters_and_companions(tmp_path):

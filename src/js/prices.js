@@ -18,7 +18,7 @@ function weak(r) { return r && (r.confidence === "third-party" || r.confidence =
 function terms(r) {
   var t = [];
   if (r.box_office_only) t.push(AR ? "من الشباك فقط" : "box office only");
-  if (r.max_tickets) t.push(AR ? "لين " + r.max_tickets + " تذاكر" : "up to " + r.max_tickets + " tickets");
+  if (r.max_tickets) t.push(esc(AR ? "لين " + r.max_tickets + " تذاكر" : "up to " + r.max_tickets + " tickets"));
   if (AR && r.note_ar) t.push(esc(r.note_ar));
   if (weak(r)) t.push(esc(C.weak));
   return t.length ? TX.sep + t.join(TX.sep) : "";
@@ -26,7 +26,7 @@ function terms(r) {
 
 function priceHTML(el, go) {
   var aed = +el.getAttribute("data-aed"), asof = asofNote(el.getAttribute("data-asof"));
-  var x = card && D ? after(aed, el.getAttribute("data-chain"), el.getAttribute("data-hall"), card, el.getAttribute("data-hk"), el.getAttribute("data-cin")) : { a: null };
+  var x = card && D && !el.hasAttribute("data-nd") ? after(aed, el.getAttribute("data-chain"), el.getAttribute("data-hall"), card, el.getAttribute("data-hk"), el.getAttribute("data-cin")) : { a: null };
   var pay = fmt(x.a != null ? x.a : aed), was = el.getAttribute("data-shown");
   el.setAttribute("data-shown", pay);
   var d = flipDigits(pay, go && was != null && was !== pay);

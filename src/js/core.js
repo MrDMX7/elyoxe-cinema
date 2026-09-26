@@ -39,7 +39,11 @@ if (pageCity) set("city", pageCity);
 var ST = { who: get("who") || "", filt: get("filt") || "all", before: get("before") || "", sort: get("sort") || "",
   prayer: get("prayer") === "1", hide: get("hide") === "1" };
 function save(k, v) { ST[k] = v; set(k, v === true ? "1" : v === false ? "" : v); }
-var LOC = (function () { var v = get("loc"), m = v && /^(-?[\d.]+),(-?[\d.]+)$/.exec(v); return m ? { lat: +m[1], lng: +m[2] } : null; })();
+var LOC = (function () {
+  var v = get("loc"), m = v && /^(-?[\d.]+),(-?[\d.]+),(\d+)$/.exec(v);
+  if (!m || Date.now() - +m[3] > 30 * 864e5) { if (v) set("loc", ""); return null; }
+  return { lat: +m[1], lng: +m[2] };
+})();
 
 /* strings the pages do not carry (window.CT holds the shared ones) */
 var TX = AR ? {
@@ -47,7 +51,8 @@ var TX = AR ? {
   near_ask: "نشوف وين أقرب سينما…", near_no: "ما قدرنا نعرف موقعك. عادي، اختار مدينتك من فوق.",
   near_pick: "أقرب سينما لك {cin}، على بعد {km}، فاخترنا لك {city}.", near_same: "أقرب سينما لك {cin}، على بعد {km}.",
   near_here: "تبعد عنك {km}.", away: "على بعد {km}",
-  empty: "ما في شي يناسب اختيارك هني. وسّع الوقت أو شيل التصفية.", reset: "شيل التصفية",
+  empty: "ما في شي يناسب اختيارك هني. وسّع الوقت أو شيل التصفية.", reset: "شيل التصفية", active: "(التصفية الحين: {f})",
+  ends_b: "يخلص قبل {t}", no_clash: "بدون العروض المتقاطعة مع الصلاة", forget: "انسَ موقعي",
   clash: "يتقاطع مع {p}", maghrib: "المغرب", isha: "العشاء", ptimes: "المغرب {m}، العشاء {i}",
   ticket: "التذكرة: {film}، {cin}، {t}", close: "سكّر", trailer: "العرض الترويجي",
   install: "ثبّت سينما على شاشتك", install_yes: "ثبّت", install_no: "لا، شكراً", share_t: "{film} في {cin}، {day} {t}"
@@ -56,7 +61,8 @@ var TX = AR ? {
   near_ask: "Finding the nearest cinema…", near_no: "We couldn’t get your location. No problem, pick your city above.",
   near_pick: "Nearest to you: {cin}, {km} away, so we picked {city}.", near_same: "Nearest to you: {cin}, {km} away.",
   near_here: "{km} from you.", away: "{km} away",
-  empty: "Nothing here matches your choice. Try a later time or clear the filters.", reset: "Clear filters",
+  empty: "Nothing here matches your choice. Try a later time or clear the filters.", reset: "Clear filters", active: "(filtering by: {f})",
+  ends_b: "ends before {t}", no_clash: "no shows that overlap a prayer", forget: "Forget my location",
   clash: "Overlaps {p}", maghrib: "Maghrib", isha: "Isha", ptimes: "Maghrib {m}, Isha {i}",
   ticket: "Ticket: {film}, {cin}, {t}", close: "Close", trailer: "Trailer",
   install: "Add Cinema to your home screen", install_yes: "Add", install_no: "No, thanks", share_t: "{film} at {cin}, {day} {t}"

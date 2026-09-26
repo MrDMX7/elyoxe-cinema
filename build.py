@@ -47,6 +47,16 @@ LANGS.update({"en": LANGS["English"], "ar": LANGS["Arabic"], "hi": LANGS["Hindi"
               "ja": LANGS["Japanese"], "ne": LANGS["Nepali"], "pa": LANGS["Punjabi"]})
 
 
+def ar_count(n, forms):
+    """Arabic counted nouns, as cinema.js's arCount: 1 · 2 · 3–10 (plural) · 11+ (singular again)."""
+    return forms[0] if n == 1 else forms[1] if n == 2 else f"{n} {forms[2]}" if 3 <= n <= 10 else f"{n} {forms[3]}"
+
+
+def seats_left(n, lang):
+    if lang == "en": return f"{n} seat left" if n == 1 else f"{n} seats left"
+    return "باقي " + ar_count(n, ("مقعد واحد", "مقعدين", "مقاعد", "مقعد"))
+
+
 def lang_words(v, lang):
     """A language key, or subtitle keys joined by '+' ("ar+en"), as words in the page language."""
     sep = "، " if lang == "ar" else ", "
@@ -86,7 +96,6 @@ T = {  # strings shared with cinema.js (window.CT)
     "ends": ("يخلص تقريباً {t}", "Ends around {t}"), "today": ("اليوم", "Today"), "tomorrow": ("بكرة", "Tomorrow"),
     "book_at": ("احجز من موقع {chain}", "Book on the {chain} site"), "share": ("أرسلها للقروب", "Send to the group"),
     "after_card": ("بعد خصم {card}", "after {card}"), "in_cinema": ("{film} في {cinema}", "{film} at {cinema}"),
-    "left": ("باقي {n} مقعد", "{n} seats left"),
 }
 RERELEASE = ("إعادة عرض", "Re-release")
 DATE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
@@ -96,6 +105,11 @@ YT = re.compile(r"^[A-Za-z0-9_-]{11}$")
 SAFE_URL = re.compile(r"^https?://", re.I)
 OUR_POSTER = re.compile(r"^/posters/[A-Za-z0-9._-]+\.webp$")   # posters.py mirrors to /posters/<fid>-<hash>-342.webp
 SCHED_BUDGET = 100_000   # bytes of schedule markup per page; with the chrome a page stays under 150 KB
+# every page is rendered as richly as fits PAGE_TARGET (the spec's budget is 150 KB; the target leaves
+# headroom for busier days): each schedule tries its modes in order and the last, «compact», is bounded —
+# times as plain text that cinema.js turns into buttons and prices from the city's /data slice
+PAGE_TARGET = 125_000
+CHROME = 7_000           # the template, window.CT and the page's price lists' wrapper, measured ~6 KB
 BCP47 = {"English": "en", "Arabic": "ar", "Hindi": "hi", "Telugu": "te", "Malayalam": "ml", "Tamil": "ta", "Tagalog": "tl",
          "Urdu": "ur", "Bengali": "bn", "Kannada": "kn", "French": "fr", "Spanish": "es", "Japanese": "ja", "Korean": "ko",
          "Chinese": "zh", "Russian": "ru", "Turkish": "tr", "Persian": "fa", "Filipino": "tl", "Punjabi": "pa", "Marathi": "mr"}
@@ -108,6 +122,11 @@ FONTS = {"ar": ("markazi-700-arabic.woff2", "readex-arabic.woff2", "readex-latin
 CHAIN_SITE = {"vox": "https://uae.voxcinemas.com/", "star": "https://www.starcinemas.ae/", "novo": "https://uae.novocinemas.com/",
               "reel": "https://www.reelcinemas.ae/", "roxy": "https://www.theroxycinemas.com/", "cineroyal": "https://cineroyal.ae/",
               "cinemacity": "https://www.cinemacity.ae/"}
+
+
+def rel(u):
+    """Our own URL as a root-relative path (shorter markup); anything else unchanged."""
+    return u[len(SITE):] if isinstance(u, str) and u.startswith(SITE + "/") else u
 
 
 def esc(s):
@@ -584,6 +603,41 @@ class Site:
             out.append(f'<div class="times" data-d="{d}">{lab}{items}</div>')
         return "".join(out)
 
+    def times_compact(self, shows, lang, tag=False, day_label=True):
+        """The bounded form: per day, the times still to come as text, one run per hall
+        (<span class="tl" data-hk="IMAX"><small>IMAX</small> 13:00 15:30</span>). No script: the cinema's name
+        links to its page, where every time books. cinema.js makes each time a button whose ticket it fills
+        from the city's slice."""
+        out = []
+        for d in sorted({s["date"] for s in shows}):
+            ds = [s for s in shows if s["date"] == d and not self.is_past(s)]
+            if not ds: continue
+            lab = f'<span class="dl">{esc(L(T["today"] if d == self.today else T["tomorrow"] if d == self.tomorrow else (d, d), lang))}</span>' if day_label else ""
+            keys = sorted(dict.fromkeys(self.hkey(s) for s in ds), key=lambda k: k != "Standard")
+            runs = []
+            for k in keys:
+                hs = [s for s in ds if self.hkey(s) == k]
+                ts = " ".join(sorted({s["time"] for s in hs}))
+                if tag and k != "Standard":
+                    runs.append(f'<span class="tl" data-hk="{esc(k)}"><small>{self.hall_html(hs[0], lang)}</small> {ts}</span>')
+                else:
+                    runs.append(f'<span class="tl">{ts}</span>')
+            out.append(f'<div class="times" data-d="{d}">{lab}{"".join(runs)}</div>')
+        return "".join(out)
+
+    def fit(self, render, modes, budget):
+        """The first mode whose markup (with the page's price lists) fits `budget` bytes; else the last."""
+        for mode in modes:
+            self._P, self._Pi = [], {}
+            html_ = render(mode)
+            n = len(html_.encode()) + len(json.dumps(self._P, ensure_ascii=False, separators=(",", ":")).encode())
+            if n <= budget: break
+        return html_, mode
+
+    @staticmethod
+    def ld_size(graph):
+        return len(json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False).encode())
+
     def cname_html(self, cid, lang):
         """The cinema's name, marked English when an Arabic page has only the English name."""
         n = esc(self.cname(cid, lang))
@@ -594,7 +648,7 @@ class Site:
         return f'<bdi lang="en">{esc(n)}</bdi>' if lang == "ar" and re.search(r"[A-Za-z]", n) else esc(n)
 
     # -------- posters
-    def poster(self, fid, lang, cls="pst", eager=False, size=(342, 513), near=False):
+    def poster(self, fid, lang, cls="pst", eager=False, size=(342, 513), lazy=True):
         """The poster, or — when there is none (or it fails to load) — a typographic tile in the film's colour."""
         f = self.films[fid]
         pc = f.get("poster_color") or hue(fid)
@@ -602,12 +656,11 @@ class Site:
         if f.get("poster"):
             first = self._first_poster is None and eager
             if first: self._first_poster = f
-            ss = f' srcset="{esc(f["poster"])} 1x, {esc(f["poster_2x"])} 2x"' if f.get("poster_2x") else ""
+            ss = f' srcset="{esc(rel(f["poster"]))} 1x, {esc(rel(f["poster_2x"]))} 2x"' if f.get("poster_2x") else ""
             # a real poster carries its own title: the tile's title stays underneath, hidden, and comes back
             # (the class drops) only if the image fails to load
-            img = (f'<img src="{esc(f["poster"])}"{ss} width="{size[0]}" height="{size[1]}" alt="" decoding="async"'
-                   + (' fetchpriority="high"' if first else "" if near else ' loading="lazy"')
-                   + ' onerror="this.parentNode.classList.remove(\'img\');this.remove()">')
+            img = (f'<img src="{esc(rel(f["poster"]))}"{ss} width="{size[0]}" height="{size[1]}" alt="" decoding="async"'
+                   + (' fetchpriority="high"' if first else ' loading="lazy"' if lazy else "") + ">")
             return (f'<span class="{cls} img" style="--pc:{pc}"><span class="pst-t" aria-hidden="true"{self.title_attr(fid, lang)}>'
                     f'{esc(self.ftitle(fid, lang))}</span>{img}</span>')
         return (f'<span class="{cls}" style="--pc:{pc}"><span class="pst-t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span></span>')
@@ -617,7 +670,7 @@ class Site:
         f = self.films[fid]
         pc = f.get("poster_color") or hue(fid)
         if f.get("poster"):
-            img = f'<img src="{esc(f.get("poster_2x") or f["poster"])}" alt="" width="684" height="1026" decoding="async" loading="lazy" onerror="this.remove()">'
+            img = f'<img src="{esc(rel(f.get("poster_2x") or f["poster"]))}" alt="" width="684" height="1026" decoding="async" loading="lazy" onerror="this.remove()">'
             return f'<div class="bd" style="--pc:{pc}" aria-hidden="true">{img}</div>'
         # no poster: never a flat colour field — night, the velvet glow, and the film's typographic tile
         return (f'<div class="bd noimg" style="--pc:{pc}" aria-hidden="true"><span class="pst bd-t">'
@@ -707,18 +760,18 @@ class Site:
                 f'<button type="button" class="chip hide-clash" data-hide-clash aria-pressed="false" hidden>{"أخفِ العروض المتقاطعة" if ar else "Hide clashing shows"}</button>'
                 f'<span class="pr-t" data-prayer-times aria-live="polite"></span></div>')
 
-    def film_tile(self, fid, lang, shows, big=False, i=99):
+    def film_tile(self, fid, lang, shows, big=False, i=99, live=False):
         f = self.films[fid]; v, vw = self.vword(fid, lang)
-        fam, kids = film_flags(f)
         today = [s for s in shows if s["film"] == fid and s["date"] == self.today] or [s for s in shows if s["film"] == fid]
-        mc = self.min_cell(today, lang)
-        price = (f'<span class="fp">{mc[0]}</span><span class="fw">{self.cname_html(mc[1]["cinema"], lang)}</span>' if mc
+        mc = self.min_price(today) if live else self.min_cell(today, lang)
+        cell = (f'<span class="pv"><span class="num">{money(mc[0])}</span></span>' if live else mc[0]) if mc else ""   # .pv: cinema.js reprices it
+        price = (f'<span class="fp">{cell}</span><span class="fw">{self.cname_html(mc[1]["cinema"], lang)}</span>' if mc
                  else f'<span class="fp">{self.box(lang)}</span>')
         rr = f'<span class="rr">{esc(L(RERELEASE, lang))}</span>' if f.get("rerelease") else ""
         attrs = self.film_attrs(fid) + f' data-v="{v}"'
         attrs += f' data-runtime="{int(f["runtime"])}"' if f.get("runtime") else ""
         return (f'<a class="film v-{v}{" big" if big else ""}" href="{P(lang, "film", fid)}"{attrs}>'
-                + self.poster(fid, lang, eager=True, near=i < 3)
+                + self.poster(fid, lang, eager=True, lazy=i >= 3)
                 + (f'<span class="fn"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>' if f.get("poster") else "")
                 + f'<span class="fm"><span class="vw">{esc(vw)}</span><span class="sc">{self.score(f, lang)}</span></span>{rr}'
                 + f'<span class="cheap" data-cheap>{price}</span></a>')
@@ -767,7 +820,7 @@ class Site:
         book = (f'<a class="book" href="{esc(self.book_url(s))}" rel="noopener nofollow" target="_blank" data-tk-book data-book="{esc(s.get("book") or "")}">'
                 f'{esc(L(T["book_at"], lang).format(chain=self.h.chain_name(chain, lang)))}</a>')
         left = s.get("seats_left")
-        left = f'<p class="tk-left" data-tk-seats>{esc(L(T["left"], lang).format(n=int(left)))}</p>' if isinstance(left, int) and left > 0 else '<p class="tk-left" data-tk-seats hidden></p>'
+        left = f'<p class="tk-left" data-tk-seats>{esc(seats_left(int(left), lang))}</p>' if isinstance(left, int) and left > 0 else '<p class="tk-left" data-tk-seats hidden></p>'
         return (f'<aside class="ticket" id="ticket" data-ticket data-show="{self.sid(s)}" data-cin="{esc(cid)}" data-chain="{esc(chain)}"'
                 f' role="dialog" aria-labelledby="tk-cin"{hidden}>'
                 f'<div class="tk-top"><div class="tk-main"><p class="tk-cin" id="tk-cin" data-tk-cin>{self.cname_html(cid, lang)}</p>'
@@ -807,12 +860,13 @@ class Site:
         strings["langs"] = {k: L(v, lang) for k, v in LANGS.items()}
         strings["ad"] = {ch: int((c or {}).get("ad_offset_min") or 15) for ch, c in (self.d.get("chains") or {}).items() if isinstance(c, dict)}
         strings["adhan"] = "/assets/" + self.adhan_name
-        strings["days"] = sorted({s["date"] for s in self.shows})   # the slice dates that exist (no 404 for a day not built)
+        strings["days"] = sorted({s["date"] for s in self.shows})
+        strings["sites"] = CHAIN_SITE   # a time with no booking URL of its own books on its chain's site   # the slice dates that exist (no 404 for a day not built)
         pre = [f'<link rel="preload" href="/assets/fonts/{f}" as="font" type="font/woff2" crossorigin>' for f in FONTS[lang]]
         fp = self._first_poster
         if fp and fp.get("poster"):
-            ss = f' imagesrcset="{esc(fp["poster"])} 1x, {esc(fp["poster_2x"])} 2x"' if fp.get("poster_2x") else ""
-            pre.insert(0, f'<link rel="preload" as="image" href="{esc(fp["poster"])}"{ss} fetchpriority="high">')
+            ss = f' imagesrcset="{esc(rel(fp["poster"]))} 1x, {esc(rel(fp["poster_2x"]))} 2x"' if fp.get("poster_2x") else ""
+            pre.insert(0, f'<link rel="preload" as="image" href="{esc(rel(fp["poster"]))}"{ss} fetchpriority="high">')
         pdata = (f'<script type="application/json" id="cinema-p">{json.dumps(self._P, ensure_ascii=False, separators=(",", ":"))}</script>'
                  if self._P else "")
         city = next((c for c in CITIES if c[0] in parts[:1]), None)
@@ -846,7 +900,7 @@ class Site:
         open(path, "w", encoding="utf-8", newline="\n").write(text)
 
     def posters_row(self, lang, fids, shows, heading, city_label="", prayer=False):
-        tiles = "".join(self.film_tile(fid, lang, shows, big=i == 0, i=i) for i, fid in enumerate(fids))
+        tiles = "".join(self.film_tile(fid, lang, shows, big=i == 0, i=i, live=True) for i, fid in enumerate(fids))
         return (f'<section class="tonight wrap" id="tonight"><div class="sec-h"><h2>{esc(heading)}<span class="h-city" data-city-label>{esc(city_label)}</span></h2>'
                 f'{self.filters(lang, fids)}</div>{self.controls(lang, prayer=prayer)}<div class="posters" data-films>{tiles}</div>'
                 f'<p class="empty" data-empty hidden></p></section>')
@@ -949,23 +1003,40 @@ class Site:
                                  f'<span class="from">{("من " if lang == "ar" else "from ") + self.pcell(low[0], c["chain"], low[1], low[2], cid, low[3], lang) if low else self.box(lang)}</span></div>')
                     body += '</div></section>'
                     cnx = self.next_show(today)
-                    for mode in ("links", "plain"):
-                        self._P, self._Pi = [], {}
-                        sched = f'<section><h2>{"اليوم في " + cn if lang == "ar" else "Today in " + cn}</h2><div class="sched">'
+                    tk = self.ticket(cnx, lang) if cnx else self.ticket_shell()
+
+                    def city_sched(mode, fids=fids, today=today, cids=cids, cn=cn, lang=lang, city=city, cnx=cnx):
+                        """links / plain: every time a link; compact: times as text; digestN (a busy day): the first
+                        N cinemas per film and a link to the film's page — cinema.js redraws the whole list from
+                        the city's slice, so only a visitor with no script sees the digest."""
+                        small = mode == "compact" or mode.startswith("digest")
+                        sched = (f'<section><h2>{"اليوم في " + cn if lang == "ar" else "Today in " + cn}</h2>'
+                                 f'<div class="sched"{f" data-sched={chr(34)}{mode.rstrip(chr(49) + chr(50) + chr(51))}{chr(34)}" if small else ""}>')
                         for fid in fids:
                             fs = [s for s in today if s["film"] == fid]
                             v, vw = self.vword(fid, lang)
                             # only the id: cinema.js reads the genres and flags from the film's tile above
                             sched += (f'<div class="srow" data-fid="{esc(fid)}"><div class="sf"><a href="{P(lang, "film", fid)}">{self.title_html(fid, lang, "b", "t")}</a>'
                                       f'<span class="vw v-{v}">{esc(vw)}</span></div><div class="sc">')
-                            for cid in cids:
+                            mine = [cid for cid in cids if any(s["cinema"] == cid and not (small and self.is_past(s)) for s in fs)]
+                            shown = mine[:int(mode[-1])] if mode.startswith("digest") else mine
+                            for cid in shown:
                                 cs = [s for s in fs if s["cinema"] == cid]
-                                if not cs: continue
-                                sched += f'<div class="scin" data-cin="{esc(cid)}" data-chain="{esc(self.cinemas[cid]["chain"])}"><a class="cn" href="{P(lang, city, cid)}">{self.cname_html(cid, lang)}</a>{self.times(cs, lang, tag_halls=True, links=mode == "links", day_label=False, on=self.sid(cnx) if cnx else None)}</div>'
+                                if small:   # a relative link (the city page is the cinema's parent) and no chain: the slice has it
+                                    sched += (f'<div class="scin" data-cin="{esc(cid)}"><a class="cn" href="{esc(cid)}/">{self.cname_html(cid, lang)}</a>'
+                                              f'{self.times_compact(cs, lang, tag=True, day_label=False)}</div>')
+                                else:
+                                    tm = self.times(cs, lang, tag_halls=True, links=mode == "links", day_label=False, on=self.sid(cnx) if cnx else None)
+                                    sched += f'<div class="scin" data-cin="{esc(cid)}" data-chain="{esc(self.cinemas[cid]["chain"])}"><a class="cn" href="{P(lang, city, cid)}">{self.cname_html(cid, lang)}</a>{tm}</div>'
+                            if len(mine) > len(shown):
+                                n = len(mine) - len(shown)
+                                sched += (f'<a class="more" href="{P(lang, "film", fid)}">{f"و{n} سينما ثانية" if lang == "ar" else f"and {n} more cinemas"}</a>')
                             sched += '</div></div>'
-                        sched += '</div></section>'
-                        if len(sched.encode()) <= SCHED_BUDGET: break
-                    body += f'<div class="wrap split"><div class="main">{sched}</div>{self.ticket(cnx, lang) if cnx else self.ticket_shell()}</div>'
+                        return sched + '</div></section>'
+                    graph0 = [{"@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "item": self.theater_ld(c, lang)} for i, c in enumerate(cids)]}]
+                    left = PAGE_TARGET - CHROME - len(body.encode()) - len(tk.encode()) - self.ld_size(graph0) - 600
+                    sched, _ = self.fit(city_sched, ("links", "plain", "compact", "digest3", "digest2", "digest1"), left)
+                    body += f'<div class="wrap split"><div class="main">{sched}</div>{tk}</div>'
                 title = (f"سينما {cn} اليوم — الأفلام والأسعار وخصم فزعة" if lang == "ar" else f"{cn} cinemas today — films, prices and card discounts")
                 names = ("، " if lang == "ar" else ", ").join(self.cname(c, lang) for c in cids[:6])
                 desc = (f"أفلام سينمات {cn} اليوم ومواعيدها، سعر التذكرة لكل قاعة، والسعر بعد خصم فزعة وإسعاد والبنوك. {names}" if lang == "ar"
@@ -1030,14 +1101,9 @@ class Site:
                 body += '<div class="wrap split"><div class="main">'
                 cfids = sorted({s["film"] for s in shows})
                 body += f'<div class="sec-h cin-h">{self.filters(lang, cfids)}</div>{self.controls(lang, prayer=True)}<p class="empty" data-empty hidden></p>'
-                # films with their times, today then tomorrow — as richly as the budget allows
-                for mode in ("full", "today", "plain"):
-                    self._P, self._Pi = [], {}
-                    sched = self.cinema_schedule(shows, lang, mode, self.sid(nxt) if nxt else None)
-                    if len(sched.encode()) <= SCHED_BUDGET: break
-                body += sched
                 # halls: explained + prices
-                body += f'<section><h2>{"القاعات والأسعار" if lang == "ar" else "Halls and prices"}</h2><div class="halls">'
+                rest = ''
+                rest += f'<section><h2>{"القاعات والأسعار" if lang == "ar" else "Halls and prices"}</h2><div class="halls">'
                 for k, h in pr.items():
                     e = self.h.match(chain, h["code"], h["label"])
                     hn = self.h.name(chain, h["code"], h["label"], lang)
@@ -1048,9 +1114,9 @@ class Site:
                     src = f' <a class="src" href="{esc(e["source"])}" rel="noopener" target="_blank">{"المصدر" if lang == "ar" else "Source"}</a>' if e and e.get("source") else ""
                     seats = "".join(f'<tr><th scope="row">{esc(seat)}</th><td>{self.pcell(aed, chain, h["code"], k, cid, h["asof"], lang)}</td></tr>'
                                     for seat, aed in sorted(h["seats"].items(), key=lambda x: x[1])) or f'<tr><td colspan="2">{self.box(lang)}</td></tr>'
-                    body += (f'<div class="hall"><h3{" lang=\"en\"" if lang == "ar" and re.search("[A-Za-z]", hn) else ""}>{esc(hn)}</h3>' + (f'<p>{dates(esc(what))}{note}{src}</p>' if what else "") +
+                    rest += (f'<div class="hall"><h3{" lang=\"en\"" if lang == "ar" and re.search("[A-Za-z]", hn) else ""}>{esc(hn)}</h3>' + (f'<p>{dates(esc(what))}{note}{src}</p>' if what else "") +
                              f'<table class="prices"><thead><tr><th scope="col">{"الفئة" if lang == "ar" else "Seat"}</th><th scope="col">{"السعر" if lang == "ar" else "Price"} <small>{esc(L(T["aed"], lang))}</small></th></tr></thead><tbody>{seats}</tbody></table></div>')
-                body += f'</div><p class="hint"><a href="{P(lang, "halls")}">{"كل القاعات المميزة في الإمارات، مقارنة" if lang == "ar" else "Every premium hall in the UAE, compared"}</a></p></section>'
+                rest += f'</div><p class="hint"><a href="{P(lang, "halls")}">{"كل القاعات المميزة في الإمارات، مقارنة" if lang == "ar" else "Every premium hall in the UAE, compared"}</a></p></section>'
                 # cards (confirmed only)
                 rows = ""
                 for card in self.cards:
@@ -1058,9 +1124,14 @@ class Site:
                     if st == "unchecked": continue
                     rows += self.card_row(card, chain, r, st, lang, P(lang, "cards", card["id"]))
                 if rows:
-                    body += f'<section><h2>{"البطاقات في " + self.h.chain_name(chain, lang) if lang == "ar" else "Cards at " + self.h.chain_name(chain, lang)}</h2><div class="rows">{rows}</div></section>'
-                body += '</div>'
-                body += (self.ticket(nxt, lang) if nxt else self.ticket_shell()) + '</div>'
+                    rest += f'<section><h2>{"البطاقات في " + self.h.chain_name(chain, lang) if lang == "ar" else "Cards at " + self.h.chain_name(chain, lang)}</h2><div class="rows">{rows}</div></section>'
+                rest += '</div>' + (self.ticket(nxt, lang) if nxt else self.ticket_shell()) + '</div>'
+                # films with their times, today then tomorrow — as richly as fits what the rest of the page leaves
+                th0 = self.theater_ld(cid, lang)
+                th0["event"] = [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:40]
+                left = PAGE_TARGET - CHROME - len(body.encode()) - len(rest.encode()) - self.ld_size([th0]) - 600
+                sched, _ = self.fit(lambda m: self.cinema_schedule(shows, lang, m, self.sid(nxt) if nxt else None), ("full", "today", "plain", "compact"), left)
+                body += sched + rest
                 title = (f"{name} — أسعار التذاكر ومواعيد اليوم وخصم البطاقات" if lang == "ar" else f"{name} — ticket prices, today’s showtimes and card discounts")
                 desc = (f"مواعيد أفلام {name} اليوم، سعر التذكرة لكل قاعة وفئة، شو الفرق بين القاعات، والسعر بعد خصم فزعة وإسعاد والبنوك." if lang == "ar"
                         else f"Today’s showtimes at {name}, ticket prices per hall and seat class, what each hall offers, and the price after Fazaa, Esaad and bank cards.")
@@ -1075,7 +1146,7 @@ class Site:
         tomorrow with booking URLs; today = today only; plain = today, no booking URLs on the buttons."""
         out = []
         days = ((self.today, ("اليوم", "Today")), (self.tomorrow, ("بكرة", "Tomorrow")))
-        for day, lab in days[:2 if mode == "full" else 1]:
+        for day, lab in days[:2 if mode in ("full", "compact") else 1]:
             ds = [s for s in shows if s["date"] == day]
             if not ds: continue
             out.append(f'<section class="day" data-d="{day}"><h2>{esc(L(lab, lang))} <small>{esc(human_date(day, lang))}</small></h2><div class="cfilms">')
@@ -1089,10 +1160,11 @@ class Site:
                 for k in dict.fromkeys(self.hkey(s) for s in fs):
                     hs = [s for s in fs if self.hkey(s) == k]
                     out.append(f'<div class="hl" data-hall="{esc(hs[0].get("hall") or "OTHER")}" data-hk="{esc(k)}"><span class="hn">{self.hall_html(hs[0], lang)}</span>'
-                               + self.times(hs, lang, links=mode != "plain", day_label=False, on=on) + '</div>')
+                               + (self.times_compact(hs, lang, day_label=False) if mode == "compact" else
+                                  self.times(hs, lang, links=mode != "plain", day_label=False, on=on)) + '</div>')
                 out.append('</div></div>')
             out.append('</div></section>')
-        if mode != "full":
+        if mode not in ("full", "compact"):
             out.append(f'<p class="hint">{"مواعيد بكرة تنزل هني الصبح." if lang == "ar" else "Tomorrow’s times appear here in the morning."}</p>')
         return "".join(out)
 
@@ -1179,12 +1251,18 @@ class Site:
                 if not cities:
                     sched = f'<p class="lead">{"ما لقينا عروض لهذا الفيلم في اليومين الجايين." if lang == "ar" else "No shows for this film in the next two days."}</p>'
                 else:
-                    # the schedule is most of the page's weight: render it as richly as the budget allows
-                    for mode in ("full", "today", "plain"):
-                        self._P, self._Pi = [], {}
-                        sched = self.film_schedule(shows, cities, lang, mode, self.sid(nxt) if nxt else None)
-                        if len(sched.encode()) <= SCHED_BUDGET: break
-                    if mode != "full" and nxt and nxt["date"] != self.today: nxt = self.first_city_show([s for s in shows if s["date"] == self.today], cities) or nxt
+                    # the schedule is most of the page's weight: render it as richly as fits what the rest leaves
+                    graph0 = [self.movie_ld(fid, lang)] + [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:30]
+                    fixed = len((head + info + self.backdrop(fid) + self.poster(fid, lang, "pst hero", size=(342, 513))).encode())
+                    left = PAGE_TARGET - CHROME - fixed - self.ld_size(graph0) - 4500 - 1200   # the ticket, the page's wrappers
+                    # full, else compact: both keep today AND tomorrow (a page built late at night still has the next
+                    # day's times when the visitor's «اليوم» has moved on)
+                    sched, mode = self.fit(lambda m: self.film_schedule(shows, cities, lang, m, self.sid(nxt) if nxt else None), ("full", "compact"), left)
+                    if mode not in ("full", "compact") and nxt and nxt["date"] != self.today: nxt = self.first_city_show([s for s in shows if s["date"] == self.today], cities) or nxt
+                # a day tab only for a day the schedule actually has
+                for d in days:
+                    if f'data-d="{d}"' not in sched:
+                        info = re.sub(r'<button type="button" class="chip" data-day="' + d + r'"[^>]*>[^<]*</button>', "", info)
                 ticket = self.ticket(nxt, lang) if nxt else self.ticket_shell()
                 body = (f'<section class="fhero">{self.backdrop(fid)}<div class="wrap fgrid">'
                         f'<div class="fposter">{self.poster(fid, lang, "pst hero", eager=True, size=(342, 513))}</div>'
@@ -1237,7 +1315,7 @@ class Site:
     def film_schedule(self, shows, cities, lang, mode, on=None):
         """city → cinema group → hall: the hall's price (once, or per day when days differ), then the time
         buttons per day. mode full = today + tomorrow with booking URLs; today = today only; plain = unlinked."""
-        days = [(self.today, ("اليوم", "Today"))] + ([(self.tomorrow, ("بكرة", "Tomorrow"))] if mode == "full" else [])
+        days = [(self.today, ("اليوم", "Today"))] + ([(self.tomorrow, ("بكرة", "Tomorrow"))] if mode in ("full", "compact") else [])
         out = []
         for city in cities:
             cs = [s for s in shows if self.cinemas[s["cinema"]].get("city") == city and s["date"] in (d for d, _ in days)]
@@ -1268,14 +1346,15 @@ class Site:
                     pc = "" if split else (next(iter(known)) if known else self.box(lang))
                     rows = "".join(f'<div class="times" data-d="{d}"><span class="dl">{esc(L(lab, lang))}</span>'
                                    + (f'<span class="pr">{per_day[d] or self.box(lang)}</span>' if split else "")
-                                   + "".join(self.tbtn(s, lang, mode != "plain", False, on == self.sid(s))
-                                             for s in sorted((s for s in hs if s["date"] == d), key=lambda s: s["time"]))
+                                   + (f'<span class="tl">{" ".join(sorted({s["time"] for s in hs if s["date"] == d and not self.is_past(s)}))}</span>' if mode == "compact" else
+                                      "".join(self.tbtn(s, lang, mode != "plain", False, on == self.sid(s))
+                                              for s in sorted((s for s in hs if s["date"] == d), key=lambda s: s["time"])))
                                    + '</div>' for d, lab in hd)
                     out.append(f'<div class="hl" data-hall="{esc(hs[0].get("hall") or "OTHER")}" data-hk="{esc(k)}">'
                                f'<p class="hl-n"><span class="hn">{self.hall_html(hs[0], lang)}</span>' + (f'<span class="pr">{pc}</span>' if pc else "") + f'</p>{rows}</div>')
                 out.append('</div>')
             out.append('</section>')
-        if mode != "full" and len(days) == 1:
+        if mode not in ("full", "compact") and len(days) == 1:
             out.append(f'<p class="hint">{"مواعيد بكرة في صفحة كل سينما." if lang == "ar" else "Tomorrow’s times are on each cinema’s page."}</p>')
         return "".join(out)
 
@@ -1487,13 +1566,29 @@ class Site:
             json.dump(known, open(self.lastmod_path, "w", encoding="utf-8"), ensure_ascii=False, indent=0, sort_keys=True)
 
     def offline(self):
-        """The service worker's fallback when a page is not cached and there is no network."""
-        body = (f'<section class="head wrap nf"><h1 class="pt">ما في إنترنت الحين</h1>'
-                f'<p class="lead">الصفحات اللي فتحتها قبل تشتغل بدون نت. ارجع لها، أو جرّب مرة ثانية لين يرجع الاتصال.</p>'
-                f'<p class="lead"><a href="/">الأفلام المعروضة اليوم</a></p>'
-                f'<p class="lead" lang="en" dir="ltr">You are offline. Pages you opened before still work. <a href="/en/">Films today, in English</a>.</p></section>')
-        self.page("ar", (), "ما في إنترنت — سينما", "بدون اتصال.", body, [], "offline",
-                  path=os.path.join(self.out, "offline.html"), robots='<meta name="robots" content="noindex">')
+        """The service worker's fallback when a page is not cached and there is no network: one self-contained
+        file (its style inline, system fonts), so it looks right on the first offline hit with nothing cached."""
+        page = """<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ما في إنترنت — سينما</title><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#0F0B0C"><meta name="color-scheme" content="dark">
+<style>
+body{margin:0;min-height:100vh;background:#0F0B0C radial-gradient(280px 220px at 70% 90px,rgba(122,22,38,.6),rgba(15,11,12,0)) no-repeat;color:#F1EAE0;
+font:16px/1.7 "Readex Pro","Segoe UI",Tahoma,system-ui,sans-serif}
+main{max-width:40rem;margin:0 auto;padding:48px 20px}
+.m{font-weight:700;font-size:34px;color:#E2B659;text-decoration:none}
+h1{font-size:36px;line-height:1.15;margin:40px 0 12px}
+p{margin:0 0 14px;color:#C9BDAE}
+a{color:#F1EAE0;text-decoration-color:#A89C8E;text-underline-offset:.2em}
+[lang=en]{direction:ltr;text-align:left;font-size:14px;color:#A89C8E}
+</style></head><body><main>
+<a class="m" href="/">سينما</a>
+<h1>ما في إنترنت الحين</h1>
+<p>الصفحات اللي فتحتها قبل تشتغل بدون نت. ارجع لها، أو جرّب مرة ثانية لين يرجع الاتصال.</p>
+<p><a href="/">الأفلام المعروضة اليوم</a></p>
+<p lang="en">You are offline. Pages you opened before still work. <a href="/en/">Films today, in English</a>.</p>
+</main></body></html>
+"""
+        self.write(os.path.join(self.out, "offline.html"), page)
 
     def assets(self):
         adir = os.path.join(self.out, "assets")

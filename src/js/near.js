@@ -1,9 +1,16 @@
-/* «أقرب سينما لي»: the location is asked for only when the button is tapped, kept (rounded to ~100 m) so
-   the next page already knows it, and never asked for again on its own. Distances come from
+/* «أقرب سينما لي»: the location is asked for only when the button is tapped, kept (rounded to 0.001°,
+   about 110 m) for at most 30 days so the next page already knows it, never asked for again on its own,
+   never sent anywhere, and forgotten with «انسَ موقعي». Distances come from
    /data/cinemas.json {cid: [city, chain, lat, lng, ar, en]}. */
 function geo() { return getJSON("/data/cinemas.json").then(function (j) { G = j || {}; return G; }); }
 function kmTo(cid) { var c = G && G[cid]; return c && LOC ? haversine(LOC.lat, LOC.lng, c[2], c[3]) : null; }
-function nearMsg(t) { qa("[data-near-msg]").forEach(function (el) { el.textContent = t || ""; }); }
+function nearMsg(t) {
+  qa("[data-near-msg]").forEach(function (el) {
+    el.textContent = t || "";
+    if (t && LOC) el.insertAdjacentHTML("beforeend", ' <button type="button" class="lnk" data-forget>' + esc(TX.forget) + "</button>");
+  });
+}
+function forgetLoc() { LOC = null; set("loc", ""); nearMsg(""); qa("[data-dist]").forEach(function (e) { e.textContent = ""; }); if (S) renderNow(); }
 
 function sortByKm(els) {
   if (els.length < 2) return;
@@ -34,6 +41,7 @@ function applyNear(fromTap) {
   return geo().then(function () {
     showDistances();
     if (S) renderNow();
+    if (!fromTap && LOC) qa("[data-near-msg]").forEach(function (el) { if (!el.firstChild) el.innerHTML = '<button type="button" class="lnk" data-forget>' + esc(TX.forget) + "</button>"; });
     var n = nearest();
     if (!n || !fromTap) return;
     var cin = AR ? G[n.cid][4] : G[n.cid][5], km = kmText(n.km, lang), cn = C.cities[n.city] || n.city;
@@ -55,7 +63,7 @@ function askNear() {
   nearMsg(TX.near_ask);
   navigator.geolocation.getCurrentPosition(function (p) {
     LOC = { lat: Math.round(p.coords.latitude * 1e3) / 1e3, lng: Math.round(p.coords.longitude * 1e3) / 1e3 };
-    set("loc", LOC.lat + "," + LOC.lng);
+    set("loc", LOC.lat + "," + LOC.lng + "," + Date.now());
     applyNear(true);
   }, function () { nearMsg(TX.near_no); }, { timeout: 12000, maximumAge: 6e5 });
 }

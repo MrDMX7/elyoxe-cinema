@@ -240,6 +240,24 @@ def test_scaled_volume_stays_within_budget(tmp_path):
     assert sizes_ok(out) == []
 
 
+def test_real_latest_at_its_busiest_stays_within_budget(tmp_path):
+    """The live data at its fullest: data/latest.json rebuilt as if at 08:00 on its busiest day, so nothing
+    has started yet (a morning build carries ~1,500 Dubai shows). Every page stays within 150,000 bytes and
+    the busiest city page within the 130 KB target. Skipped where there is no live data (CI, a fresh clone)."""
+    src = os.path.join(ROOT, "data", "latest.json")
+    if not os.path.exists(src): pytest.skip("no data/latest.json")
+    data = json.load(open(src, encoding="utf-8"))
+    days = {}
+    for s in data["shows"]: days[s["date"]] = days.get(s["date"], 0) + 1
+    busiest = max(days, key=days.get)
+    data["generated"] = busiest + "T08:00:00+04:00"
+    p = tmp_path / "live.json"; p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    out = str(tmp_path / "o")
+    build.build(str(p), os.path.join(ROOT, "discounts.yaml"), out)
+    assert sizes_ok(out) == []
+    assert os.path.getsize(os.path.join(out, "dubai", "index.html")) <= 130_000
+
+
 def test_poster_used_when_present(tmp_path):
     data = json.load(open(DATA, encoding="utf-8"))
     data["films"]["crawlers"]["poster"] = "https://image.example/crawlers.jpg"
@@ -445,6 +463,7 @@ def test_every_page_with_times_has_a_filled_ticket_for_its_city(site):
 def test_og_images_exist(site):
     out, _ = site
     for f in all_files(out):
+        if f.endswith("offline.html"): continue   # the service worker's fallback, never shared
         if not f.endswith(".html"): continue
         m = re.search(r'<meta property="og:image" content="([^"]+)">', open(f, encoding="utf-8").read())
         assert m, f
@@ -485,7 +504,8 @@ def test_posters_and_tiles(site):
     out, _ = site
     home = read(out)
     # a poster: img with its 2x, lazy except the first, preloaded
-    assert re.search(r'<img src="https://cinema\.elyoxe\.com/posters/coyote-vs-acme-342\.webp" srcset="[^"]+-684\.webp 2x"', home)
+    # our own posters are root-relative in markup (absolute in og:image and JSON-LD)
+    assert re.search(r'<img src="/posters/coyote-vs-acme-342\.webp" srcset="[^"]+-684\.webp 2x"', home)
     assert home.count('fetchpriority="high"') == 2      # the preload link and the first poster
     assert 'rel="preload" as="image"' in home
     # no poster: a typographic tile in the film's colour (or a hue from its id), never a broken image
@@ -542,7 +562,9 @@ def test_real_poster_tile_puts_the_title_under_the_poster(site):
     tile = re.search(r'<a class="film[^"]*" href="/film/coyote-vs-acme/".*?</a>', home, re.S).group(0)
     assert '<span class="pst img"' in tile and '<span class="pst-t" aria-hidden="true"' in tile
     assert re.search(r'</span><span class="fn"[^>]*>[^<]+</span><span class="fm">', tile)
-    assert "classList.remove('img')" in tile
+    # a failed image gives way to the tile: cinema.js posterFallback() (no inline handler per tile)
+    assert "onerror" not in tile
+    assert "classList.remove(\"img\")" in open(os.path.join(ROOT, "src", "js", "main.js"), encoding="utf-8").read()
     notile = re.search(r'<a class="film[^"]*" href="/film/[^"]+/"[^>]*>(?:(?!</a>).)*?<span class="pst" style="--pc:#1D2A4A">.*?</a>', home, re.S).group(0)
     assert 'class="fn"' not in notile
 
@@ -566,7 +588,7 @@ def test_mirrored_poster_paths_are_kept_and_made_absolute(tmp_path):
         d["films"]["resident-evil"].update(poster="/etc/passwd", poster_2x="//evil.example/x.webp")
     out = _built(tmp_path, m)
     film = read(out, "film", "crawlers")
-    assert 'src="https://cinema.elyoxe.com/posters/crawlers-0123456789-342.webp"' in film
+    assert 'src="/posters/crawlers-0123456789-342.webp"' in film
     assert 'content="https://cinema.elyoxe.com/posters/crawlers-0123456789-684.webp"' in film
     re_ = read(out, "film", "resident-evil")
     assert "/etc/passwd" not in re_ and "evil.example" not in re_

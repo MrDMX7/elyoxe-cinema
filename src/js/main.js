@@ -51,6 +51,23 @@ function pickCard(c) {
   if (tk) renderTerms(tk.getAttribute("data-chain"));
 }
 
+/* «اليوم / بكرة» follow the visitor's clock (UAE time), not the build's: a page built last night calls
+   this morning's shows «اليوم». A day already over keeps its date. */
+function dayName(d) { return d === TODAY ? C.today : d === TOMORROW ? C.tomorrow : d; }
+function relabelDays() {
+  qa("[data-day]").forEach(function (b) { b.textContent = dayName(b.getAttribute("data-day")); });
+  qa(".times[data-d] > .dl").forEach(function (l) { l.textContent = dayName(l.parentNode.getAttribute("data-d")); });
+  qa(".day[data-d] > h2").forEach(function (h) { var t = h.firstChild; if (t && t.nodeType === 3) t.textContent = dayName(h.parentNode.getAttribute("data-d")) + " "; });
+}
+/* a poster that fails to load gives way to the film's typographic tile (never a broken image) */
+function posterFallback() {
+  function drop(im) { var p = im.parentNode; if (p && p.classList) p.classList.remove("img"); im.remove(); }
+  qa(".pst.img img, .bd img").forEach(function (im) {
+    if (im.complete && im.naturalWidth === 0 && im.currentSrc) drop(im);
+    else im.addEventListener("error", function () { drop(im); });
+  });
+}
+
 /* posters in a sideways row: lazy images inside a scroller may wait too long — load each as it comes near */
 function lazyRow() {
   if (!("IntersectionObserver" in window)) return;
@@ -84,8 +101,13 @@ function lazyRow() {
       applyFilters();
     });
   });
-  var first = q("[data-day]"); if (first) first.click();
+  relabelDays();
+  var days = qa("[data-day]"), cur = days.filter(function (b) { return b.getAttribute("data-day") === TODAY; })[0] ||
+    days.filter(function (b) { return b.getAttribute("data-day") > TODAY; })[0] || days[0];
+  if (cur) cur.click();
+  document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-forget]")) forgetLoc(); });
   var note = get("nearnote"); if (note) { set("nearnote", ""); nearMsg(note); }
+  upgradeTimes(); posterFallback();
   markCard(); marks(); ages(); renderPrices(false);
   if (page === "film") renderFilm();
   bindFilters(); bindTicket(); bindTrailer(); bindPWA(); lazyRow();
@@ -99,5 +121,5 @@ function lazyRow() {
   });
   if (page === "home" || page === "city") loadCity();
   /* the clock: every minute «الحين», the struck times and the ages move on */
-  setInterval(function () { tick(); marks(); ages(); renderNow(); }, 60e3);
+  setInterval(function () { var d = TODAY; tick(); if (d !== TODAY) relabelDays(); marks(); ages(); renderNow(); }, 60e3);
 })();

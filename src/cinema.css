@@ -163,7 +163,7 @@ span.num[dir=ltr],bdi.num{unicode-bidi:isolate}
 
 /* prices: gold is the price you pay; the old one is struck in seat grey */
 .p{display:inline-flex;align-items:baseline;flex-wrap:wrap;gap:0 6px;white-space:nowrap}
-.p .num,.p b{color:var(--gold);font-weight:600;font-family:var(--body)}
+.p .num,.p b,.pv .num{color:var(--gold);font-weight:600;font-family:var(--body)}
 .p s{color:var(--seat);font-size:.7em;font-weight:400;order:2}
 .p small{flex-basis:100%;color:var(--seat);font-size:11px;font-weight:400;white-space:normal}
 .per,.asof{color:var(--seat);font-size:11px;font-weight:400}
@@ -528,7 +528,6 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
 @media (min-width:1280px){
   .fgrid{grid-template-columns:300px minmax(0,1fr) 360px;gap:56px}
   .fposter{display:block}
-  .pst.hero .pst-t{font-size:44px}
   .pst.hero{inline-size:300px;block-size:450px;aspect-ratio:auto;box-shadow:0 40px 90px rgba(122,22,38,.35),0 40px 90px rgba(0,0,0,.6)}
   .pst.hero .pst-t{font-size:44px}
 }
@@ -578,3 +577,7 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
 .inst{position:fixed;z-index:30;inset-inline:12px;inset-block-end:calc(70px + env(safe-area-inset-bottom));display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:10px 14px;background:var(--night);border-block-start:2px solid var(--gold);font-size:14px}
 @media (min-width:1024px){.inst{inset-inline:auto 24px;inset-block-end:24px}}
 @media (prefers-reduced-motion:reduce){.scrim{transition:none}}
+/* compact schedules: times as text (no script) or buttons drawn by cinema.js */
+.tl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--dim);font-variant-numeric:tabular-nums;word-spacing:.4em}
+.tl small{font-size:11px;color:var(--seat);word-spacing:normal}
+.more{display:inline-block;margin-block-start:6px;font-size:13px;color:var(--seat)}
