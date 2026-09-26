@@ -1,9 +1,9 @@
-/* «سينما» client — no framework.
-   Reads the visitor's city + card (localStorage, optional), loads /cinema/data/discounts.json (+ the city's
-   slice on the home page), rewrites every .p price cell to the price after the card, fills «starting in
-   the next 2 hours» and «cheapest for you tonight», marks past/soon showtimes and refreshes «updated X ago».
-   Discount semantics are discounts.py's (compute): the block between disc:begin and disc:end mirrors it line
-   for line, and tests/test_parity.py runs that block in node against Python on one matrix.
+/* «سينما» client — no framework. (Task 4 rewrites this; for now it drives the «هـ» markup minimally.)
+   Reads the visitor's city + card (localStorage, optional), loads /data/discounts.json (+ the city's slice
+   on home and city pages), rewrites every .p price cell to the price after the card, fills «الحين» and the
+   film tiles' «cheapest for you», opens the ticket for a tapped time, marks past/soon showtimes and
+   refreshes «updated X ago». Discount semantics are discounts.py's (compute): the block between disc:begin
+   and disc:end mirrors it line for line, and tests/test_parity.py runs that block in node against Python.
    ?now=2026-09-25T19:00 pretends it is that UAE time (for checking the page). */
 (function () {
   "use strict";
@@ -117,8 +117,8 @@
     var soon = NOW.getTime() + 2 * 3600e3;
     qa(".times[data-d]").forEach(function (box) {
       var d = box.getAttribute("data-d");
-      [].forEach.call(box.children, function (a) {
-        var t = uae(d + "T" + a.textContent.slice(0, 5)).getTime();
+      qa("[data-start]", box).forEach(function (a) {
+        var t = uae(d + "T" + a.getAttribute("data-start")).getTime();
         a.classList.toggle("past", t < NOW.getTime());
         a.classList.toggle("nowish", t >= NOW.getTime() && t <= soon);
       });
@@ -133,7 +133,7 @@
   }
   function ages() { qa("[data-at]").forEach(function (el) { el.textContent = C.updated + " " + ago(el.getAttribute("data-at")); }); }
 
-  /* ---------------- home: on now + cheapest for you */
+  /* ---------------- home + city: «الحين» + cheapest for you */
   function best(shows) {
     var b = null;
     shows.forEach(function (s) {
@@ -146,49 +146,52 @@
     return b;
   }
   function start(s) { return uae(s.d + "T" + s.t).getTime(); }
+  function flip(t) {
+    return t.split("").map(function (ch) { return ch === ":" ? '<span class="c">:</span>' : '<span class="d go">' + esc(ch) + "</span>"; }).join("");
+  }
   function renderHome() {
     if (!S) return;
     var cn = C.cities[city] || city, n = NOW.getTime();
-    var label = document.querySelector("[data-now-city]"); if (label) label.textContent = "— " + cn;
-    var list = document.querySelector("[data-now-list]"), empty = document.querySelector("[data-now-empty]");
+    qa("[data-city-name]").forEach(function (el) { el.textContent = cn; });
+    var lab = document.querySelector("[data-city-label]"); if (lab && page === "home") lab.textContent = lang === "ar" ? "في " + cn : "in " + cn;
     var up = S.shows.filter(function (s) { return start(s) >= n; }).sort(function (a, b) { return start(a) - start(b); });
-    var soon = up.filter(function (s) { return start(s) <= n + 2 * 3600e3; }).slice(0, 14);
-    if (list) list.innerHTML = soon.map(function (s) {
-      var c = S.cinemas[s.c], b = best([s]), mins = Math.round((start(s) - n) / 60000);
-      return '<li><a href="' + esc(/^https?:\/\//i.test(s.b || "") ? s.b : C.base + "film/" + s.f + "/") + '" rel="nofollow noopener" target="_blank">' +
-        '<span class="tt">' + esc(s.t) + "</span>" + '<span class="in">' + (mins < 1 ? (lang === "ar" ? "الحين" : "now") : lang === "ar" ? "بعد " + mins + " دقيقة" : "in " + mins + " min") + "</span>" +
-        '<span class="ft">' + esc(nm(S.films[s.f])) + "</span>" +
-        '<span class="pl">' + esc(nm(c)) + (s.h !== "Standard" ? " · " + esc(nm({ ar: S.halls[s.k][0], en: S.halls[s.k][1] })) : "") + "</span>" +
-        '<span class="pp">' + (b ? '<span class="num">' + fmt(b.pay) + "</span> " + esc(C.aed) + ppNote(b.r) + asofNote(s.asof) : esc(C.box)) + "</span></a></li>";
-    }).join("");
-    if (empty) {
-      var today = up.filter(function (s) { return s.d === TODAY; });
-      empty.hidden = soon.length > 0;
-      empty.textContent = today.length ? sub(C.now_empty, { city: cn, next: today[0].t + " — " + nm(S.films[today[0].f]) }) : sub(C.now_none, { city: cn });
+    var soon = up.filter(function (s) { return start(s) <= n + 45 * 60e3; });
+    var now = document.querySelector("[data-now]");
+    if (now) {
+      var s0 = soon[0];
+      now.hidden = !s0;
+      if (s0) {
+        var b = best([s0]), mins = Math.round((start(s0) - n) / 60000);
+        now.querySelector("[data-now-film]").textContent = sub(C.in_cinema, { film: nm(S.films[s0.f]), cinema: nm(S.cinemas[s0.c]) });
+        now.querySelector("[data-now-where]").innerHTML = esc(sub(C.in_min, { n: Math.max(mins, 0) })) +
+          (b ? '، <span class="num">' + fmt(b.pay) + "</span> " + esc(C.aed) + ppNote(b.r) + asofNote(s0.asof) : "");
+        now.querySelector("[data-now-time]").innerHTML = flip(s0.t);
+        now.href = C.base + "film/" + s0.f + "/";
+      }
     }
-    var grid = document.querySelector(".fgrid"), tiles = qa(".film[data-fid]"), inCity = [], out = [];
+    var grid = document.querySelector("[data-films]"), tiles = qa(".film[data-fid]", grid || document), inCity = [], out = [];
     tiles.forEach(function (el) {
       var fid = el.getAttribute("data-fid"), mine = up.filter(function (s) { return s.f === fid; });
       var tonight = mine.filter(function (s) { return s.d === TODAY; }), tmr = mine.filter(function (s) { return s.d === TOMORROW; });
       var pool = tonight.length ? tonight : tmr;
       var b = best(pool), box = el.querySelector("[data-cheap]");
       el.classList.toggle("off", !pool.length);
+      el.setAttribute("data-pay", b ? b.pay : 1e9);
       (pool.length ? inCity : out).push(el);
       if (!box) return;
-      if (!pool.length) { box.innerHTML = '<span class="lbl">' + esc(sub(C.not_in_city, { city: cn })) + "</span>"; return; }
-      if (!b) { box.innerHTML = '<span class="lbl">' + esc(C.box) + "</span>"; return; }
-      box.innerHTML = '<span class="lbl">' + esc(tonight.length ? C.cheap_tonight : C.cheap_tomorrow) + "</span>" +
-        '<span class="amt' + (b.off ? " you" : "") + '"><span class="num">' + fmt(b.pay) + "</span> <small>" + esc(C.aed) + "</small>" +
-        (b.off ? '<s class="num">' + fmt(b.aed) + "</s>" : "") + ppNote(b.r) + "</span>" +
-        '<span class="where">' + esc(nm(S.cinemas[b.s.c])) + " · " + '<span class="num">' + esc(b.s.t) + "</span></span>" + asofNote(b.s.asof);
+      if (!pool.length) { box.innerHTML = '<span class="fw">' + esc(sub(C.not_in_city, { city: cn })) + "</span>"; return; }
+      if (!b) { box.innerHTML = '<span class="fp"><span class="na">' + esc(C.box) + "</span></span>"; return; }
+      box.innerHTML = '<span class="fp"><span class="p"><b>' + fmt(b.pay) + "</b>" + (b.off ? '<s class="num">' + fmt(b.aed) + "</s>" : "") + ppNote(b.r) + "</span></span>" +
+        '<span class="fw">' + esc(nm(S.cinemas[b.s.c])) + (lang === "ar" ? "، " : ", ") + esc(b.s.t) + "</span>" + asofNote(b.s.asof);
     });
-    if (grid) inCity.concat(out).forEach(function (el) { grid.appendChild(el); });
+    if (grid && page === "home") inCity.concat(out).forEach(function (el, i) { el.classList.toggle("big", i === 0); grid.appendChild(el); });
+    applyFilters();
     renderNote(Object.keys(S.cinemas).map(function (k) { return S.cinemas[k].chain; }));
   }
-  // /cinema/data/<city>-<date>.json (indexed arrays, see build.slices): C[[cid,chain,ar,en]] F[[fid,ar,en]]
+  // /data/<city>-<date>.json (indexed arrays, see build.slices): C[[cid,chain,ar,en]] F[[fid,ar,en]]
   // H[[code,key,ar,en]] P[prices] B[url prefixes] S[[cinema i, film i, time, hall i, price i|-1, prefix i|-1, url tail]]
   function slice(d) {
-    return fetch("/cinema/data/" + city + "-" + d + ".json").then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    return fetch("/data/" + city + "-" + d + ".json").then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
   }
   function loadCity() {
     var want = city;
@@ -210,70 +213,117 @@
     });
   }
 
-  /* ---------------- film page: your city first */
+  /* ---------------- filters (genre, family, kids, cheapest for you); «ends before» is Task 4's */
+  var filt = "all", byPrice = false;
+  function applyFilters() {
+    qa(".film[data-fid]").forEach(function (el) {
+      var ok = filt === "all" || (filt === "family" && el.getAttribute("data-family") === "1") || (filt === "kids" && el.getAttribute("data-kids") === "1") ||
+        (filt.indexOf("genre:") === 0 && (" " + el.getAttribute("data-genres") + " ").indexOf(" " + filt.slice(6) + " ") >= 0);
+      el.hidden = !ok;
+    });
+    var grid = document.querySelector("[data-films]");
+    if (grid && byPrice) qa(".film[data-fid]", grid).sort(function (a, b) { return (+a.getAttribute("data-pay") || 1e9) - (+b.getAttribute("data-pay") || 1e9); }).forEach(function (el) { grid.appendChild(el); });
+  }
+  qa("[data-filter]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      filt = b.getAttribute("data-filter");
+      qa("[data-filter]").forEach(function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+      applyFilters();
+    });
+  });
+  qa("[data-sort],[data-ends-before]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", on ? "true" : "false");
+      if (b.hasAttribute("data-sort")) byPrice = on;
+      applyFilters();
+    });
+  });
+
+  /* ---------------- film page: your city first, day tabs, the prayer switch (its marking is Task 4's) */
   function renderFilm() {
     var secs = qa(".fcity[data-city]"); if (!secs.length) return;
     var parent = secs[0].parentNode, mine = secs.filter(function (s) { return s.getAttribute("data-city") === city; });
     secs.forEach(function (s) { s.classList.toggle("here", s.getAttribute("data-city") === city); });
     if (mine.length) parent.insertBefore(mine[0], secs[0]);
   }
+  qa("[data-day]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var d = b.getAttribute("data-day");
+      qa("[data-day]").forEach(function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
+      qa(".cgs .times[data-d]").forEach(function (t) { t.hidden = t.getAttribute("data-d") !== d; });
+    });
+  });
+  (function () { var first = document.querySelector("[data-day]"); if (first) first.click(); })();
+  qa("[data-prayer]").forEach(function (sw) {
+    sw.addEventListener("click", function () { sw.setAttribute("aria-checked", sw.getAttribute("aria-checked") === "true" ? "false" : "true"); });
+  });
+
+  /* ---------------- the ticket: a tapped time fills the page's one ticket */
+  var PL = (function () { var el = document.getElementById("cinema-p"); try { return el ? JSON.parse(el.textContent) : []; } catch (e) { return []; } })();
+  var tk = document.querySelector("[data-ticket]");
+  function openTicket(btn) {
+    if (!tk || !tk.querySelector("[data-tk-rows]")) return;
+    qa(".tm.on").forEach(function (o) { o.classList.remove("on"); });
+    btn.classList.add("on");
+    var grp = btn.closest("[data-cin]"), hl = btn.closest("[data-hall]"), box = btn.closest("[data-d]");
+    var cin = grp ? grp.getAttribute("data-cin") : "", d = box ? box.getAttribute("data-d") : TODAY;
+    var chain = grp && grp.getAttribute("data-chain") || (body.getAttribute("data-chains") || "").split(" ")[0];
+    var hall = hl ? hl.getAttribute("data-hall") : "", hk = hl ? hl.getAttribute("data-hk") : "", asof = btn.getAttribute("data-asof");
+    var h3 = grp && grp.querySelector(".cg-h h3");
+    if (h3) tk.querySelector("[data-tk-cin]").textContent = h3.textContent;
+    var fr = btn.closest(".cf"); if (fr && fr.querySelector("h3")) tk.querySelector("[data-tk-film]").textContent = fr.querySelector("h3").textContent;
+    tk.querySelector("[data-tk-time]").textContent = btn.getAttribute("data-start");
+    tk.querySelector("[data-tk-day]").textContent = d === TODAY ? C.today : d === TOMORROW ? C.tomorrow : d;
+    var hn = hl && hl.querySelector(".hn"), ends = btn.getAttribute("data-ends");
+    tk.querySelector("[data-tk-when]").innerHTML = (hn && hk !== "Standard" ? '<span class="tk-h"><bdi>' + esc(hn.textContent) + "</bdi></span>" : "") + (ends ? "<span>" + esc(sub(C.ends, { t: ends })) + "</span>" : "");
+    var pl = PL[+btn.getAttribute("data-p")];
+    tk.querySelector("[data-tk-rows]").innerHTML = pl && btn.hasAttribute("data-p") ? pl.slice().sort(function (a, b) { return a[1] - b[1]; }).map(function (p) {
+      return '<tr><th scope="row"><bdi>' + esc(p[0]) + '</bdi></th><td><span class="p" data-aed="' + fmt(p[1]) + '" data-chain="' + esc(chain) + '" data-hall="' + esc(hall) + '" data-hk="' + esc(hk) + '" data-cin="' + esc(cin) + '"' + (asof ? ' data-asof="' + esc(asof) + '"' : "") + '><span class="num">' + fmt(p[1]) + "</span></span></td></tr>";
+    }).join("") : '<tr><td colspan="2"><span class="na">' + esc(C.box) + "</span></td></tr>";
+    var book = tk.querySelector("[data-tk-book]"), url = btn.getAttribute("data-book");
+    if (book && url && book.tagName === "A") { book.href = url; if (D && D.chains) book.textContent = sub(C.book_at, { chain: D.chains[lang][chain] || chain }); }
+    renderPrices(); renderTerms(chain);
+    tk.classList.add("open");
+  }
+  function renderTerms(chain) {
+    var el = tk && tk.querySelector("[data-tk-terms]"); if (!el) return;
+    var r = card && D ? rule(chain, card) : null;
+    el.hidden = !(r && state(r) === "ok");
+    if (!el.hidden) el.innerHTML = esc(sub(C.after_card, { card: C.cards[card] })) + " " + offer(r) + (r.note_ar && lang === "ar" ? "، " + esc(r.note_ar) : "");
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("button[data-show]"); if (b) { openTicket(b); return; }
+    if (e.target.closest && e.target.closest("[data-tk-close]") && tk) tk.classList.remove("open");
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && tk) tk.classList.remove("open"); });
 
   function render() {
     renderPrices();
-    if (page === "home") { if (S) renderHome(); else renderNote([]); }
-    else renderNote();
+    if (S) renderHome(); else renderNote([]);
     if (page === "film") renderFilm();
+    if (tk) renderTerms((tk.closest("body").getAttribute("data-chains") || "").split(" ")[0]);
   }
 
-  /* ---------------- pickers: each select is as wide as the word it shows, so the sentence reads as one line.
-     Measured in the select's own font once that font is actually loaded (document.fonts.load for the
-     exact text), plus both paddings, the border and the arrow's room; CSS min-inline-size is the floor
-     if any of this fails, so a city can never be clipped to its first letter. */
-  function fit(sel) {
-    var o = sel.options[sel.selectedIndex]; if (!o) return;
-    var cs = getComputedStyle(sel), s = document.createElement("span");
-    s.style.cssText = "position:absolute;visibility:hidden;white-space:pre;inset-block-start:0";
-    s.style.font = cs.font; s.style.letterSpacing = cs.letterSpacing;
-    s.style.fontFamily = cs.fontFamily; s.style.fontSize = cs.fontSize; s.style.fontWeight = cs.fontWeight;
-    s.setAttribute("dir", document.documentElement.dir || "rtl");
-    s.textContent = o.text; document.body.appendChild(s);
-    var px = function (v) { return parseFloat(v) || 0; };
-    var w = s.getBoundingClientRect().width + px(cs.paddingLeft) + px(cs.paddingRight) + px(cs.borderLeftWidth) + px(cs.borderRightWidth);
-    s.remove();
-    sel.style.inlineSize = Math.ceil(w + 6) + "px";
-  }
-  function fitWhenLoaded(sel) {
-    fit(sel);
-    var o = sel.options[sel.selectedIndex];
-    if (o && document.fonts && document.fonts.load) {
-      var cs = getComputedStyle(sel);
-      document.fonts.load(cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily, o.text).then(function () { fit(sel); }, function () {});
-    }
-  }
-  function fitAll() { qa(".sel select").forEach(fitWhenLoaded); }
-  qa("select[data-city]").forEach(function (sel) {
-    sel.value = city;
-    sel.addEventListener("change", function () {
-      city = sel.value; set("city", city);
-      fitWhenLoaded(sel);
-      if (pageCity) { location.href = C.base + city + "/"; return; }
-      if (page === "home") loadCity(); else render();
+  /* ---------------- the control sentence: city links + card chips */
+  qa("[data-citypick] a[data-city]").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      set("city", a.getAttribute("data-city"));
+      if (page === "home") { e.preventDefault(); city = a.getAttribute("data-city"); a.closest("details").open = false; loadCity(); }
     });
   });
-  qa("select[data-card]").forEach(function (sel) {
-    sel.value = card;
-    sel.addEventListener("change", function () { card = sel.value; set("card", card); qa("select[data-card]").forEach(function (o) { o.value = card; fitWhenLoaded(o); }); render(); });
-  });
-
-  fitAll();
-  if (document.fonts) {
-    if (document.fonts.ready) document.fonts.ready.then(fitAll);
-    if (document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", fitAll);
+  function markCard() {
+    qa("button[data-card]").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-card") === card ? "true" : "false"); });
+    qa("select[data-card]").forEach(function (s) {
+      var has = !!card && [].some.call(s.options, function (o) { return o.value === card; });
+      s.value = has ? card : ""; s.parentNode.classList.toggle("on", has);
+    });
   }
-  window.addEventListener("load", fitAll);
-  window.addEventListener("resize", fitAll);
-  marks(); ages();
-  fetch("/cinema/data/discounts.json").then(function (r) { return r.ok ? r.json() : null; })
+  qa("button[data-card]").forEach(function (b) { b.addEventListener("click", function () { card = b.getAttribute("data-card"); set("card", card); markCard(); render(); }); });
+  qa("select[data-card]").forEach(function (s) { s.addEventListener("change", function () { card = s.value; set("card", card); markCard(); render(); }); });
+  qa("[data-city-name]").forEach(function (el) { if (C.cities[city]) el.textContent = C.cities[city]; });
+
+  markCard(); marks(); ages();
+  fetch("/data/discounts.json").then(function (r) { return r.ok ? r.json() : null; })
     .then(function (j) { D = j; render(); }).catch(function () {});
-  if (page === "home") loadCity();
+  if (page === "home" || page === "city") loadCity();
 })();

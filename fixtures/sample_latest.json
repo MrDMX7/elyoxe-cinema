@@ -230,10 +230,10 @@
    "rating": "PG15",
    "runtime": 118,
    "genres": [
-    "Adventure",
-    "Drama"
+    "adventure",
+    "drama"
    ],
-   "poster": null,
+   "poster": "https://cinema.elyoxe.com/posters/heart-of-the-beast-342.webp",
    "tmdb": null,
    "imdb": null,
    "rt": {
@@ -246,7 +246,15 @@
     "ar": "قصة بقاء في البرّ، وتصويرها وايد حلو. آخر نص ساعة تمسكك في الكرسي.",
     "en": "A survival story shot beautifully; the last half hour holds you to the seat.",
     "basis": "RT 88% · audience 91%"
-   }
+   },
+   "poster_2x": "https://cinema.elyoxe.com/posters/heart-of-the-beast-684.webp",
+   "poster_color": "#2C3A25",
+   "trailer": "k8Qm3LzT0aE",
+   "family": false,
+   "kids": false,
+   "first_seen": "2026-09-11",
+   "last_seen": "2026-09-26",
+   "status": "showing"
   },
   "resident-evil": {
    "title": "Resident Evil",
@@ -270,7 +278,11 @@
     "ar": "رعب وأكشن على قد الحال. لو تحب السلسلة بتستانس، غير جذيه انطره ينزل في البيت.",
     "en": "Horror and action that do the job. Fans will enjoy it; everyone else can wait for streaming.",
     "basis": "RT 54% · audience 63%"
-   }
+   },
+   "poster_color": "#4A1418",
+   "first_seen": "2026-09-12",
+   "last_seen": "2026-09-26",
+   "status": "showing"
   },
   "spider-man-brand-new-day": {
    "title": "Spider-Man: Brand New Day",
@@ -279,8 +291,8 @@
    "rating": "PG13",
    "runtime": 136,
    "genres": [
-    "Action",
-    "Superhero"
+    "action",
+    "superhero"
    ],
    "poster": null,
    "tmdb": null,
@@ -294,7 +306,14 @@
     "ar": "أحسن سبايدر مان من سنين، والقتال فيه واضح مب ملخبط. شاشة MAX أو IMAX تستاهل الفرق.",
     "en": "The best Spider-Man in years, with fights you can actually follow. MAX or IMAX is worth the extra.",
     "basis": "RT 90% · audience 94%"
-   }
+   },
+   "poster_color": "#1D2A4A",
+   "trailer": "Zp4sVq2nH7c",
+   "family": true,
+   "kids": false,
+   "first_seen": "2026-09-13",
+   "last_seen": "2026-09-26",
+   "status": "showing"
   },
   "coyote-vs-acme": {
    "title": "Coyote vs. Acme",
@@ -303,10 +322,11 @@
    "rating": "PG",
    "runtime": 94,
    "genres": [
-    "Animation",
-    "Comedy"
+    "animation",
+    "comedy",
+    "family"
    ],
-   "poster": null,
+   "poster": "https://cinema.elyoxe.com/posters/coyote-vs-acme-342.webp",
    "tmdb": null,
    "imdb": null,
    "rt": {
@@ -318,7 +338,14 @@
     "ar": "ضحك صافي للعيال والكبار. خذ العيال وما بتندم.",
     "en": "Clean laughs for kids and adults alike. Take the kids; you won't regret it.",
     "basis": "RT 85% · audience 89%"
-   }
+   },
+   "poster_2x": "https://cinema.elyoxe.com/posters/coyote-vs-acme-684.webp",
+   "poster_color": "#7A5A1C",
+   "family": true,
+   "kids": true,
+   "first_seen": "2026-09-14",
+   "last_seen": "2026-09-26",
+   "status": "showing"
   },
   "shish-dou": {
    "title": "Shish Dou",
@@ -338,7 +365,10 @@
     "ar": "ما في تقييمات كافية لين الحين.",
     "en": "Not enough reviews yet.",
     "basis": ""
-   }
+   },
+   "first_seen": "2026-09-15",
+   "last_seen": "2026-09-26",
+   "status": "showing"
   },
   "sacrifice": {
    "title": "Sacrifice",
@@ -349,7 +379,7 @@
    "genres": [
     "Thriller"
    ],
-   "poster": null,
+   "poster": "https://cinema.elyoxe.com/posters/sacrifice-342.webp",
    "tmdb": null,
    "imdb": null,
    "rt": {
@@ -361,7 +391,10 @@
     "ar": "القصة ضايعة والنهاية مب مقنعة. وفّر فلوسك لفيلم ثاني هالأسبوع.",
     "en": "The story wanders and the ending doesn't land. Save your money for another film this week.",
     "basis": "RT 31% · audience 42%"
-   }
+   },
+   "first_seen": "2026-09-16",
+   "last_seen": "2026-09-26",
+   "status": "showing"
   },
   "the-paradise": {
    "title": "The Paradise",
@@ -385,7 +418,10 @@
     "ar": "أغاني وأكشن تيلوغو على أصوله، بس طويل وايد: قرابة 3 ساعات.",
     "en": "Songs and Telugu action done properly, but very long: close to 3 hours.",
     "basis": "audience 78%"
-   }
+   },
+   "first_seen": "2026-09-17",
+   "last_seen": "2026-09-26",
+   "status": "showing"
   },
   "crawlers": {
    "title": "Crawlers",
@@ -408,7 +444,64 @@
     "ar": "رعب رخيص يعتمد على الخرعة، وما فيه شي يعلق في البال.",
     "en": "Cheap jump scares and nothing that stays with you.",
     "basis": "RT 22% · audience 35%"
-   }
+   },
+   "first_seen": "2026-09-18",
+   "last_seen": "2026-09-26",
+   "status": "showing"
+  },
+  "weapons": {
+   "title": "Weapons",
+   "title_ar": "أسلحة",
+   "lang": "English",
+   "rating": "18+",
+   "runtime": 128,
+   "genres": [
+    "horror",
+    "mystery"
+   ],
+   "poster": null,
+   "poster_color": "#3A2A1E",
+   "tmdb": null,
+   "imdb": null,
+   "rt": {
+    "critics": 94,
+    "audience": 83
+   },
+   "synopsis": "When every child but one in a class vanishes on the same night, a town looks for who is to blame.",
+   "verdict": {
+    "verdict": "yes",
+    "ar": "رعب ذكي وقصة تمسكك لين آخرها.",
+    "en": "Smart horror that holds you to the end.",
+    "basis": "RT 94%"
+   },
+   "first_seen": "2026-08-07",
+   "last_seen": "2026-09-17",
+   "status": "archived"
+  },
+  "the-long-walk": {
+   "title": "The Long Walk",
+   "title_ar": null,
+   "lang": "English",
+   "rating": "18+",
+   "runtime": 108,
+   "genres": [
+    "Thriller",
+    "Drama"
+   ],
+   "poster": null,
+   "tmdb": null,
+   "imdb": null,
+   "rt": {
+    "critics": 88,
+    "audience": null
+   },
+   "verdict": {
+    "verdict": "mixed",
+    "ar": "فكرة قوية وتنفيذ متعب.",
+    "en": "A strong idea, a tiring film.",
+    "basis": "RT 88%"
+   },
+   "status": "archived"
   }
  },
  "shows": [
@@ -538,7 +631,9 @@
      "aed": 50
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1030"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1030",
+   "ends": "12:19",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -621,7 +716,10 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/heart-of-the-beast/2026-09-25/1030"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/heart-of-the-beast/2026-09-25/1030",
+   "ends": "12:43",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -644,7 +742,10 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-25/1030"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-25/1030",
+   "ends": "13:01",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -659,7 +760,10 @@
      "aed": 195
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-25/1030"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-25/1030",
+   "ends": "13:01",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -682,7 +786,10 @@
      "aed": 70
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/1030"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/1030",
+   "ends": "12:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -697,7 +804,10 @@
      "aed": 46
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/1030"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/1030",
+   "ends": "12:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -777,7 +887,9 @@
      "aed": 50
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/shish-dou/2026-09-25/1030"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/shish-dou/2026-09-25/1030",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-yas-mall",
@@ -896,7 +1008,9 @@
      "aed": 80
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/1215"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/1215",
+   "ends": "14:46",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -911,7 +1025,9 @@
      "aed": 200
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/1215"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/1215",
+   "ends": "14:46",
+   "lang": "English"
   },
   {
    "cinema": "roxy-city-walk",
@@ -991,7 +1107,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-25/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-25/1215",
+   "ends": "14:28",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -1014,7 +1133,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-25/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-25/1215",
+   "ends": "14:46",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -1037,7 +1159,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/1215",
+   "ends": "14:04",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -1094,7 +1219,10 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/heart-of-the-beast/2026-09-25/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/heart-of-the-beast/2026-09-25/1215",
+   "ends": "14:28",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-city-centre-fujairah",
@@ -1109,7 +1237,9 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/shish-dou/2026-09-25/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/shish-dou/2026-09-25/1215",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-city-centre-sharjah",
@@ -1128,7 +1258,9 @@
      "aed": 50
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/shish-dou/2026-09-25/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/shish-dou/2026-09-25/1215",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-yas-mall",
@@ -1143,7 +1275,10 @@
      "aed": 175
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/1215",
+   "ends": "14:28",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -1181,7 +1316,9 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-25/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-25/1215",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -1309,7 +1446,9 @@
      "aed": 75
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1345"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1345",
+   "ends": "15:34",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -1377,7 +1516,9 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-25/1345"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-25/1345",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -1434,7 +1575,9 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-25/1345"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-25/1345",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-city-centre-fujairah",
@@ -1449,7 +1592,9 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/shish-dou/2026-09-25/1345"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/shish-dou/2026-09-25/1345",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-city-centre-fujairah",
@@ -1464,7 +1609,10 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/coyote-vs-acme/2026-09-25/1345"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/coyote-vs-acme/2026-09-25/1345",
+   "ends": "15:34",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -1483,7 +1631,10 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/1345"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/1345",
+   "ends": "15:58",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -1583,7 +1734,9 @@
      "aed": 80
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/1530"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/1530",
+   "ends": "18:01",
+   "lang": "English"
   },
   {
    "cinema": "roxy-city-walk",
@@ -1598,7 +1751,9 @@
      "aed": 55
     }
    ],
-   "book": "https://www.theroxycinemas.com/en/booking/roxy-city-walk/shish-dou/2026-09-25/1530"
+   "book": "https://www.theroxycinemas.com/en/booking/roxy-city-walk/shish-dou/2026-09-25/1530",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "roxy-city-walk",
@@ -1636,7 +1791,10 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-25/1530"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-25/1530",
+   "ends": "18:01",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -1682,7 +1840,10 @@
      "aed": 70
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-25/1530"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-25/1530",
+   "ends": "17:43",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -1705,7 +1866,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/1530"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/1530",
+   "ends": "17:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -1720,7 +1884,10 @@
      "aed": 46
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/1530"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/1530",
+   "ends": "17:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -1765,7 +1932,10 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/heart-of-the-beast/2026-09-25/1530"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/heart-of-the-beast/2026-09-25/1530",
+   "ends": "17:43",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-city-centre-sharjah",
@@ -1822,7 +1992,10 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/1530"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/1530",
+   "ends": "17:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -1837,7 +2010,10 @@
      "aed": 175
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/1530"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/1530",
+   "ends": "17:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -1920,7 +2096,9 @@
      "aed": 50
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1700"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1700",
+   "ends": "18:49",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -1935,7 +2113,9 @@
      "aed": 75
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1700"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1700",
+   "ends": "18:49",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -1950,7 +2130,9 @@
      "aed": 200
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1700"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1700",
+   "ends": "18:49",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -2033,7 +2215,10 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-25/1700"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-25/1700",
+   "ends": "19:31",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -2056,7 +2241,9 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-25/1700"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-25/1700",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -2075,7 +2262,9 @@
      "aed": 68.25
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-25/1700"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-25/1700",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -2113,7 +2302,9 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-25/1700"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-25/1700",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -2185,7 +2376,10 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/coyote-vs-acme/2026-09-25/1700"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/coyote-vs-acme/2026-09-25/1700",
+   "ends": "18:49",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-city-centre-sharjah",
@@ -2223,7 +2417,10 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/1700"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/1700",
+   "ends": "19:13",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -2276,7 +2473,9 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-25/1700"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-25/1700",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-yas-mall",
@@ -2295,7 +2494,9 @@
      "aed": 85
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-25/1700"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-25/1700",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -2378,7 +2579,9 @@
      "aed": 50
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/1815"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/1815",
+   "ends": "20:46",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -2431,7 +2634,10 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/heart-of-the-beast/2026-09-25/1815"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/heart-of-the-beast/2026-09-25/1815",
+   "ends": "20:28",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -2477,7 +2683,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-25/1815"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-25/1815",
+   "ends": "20:28",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -2515,7 +2724,10 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/coyote-vs-acme/2026-09-25/1815"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/coyote-vs-acme/2026-09-25/1815",
+   "ends": "20:04",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -2534,7 +2746,10 @@
      "aed": 85
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/1815"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/1815",
+   "ends": "20:28",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -2572,7 +2787,10 @@
      "aed": 85
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/1815"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/1815",
+   "ends": "20:04",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -2648,7 +2866,9 @@
      "aed": 80
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1900"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1900",
+   "ends": "20:49",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -2663,7 +2883,9 @@
      "aed": 200
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1900"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/1900",
+   "ends": "20:49",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -2724,7 +2946,9 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-25/1900"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-25/1900",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -2770,7 +2994,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-25/1900"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-25/1900",
+   "ends": "21:31",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -2793,7 +3020,9 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-25/1900"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-25/1900",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-city-centre-ajman",
@@ -2842,7 +3071,10 @@
      "aed": 80
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/1900"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/1900",
+   "ends": "20:49",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -3013,7 +3245,10 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/heart-of-the-beast/2026-09-25/1945"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/heart-of-the-beast/2026-09-25/1945",
+   "ends": "21:58",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -3070,7 +3305,10 @@
      "aed": 48
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-ajman/coyote-vs-acme/2026-09-25/1945"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-ajman/coyote-vs-acme/2026-09-25/1945",
+   "ends": "21:34",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-city-centre-ajman",
@@ -3146,7 +3384,9 @@
      "aed": 50
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/shish-dou/2026-09-25/1945"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/shish-dou/2026-09-25/1945",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-yas-mall",
@@ -3161,7 +3401,10 @@
      "aed": 175
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/1945"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/1945",
+   "ends": "21:58",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -3176,7 +3419,10 @@
      "aed": 80
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/1945"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/1945",
+   "ends": "21:58",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -3363,7 +3609,9 @@
      "aed": 50
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/2030"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/2030",
+   "ends": "23:01",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -3416,7 +3664,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-25/2030"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-25/2030",
+   "ends": "22:43",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -3439,7 +3690,10 @@
      "aed": 70
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-25/2030"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-25/2030",
+   "ends": "22:43",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -3500,7 +3754,9 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/shish-dou/2026-09-25/2030"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/shish-dou/2026-09-25/2030",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-city-centre-sharjah",
@@ -3519,7 +3775,10 @@
      "aed": 50
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/coyote-vs-acme/2026-09-25/2030"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/coyote-vs-acme/2026-09-25/2030",
+   "ends": "22:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -3591,7 +3850,9 @@
      "aed": 85
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-25/2030"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-25/2030",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-yas-mall",
@@ -3610,7 +3871,10 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/2030"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/2030",
+   "ends": "22:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -3629,7 +3893,10 @@
      "aed": 85
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/2030"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/2030",
+   "ends": "22:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -3766,7 +4033,9 @@
      "aed": 50
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/2115"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/2115",
+   "ends": "23:46",
+   "lang": "English"
   },
   {
    "cinema": "roxy-city-walk",
@@ -3796,7 +4065,10 @@
      "aed": 195
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-25/2115"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-25/2115",
+   "ends": "23:46",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -3819,7 +4091,10 @@
      "aed": 70
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/2115"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/2115",
+   "ends": "23:04",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -3876,7 +4151,10 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/heart-of-the-beast/2026-09-25/2115"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/heart-of-the-beast/2026-09-25/2115",
+   "ends": "23:28",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -3895,7 +4173,10 @@
      "aed": 85
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/2115"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/2115",
+   "ends": "23:28",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -3910,7 +4191,10 @@
      "aed": 175
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/2115"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/2115",
+   "ends": "23:04",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -4051,7 +4335,9 @@
      "aed": 80
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/2200"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/2200",
+   "ends": "23:49",
+   "lang": "English"
   },
   {
    "cinema": "roxy-city-walk",
@@ -4066,7 +4352,9 @@
      "aed": 55
     }
    ],
-   "book": "https://www.theroxycinemas.com/en/booking/roxy-city-walk/shish-dou/2026-09-25/2200"
+   "book": "https://www.theroxycinemas.com/en/booking/roxy-city-walk/shish-dou/2026-09-25/2200",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "roxy-city-walk",
@@ -4180,7 +4468,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/2200"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-25/2200",
+   "ends": "23:49",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -4252,7 +4543,10 @@
      "aed": 48
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-ajman/coyote-vs-acme/2026-09-25/2200"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-ajman/coyote-vs-acme/2026-09-25/2200",
+   "ends": "23:49",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-city-centre-ajman",
@@ -4309,7 +4603,10 @@
      "aed": 50
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/coyote-vs-acme/2026-09-25/2200"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/coyote-vs-acme/2026-09-25/2200",
+   "ends": "23:49",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -4328,7 +4625,10 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/2200"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/2200",
+   "ends": "00:13",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -4347,7 +4647,9 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-25/2200"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-25/2200",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -4563,7 +4865,9 @@
      "aed": 55
     }
    ],
-   "book": "https://www.theroxycinemas.com/en/booking/roxy-city-walk/shish-dou/2026-09-25/2245"
+   "book": "https://www.theroxycinemas.com/en/booking/roxy-city-walk/shish-dou/2026-09-25/2245",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "roxy-city-walk",
@@ -4597,7 +4901,9 @@
      "aed": 68.25
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-25/2245"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-25/2245",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-city-centre-ajman",
@@ -4616,7 +4922,10 @@
      "aed": 48
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-ajman/coyote-vs-acme/2026-09-25/2245"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-ajman/coyote-vs-acme/2026-09-25/2245",
+   "ends": "00:34",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -4661,7 +4970,10 @@
      "aed": 80
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/2245"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/2245",
+   "ends": "00:34",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -4759,7 +5071,9 @@
      "aed": 200
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/2330"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-25/2330",
+   "ends": "02:01",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -4774,7 +5088,9 @@
      "aed": 50
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/2330"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-25/2330",
+   "ends": "01:19",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -4835,7 +5151,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-25/2330"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-25/2330",
+   "ends": "02:01",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-city-centre-ajman",
@@ -4892,7 +5211,10 @@
      "aed": 50
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/coyote-vs-acme/2026-09-25/2330"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/coyote-vs-acme/2026-09-25/2330",
+   "ends": "01:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -4907,7 +5229,10 @@
      "aed": 80
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/2330"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-25/2330",
+   "ends": "01:43",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -4926,7 +5251,10 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/2330"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-25/2330",
+   "ends": "01:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -5042,7 +5370,9 @@
      "aed": 50
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-26/1030"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-26/1030",
+   "ends": "13:01",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -5110,7 +5440,10 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/heart-of-the-beast/2026-09-26/1030"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/heart-of-the-beast/2026-09-26/1030",
+   "ends": "12:43",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -5125,7 +5458,10 @@
      "aed": 105
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/1030"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/1030",
+   "ends": "13:01",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -5163,7 +5499,9 @@
      "aed": 70
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/1030"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/1030",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -5201,7 +5539,10 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/coyote-vs-acme/2026-09-26/1030"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/coyote-vs-acme/2026-09-26/1030",
+   "ends": "12:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -5311,7 +5652,9 @@
      "aed": 75
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-26/1215"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-26/1215",
+   "ends": "14:46",
+   "lang": "English"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -5334,7 +5677,9 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-26/1215"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-26/1215",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -5364,7 +5709,10 @@
      "aed": 46
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-26/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-26/1215",
+   "ends": "14:04",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -5379,7 +5727,9 @@
      "aed": 195
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/1215",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -5474,7 +5824,10 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/heart-of-the-beast/2026-09-26/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/heart-of-the-beast/2026-09-26/1215",
+   "ends": "14:28",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-city-centre-sharjah",
@@ -5493,7 +5846,10 @@
      "aed": 50
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/coyote-vs-acme/2026-09-26/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/coyote-vs-acme/2026-09-26/1215",
+   "ends": "14:04",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-city-centre-sharjah",
@@ -5531,7 +5887,9 @@
      "aed": 50
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/shish-dou/2026-09-26/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/shish-dou/2026-09-26/1215",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-yas-mall",
@@ -5569,7 +5927,9 @@
      "aed": 85
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-26/1215"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-26/1215",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -5720,7 +6080,9 @@
      "aed": 50
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-26/1345"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-26/1345",
+   "ends": "16:16",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -5735,7 +6097,9 @@
      "aed": 75
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-26/1345"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-26/1345",
+   "ends": "16:16",
+   "lang": "English"
   },
   {
    "cinema": "roxy-city-walk",
@@ -5750,7 +6114,9 @@
      "aed": 55
     }
    ],
-   "book": "https://www.theroxycinemas.com/en/booking/roxy-city-walk/shish-dou/2026-09-26/1345"
+   "book": "https://www.theroxycinemas.com/en/booking/roxy-city-walk/shish-dou/2026-09-26/1345",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "roxy-city-walk",
@@ -5788,7 +6154,10 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/heart-of-the-beast/2026-09-26/1345"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/heart-of-the-beast/2026-09-26/1345",
+   "ends": "15:58",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -5811,7 +6180,10 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/1345"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/1345",
+   "ends": "16:16",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -5880,7 +6252,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-26/1345"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-26/1345",
+   "ends": "16:16",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -5903,7 +6278,9 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/1345"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/1345",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-city-centre-ajman",
@@ -5937,7 +6314,10 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/coyote-vs-acme/2026-09-26/1345"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/coyote-vs-acme/2026-09-26/1345",
+   "ends": "15:34",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -6075,7 +6455,9 @@
      "aed": 75
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/1530"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/1530",
+   "ends": "17:19",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -6181,7 +6563,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-26/1530"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-26/1530",
+   "ends": "18:01",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-city-centre-ajman",
@@ -6200,7 +6585,10 @@
      "aed": 48
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-ajman/coyote-vs-acme/2026-09-26/1530"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-ajman/coyote-vs-acme/2026-09-26/1530",
+   "ends": "17:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-city-centre-fujairah",
@@ -6215,7 +6603,9 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/shish-dou/2026-09-26/1530"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/shish-dou/2026-09-26/1530",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-yas-mall",
@@ -6234,7 +6624,10 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-26/1530"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-26/1530",
+   "ends": "17:43",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -6287,7 +6680,10 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/1530"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/1530",
+   "ends": "17:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cineroyal-khalidiyah-mall",
@@ -6412,7 +6808,9 @@
      "aed": 50
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/1700"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/1700",
+   "ends": "18:49",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -6427,7 +6825,9 @@
      "aed": 75
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/1700"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/1700",
+   "ends": "18:49",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -6442,7 +6842,9 @@
      "aed": 200
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/1700"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/1700",
+   "ends": "18:49",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -6472,7 +6874,9 @@
      "aed": 55
     }
    ],
-   "book": "https://www.theroxycinemas.com/en/booking/roxy-city-walk/shish-dou/2026-09-26/1700"
+   "book": "https://www.theroxycinemas.com/en/booking/roxy-city-walk/shish-dou/2026-09-26/1700",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "roxy-city-walk",
@@ -6540,7 +6944,10 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/heart-of-the-beast/2026-09-26/1700"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/heart-of-the-beast/2026-09-26/1700",
+   "ends": "19:13",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -6631,7 +7038,10 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/heart-of-the-beast/2026-09-26/1700"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/heart-of-the-beast/2026-09-26/1700",
+   "ends": "19:13",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-city-centre-sharjah",
@@ -6650,7 +7060,9 @@
      "aed": 50
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/shish-dou/2026-09-26/1700"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/shish-dou/2026-09-26/1700",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-yas-mall",
@@ -6729,7 +7141,9 @@
      "aed": 200
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/1815"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/1815",
+   "ends": "20:04",
+   "lang": "English"
   },
   {
    "cinema": "roxy-city-walk",
@@ -6797,7 +7211,10 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/1815"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/1815",
+   "ends": "20:46",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -6820,7 +7237,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-26/1815"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-26/1815",
+   "ends": "20:28",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -6843,7 +7263,10 @@
      "aed": 70
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-26/1815"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-26/1815",
+   "ends": "20:28",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -6866,7 +7289,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-26/1815"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-26/1815",
+   "ends": "20:04",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -6889,7 +7315,9 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/1815"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/1815",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -6946,7 +7374,10 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/heart-of-the-beast/2026-09-26/1815"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/heart-of-the-beast/2026-09-26/1815",
+   "ends": "20:28",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -6965,7 +7396,10 @@
      "aed": 85
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-26/1815"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-26/1815",
+   "ends": "20:28",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -7048,7 +7482,9 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-26/1815"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-26/1815",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "cineroyal-khalidiyah-mall",
@@ -7161,7 +7597,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-26/1900"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-26/1900",
+   "ends": "21:13",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -7184,7 +7623,9 @@
      "aed": 70
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/1900"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/1900",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-city-centre-fujairah",
@@ -7199,7 +7640,10 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/coyote-vs-acme/2026-09-26/1900"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/coyote-vs-acme/2026-09-26/1900",
+   "ends": "20:49",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -7218,7 +7662,10 @@
      "aed": 85
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/1900"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/1900",
+   "ends": "20:49",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -7233,7 +7680,10 @@
      "aed": 80
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/1900"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/1900",
+   "ends": "20:49",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cineroyal-khalidiyah-mall",
@@ -7419,7 +7869,9 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-26/1945"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-26/1945",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -7465,7 +7917,10 @@
      "aed": 70
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-26/1945"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-26/1945",
+   "ends": "21:58",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -7488,7 +7943,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-26/1945"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-26/1945",
+   "ends": "21:34",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -7564,7 +8022,9 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/shish-dou/2026-09-26/1945"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/shish-dou/2026-09-26/1945",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-city-centre-sharjah",
@@ -7636,7 +8096,9 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-26/1945"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-26/1945",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-yas-mall",
@@ -7655,7 +8117,10 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/1945"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/1945",
+   "ends": "21:34",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -7794,7 +8259,9 @@
      "aed": 50
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-26/2030"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/spider-man-brand-new-day/2026-09-26/2030",
+   "ends": "23:01",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -7888,7 +8355,10 @@
      "aed": 68.25
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/2030"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/2030",
+   "ends": "23:01",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -7957,7 +8427,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-26/2030"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/heart-of-the-beast/2026-09-26/2030",
+   "ends": "22:43",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -7972,7 +8445,10 @@
      "aed": 46
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-26/2030"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-26/2030",
+   "ends": "22:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -7987,7 +8463,9 @@
      "aed": 195
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/2030"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/2030",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-city-centre-fujairah",
@@ -8040,7 +8518,10 @@
      "aed": 50
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/coyote-vs-acme/2026-09-26/2030"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/coyote-vs-acme/2026-09-26/2030",
+   "ends": "22:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -8131,7 +8612,10 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/2115"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/2115",
+   "ends": "23:46",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -8150,7 +8634,10 @@
      "aed": 68.25
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/2115"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/2115",
+   "ends": "23:46",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "star-bawadi-mall",
@@ -8458,7 +8945,9 @@
      "aed": 50
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/2200"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/2200",
+   "ends": "23:49",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -8519,7 +9008,9 @@
      "aed": 52.5
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-26/2200"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/shish-dou/2026-09-26/2200",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -8553,7 +9044,10 @@
      "aed": 48
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-ajman/coyote-vs-acme/2026-09-26/2200"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-ajman/coyote-vs-acme/2026-09-26/2200",
+   "ends": "23:49",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-city-centre-ajman",
@@ -8606,7 +9100,10 @@
      "aed": 50
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/coyote-vs-acme/2026-09-26/2200"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/coyote-vs-acme/2026-09-26/2200",
+   "ends": "23:49",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -8625,7 +9122,9 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-26/2200"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-26/2200",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-yas-mall",
@@ -8644,7 +9143,9 @@
      "aed": 85
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-26/2200"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/shish-dou/2026-09-26/2200",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-yas-mall",
@@ -8663,7 +9164,10 @@
      "aed": 85
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/2200"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/2200",
+   "ends": "23:49",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -8810,7 +9314,10 @@
      "aed": 105
     }
    ],
-   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/2245"
+   "book": "https://www.starcinemas.ae/booking/star-bawadi-mall/spider-man-brand-new-day/2026-09-26/2245",
+   "ends": "01:16",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -8867,7 +9374,9 @@
      "aed": 38
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/shish-dou/2026-09-26/2245"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-fujairah/shish-dou/2026-09-26/2245",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-city-centre-sharjah",
@@ -8924,7 +9433,10 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-26/2245"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-26/2245",
+   "ends": "00:58",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -8943,7 +9455,10 @@
      "aed": 85
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-26/2245"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-26/2245",
+   "ends": "00:58",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -8977,7 +9492,10 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/2245"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/2245",
+   "ends": "00:34",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",
@@ -8992,7 +9510,10 @@
      "aed": 80
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/2245"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/coyote-vs-acme/2026-09-26/2245",
+   "ends": "00:34",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "cinemacity-zero6-mall",
@@ -9110,7 +9631,9 @@
      "aed": 50
     }
    ],
-   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/2330"
+   "book": "https://reelcinemas.com/en-ae/booking/reel-dubai-mall/coyote-vs-acme/2026-09-26/2330",
+   "ends": "01:19",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -9155,7 +9678,9 @@
      "aed": 55
     }
    ],
-   "book": "https://www.theroxycinemas.com/en/booking/roxy-city-walk/shish-dou/2026-09-26/2330"
+   "book": "https://www.theroxycinemas.com/en/booking/roxy-city-walk/shish-dou/2026-09-26/2330",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -9178,7 +9703,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-26/2330"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/spider-man-brand-new-day/2026-09-26/2330",
+   "ends": "02:01",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -9201,7 +9729,10 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-26/2330"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/coyote-vs-acme/2026-09-26/2330",
+   "ends": "01:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-al-jimi-mall",
@@ -9224,7 +9755,9 @@
      "aed": 61
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/2330"
+   "book": "https://uae.voxcinemas.com/booking/vox-al-jimi-mall/shish-dou/2026-09-26/2330",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-city-centre-ajman",
@@ -9243,7 +9776,10 @@
      "aed": 48
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-ajman/coyote-vs-acme/2026-09-26/2330"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-ajman/coyote-vs-acme/2026-09-26/2330",
+   "ends": "01:19",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-city-centre-ajman",
@@ -9300,7 +9836,9 @@
      "aed": 50
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/shish-dou/2026-09-26/2330"
+   "book": "https://uae.voxcinemas.com/booking/vox-city-centre-sharjah/shish-dou/2026-09-26/2330",
+   "lang": "Arabic",
+   "subs": "English"
   },
   {
    "cinema": "vox-yas-mall",
@@ -9319,7 +9857,10 @@
      "aed": 62
     }
    ],
-   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-26/2330"
+   "book": "https://uae.voxcinemas.com/booking/vox-yas-mall/heart-of-the-beast/2026-09-26/2330",
+   "ends": "01:43",
+   "lang": "English",
+   "subs": "Arabic"
   },
   {
    "cinema": "vox-yas-mall",

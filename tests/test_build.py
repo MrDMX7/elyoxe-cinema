@@ -34,15 +34,18 @@ def all_files(out):
 
 def test_every_page_in_both_languages(site):
     out, data = site
-    cards = [c["id"] for c in build.load_discounts(DISC)["cards"]]
-    pages = [("cinema",), ("cinema", "halls"), ("cinema", "cards")]
-    pages += [("cinema", c) for c in CITIES]
-    pages += [("cinema", c["city"], cid) for cid, c in data["cinemas"].items()]
-    pages += [("cinema", "film", fid) for fid in data["films"]]
-    pages += [("cinema", "cards", c) for c in cards]
+    cards = [c["id"] for c in build.confirmed_cards(build.load_discounts(DISC), "2026-09-25")]
+    pages = [(), ("halls",), ("cards",)]
+    pages += [(c,) for c in CITIES]
+    pages += [(c["city"], cid) for cid, c in data["cinemas"].items()]
+    pages += [("film", fid) for fid in data["films"]]
+    pages += [("cards", c) for c in cards]
     for p in pages:
         assert os.path.exists(os.path.join(out, *p, "index.html")), p
         assert os.path.exists(os.path.join(out, "en", *p, "index.html")), ("en",) + p
+    assert not os.path.exists(os.path.join(out, "cinema")), "pages live at the site root now"
+    for f in ("404.html", "robots.txt", "sitemap.xml", os.path.join("assets", "cinema.css"), os.path.join("assets", "fonts", "readex-arabic.woff2")):
+        assert os.path.exists(os.path.join(out, f)), f
 
 
 def test_no_arabic_indic_digits_anywhere(site):
@@ -83,25 +86,25 @@ def test_price_cells_carry_data_and_jsonld_parses(site):
 
 def test_sitemap_pairs_languages(site):
     out, _ = site
-    sm = open(os.path.join(out, "cinema", "sitemap.xml"), encoding="utf-8").read()
+    sm = open(os.path.join(out, "sitemap.xml"), encoding="utf-8").read()
     urls = re.findall(r"<url>(.*?)</url>", sm, re.S)
     assert len(urls) > 40
     for u in urls:
         assert 'hreflang="ar"' in u and 'hreflang="en"' in u
-    assert "https://elyoxe.com/cinema/al-ain/" in sm and "https://elyoxe.com/en/cinema/al-ain/" in sm
+    assert "https://cinema.elyoxe.com/al-ain/" in sm and "https://cinema.elyoxe.com/en/al-ain/" in sm
 
 
 def test_head_has_canonical_and_hreflang(site):
     out, _ = site
-    h = read(out, "cinema", "al-ain")
-    assert '<link rel="canonical" href="https://elyoxe.com/cinema/al-ain/">' in h
-    assert 'hreflang="en" href="https://elyoxe.com/en/cinema/al-ain/"' in h
+    h = read(out, "al-ain")
+    assert '<link rel="canonical" href="https://cinema.elyoxe.com/al-ain/">' in h
+    assert 'hreflang="en" href="https://cinema.elyoxe.com/en/al-ain/"' in h
     assert "سينما العين" in h.split("</title>")[0]
 
 
 def test_none_found_says_we_found_none(site):
     out, _ = site
-    h = read(out, "cinema", "cards", "fazaa")
+    h = read(out, "cards", "fazaa")
     assert "ما لقينا خصم" in h
     assert "ما يقبلون" not in h
 
@@ -116,36 +119,47 @@ def test_discount_math_and_example(site):
     assert build.after(200, "reel", "SUITES", "fazaa", rules, "2026-09-25")[0] == 150.0
     assert build.after(35, "cinemacity", "Standard", "fazaa", rules, "2026-09-25")[0] is None  # expired
     out, _ = site
-    assert "33.60" in read(out, "cinema", "cards", "fazaa")
+    assert "33.60" in read(out, "cards", "fazaa")
 
 
 def test_box_office_price_and_stale_chain(site):
     out, _ = site
-    assert "السعر في الشباك" in read(out, "cinema", "ras-al-khaimah", "novo-manar-mall")
-    h = read(out, "cinema", "al-ain", "star-bawadi-mall")
+    assert "السعر في الشباك" in read(out, "ras-al-khaimah", "novo-manar-mall")
+    h = read(out, "al-ain", "star-bawadi-mall")
     assert "آخر تحديث قبل 3 ساعات" in h
-    assert "updated 3 hours ago" in read(out, "en", "cinema", "al-ain", "star-bawadi-mall").lower()
+    assert "updated 3 hours ago" in read(out, "en", "al-ain", "star-bawadi-mall").lower()
 
 
-def test_unconfirmed_rule_is_marked(site):
+def test_only_confirmed_cards_and_official_rules_are_published(site):
+    """Spec: third-party and unconfirmed rules stay hidden; a card with no current official discount
+    (homat: only «none found») appears nowhere — no page, no chip, no row in discounts.json."""
     out, _ = site
-    assert "غير مؤكد" in read(out, "cinema", "cards", "esaad")
+    esaad = re.sub(r"<script.*?</script>", "", read(out, "cards", "esaad"), flags=re.S)   # official at Novo, third-party at Star
+    assert "غير مؤكد" not in esaad and "نوفو" in esaad
+    assert "ستار" not in esaad.split('<section class="wrap cardsx">')[0].split("</h1>")[1]
+    assert not os.path.exists(os.path.join(out, "cards", "homat"))
+    home = read(out)
+    assert 'data-card="fazaa"' in home and 'data-card="homat"' not in home and 'value="homat"' not in home
+    d = json.load(open(os.path.join(out, "data", "discounts.json"), encoding="utf-8"))
+    assert {c["id"] for c in d["cards"]} == {"fazaa", "esaad", "adcb"}
+    assert all(r.get("confidence") == "official" for cs in d["rules"].values() for r in cs.values())
+    assert "esaad" not in d["rules"]["star"]
 
 
 def test_city_day_slices_for_the_client(site):
     out, data = site
     for city in {c["city"] for c in data["cinemas"].values()}:
         for day in ("2026-09-25", "2026-09-26"):
-            j = json.load(open(os.path.join(out, "cinema", "data", f"{city}-{day}.json"), encoding="utf-8"))
+            j = json.load(open(os.path.join(out, "data", f"{city}-{day}.json"), encoding="utf-8"))
             assert j["S"]
             for ci, fi, t, hi, pi, bi, tail in j["S"]:
                 assert j["C"][ci][0] in data["cinemas"] and j["F"][fi][0] in data["films"] and re.match(r"^\d\d:\d\d$", t)
                 assert j["H"][hi][0] and "|" in j["H"][hi][1]
                 assert pi == -1 or j["P"][pi][0][1] > 0
                 assert bi == -1 or (j["B"][bi] + tail).startswith("https://")
-    d = json.load(open(os.path.join(out, "cinema", "data", "discounts.json"), encoding="utf-8"))
+    d = json.load(open(os.path.join(out, "data", "discounts.json"), encoding="utf-8"))
     assert d["rules"]["star"]["fazaa"]["value"] == 20
-    js = os.path.getsize(os.path.join(out, "cinema", "assets", "cinema.js"))
+    js = os.path.getsize(os.path.join(out, "assets", "cinema.js"))
     assert js < 25 * 1024
 
 
@@ -156,11 +170,12 @@ def test_percentages_are_isolated_in_arabic(site):
         if not f.endswith(".html"): continue
         h = open(f, encoding="utf-8").read()
         body = re.sub(r"<script.*?</script>", "", h.split("<body", 1)[1], flags=re.S)
+        body = re.sub(r'href="[^"]*"', 'href=""', body)   # a URL's %-escapes are not visible text
         for m in re.finditer(r"\d+(?:\.\d+)?\s?%", body):
             # dir="ltr" too: span.num is unicode-bidi:plaintext, which alone still prints «%88» in an RTL page
             assert re.search(r'class="num" dir="ltr">\s*$', body[:m.start()][-40:]), (f, body[m.start() - 60:m.end() + 10])
-    assert '<span class="num" dir="ltr">20%</span>' in read(out, "cinema", "cards", "fazaa")
-    assert '<b class="num" dir="ltr">20%</b>' in read(out, "cinema", "cards")
+    assert '<span class="num" dir="ltr">20%</span>' in read(out, "cards", "fazaa")
+    assert '<b class="num" dir="ltr">20%</b>' in read(out, "cards")
 
 
 def test_hall_labels_are_cleaned():
@@ -184,7 +199,7 @@ def merged_real():
     return normalize.merge(res, None, "2026-09-25T00:00:00")
 
 
-def sizes_ok(out, page_max=200_000, slice_max=150_000):
+def sizes_ok(out, page_max=150_000, slice_max=150_000):
     big = []
     for f in all_files(out):
         n = os.path.getsize(f)
@@ -225,7 +240,7 @@ def test_poster_used_when_present(tmp_path):
     data["films"]["crawlers"]["poster"] = "https://image.example/crawlers.jpg"
     p = tmp_path / "d.json"; p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     build.build(str(p), DISC, str(tmp_path / "o"))
-    assert 'src="https://image.example/crawlers.jpg"' in read(str(tmp_path / "o"), "cinema")
+    assert 'src="https://image.example/crawlers.jpg"' in read(str(tmp_path / "o"))
 
 
 # ---------------------------------------------------------------- fix wave: B (re-release), C (template line), G (names), H (genres, %)
@@ -244,10 +259,10 @@ def test_enriched_genres_render_as_words_and_empty_hides_the_cell(tmp_path):
         d["films"]["crawlers"]["genres"] = {"ar": ["رعب", "إثارة"], "en": ["horror film", "thriller film"]}
         d["films"]["resident-evil"]["genres"] = {"ar": [], "en": []}
     out = _built(tmp_path, m)
-    ar, en = read(out, "cinema", "film", "crawlers"), read(out, "en", "cinema", "film", "crawlers")
+    ar, en = read(out, "film", "crawlers"), read(out, "en", "film", "crawlers")
     assert "<dt>النوع</dt><dd>رعب، إثارة</dd>" in ar and "ar، en" not in ar
     assert "<dt>Genre</dt><dd>horror film, thriller film</dd>" in en
-    assert "<dt>النوع</dt>" not in read(out, "cinema", "film", "resident-evil")
+    assert "<dt>النوع</dt>" not in read(out, "film", "resident-evil")
     ld = re.search(r'<script type="application/ld\+json">(.*?)</script>', en, re.S).group(1)
     assert json.loads(ld)["@graph"][0]["genre"] == ["horror film", "thriller film"]
 
@@ -257,7 +272,7 @@ def test_a_percentage_inside_a_verdict_is_isolated(tmp_path):
         d["films"]["crawlers"]["verdict"] = {"verdict": "yes", "ar": "قلب الوحش ياب بتقييم نقاد 88%.", "en": "88% of critics.",
                                              "basis": "RT 88% (124 نقد)"}
     out = _built(tmp_path, m)
-    ar = read(out, "cinema", "film", "crawlers")
+    ar = read(out, "film", "crawlers")
     assert 'بتقييم نقاد <span class="num" dir="ltr">88%</span>' in ar
     assert 'RT <span class="num" dir="ltr">88%</span>' in ar
 
@@ -266,9 +281,9 @@ def test_rerelease_is_labelled_in_both_languages(tmp_path):
     def m(d):
         d["films"]["crawlers"].update(rerelease=True, year=2008)
     out = _built(tmp_path, m)
-    assert "إعادة عرض" in read(out, "cinema", "film", "crawlers") and "إعادة عرض" in read(out, "cinema")
-    assert "Re-release" in read(out, "en", "cinema", "film", "crawlers") and "Re-release" in read(out, "en", "cinema")
-    assert "إعادة عرض" not in read(out, "cinema", "film", "resident-evil")
+    assert "إعادة عرض" in read(out, "film", "crawlers") and "إعادة عرض" in read(out)
+    assert "Re-release" in read(out, "en", "film", "crawlers") and "Re-release" in read(out, "en")
+    assert "إعادة عرض" not in read(out, "film", "resident-evil")
 
 
 def test_template_verdict_line_is_shown_for_an_unknown_film(tmp_path):
@@ -276,8 +291,8 @@ def test_template_verdict_line_is_shown_for_an_unknown_film(tmp_path):
         d["films"]["crawlers"]["verdict"] = {"verdict": "unknown", "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
                                              "en": "Not enough ratings yet.", "basis": "", "by": "template"}
     out = _built(tmp_path, m)
-    assert "ما لقينا تقييمات كافية لهالفيلم للحين." in read(out, "cinema", "film", "crawlers")
-    assert "Not enough ratings yet." in read(out, "en", "cinema", "film", "crawlers")
+    assert "ما لقينا تقييمات كافية لهالفيلم للحين." in read(out, "film", "crawlers")
+    assert "Not enough ratings yet." in read(out, "en", "film", "crawlers")
 
 
 def test_every_real_cinema_has_a_display_name_in_both_languages():
@@ -294,11 +309,11 @@ def test_arabic_pages_use_the_arabic_cinema_name(tmp_path):
     p = tmp_path / "real.json"; p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     out = str(tmp_path / "o")
     build.build(str(p), os.path.join(ROOT, "discounts.yaml"), out)
-    city = read(out, "cinema", "al-ain")
+    city = read(out, "al-ain")
     assert "ستار — الفوعة مول" in city and "فوكس — الجيمي مول" in city
     for raw in ("Al Foah -Al Ain", "Mall of Al Ain - Al Ain", "Barari Outlet Mall -Al Ain", "VOX Cinemas Al Jimi Mall"):
         assert raw not in city, raw
-    assert "Star — Al Foah Mall" in read(out, "en", "cinema", "al-ain")
+    assert "Star — Al Foah Mall" in read(out, "en", "al-ain")
     assert build.clean_reader_name("Al Foah -Al Ain") == "Al Foah - Al Ain"
 
 
@@ -312,22 +327,22 @@ def test_table_prices_carry_their_own_date_not_live_freshness(tmp_path):
     p = tmp_path / "d.json"; p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     out = str(tmp_path / "o")
     build.build(str(p), DISC, out)
-    cin = read(out, "cinema", "al-ain", "vox-al-jimi-mall")
+    cin = read(out, "al-ain", "vox-al-jimi-mall")
     cells = re.findall(r'<span class="p"[^>]*>.*?</span></span>', cin)
     assert cells and all('data-asof="2026-09-25"' in c and "السعر بتاريخ" in c for c in cells)
-    assert "Price as of" in read(out, "en", "cinema", "al-ain", "vox-al-jimi-mall")
-    city = read(out, "cinema", "al-ain")
+    assert "Price as of" in read(out, "en", "al-ain", "vox-al-jimi-mall")
+    city = read(out, "al-ain")
     assert re.search(r'data-cin="vox-al-jimi-mall" data-asof="2026-09-25"', city)
     # a live-priced cinema carries no date note
-    star = read(out, "cinema", "al-ain", "star-bawadi-mall")
+    star = read(out, "al-ain", "star-bawadi-mall")
     assert 'data-asof="' not in star and '<small class="asof">' not in star
     # slices: the table date rides on the show row for the home tiles and «starting now»
-    sl = json.load(open(os.path.join(out, "cinema", "data", "al-ain-2026-09-25.json"), encoding="utf-8"))
+    sl = json.load(open(os.path.join(out, "data", "al-ain-2026-09-25.json"), encoding="utf-8"))
     ci = [c[0] for c in sl["C"]].index("vox-al-jimi-mall")
     rows = [r for r in sl["S"] if r[0] == ci and r[4] >= 0]
     assert rows and all(len(r) == 8 and r[7] == "2026-09-25" for r in rows)
     assert all(len(r) == 7 for r in sl["S"] if r[0] != ci)
-    ct = re.search(r"window\.CT = (\{.*?\});</script>", read(out, "cinema"))
+    ct = re.search(r"window\.CT = (\{.*?\});</script>", read(out))
     assert ct and json.loads(ct.group(1))["asof"] == "السعر بتاريخ {date}"
 
 
@@ -336,8 +351,8 @@ def test_bogo_price_says_per_person_with_two_tickets(tmp_path):
     assert build.T["per_person"] == ("للشخص — بشرط تذكرتين", "per person, with 2 tickets")
     out = str(tmp_path / "o")
     build.build(DATA, os.path.join(ROOT, "discounts.yaml"), out)
-    assert "للشخص — بشرط تذكرتين" in read(out, "cinema", "cards", "enbd")       # the worked example
-    assert "per person, with 2 tickets" in read(out, "en", "cinema", "cards", "enbd")
+    assert "للشخص — بشرط تذكرتين" in read(out, "cards", "enbd")       # the worked example
+    assert "per person, with 2 tickets" in read(out, "en", "cards", "enbd")
     js = open(os.path.join(ROOT, "src", "cinema.js"), encoding="utf-8").read()
     home = js[js.index("function renderHome"):js.index("function slice")]
     # the «starting now» strip and the «cheapest for you» tile both append the per-person note
@@ -357,9 +372,100 @@ def test_film_schedule_prices_each_day_when_days_differ(tmp_path):
     p = tmp_path / "d.json"; p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     out = str(tmp_path / "o")
     build.build(str(p), DISC, out)
-    film = read(out, "cinema", "film", base["film"])
+    film = read(out, "film", base["film"])
     assert 'data-aed="77.50"' in film and 'data-asof="2026-09-25"' in film and "السعر بتاريخ" in film
     assert f'data-aed="{build.money(base["prices"][0]["aed"])}"' in film            # today's live price kept
     # the cinema page prices halls from ONE day, live and today first
-    cin = read(out, "cinema", "al-ain", "vox-al-jimi-mall")
+    cin = read(out, "al-ain", "vox-al-jimi-mall")
     assert 'data-aed="77.50"' not in cin
+
+
+# ---------------------------------------------------------------- phase 1: «هـ» markup, root paths, archive
+
+def test_root_files_and_robots(site):
+    out, _ = site
+    robots = open(os.path.join(out, "robots.txt"), encoding="utf-8").read()
+    assert "Sitemap: https://cinema.elyoxe.com/sitemap.xml" in robots
+    nf = open(os.path.join(out, "404.html"), encoding="utf-8").read()
+    assert 'lang="ar"' in nf and 'href="/en/"' in nf and "noindex" in nf
+    home = read(out)
+    assert '<link rel="canonical" href="https://cinema.elyoxe.com/">' in home
+    assert 'href="/assets/cinema.css?v=' in home and 'rel="preload" href="/assets/fonts/' in home
+    assert 'href="/en/" hreflang="en"' in home
+
+
+def test_times_are_buttons_with_show_ids_and_the_ticket_is_server_rendered(site):
+    out, data = site
+    film = read(out, "film", "heart-of-the-beast")
+    btns = re.findall(r'<button type="button" class="tm[^"]*" ([^>]*)>', film)
+    assert btns and all(re.search(r'data-show="[0-9a-f]{10}" data-start="\d\d:\d\d"', b) for b in btns)
+    ids = [re.search(r'data-show="(\w+)"', b).group(1) for b in btns]
+    assert len(ids) == len(set(ids))
+    assert any("data-ends=" in b and 'data-lang="English"' in b for b in btns)
+    tk = film[film.index('<aside class="ticket"'):]
+    tk = tk[:tk.index("</aside>")]
+    assert 'data-aed="' in tk and "wa.me/?text=" in tk and "أرسلها للقروب" in tk
+    assert re.search(r"يخلص تقريباً \d\d:\d\d", tk)
+    pl = json.loads(re.search(r'<script type="application/json" id="cinema-p">(.*?)</script>', film).group(1))
+    assert all(int(re.search(r'data-p="(\d+)"', b).group(1)) < len(pl) for b in btns if "data-p=" in b)
+    cin = read(out, "al-ain", "star-bawadi-mall")
+    assert '<aside class="ticket"' in cin and 'class="tm' in cin
+
+
+def test_ends_only_when_known(site):
+    out, _ = site
+    film = read(out, "film", "crawlers")          # the fixture gives Crawlers no end times
+    assert "data-ends=" not in film and "يخلص تقريباً" not in film.split("<script>window.CT")[0]
+
+
+def test_posters_and_tiles(site):
+    out, _ = site
+    home = read(out)
+    # a poster: img with its 2x, lazy except the first, preloaded
+    assert re.search(r'<img src="https://cinema\.elyoxe\.com/posters/coyote-vs-acme-342\.webp" srcset="[^"]+-684\.webp 2x"', home)
+    assert home.count('fetchpriority="high"') == 2      # the preload link and the first poster
+    assert 'rel="preload" as="image"' in home
+    # no poster: a typographic tile in the film's colour (or a hue from its id), never a broken image
+    assert re.search(r'<span class="pst" style="--pc:#1D2A4A"><span class="pst-t">سبايدر مان', home)
+    assert re.search(r'<span class="pst" style="--pc:#[0-9A-F]{6}"><span class="pst-t"[^>]*>The Paradise', home)
+    assert 'data-genres="animation comedy family" data-family="1" data-kids="1"' in home
+    assert 'data-filter="family"' in home and 'data-sort="price"' in home and 'data-ends-before=' in home
+
+
+def test_hostile_media_fields_are_dropped(tmp_path):
+    def m(d):
+        d["films"]["crawlers"].update(poster="javascript:alert(1)", poster_color="red;background:url(x)", trailer="<script>")
+    out = _built(tmp_path, m)
+    film = read(out, "film", "crawlers")
+    assert "javascript:" not in film and "url(x)" not in film and "&lt;script&gt;" not in film
+
+
+def test_archived_film_keeps_its_page(site):
+    out, data = site
+    ar, en = read(out, "film", "weapons"), read(out, "en", "film", "weapons")
+    assert "عُرض في سينمات الإمارات من 7 أغسطس إلى 17 سبتمبر 2026" in ar
+    assert "Shown in UAE cinemas from 7 August to 17 September 2026" in en
+    assert "المعروض الحين" in ar and 'class="btn light" href="/"' in ar
+    assert '<aside class="ticket"' not in ar and 'class="tm' not in ar
+    similar = ar[ar.index('class="tonight wrap similar"'):]
+    tiles = re.findall(r'<a class="film[^"]*" href="/film/([^/]+)/"', similar)
+    assert 0 < len(tiles) <= 6 and "weapons" not in tiles and "the-long-walk" not in tiles
+    # a shared genre first (horror / thriller), then the verdict: Resident Evil (mixed) before Crawlers (skip)
+    assert tiles[:3] == ["resident-evil", "crawlers", "sacrifice"] or set(tiles[:3]) == {"resident-evil", "crawlers", "sacrifice"}
+    assert tiles.index("resident-evil") < tiles.index("crawlers")
+    nodate = read(out, "film", "the-long-walk")
+    assert '<p class="arch-s">انتهى عرضه في السينما</p>' in nodate
+    for page in (read(out), read(out, "al-ain"), read(out, "al-ain", "star-bawadi-mall")):
+        assert "/film/weapons/" not in page and "/film/the-long-walk/" not in page
+    for f in os.listdir(os.path.join(out, "data")):
+        assert "weapons" not in open(os.path.join(out, "data", f), encoding="utf-8").read()
+    sm = open(os.path.join(out, "sitemap.xml"), encoding="utf-8").read()
+    assert "<loc>https://cinema.elyoxe.com/film/weapons/</loc><lastmod>2026-09-17</lastmod>" in sm
+
+
+def test_no_middle_dot_fact_strings(site):
+    out, _ = site
+    for f in all_files(out):
+        if f.endswith(".html"):
+            body = re.sub(r"<script.*?</script>", "", open(f, encoding="utf-8").read().split("<body", 1)[1], flags=re.S)
+            assert " · " not in body, f
