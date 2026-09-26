@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "By Any Means حصل 48% بس من النقاد رغم قصة حقيقية قوية عن الظلم العنصري. النقاد يقولون أداء Yahya Abdul-Mateen II الهادي طاح تحت مبالغة Mark Wahlberg.",
+  "basis": "RT 48% (75 نقد) · الجمهور 89%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 48,
+    "rt_count": 75
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "By Any Means sits at a mixed 48% with critics, who say Yahya Abdul-Mateen II's nuanced performance is overwhelmed by Mark Wahlberg's hammy antics. Audiences rate it much higher at 89%.",
   "fid": "by-any-means",
-  "verdict": "unknown",
+  "verdict": "mixed",
   "written": "2026-09-26"
 }
