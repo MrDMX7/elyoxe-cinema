@@ -34,7 +34,8 @@ from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 from curl_cffi import requests as cr
 
-from readers.common import CITIES, HALLS, city_of, lang_key, slug as _slug, subs_keys, youtube_id, fmt3d as _fmt3d
+from readers.common import (CACHE_MISS, CITIES, HALLS, cache_get, cache_set, city_of, lang_key,
+                             slug as _slug, subs_keys, youtube_id, fmt3d as _fmt3d)
 
 BASE = "https://uae.voxcinemas.com"
 UA_IMPERSONATE = "chrome"
@@ -270,7 +271,7 @@ def _sample_prices(client: _Client, book_url: str) -> list[dict] | None:
             pass
 
 
-def fetch(days: int = 2, prices: bool = True) -> dict:
+def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict:
     client = _Client()
     cinemas_raw = _fetch_cinema_list(client)
 
@@ -341,6 +342,12 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
         tries: dict[tuple, int] = {}
         for sh in sorted(shows, key=lambda x: (x["date"], x["time"])):
             key = pkey(sh)
+            if key not in price_of:
+                hit = cache_get(cache, key)
+                if hit is not CACHE_MISS:  # already sampled today (this run or an earlier one) -- reuse
+                    price_of[key] = hit
+                    tries[key] = 2
+                    health["cached"] = health.get("cached", 0) + 1
             if price_of.get(key) or tries.get(key, 0) >= 2:
                 continue
             start = datetime.strptime(f"{sh['date']} {sh['time']}", "%Y-%m-%d %H:%M").replace(tzinfo=DUBAI)
@@ -350,12 +357,14 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
             health["attempted"] += 1
             try:
                 price_of[key] = _sample_prices(client, sh["book"])
+                cache_set(cache, key, price_of[key])
             except _Blocked as e:
                 health["error"] = f"price sampling stopped on a block: {e}"
                 print(f"[readers.vox] {health['error']}", file=sys.stderr)
                 break
             except Exception:
                 price_of[key] = None
+                cache_set(cache, key, None)
     for sh in shows:
         sh["prices"] = price_of.get(pkey(sh))
     health["priced"] = sum(1 for v in price_of.values() if v)

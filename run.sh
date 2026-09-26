@@ -3,7 +3,10 @@
 #
 # Runner: the Fold (residential IP; the chains' booking APIs are read from there). cron calls it through the
 # workspace's job wrapper, which adds the wake lock, the memory wait and a notification on success/failure:
-#   10 6,12,18,23 * * *  /data/local/debian-boot.sh -c "/root/workspace/automation/phone/run-job.sh cinema"
+#   10 * * * *  /data/local/debian-boot.sh -c "/root/workspace/automation/phone/run-job.sh cinema"
+# Hourly at :10 since 2026-09-27 (owner's ruling, Task 6) — was four times a day. Prices still
+# sample at most once per cinema x hall x date per day (data/price_cache.json), so the extra runs
+# cost showtime/listing calls only, never re-hammer the seat-map endpoints.
 # By hand, in the foreground:  bash run.sh [--force]   (arguments go to refresh.py)
 #
 # Exit: 0 = deployed (possibly with degraded chains — those notify here), non-zero = nothing deployed
@@ -95,5 +98,26 @@ EOF
 if [ -n "$bad" ]; then
   echo "DEGRADED: $bad"
   note "سينما ⚠" "نُشر، لكن: $bad" "elyoxe-cinema-health"
+fi
+
+# data/new_films.json: [{fid,title,title_ar,cinemas}, ...] fids refresh.py saw for the first time
+# ever this run — empty on the seeding run (no film_history.json before it) by refresh.py's own
+# rule, so this never fires on that one. One notification, up to 5 films.
+new_line=$("$PY" - <<'EOF'
+import json
+try:
+    films = json.load(open("data/new_films.json", encoding="utf-8"))
+except FileNotFoundError:
+    films = []
+parts = [f"{f['title']} — {f['cinemas']} سينما" for f in films[:5]]
+extra = len(films) - len(parts)
+if extra > 0:
+    parts.append(f"و{extra} غيره")
+print(" · ".join(parts))
+EOF
+)
+if [ -n "$new_line" ]; then
+  echo "NEW FILMS: $new_line"
+  note "سينما 🎬" "نزل: $new_line" "elyoxe-cinema-new"
 fi
 echo "== cinema run done"

@@ -33,6 +33,9 @@ def sandbox(tmp_path, monkeypatch):
     monkeypatch.setattr(refresh, "LATEST_PATH", data_dir / "latest.json")
     monkeypatch.setattr(refresh, "HEALTH_PATH", data_dir / "health.json")
     monkeypatch.setattr(refresh, "FILMS_CACHE_PATH", data_dir / "films_cache.json")
+    monkeypatch.setattr(refresh, "FILM_HISTORY_PATH", data_dir / "film_history.json")
+    monkeypatch.setattr(refresh, "PRICE_CACHE_PATH", data_dir / "price_cache.json")
+    monkeypatch.setattr(refresh, "NEW_FILMS_PATH", data_dir / "new_films.json")
     monkeypatch.setattr(refresh, "FIXTURES_DIR", REAL_FIXTURES_DIR)
 
     verdicts_dir = tmp_path / "verdicts"
@@ -86,7 +89,7 @@ def _fake_readers(monkeypatch, fail=(), hang=(), calls=None):
     calls = calls if calls is not None else {}
 
     def make(chain):
-        def fn(days=2):
+        def fn(days=2, **kw):  # readers/common.py's `cache=` kwarg (Task 6) is ignored here
             calls[chain] = calls.get(chain, 0) + 1
             if chain in fail:
                 raise RuntimeError(f"{chain} boom")
@@ -184,7 +187,7 @@ def test_price_health_passthrough_and_degraded_flag(sandbox, monkeypatch):
     data_dir, _ = sandbox
     monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
 
-    def vox_with_price_health(days=2):
+    def vox_with_price_health(days=2, **kw):
         data = json.loads((REAL_FIXTURES_DIR / "vox.json").read_text(encoding="utf-8"))
         data["price_health"] = {"attempted": 10, "priced": 3, "error": None}  # < 50% -> degraded
         return data
@@ -196,7 +199,7 @@ def test_price_health_passthrough_and_degraded_flag(sandbox, monkeypatch):
 
     assert code == 0
     health = json.loads((data_dir / "health.json").read_text(encoding="utf-8"))
-    assert health["vox"]["price_health"] == {"attempted": 10, "priced": 3, "error": None}
+    assert health["vox"]["price_health"] == {"attempted": 10, "priced": 3, "cached": 0, "error": None}
     assert health["vox"]["prices_degraded"] is True
 
     latest = json.loads((data_dir / "latest.json").read_text(encoding="utf-8"))

@@ -41,8 +41,8 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from curl_cffi import requests as cr
 
-from readers.common import (CITIES, HALLS, Polite, arabic_title, city_of, lang_key, slug, subs_keys,
-                            youtube_id, fmt3d as _fmt3d)
+from readers.common import (CACHE_MISS, CITIES, HALLS, Polite, arabic_title, cache_get, cache_set,
+                            city_of, lang_key, slug, subs_keys, youtube_id, fmt3d as _fmt3d)
 
 BASE = "https://storage.googleapis.com/eeg-prod-reelcinema-sb/web/vista/json"
 # the site's own poster path (bundle: e4(id) = `${$3}/vista/movie_images/${id}.jpg`, 300x450)
@@ -247,7 +247,7 @@ def film_extras(film: dict, genre_names: dict) -> dict:
     return out
 
 
-def fetch(days: int = 2, prices: bool = True) -> dict:
+def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict:
     http = Polite(gap=1.0)
 
     cinemas_raw = http.get(f"{BASE}/Cinemas.json").json()["value"]
@@ -340,6 +340,16 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
     price_of: dict = {}
     health = {"attempted": 0, "priced": 0, "error": None}
     if prices and sample_for:
+        fresh_sample_for = {}
+        for key, v in sample_for.items():
+            hit = cache_get(cache, key)
+            if hit is not CACHE_MISS:  # already sampled today -- reuse instead of another call
+                price_of[key] = hit
+                health["cached"] = health.get("cached", 0) + 1
+            else:
+                fresh_sample_for[key] = v
+        sample_for = fresh_sample_for
+    if prices and sample_for:
         try:  # constructing the curl_cffi session is part of the price path: it must not fail the chain
             pc = _PriceClient()
             err = pc.login()
@@ -362,6 +372,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
                     errors.append(f"{cid}/{sid}: {e!r}")
                 if price_of.get(key):
                     health["priced"] += 1
+                cache_set(cache, key, price_of.get(key))
             for e in errors:
                 print(f"[readers.reel] price sample failed: {e}", file=sys.stderr)
             if health["attempted"] and not health["priced"]:

@@ -55,6 +55,9 @@ FIXTURES_DIR = ROOT / "fixtures"
 LATEST_PATH = DATA_DIR / "latest.json"
 HEALTH_PATH = DATA_DIR / "health.json"
 FILMS_CACHE_PATH = DATA_DIR / "films_cache.json"
+FILM_HISTORY_PATH = DATA_DIR / "film_history.json"
+PRICE_CACHE_PATH = DATA_DIR / "price_cache.json"
+NEW_FILMS_PATH = DATA_DIR / "new_films.json"
 
 CHAIN_READERS = {
     "vox": vox.fetch,
@@ -66,6 +69,11 @@ CHAIN_READERS = {
     "cinemacity": cinemacity.fetch,
 }
 ALL_CHAINS = list(CHAIN_READERS)
+# chains whose reader accepts a `cache=` kwarg (readers/common.py cache_get/cache_set) to reuse a
+# same-day seat-map/price sample across runs instead of re-requesting it every hour. Roxy never
+# samples (login-gated: see readers/roxy.py) so it's not in this set.
+PRICE_CACHE_CHAINS = {"vox", "star", "cineroyal", "novo", "cinemacity", "reel"}
+ARCHIVE_AFTER_ABSENT_RUNS = 2  # owner's rule: archive only after 2 consecutive *confirmed* absences
 
 DEFAULT_TIMEOUT = 8 * 60.0
 # Prices are sampled once per cinema x hall x show DATE (weekday/weekend prices differ), so the
@@ -118,17 +126,26 @@ def _fresh_raw(chain: str, force: bool):
     return _load_json(p)
 
 
-def _fetch_chain(chain: str, days: int, offline: bool):
-    """The raw fetch for one chain: a reader call, or (--offline) its fixture."""
+def _fetch_chain(chain: str, days: int, offline: bool, price_cache: dict | None = None):
+    """The raw fetch for one chain: a reader call, or (--offline) its fixture.
+
+    `price_cache`, when given and `chain` is one of PRICE_CACHE_CHAINS, is today's slice of
+    data/price_cache.json for this chain -- passed as the reader's own `cache=` kwarg so it can
+    reuse an already-sampled cinema x hall x date price instead of requesting it again (mutated
+    in place by the reader; refresh() persists it back to disk after the run).
+    """
     if offline:
         data = _load_json(FIXTURES_DIR / f"{chain}.json")
         if data is None:
             raise FileNotFoundError(f"no fixture at fixtures/{chain}.json")
         return data
-    return CHAIN_READERS[chain](days=days)
+    kwargs = {}
+    if price_cache is not None and chain in PRICE_CACHE_CHAINS:
+        kwargs["cache"] = price_cache
+    return CHAIN_READERS[chain](days=days, **kwargs)
 
 
-def _run_chain(chain: str, days: int, offline: bool, timeout: float) -> dict:
+def _run_chain(chain: str, days: int, offline: bool, timeout: float, price_cache: dict | None = None) -> dict:
     """Runs `_fetch_chain` in a daemon thread with a wall-clock timeout.
 
     A daemon thread (not a ThreadPoolExecutor, whose worker threads are joined at interpreter
@@ -141,7 +158,7 @@ def _run_chain(chain: str, days: int, offline: bool, timeout: float) -> dict:
 
     def worker():
         try:
-            q.put(("ok", _fetch_chain(chain, days, offline)))
+            q.put(("ok", _fetch_chain(chain, days, offline, price_cache)))
         except Exception as e:  # noqa: BLE001 - a reader failure is data, not a crash
             q.put(("err", e))
 
@@ -198,6 +215,79 @@ def chain_timeout(chain: str) -> float:
     return CHAIN_TIMEOUTS.get(chain, DEFAULT_TIMEOUT)
 
 
+# ---------------------------------------------------------------- film history / archive / new-film alert
+
+def _cinema_counts(merged: dict) -> dict[str, int]:
+    """{fid: distinct cinema count} from this run's shows -- for the new-film alert line."""
+    out: dict[str, set] = {}
+    for s in merged.get("shows", []):
+        fid = s.get("film")
+        if fid:
+            out.setdefault(fid, set()).add(s.get("cinema"))
+    return {fid: len(cids) for fid, cids in out.items()}
+
+
+def update_film_history(merged: dict, history: dict, today: str) -> tuple[dict, list[dict]]:
+    """Advances film_history.json state for this run and returns (new_history, new_films).
+
+    Owner's rules (Task 6):
+      - a film absent from `merged["films"]` this run is archived (status "archived" +
+        first_seen/last_seen, re-added into merged["films"] in place) only once it has been
+        *confirmed* absent for ARCHIVE_AFTER_ABSENT_RUNS consecutive runs -- "confirmed" meaning
+        every chain that ever listed it (history[fid]["chains"]) reported ok=True this run and
+        none of them lists it any more. A chain outage never counts toward, or resets, that
+        streak: the film's entry is carried over untouched until every one of its chains is
+        healthy again.
+      - new_films: fids seen for the first time ever (not in `history` at all before this call).
+        Callers must NOT alert on these when `history` itself didn't exist before this run (the
+        seeding run) -- that's the caller's job (refresh() below), not this function's, since
+        "did the file exist" isn't something `history` (already loaded into a dict) can answer.
+    """
+    current_films = merged.get("films", {})
+    chains_ok = {c: bool(info.get("ok")) for c, info in (merged.get("chains") or {}).items()}
+    counts = _cinema_counts(merged)
+
+    new_history = dict(history)
+    new_films: list[dict] = []
+
+    for fid, f in current_films.items():
+        prev = history.get(fid)
+        if prev is None:
+            new_films.append({
+                "fid": fid,
+                "title": f.get("title") or fid,
+                "title_ar": f.get("title_ar") or f.get("title_ar_chain"),
+                "cinemas": counts.get(fid, 0),
+            })
+        new_history[fid] = {
+            "first_seen": (prev or {}).get("first_seen") or today,
+            "last_seen": today,
+            "absent_runs": 0,
+            "chains": sorted(set(f.get("chains") or [])) or (prev or {}).get("chains") or [],
+            "snapshot": {k: v for k, v in f.items() if k != "chains"},
+        }
+
+    for fid, rec in history.items():
+        if fid in current_films:
+            continue  # handled above -- still showing (or just started showing again)
+        listed_by = rec.get("chains") or []
+        confirmed_absent = all(chains_ok.get(c, False) for c in listed_by)
+        if not confirmed_absent:
+            new_history[fid] = rec  # a listing chain is down/not-run -- absence unproven, don't touch
+            continue
+        absent_runs = int(rec.get("absent_runs") or 0) + 1
+        new_history[fid] = {**rec, "absent_runs": absent_runs}
+        if absent_runs >= ARCHIVE_AFTER_ABSENT_RUNS:
+            snap = dict(rec.get("snapshot") or {})
+            snap["status"] = "archived"
+            snap["first_seen"] = rec.get("first_seen")
+            snap["last_seen"] = rec.get("last_seen")
+            snap.setdefault("chains", listed_by)
+            current_films[fid] = snap
+
+    return new_history, new_films
+
+
 def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days: int = 2,
             force: bool = False, timeout: float | None = None) -> int:
     """Runs the full pipeline once. Returns the process exit code (0 ok, 1 all chains failed).
@@ -210,6 +300,16 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
     table = price_table.load()
     previous = _load_json(LATEST_PATH)
     now = now_iso()
+    today = now[:10]
+
+    # Price cache (data/price_cache.json): {chain: {date: {key: [{"seat","aed"}]|None}}}. Only
+    # today's slice is ever handed to a reader, and only today's slice is ever written back --
+    # this *is* the "resets per date" rule: a run on a new calendar date simply starts every
+    # chain's cache empty again, ignoring (and dropping) whatever an earlier date left behind.
+    price_cache_on_disk = _load_json(PRICE_CACHE_PATH) or {}
+    chain_price_caches = {
+        c: dict((price_cache_on_disk.get(c) or {}).get(today) or {}) for c in PRICE_CACHE_CHAINS
+    }
 
     results: dict = {}
     health: dict = {}
@@ -220,7 +320,8 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
         if cached is not None:
             raw, ok, error, seconds = cached, True, None, 0.0
         else:
-            outcome = _run_chain(chain, days, offline, timeout if timeout is not None else chain_timeout(chain))
+            outcome = _run_chain(chain, days, offline, timeout if timeout is not None else chain_timeout(chain),
+                                  price_cache=chain_price_caches.get(chain))
             ok, error, seconds, raw = outcome["ok"], outcome["error"], outcome["seconds"], outcome["result"]
             if ok:
                 _write_json_atomic(_raw_path(chain), raw)
@@ -244,6 +345,7 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             else:
                 attempted = total
                 priced = sum(1 for s in raw.get("shows", []) if s.get("prices") is not None)
+            cached_reused = reader_price_health.get("cached") or 0
             pct = (priced / attempted * 100) if attempted else 0.0
             degraded = bool(attempted > 0 and (priced / attempted) < PRICES_DEGRADED_THRESHOLD)
 
@@ -251,18 +353,26 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             health[chain] = {"ok": True, "at": now, "error": None, "shows": total,
                               "prices_degraded": degraded}
             if reader_price_health:
+                # "attempted"/"priced" count network calls this run only -- honest about what
+                # actually hit the chain's site; "cached" is same-day samples reused instead
+                # (data/price_cache.json), never counted as an "attempt".
                 health[chain]["price_health"] = {
-                    "attempted": attempted, "priced": priced,
+                    "attempted": attempted, "priced": priced, "cached": cached_reused,
                     "error": reader_price_health.get("error"),
                 }
             summaries.append(
                 f"{chain}: ok  cinemas={len(raw.get('cinemas', []))}  shows={total}  "
-                f"priced={pct:.0f}%{'  DEGRADED' if degraded else ''}  {seconds:.1f}s"
+                f"priced={pct:.0f}%{f'  cached={cached_reused}' if cached_reused else ''}"
+                f"{'  DEGRADED' if degraded else ''}  {seconds:.1f}s"
             )
         else:
             results[chain] = error
             health[chain] = {"ok": False, "at": now, "error": error, "shows": 0}
             summaries.append(f"{chain}: FAILED  {error}  {seconds:.1f}s")
+
+    # persist today's price samples (mutated in place by each reader above) -- any other date
+    # already on disk is dropped here, which is the cache's "resets per date" rule in practice
+    _write_json_atomic(PRICE_CACHE_PATH, {c: {today: v} for c, v in chain_price_caches.items() if v})
 
     merged = normalize.merge(results, previous, now)
 
@@ -321,6 +431,21 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
                 f"failed: {', '.join(verdict_health['failed'])}"
             )
     _attach_verdicts(merged)
+
+    # film history: archive a film that's confirmed gone (permanent page, see update_film_history),
+    # and collect fids appearing for the first time ever -- for run.sh's one new-film notification.
+    # The very first run (no film_history.json on disk yet) seeds it silently: every current film
+    # is "new" only in the trivial sense of not being in an empty history, not worth alerting on.
+    history_existed = FILM_HISTORY_PATH.exists()
+    history = _load_json(FILM_HISTORY_PATH) or {}
+    new_history, new_films = update_film_history(merged, history, today)
+    _write_json_atomic(FILM_HISTORY_PATH, new_history)
+    _write_json_atomic(NEW_FILMS_PATH, new_films if history_existed else [])
+    if new_films:
+        summaries.append(
+            ("new films (seeded, no alert): " if not history_existed else "new films: ")
+            + ", ".join(f"{f['title']} ({f['cinemas']} سينما)" for f in new_films)
+        )
 
     _write_json_atomic(LATEST_PATH, merged)
     for city, city_data in normalize.city_slices(merged).items():

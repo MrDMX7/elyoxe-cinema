@@ -126,6 +126,33 @@ def city_of(*texts: str) -> str | None:
     return None
 
 
+# ---------------------------------------------------------------- cross-run price cache
+# A chain's slice of data/price_cache.json (refresh.py: {chain: {date: {key: value}}}, only
+# today's date ever handed down) — a plain {str: [{"seat","aed"}]|None} mapping, or None when the
+# caller has no persistence to offer (tests, --offline). Every reader that samples prices builds
+# its own per-run dedup key as a tuple (cinema, hall[, ...], date[, ...] — order is the reader's
+# own, cache_get/cache_set just need it stable); joined here into one string so it survives JSON.
+_CACHE_MISS = object()
+CACHE_MISS = _CACHE_MISS
+
+
+def _join_key(key) -> str:
+    return "|".join(str(part) for part in key)
+
+
+def cache_get(cache: dict | None, key):
+    """`cache[key joined]` if `cache` is not None and already has it, else CACHE_MISS (a sentinel
+    distinct from a legitimately-cached `None`, which means "sampled, no price found")."""
+    if cache is None:
+        return _CACHE_MISS
+    return cache.get(_join_key(key), _CACHE_MISS)
+
+
+def cache_set(cache: dict | None, key, value) -> None:
+    if cache is not None:
+        cache[_join_key(key)] = value
+
+
 class Polite:
     """requests.Session that waits `gap` seconds between calls and retries twice on 429/5xx/timeouts."""
 

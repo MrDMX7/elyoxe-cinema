@@ -18,7 +18,8 @@ import re
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from readers.common import CITIES, HALLS, Polite, arabic_title, city_of, lang_key, slug, subs_keys, youtube_id
+from readers.common import (CACHE_MISS, CITIES, HALLS, Polite, arabic_title, cache_get, cache_set,
+                             city_of, lang_key, slug, subs_keys, youtube_id)
 
 API = "https://uae-api.novocinemas.com/api/home"
 BOOKING_API = "https://uae-api.novocinemas.com/api/booking"
@@ -130,7 +131,7 @@ def _sample_prices(s: Polite, cinema_num, session_id) -> list[dict] | None:
         return None
 
 
-def fetch(days: int = 2, prices: bool = True) -> dict:
+def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict:
     s = Polite(gap=1.0)
 
     r = s.get(f"{API}/cinemas", params={"country_id": 2, "channel": "web"})
@@ -225,11 +226,18 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
                         continue
                     # one sample per cinema x hall x show date: weekday and weekend prices differ
                     key = (cinema_id, hall_label, cal_date)
+                    if key not in price_cache:
+                        hit = cache_get(cache, key)
+                        if hit is not CACHE_MISS:  # already sampled today -- reuse, don't retry it
+                            price_cache[key] = hit
+                            price_tries[key] = 2
+                            health["cached"] = health.get("cached", 0) + 1
                     if (prices and price_cache.get(key) is None and price_tries.get(key, 0) < 2
                             and start > now + timedelta(hours=1) and sess.get("session_id")):
                         price_tries[key] = price_tries.get(key, 0) + 1
                         price_cache[key] = _sample_prices(s, sess.get("cinemaId"), sess["session_id"])
                         health["attempted"] += 1
+                        cache_set(cache, key, price_cache[key])
                     shows.append({
                         "cinema": cinema_id,
                         "film_title": title,

@@ -21,7 +21,7 @@ import json
 import re
 from zoneinfo import ZoneInfo
 
-from readers.common import CITIES, HALLS, Polite, city_of, lang_key, slug, youtube_id
+from readers.common import CACHE_MISS, CITIES, HALLS, Polite, cache_get, cache_set, city_of, lang_key, slug, youtube_id
 
 BASE = "https://cineroyal.ae"
 CHAIN = "cineroyal"
@@ -202,7 +202,7 @@ def _get_seat_prices(s: Polite, screen_ref, cinema_ref, show_date: str, show_tim
     return [{"seat": tier, "aed": aed} for tier, aed in sorted(tiers.items())]
 
 
-def fetch(days: int = 2) -> dict:
+def fetch(days: int = 2, cache: dict | None = None) -> dict:
     s = Polite(gap=1.0, headers={"Accept": "application/json, text/html;q=0.9, */*;q=0.8"})
     # one same-origin GET establishes the session cookie every POST below needs
     s.get(BASE + "/home/nowShowing")
@@ -267,10 +267,16 @@ def fetch(days: int = 2) -> dict:
                     # cinema must not each cost their own call).
                     price_key = (cinema_ref, hall, show_date_iso)
                     if price_key not in price_cache:
-                        health["attempted"] += 1
-                        price_cache[price_key] = _get_seat_prices(
-                            s, screen_ref, cinema_ref, show_date_iso, formatted_time, pretty_url
-                        )
+                        hit = cache_get(cache, price_key)
+                        if hit is not CACHE_MISS:  # already sampled today -- reuse, no new call
+                            price_cache[price_key] = hit
+                            health["cached"] = health.get("cached", 0) + 1
+                        else:
+                            health["attempted"] += 1
+                            price_cache[price_key] = _get_seat_prices(
+                                s, screen_ref, cinema_ref, show_date_iso, formatted_time, pretty_url
+                            )
+                            cache_set(cache, price_key, price_cache[price_key])
                     prices = price_cache[price_key]
 
                     film_title = film_name.title() if film_name.isupper() else film_name

@@ -14,7 +14,8 @@ import sys
 import time
 from zoneinfo import ZoneInfo
 
-from readers.common import CITIES, HALLS, Polite, city_of, lang_key, slug, subs_keys, youtube_id, fmt3d as _fmt3d
+from readers.common import (CACHE_MISS, CITIES, HALLS, Polite, cache_get, cache_set, city_of,
+                             lang_key, slug, subs_keys, youtube_id, fmt3d as _fmt3d)
 
 BASE = "https://web-api.starcinemas.ae/api/v3/external"
 SITE = "https://www.starcinemas.ae"
@@ -274,7 +275,7 @@ def _get_with_refresh(http: Polite, url: str, state: dict) -> "requests.Response
     return r
 
 
-def fetch(days: int = 2) -> dict:
+def fetch(days: int = 2, cache: dict | None = None) -> dict:
     state = {"token": TOKEN, "refreshed": False}
     http = Polite(gap=2.0, headers={"Accept": "application/json", "Authorization": TOKEN})
 
@@ -341,37 +342,43 @@ def fetch(days: int = 2) -> dict:
             # one sample per cinema x hall x show date (weekday/weekend prices differ); 3D titles apart
             cache_key = (cid_num, hall_label, date, _fmt3d(rec.get("movie_title")))
             if cache_key not in price_cache:
-                ss_id = rec.get("ss_id")
-                if ss_id:
-                    health["attempted"] += 1
-                    pr = http.get(f"{BASE}/seat-layout/{ss_id}")
-                    # Price-call failures never raise — they only ever leave prices null,
-                    # per the binding rule (a 401/403 here is not the token-rot path; only
-                    # the listing/showtime calls above trigger a token refresh + raise).
-                    if pr is not None and pr.status_code == 200:
-                        try:
-                            seat_recs = pr.json().get("Records") or []
-                        except json.JSONDecodeError:
-                            seat_recs = []
-                        by_type: dict[str, float] = {}
-                        for s in seat_recs:
-                            seat_type = s.get("sst_seat_type")
-                            price = _to_float(s.get("seat_price"))
-                            if seat_type and price and price > 0:
-                                by_type[seat_type] = price
-                        price_cache[cache_key] = (
-                            [{"seat": k, "aed": v} for k, v in sorted(by_type.items())]
-                            if by_type
-                            else None
-                        )
+                hit = cache_get(cache, cache_key)
+                if hit is not CACHE_MISS:  # already sampled today -- reuse instead of another call
+                    price_cache[cache_key] = hit
+                    health["cached"] = health.get("cached", 0) + 1
+                else:
+                    ss_id = rec.get("ss_id")
+                    if ss_id:
+                        health["attempted"] += 1
+                        pr = http.get(f"{BASE}/seat-layout/{ss_id}")
+                        # Price-call failures never raise — they only ever leave prices null,
+                        # per the binding rule (a 401/403 here is not the token-rot path; only
+                        # the listing/showtime calls above trigger a token refresh + raise).
+                        if pr is not None and pr.status_code == 200:
+                            try:
+                                seat_recs = pr.json().get("Records") or []
+                            except json.JSONDecodeError:
+                                seat_recs = []
+                            by_type: dict[str, float] = {}
+                            for s in seat_recs:
+                                seat_type = s.get("sst_seat_type")
+                                price = _to_float(s.get("seat_price"))
+                                if seat_type and price and price > 0:
+                                    by_type[seat_type] = price
+                            price_cache[cache_key] = (
+                                [{"seat": k, "aed": v} for k, v in sorted(by_type.items())]
+                                if by_type
+                                else None
+                            )
+                        else:
+                            price_cache[cache_key] = None
+                            notes.append(
+                                f"seat-layout/{ss_id} (cinema {cid_num}, hall {hall_label}): "
+                                f"status={getattr(pr, 'status_code', None)}, prices left null"
+                            )
                     else:
                         price_cache[cache_key] = None
-                        notes.append(
-                            f"seat-layout/{ss_id} (cinema {cid_num}, hall {hall_label}): "
-                            f"status={getattr(pr, 'status_code', None)}, prices left null"
-                        )
-                else:
-                    price_cache[cache_key] = None
+                    cache_set(cache, cache_key, price_cache[cache_key])
 
             prices = price_cache[cache_key]
 
