@@ -3,7 +3,7 @@
 Prepared 2026-09-27 (phase 1, Task 5a). **Nothing here has been run.** The cutover changes the live
 production site; it waits for the owner's go after he has seen the preview at https://cinema.elyoxe.com.
 
-What changes: the Fold starts running the phase-1 code (hourly, deploying an indexable build to the new
+What changes: the Fold starts running the phase-1 code (four runs a day at first, hourly from step 6; deploying an indexable build to the new
 stack), the old `elyoxe.com/cinema*` and `/en/cinema*` URLs answer 301 to the same path on
 `cinema.elyoxe.com`, the studio's robots.txt points at the new sitemap, and the old objects in the tools
 bucket go.
@@ -21,6 +21,11 @@ Names used below:
 Timing: the Fold's cinema job runs at :10 of 06, 12, 18 and 23 (Asia/Dubai) until step 6. Start right
 after one of those runs has finished (e.g. 12:40) so steps 1–5 have a quiet window of hours. Every step
 below is ordered: do not start one until the previous step's check passes.
+
+**Step 2 starts immediately after step 1's push — before the Fold's next scheduled run.** Once the merge
+is on `origin/main`, the Fold's next :10 run pulls it and does step 2 by itself, unattended. Run step 2 by
+hand straight away (its flock makes a scheduled run that lands mid-way skip), and go on to step 3 without
+a gap: between steps 2 and 3 both hosts are indexable.
 
 ---
 
@@ -51,6 +56,7 @@ python -m pytest -q -p no:cacheprovider  # green on the merge
 git push origin main
 git checkout phase1                      # keep working on phase1 if more comes
 ```
+Then go straight to step 2 (see Timing above).
 
 Check: `git log origin/main --oneline -1` is the merge commit.
 
@@ -123,6 +129,12 @@ chk "https://elyoxe.com/cinema/film/heart-of-the-beast/?card=fazaa&x=1"   # 301 
 chk "https://elyoxe.com/cinema/sitemap.xml"          # 301 https://cinema.elyoxe.com/sitemap.xml
 chk "https://elyoxe.com/en/cinema/"                  # 301 https://cinema.elyoxe.com/en/
 chk "https://elyoxe.com/en/cinema/al-ain/?q=1"       # 301 https://cinema.elyoxe.com/en/al-ain/?q=1
+# an encoded query must come out byte for byte as it went in (CloudFront Functions may hand values over
+# decoded; if the Location shows "a&b c" or "a&b%20c", wrap the values in encodeURIComponent in
+# infra/redirect.js and re-run step 3):
+chk "https://elyoxe.com/cinema/dubai/?q=a%26b%20c"   # 301 https://cinema.elyoxe.com/dubai/?q=a%26b%20c
+chk "https://elyoxe.com/cinema/cards/homat/"         # 301 https://cinema.elyoxe.com/cards/homat/ -> 200, a noindex
+                                                     # «ما لقينا خصم مؤكد» note linking /cards/ (no confirmed discount)
 chk "https://elyoxe.com/"                            # 200 (studio untouched)
 chk "https://elyoxe.com/tools/"                      # 200
 chk "https://elyoxe.com/quran/"                      # 200
@@ -162,6 +174,12 @@ Rollback: re-upload the previous robots.txt (the four-line version with `/cinema
 
 ## 6. Hourly schedule (workspace + Fold)
 
+**Not on cutover day.** Keep the Fold on four runs a day until the hourly-safety fixes (resume-only raw
+reuse, canonical-fid history, the 5-day archive clock, state-change alerts; commit "fix: hourly-safe
+refresh…") have run in production for a full day: `data/raw/.run.json` absent between runs, every chain
+line in `cinema.log` without `(resumed)` on a normal run, `data/alert_state.json` present, no repeated
+`سينما ⚠` for the same condition. Then flip the `CINEMA_HOURLY_AT_CUTOVER` line:
+
 In `automation/phone/crontab`, the line under the `CINEMA_HOURLY_AT_CUTOVER` marker becomes hourly
 (the phase-1 daily price cache keeps seat-map calls to once per cinema × hall × date; run.sh's flock skips
 an overlapping run):
@@ -188,7 +206,8 @@ Rollback: restore the four-times line, commit, pull on the Fold, `install-cron.s
 ## 7. Watch one day
 
 - 24 runs, no failure notifications (`سينما ✗`); `data/health.json` all ok; a new film (if any) gives one
-  `سينما 🎬` notification, never a storm.
+  `سينما 🎬` notification, never a storm; a standing condition (a chain's prices degraded all day, a busy
+  phone) notifies once when it starts and once when it clears (`data/alert_state.json`).
 - `data/price_cache.json` grows once per day per cinema × hall × date, not per run.
 - Lighthouse spot check on the indexable build (SEO ≥ 95 now that `is-crawlable` passes).
 
@@ -208,7 +227,8 @@ aws s3 rm "s3://$TB/en/cinema/" --recursive --region ap-south-1 --dryrun | tail 
 aws s3 ls "s3://$TB/tools/" --region ap-south-1 | head -3       # still there
 curl -s -o /dev/null -w "%{http_code}\n" https://elyoxe.com/tools/   # 200
 ```
-Also retire `wire_cloudfront.py` (the old /cinema* → tools-bucket wiring) from the repo in the same change.
+(The old /cinema* → tools-bucket wiring script was deleted from the repo in the merge, so nothing can
+re-point those behaviors at the tools bucket and undo the 301s.)
 
 Rollback: none needed for the redirect (the edge answers without the origin). To bring the old site back
 entirely you would undo step 3 and redeploy the old main build (`git checkout <pre-merge sha> -- deploy.sh`

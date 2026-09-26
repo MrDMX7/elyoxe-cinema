@@ -48,7 +48,7 @@ def test_brand_new_fid_is_reported():
     assert new_films[0]["cinemas"] == 1
     assert new_history["new-film"]["first_seen"] == "2026-09-27"
     assert new_history["new-film"]["last_seen"] == "2026-09-27"
-    assert new_history["new-film"]["absent_runs"] == 0
+    assert new_history["new-film"]["absent_since"] is None
 
 
 def test_fid_already_in_history_is_not_reported_again():
@@ -69,26 +69,30 @@ def test_first_seen_is_never_overwritten_once_set():
 
 
 # ---------------------------------------------------------------- archival + the absence guard
+# Owner's ruling (final review I2): archive only after >= 5 days of confirmed absence, time-based.
+# The fuller hourly cases live in test_hourly_safe.py.
 
-def _absent_history(chains=("vox",), absent_runs=0, last_seen="2026-09-20"):
+NOW = "2026-09-27T12:10:00+04:00"
+
+
+def _absent_history(chains=("vox",), absent_since=None, last_seen="2026-09-20"):
     return {"gone-film": {"first_seen": "2026-09-01", "last_seen": last_seen,
-                           "absent_runs": absent_runs, "chains": list(chains),
-                           "snapshot": _film(chains=chains, title="Gone Film")}}
+                           "last_seen_at": f"{last_seen}T23:10:00+04:00", "absent_since": absent_since,
+                           "chains": list(chains), "snapshot": _film(chains=chains, title="Gone Film")}}
 
 
-def test_absent_film_is_not_archived_after_one_confirmed_absent_run():
-    history = _absent_history(absent_runs=0)
+def test_absent_film_is_not_archived_on_its_first_confirmed_absence():
+    history = _absent_history()
     merged = _merged({}, [], {"vox": True})
-    new_history, _ = refresh.update_film_history(merged, history, "2026-09-27")
-    assert new_history["gone-film"]["absent_runs"] == 1
+    new_history, _ = refresh.update_film_history(merged, history, NOW)
+    assert new_history["gone-film"]["absent_since"] == NOW
     assert "gone-film" not in merged["films"]  # not archived yet -- just gone from the listing
 
 
-def test_absent_film_is_archived_after_two_confirmed_absent_runs():
-    history = _absent_history(absent_runs=1)
+def test_absent_film_is_archived_after_five_days_of_confirmed_absence():
+    history = _absent_history(absent_since="2026-09-22T12:10:00+04:00")
     merged = _merged({}, [], {"vox": True})
-    new_history, _ = refresh.update_film_history(merged, history, "2026-09-27")
-    assert new_history["gone-film"]["absent_runs"] == 2
+    refresh.update_film_history(merged, history, NOW)
     film = merged["films"]["gone-film"]
     assert film["status"] == "archived"
     assert film["first_seen"] == "2026-09-01"
@@ -97,41 +101,40 @@ def test_absent_film_is_archived_after_two_confirmed_absent_runs():
 
 
 def test_archived_film_stays_archived_on_every_later_run():
-    """Once past the threshold, absent_runs only grows -- the film is re-added every run."""
-    history = _absent_history(absent_runs=5)
-    merged = _merged({}, [], {"vox": True})
-    new_history, _ = refresh.update_film_history(merged, history, "2026-09-27")
-    assert new_history["gone-film"]["absent_runs"] == 6
-    assert merged["films"]["gone-film"]["status"] == "archived"
+    history = _absent_history(absent_since="2026-09-21T12:10:00+04:00")
+    for hour in range(3):
+        merged = _merged({}, [], {"vox": True})
+        history, _ = refresh.update_film_history(merged, history, f"2026-09-27T1{2 + hour}:10:00+04:00")
+        assert merged["films"]["gone-film"]["status"] == "archived"
 
 
-def test_a_chain_outage_blocks_archival_and_does_not_advance_the_counter():
+def test_a_chain_outage_blocks_archival_and_does_not_start_the_clock():
     """The owner's binding guard: a chain that ever listed the film must be healthy AND absent
-    this run before its absence counts -- a failed/not-run chain must never let it be archived,
-    and must not even advance the streak (so a real 2nd confirmed absence starts fresh later)."""
-    history = _absent_history(chains=("vox", "star"), absent_runs=1)
+    this run before its absence counts -- a failed/not-run chain never archives, never starts the clock."""
+    history = _absent_history(chains=("vox", "star"))
     merged = _merged({}, [], {"vox": True, "star": False})  # star down this run
-    new_history, _ = refresh.update_film_history(merged, history, "2026-09-27")
-    assert new_history["gone-film"]["absent_runs"] == 1  # untouched, not advanced to 2
+    new_history, _ = refresh.update_film_history(merged, history, NOW)
+    assert new_history["gone-film"]["absent_since"] is None
+    assert "gone-film" not in merged["films"]
+    history = _absent_history(chains=("vox", "star"), absent_since="2026-09-20T12:00:00+04:00")
+    merged = _merged({}, [], {"vox": True, "star": False})
+    refresh.update_film_history(merged, history, NOW)
     assert "gone-film" not in merged["films"]  # never archived while unproven
 
 
 def test_a_chain_not_run_at_all_also_blocks_archival():
-    """merged["chains"] simply missing a chain (never run this call) must be treated as not ok,
-    same as an explicit failure -- normalize.merge()'s own "not run" chains are ok:false, but a
-    caller that omits the key entirely must not accidentally read that as healthy."""
-    history = _absent_history(chains=("reel",), absent_runs=1)
+    """merged["chains"] simply missing a chain (never run this call) must be treated as not ok."""
+    history = _absent_history(chains=("reel",), absent_since="2026-09-20T12:00:00+04:00")
     merged = _merged({}, [], {"vox": True})  # "reel" isn't even a key here
-    new_history, _ = refresh.update_film_history(merged, history, "2026-09-27")
-    assert new_history["gone-film"]["absent_runs"] == 1
+    new_history, _ = refresh.update_film_history(merged, history, NOW)
     assert "gone-film" not in merged["films"]
 
 
-def test_film_reappearing_before_archival_resets_absent_runs():
-    history = _absent_history(absent_runs=1)
+def test_film_reappearing_before_archival_resets_the_clock():
+    history = _absent_history(absent_since="2026-09-25T12:00:00+04:00")
     merged = _merged({"gone-film": _film(title="Gone Film")}, [_show("gone-film")], {"vox": True})
-    new_history, new_films = refresh.update_film_history(merged, history, "2026-09-27")
-    assert new_history["gone-film"]["absent_runs"] == 0
+    new_history, new_films = refresh.update_film_history(merged, history, NOW)
+    assert new_history["gone-film"]["absent_since"] is None
     assert new_films == []  # it was already in history -- not a "new" film
     assert merged["films"]["gone-film"].get("status") != "archived"
 
@@ -206,14 +209,20 @@ def test_price_cache_persisted_and_reused_next_run(sandbox, monkeypatch):
     seen: dict = {}
     _fake_readers_with_price_cache_spy(monkeypatch, seen)
 
+    sampling = refresh.CHAIN_READERS["vox"]
+
+    def vox_samples(days=2, **kw):  # the reader samples one price into the cache it was handed
+        kw["cache"]["vox-fake|Standard|2026-09-25"] = [{"seat": "Standard", "aed": 40.0}]
+        return sampling(days=days, **kw)
+    monkeypatch.setattr(refresh, "CHAIN_READERS", {**refresh.CHAIN_READERS, "vox": vox_samples})
     refresh.refresh(chains=["vox"], offline=False, no_verdicts=True)
-    seen["vox"]["vox-fake|Standard|2026-09-25"] = [{"seat": "Standard", "aed": 40.0}]  # simulate a sample
 
     on_disk = json.loads((data_dir / "price_cache.json").read_text(encoding="utf-8"))
     # refresh() writes back whatever it handed the reader, mutated in place
-    assert "vox" not in on_disk or on_disk.get("vox", {}).get("2026-09-25") is not None
+    assert on_disk["vox"]["2026-09-25"]["vox-fake|Standard|2026-09-25"] == [{"seat": "Standard", "aed": 40.0}]
 
-    refresh.refresh(chains=["vox"], offline=False, no_verdicts=True)
+    monkeypatch.setattr(refresh, "CHAIN_READERS", {**refresh.CHAIN_READERS, "vox": sampling})
+    refresh.refresh(chains=["vox"], offline=False, no_verdicts=True)  # a new run: the reader is called again
     assert seen["vox"].get("vox-fake|Standard|2026-09-25") == [{"seat": "Standard", "aed": 40.0}]
 
 

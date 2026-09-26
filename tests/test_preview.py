@@ -49,6 +49,8 @@ def test_default_build_stays_indexable(tmp_path, monkeypatch, env):
         html = open(p, encoding="utf-8").read()
         if os.path.basename(p) in ("404.html", "offline.html"):   # never pages to index
             continue
+        if "no confirmed discount for this card" in html or "ما لقينا خصم مؤكد لهالبطاقة" in html:
+            continue   # an unconfirmed card's old URL: a noindex note by design (test_hourly_safe.py)
         assert "noindex" not in html, p
     robots = open(os.path.join(out, "robots.txt"), encoding="utf-8").read()
     assert "Sitemap: https://cinema.elyoxe.com/sitemap.xml" in robots

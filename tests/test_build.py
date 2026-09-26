@@ -132,12 +132,14 @@ def test_box_office_price_and_stale_chain(site):
 
 def test_only_confirmed_cards_and_official_rules_are_published(site):
     """Spec: third-party and unconfirmed rules stay hidden; a card with no current official discount
-    (homat: only «none found») appears nowhere — no page, no chip, no row in discounts.json."""
+    (homat: only «none found») appears nowhere — no chip, no row in discounts.json, not in the sitemap;
+    its old URL is only a noindex «no confirmed discount» note (test_hourly_safe.py), not a card page."""
     out, _ = site
     esaad = re.sub(r"<script.*?</script>", "", read(out, "cards", "esaad"), flags=re.S)   # official at Novo, third-party at Star
     assert "غير مؤكد" not in esaad and "نوفو" in esaad
     assert "ستار" not in esaad.split('<section class="wrap cardsx">')[0].split("</h1>")[1]
-    assert not os.path.exists(os.path.join(out, "cards", "homat"))
+    stub = read(out, "cards", "homat")
+    assert '<meta name="robots" content="noindex">' in stub and "cardrows" not in stub
     home = read(out)
     assert 'data-card="fazaa"' in home and 'data-card="homat"' not in home and 'value="homat"' not in home
     d = json.load(open(os.path.join(out, "data", "discounts.json"), encoding="utf-8"))

@@ -103,6 +103,7 @@ DATE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
 HHMM = re.compile(r"^\d{2}:\d{2}$")
 HEX = re.compile(r"^#[0-9A-Fa-f]{6}$")
 YT = re.compile(r"^[A-Za-z0-9_-]{11}$")
+FID = re.compile(r"^[a-z0-9][a-z0-9_-]{0,120}$")   # a slug: safe as a path segment and in an attribute
 SAFE_URL = re.compile(r"^https?://", re.I)
 OUR_POSTER = re.compile(r"^/posters/[A-Za-z0-9._-]+\.webp$")   # posters.py mirrors to /posters/<fid>-<hash>-342.webp
 SCHED_BUDGET = 100_000   # bytes of schedule markup per page; with the chrome a page stays under 150 KB
@@ -456,6 +457,10 @@ class Site:
             self._by_film.setdefault(s["film"], []).append(s); self._by_cin.setdefault(s["cinema"], []).append(s)
         self.today_count = {fid: sum(1 for s in ss if s["date"] == self.today) for fid, ss in self._by_film.items()}
         self._P, self._Pi, self._first_poster = [], {}, None
+        # {old fid: canonical fid} (refresh.update_film_history): a film whose canonical fid changed keeps
+        # its old URL as a noindex redirect page. Only to a film that has a page, never over a real film.
+        self.redirects = {o: n for o, n in (data.get("redirects") or {}).items()
+                          if isinstance(o, str) and FID.match(o) and n in self.films and o not in self.films}
 
     # -------- names
     def cname(self, cid, lang):
@@ -1492,6 +1497,42 @@ class Site:
                      self.breadcrumb_ld(lang, (L(UI["s_halls"], lang), P(lang, "halls")))]
             self.page(lang, ("halls",), title, desc, body, graph, "halls")
 
+    # -------------------------------------------------- old URLs that must not 404
+    def redirect_pages(self):
+        """An old fid (the film's canonical id changed, final review I1) answers with a small page that sends
+        the reader on at once: meta refresh + canonical to the film's page + noindex. Never in the sitemap."""
+        for old, new in sorted(self.redirects.items()):
+            for lang in ("ar", "en"):
+                href = P(lang, "film", new); t = self.ftitle(new, lang)
+                robots = NOINDEX if self.noindex else '<meta name="robots" content="noindex">'
+                page = (f'<!doctype html>\n<html lang="{lang}" dir="{"rtl" if lang == "ar" else "ltr"}"><head><meta charset="utf-8">'
+                        f'<title>{esc(t)}</title>{robots}'
+                        f'<link rel="canonical" href="{SITE + href}"><meta http-equiv="refresh" content="0; url={href}">'
+                        f'<meta name="viewport" content="width=device-width,initial-scale=1"></head>'
+                        f'<body><p><a href="{href}">{esc(t)}</a></p></body></html>\n')
+                self.write(os.path.join(self.out, *(["en"] if lang == "en" else []), "film", old, "index.html"), page)
+
+    def card_stubs(self):
+        """A card listed in discounts.yaml with no confirmed discount today (homat) had a page on the old site;
+        its old link (and the 301 onto this host) lands on a short noindex note and the way to every card,
+        not a 404. Not in the sitemap, linked from nowhere."""
+        confirmed = {c["id"] for c in self.cards}
+        for card in self.disc.get("cards") or []:
+            cid = card.get("id")
+            if not cid or cid in confirmed or not FID.match(cid):
+                continue
+            for lang in ("ar", "en"):
+                cn = card.get("name_ar") if lang == "ar" else card.get("name_en")
+                cn = cn or cid
+                body = (f'<section class="head wrap">{self.crumbs(lang, (L(UI["s_cards"], lang), P(lang, "cards")), (cn, None))}'
+                        f'<h1 class="pt">{esc(cn)}</h1>'
+                        f'<p class="lead">{"ما لقينا خصم مؤكد لهالبطاقة حالياً." if lang == "ar" else "We found no confirmed discount for this card right now."} '
+                        f'<a href="{P(lang, "cards")}">{"كل خصومات البطاقات" if lang == "ar" else "Every card discount"}</a></p></section>')
+                title = (f"{cn} — ما لقينا خصم مؤكد حالياً" if lang == "ar" else f"{cn} — no confirmed discount right now")
+                self.page(lang, ("cards", cid), title, title, body, [], "card", nav="cards",
+                          path=os.path.join(self.out, *(["en"] if lang == "en" else []), "cards", cid, "index.html"),
+                          robots='<meta name="robots" content="noindex">')
+
     # -------------------------------------------------- 404
     def not_found(self):
         body = (f'<section class="head wrap nf"><h1 class="pt">ما لقينا هالصفحة</h1>'
@@ -1631,7 +1672,7 @@ a{color:#F1EAE0;text-decoration-color:#A89C8E;text-underline-offset:.2em}
             shutil.copy(os.path.join(fdir, f), os.path.join(adir, "fonts", f))
 
     def run(self):
-        self.home(); self.city_pages(); self.cinema_pages(); self.film_pages(); self.card_pages(); self.halls_page(); self.not_found(); self.offline()
+        self.home(); self.city_pages(); self.cinema_pages(); self.film_pages(); self.card_pages(); self.card_stubs(); self.redirect_pages(); self.halls_page(); self.not_found(); self.offline()
         self.slices(); self.sitemap(); self.assets()
         return len(self.urls)
 

@@ -165,22 +165,25 @@ def test_all_chains_failed_exits_1(sandbox, monkeypatch):
     assert code == 1
 
 
-def test_fresh_raw_file_is_reused_without_refetching(sandbox, monkeypatch):
+def test_unfinished_runs_raw_file_is_reused_without_refetching(sandbox, monkeypatch):
+    """A killed run is resumed from its own raw files (final review C1: only those -- see
+    test_hourly_safe.py for the never-across-completed-runs side)."""
     data_dir, _ = sandbox
     monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
     calls = _fake_readers(monkeypatch)
 
     raw_dir = data_dir / "raw"
     raw_dir.mkdir(parents=True)
+    (raw_dir / ".run.json").write_text(json.dumps({"id": "r1", "started": "2026-09-25T11:40:00+04:00"}), encoding="utf-8")
     fixture = json.loads((REAL_FIXTURES_DIR / "vox.json").read_text(encoding="utf-8"))
-    (raw_dir / "vox.json").write_text(json.dumps(fixture), encoding="utf-8")
+    (raw_dir / "vox.json").write_text(json.dumps({**fixture, "_run_id": "r1"}), encoding="utf-8")
 
     code = refresh.refresh(chains=["vox"], offline=False, no_verdicts=True)
 
     assert code == 0
-    assert calls.get("vox", 0) == 0  # never called — the fresh raw file was reused
+    assert calls.get("vox", 0) == 0  # never called — the unfinished run's raw file was reused
     health = json.loads((data_dir / "health.json").read_text(encoding="utf-8"))
-    assert health["vox"]["ok"] is True
+    assert health["vox"]["ok"] is True and health["vox"]["reused"] is True
 
 
 def test_price_health_passthrough_and_degraded_flag(sandbox, monkeypatch):
@@ -231,8 +234,9 @@ def test_force_ignores_fresh_raw_file(sandbox, monkeypatch):
 
     raw_dir = data_dir / "raw"
     raw_dir.mkdir(parents=True)
+    (raw_dir / ".run.json").write_text(json.dumps({"id": "r1", "started": "2026-09-25T11:40:00+04:00"}), encoding="utf-8")
     fixture = json.loads((REAL_FIXTURES_DIR / "vox.json").read_text(encoding="utf-8"))
-    (raw_dir / "vox.json").write_text(json.dumps(fixture), encoding="utf-8")
+    (raw_dir / "vox.json").write_text(json.dumps({**fixture, "_run_id": "r1"}), encoding="utf-8")
 
     code = refresh.refresh(chains=["vox"], offline=False, no_verdicts=True, force=True)
 
