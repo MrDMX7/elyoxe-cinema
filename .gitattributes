@@ -1,0 +1,6 @@
+# LF everywhere in the repo (the Fold checks out LF; Windows editors must not flip whole files)
+*.py   text eol=lf
+*.yaml text eol=lf
+*.yml  text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
