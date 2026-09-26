@@ -394,11 +394,15 @@ def test_root_files_and_robots(site):
     assert 'href="/en/" hreflang="en"' in home
 
 
-def test_times_are_buttons_with_show_ids_and_the_ticket_is_server_rendered(site):
+def test_times_are_booking_links_with_show_ids_and_the_ticket_is_server_rendered(site):
+    """Review round 1: every time books with no script (an <a href> to the chain's booking page, or the
+    chain's site), carries data-show for the ticket, and a show already started is plain text."""
     out, data = site
     film = read(out, "film", "heart-of-the-beast")
-    btns = re.findall(r'<button type="button" class="tm[^"]*" ([^>]*)>', film)
-    assert btns and all(re.search(r'data-show="[0-9a-f]{10}" data-start="\d\d:\d\d"', b) for b in btns)
+    btns = re.findall(r'<a class="tm[^"]*" (href="[^"]*"[^>]*)>', film)
+    assert btns and all(re.search(r'href="https?://[^"]+".*data-show="[0-9a-f]{10}" data-start="\d\d:\d\d"', b) for b in btns)
+    assert "<button" not in "".join(re.findall(r'<div class="times".*?</div>', film))
+    assert re.search(r'<span class="tm past" data-start="(0\d|1[0-7]):\d\d">', film)       # built at 18:00: earlier shows are text
     ids = [re.search(r'data-show="(\w+)"', b).group(1) for b in btns]
     assert len(ids) == len(set(ids))
     assert any("data-ends=" in b and 'data-lang="English"' in b for b in btns)
@@ -410,6 +414,57 @@ def test_times_are_buttons_with_show_ids_and_the_ticket_is_server_rendered(site)
     assert all(int(re.search(r'data-p="(\d+)"', b).group(1)) < len(pl) for b in btns if "data-p=" in b)
     cin = read(out, "al-ain", "star-bawadi-mall")
     assert '<aside class="ticket"' in cin and 'class="tm' in cin
+    assert 'role="dialog" aria-labelledby="tk-cin"' in tk and 'data-tk-book data-book=' in tk and "data-share=" in tk
+
+
+def test_every_page_with_times_has_a_filled_ticket_for_its_city(site):
+    out, data = site
+    city = read(out, "al-ain")
+    assert city.count('class="tm') > 5 and "data-tk-rows" in city
+    tk = city[city.index('<aside class="ticket"'):]
+    cin = re.search(r'data-cin="([^"]+)"', tk).group(1)
+    assert data["cinemas"][cin]["city"] == "al-ain"
+    for m in re.finditer(r'<div class="scin" data-cin="([^"]+)" data-chain="([^"]+)">', city):
+        assert data["cinemas"][m.group(1)]["chain"] == m.group(2)
+    home = read(out)
+    tk = home[home.index('<aside class="ticket"'):]
+    assert "data-tk-rows" in tk and data["cinemas"][re.search(r'data-cin="([^"]+)"', tk).group(1)]["city"] == "dubai"
+    film = read(out, "film", "heart-of-the-beast")            # the default ticket is in the city shown first (Dubai)
+    tk = film[film.index('<aside class="ticket"'):]
+    assert data["cinemas"][re.search(r'data-cin="([^"]+)"', tk).group(1)]["city"] == "dubai"
+
+
+def test_og_images_exist(site):
+    out, _ = site
+    for f in all_files(out):
+        if not f.endswith(".html"): continue
+        m = re.search(r'<meta property="og:image" content="([^"]+)">', open(f, encoding="utf-8").read())
+        assert m, f
+        if m.group(1).startswith(build.SITE + "/assets/"):
+            assert os.path.exists(os.path.join(out, *m.group(1)[len(build.SITE) + 1:].split("/"))), (f, m.group(1))
+
+
+def test_dates_are_human_and_english_runs_marked(site):
+    out, _ = site
+    cin = read(out, "al-ain", "star-bawadi-mall")
+    assert "<small>25 سبتمبر 2026</small>" in cin and "25 September 2026" in read(out, "en", "al-ain", "star-bawadi-mall")
+    assert 'lang="en">Google Maps</a>' in cin and 'lang="en">Waze</a>' in cin
+    assert '<bdi dir="ltr" lang="en">' in read(out, "film", "crawlers")
+    assert "E0816F" not in open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
+    assert 'href="/assets/fonts/readex-latin.woff2"' in read(out)
+
+
+def test_no_poster_hero_is_not_a_colour_field(site):
+    out, _ = site
+    home = read(out)                                   # the fixture's featured film (Coyote) has a poster URL
+    assert '<div class="bd" style="--pc:#7A5A1C" aria-hidden="true"><img' in home
+
+    def m(d):
+        for f in d["films"].values(): f["poster"] = None
+    import tempfile
+    o = _built(__import__("pathlib").Path(tempfile.mkdtemp()), m)
+    h = read(o)
+    assert '<div class="bd noimg"' in h and '<span class="pst bd-t">' in h
 
 
 def test_ends_only_when_known(site):
@@ -451,7 +506,7 @@ def test_archived_film_keeps_its_page(site):
     tiles = re.findall(r'<a class="film[^"]*" href="/film/([^/]+)/"', similar)
     assert 0 < len(tiles) <= 6 and "weapons" not in tiles and "the-long-walk" not in tiles
     # a shared genre first (horror / thriller), then the verdict: Resident Evil (mixed) before Crawlers (skip)
-    assert tiles[:3] == ["resident-evil", "crawlers", "sacrifice"] or set(tiles[:3]) == {"resident-evil", "crawlers", "sacrifice"}
+    assert set(tiles[:3]) == {"resident-evil", "crawlers", "sacrifice"}
     assert tiles.index("resident-evil") < tiles.index("crawlers")
     nodate = read(out, "film", "the-long-walk")
     assert '<p class="arch-s">انتهى عرضه في السينما</p>' in nodate

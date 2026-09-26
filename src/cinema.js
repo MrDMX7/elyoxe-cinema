@@ -114,12 +114,13 @@
 
   /* ---------------- times and ages */
   function marks() {
-    var soon = NOW.getTime() + 2 * 3600e3;
+    var soon = NOW.getTime() + 45 * 60e3;   // the same window as «الحين»
     qa(".times[data-d]").forEach(function (box) {
       var d = box.getAttribute("data-d");
       qa("[data-start]", box).forEach(function (a) {
         var t = uae(d + "T" + a.getAttribute("data-start")).getTime();
         a.classList.toggle("past", t < NOW.getTime());
+        if (t < NOW.getTime()) { a.setAttribute("aria-disabled", "true"); a.setAttribute("tabindex", "-1"); }
         a.classList.toggle("nowish", t >= NOW.getTime() && t <= soon);
       });
     });
@@ -278,12 +279,13 @@
     tk.querySelector("[data-tk-when]").innerHTML = (hn && hk !== "Standard" ? '<span class="tk-h"><bdi>' + esc(hn.textContent) + "</bdi></span>" : "") + (ends ? "<span>" + esc(sub(C.ends, { t: ends })) + "</span>" : "");
     var pl = PL[+btn.getAttribute("data-p")];
     tk.querySelector("[data-tk-rows]").innerHTML = pl && btn.hasAttribute("data-p") ? pl.slice().sort(function (a, b) { return a[1] - b[1]; }).map(function (p) {
-      return '<tr><th scope="row"><bdi>' + esc(p[0]) + '</bdi></th><td><span class="p" data-aed="' + fmt(p[1]) + '" data-chain="' + esc(chain) + '" data-hall="' + esc(hall) + '" data-hk="' + esc(hk) + '" data-cin="' + esc(cin) + '"' + (asof ? ' data-asof="' + esc(asof) + '"' : "") + '><span class="num">' + fmt(p[1]) + "</span></span></td></tr>";
+      return '<tr><th scope="row"><bdi lang="en">' + esc(p[0]) + '</bdi></th><td><span class="p" data-aed="' + fmt(p[1]) + '" data-chain="' + esc(chain) + '" data-hall="' + esc(hall) + '" data-hk="' + esc(hk) + '" data-cin="' + esc(cin) + '"' + (asof ? ' data-asof="' + esc(asof) + '"' : "") + '><span class="num">' + fmt(p[1]) + "</span></span></td></tr>";
     }).join("") : '<tr><td colspan="2"><span class="na">' + esc(C.box) + "</span></td></tr>";
     var book = tk.querySelector("[data-tk-book]"), url = btn.getAttribute("data-book");
     if (book && url && book.tagName === "A") { book.href = url; if (D && D.chains) book.textContent = sub(C.book_at, { chain: D.chains[lang][chain] || chain }); }
     renderPrices(); renderTerms(chain);
-    tk.classList.add("open");
+    tk.hidden = false; tk.classList.add("open");
+    if (window.matchMedia && window.matchMedia("(max-width: 1023px)").matches) tk.setAttribute("aria-modal", "true");
   }
   function renderTerms(chain) {
     var el = tk && tk.querySelector("[data-tk-terms]"); if (!el) return;
@@ -292,10 +294,12 @@
     if (!el.hidden) el.innerHTML = esc(sub(C.after_card, { card: C.cards[card] })) + " " + offer(r) + (r.note_ar && lang === "ar" ? "، " + esc(r.note_ar) : "");
   }
   document.addEventListener("click", function (e) {
-    var b = e.target.closest && e.target.closest("button[data-show]"); if (b) { openTicket(b); return; }
-    if (e.target.closest && e.target.closest("[data-tk-close]") && tk) tk.classList.remove("open");
+    var b = e.target.closest && e.target.closest(".tm[data-show]");
+    if (b) { if (b.classList.contains("past")) { e.preventDefault(); return; } if (tk && tk.querySelector("[data-tk-rows]")) { e.preventDefault(); openTicket(b); } return; }
+    if (e.target.closest && e.target.closest("[data-tk-close]")) closeTicket();
   });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && tk) tk.classList.remove("open"); });
+  function closeTicket() { if (tk) { tk.classList.remove("open"); tk.removeAttribute("aria-modal"); } }
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeTicket(); });
 
   function render() {
     renderPrices();

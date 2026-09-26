@@ -938,7 +938,9 @@
      "aed": 160
     }
    ],
-   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-25/1215"
+   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-25/1215",
+   "ends": "14:33",
+   "lang": "English"
   },
   {
    "cinema": "novo-img-worlds",
@@ -978,7 +980,9 @@
    "hall": "Standard",
    "hall_label": "Screen 1",
    "prices": null,
-   "book": "https://uae.novocinemas.com/booking/novo-manar-mall/heart-of-the-beast/2026-09-25/1215"
+   "book": "https://uae.novocinemas.com/booking/novo-manar-mall/heart-of-the-beast/2026-09-25/1215",
+   "ends": "14:33",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -1431,7 +1435,9 @@
      "aed": 45
     }
    ],
-   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-25/1345"
+   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-25/1345",
+   "ends": "16:03",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -1719,7 +1725,9 @@
    "hall": "Standard",
    "hall_label": "Screen 1",
    "prices": null,
-   "book": "https://uae.novocinemas.com/booking/novo-manar-mall/heart-of-the-beast/2026-09-25/1530"
+   "book": "https://uae.novocinemas.com/booking/novo-manar-mall/heart-of-the-beast/2026-09-25/1530",
+   "ends": "17:48",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -3479,7 +3487,9 @@
      "aed": 160
     }
    ],
-   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-25/2030"
+   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-25/2030",
+   "ends": "22:48",
+   "lang": "English"
   },
   {
    "cinema": "novo-img-worlds",
@@ -4740,7 +4750,9 @@
      "aed": 45
     }
    ],
-   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-25/2245"
+   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-25/2245",
+   "ends": "01:03",
+   "lang": "English"
   },
   {
    "cinema": "novo-img-worlds",
@@ -4780,7 +4792,9 @@
    "hall": "Standard",
    "hall_label": "Screen 1",
    "prices": null,
-   "book": "https://uae.novocinemas.com/booking/novo-manar-mall/heart-of-the-beast/2026-09-25/2245"
+   "book": "https://uae.novocinemas.com/booking/novo-manar-mall/heart-of-the-beast/2026-09-25/2245",
+   "ends": "01:03",
+   "lang": "English"
   },
   {
    "cinema": "novo-manar-mall",
@@ -5041,7 +5055,9 @@
      "aed": 45
     }
    ],
-   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-25/2330"
+   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-25/2330",
+   "ends": "01:48",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -5612,7 +5628,9 @@
    "hall": "Standard",
    "hall_label": "Screen 1",
    "prices": null,
-   "book": "https://uae.novocinemas.com/booking/novo-manar-mall/heart-of-the-beast/2026-09-26/1215"
+   "book": "https://uae.novocinemas.com/booking/novo-manar-mall/heart-of-the-beast/2026-09-26/1215",
+   "ends": "14:33",
+   "lang": "English"
   },
   {
    "cinema": "novo-manar-mall",
@@ -6385,7 +6403,9 @@
      "aed": 65
     }
    ],
-   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-26/1530"
+   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-26/1530",
+   "ends": "17:48",
+   "lang": "English"
   },
   {
    "cinema": "novo-img-worlds",
@@ -6713,7 +6733,9 @@
      "aed": 45
     }
    ],
-   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-26/1700"
+   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-26/1700",
+   "ends": "19:18",
+   "lang": "English"
   },
   {
    "cinema": "novo-img-worlds",
@@ -7713,7 +7735,9 @@
      "aed": 65
     }
    ],
-   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-26/1945"
+   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-26/1945",
+   "ends": "22:03",
+   "lang": "English"
   },
   {
    "cinema": "novo-img-worlds",
@@ -8234,7 +8258,9 @@
      "aed": 45
     }
    ],
-   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-26/2030"
+   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-26/2030",
+   "ends": "22:48",
+   "lang": "English"
   },
   {
    "cinema": "novo-manar-mall",
@@ -8244,7 +8270,9 @@
    "hall": "Standard",
    "hall_label": "Screen 1",
    "prices": null,
-   "book": "https://uae.novocinemas.com/booking/novo-manar-mall/heart-of-the-beast/2026-09-26/2030"
+   "book": "https://uae.novocinemas.com/booking/novo-manar-mall/heart-of-the-beast/2026-09-26/2030",
+   "ends": "22:48",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
@@ -9566,7 +9594,9 @@
      "aed": 45
     }
    ],
-   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-26/2330"
+   "book": "https://uae.novocinemas.com/booking/novo-img-worlds/heart-of-the-beast/2026-09-26/2330",
+   "ends": "01:48",
+   "lang": "English"
   },
   {
    "cinema": "novo-img-worlds",
@@ -9616,7 +9646,9 @@
    "hall": "Standard",
    "hall_label": "Screen 1",
    "prices": null,
-   "book": "https://uae.novocinemas.com/booking/novo-manar-mall/heart-of-the-beast/2026-09-26/2330"
+   "book": "https://uae.novocinemas.com/booking/novo-manar-mall/heart-of-the-beast/2026-09-26/2330",
+   "ends": "01:48",
+   "lang": "English"
   },
   {
    "cinema": "reel-dubai-mall",
