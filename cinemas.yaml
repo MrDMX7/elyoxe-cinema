@@ -65,27 +65,27 @@ cinemas:
   star-national-cinema-abu-dhabi:    {ar: "ستار — السينما الوطنية",              en: "Star — National Cinema", lat: 24.4920694, lng: 54.3689923, coord_source: "google maps link published by star"}
   star-star-cinemas-ras-al-khaimah:  {ar: "ستار — رأس الخيمة",                   en: "Star — Ras Al Khaimah", lat: 25.7946177, lng: 55.9732781, coord_source: "google maps link published by star"}
   # --- VOX
-  vox-abu-dhabi-mall-abu-dhabi:      {ar: "فوكس — أبوظبي مول",                   en: "VOX — Abu Dhabi Mall", lat: 24.496107, lng: 54.383179, coord_source: "openstreetmap nominatim: Abu Dhabi Mall, Abu Dhabi"}
+  vox-abu-dhabi-mall-abu-dhabi:      {ar: "فوكس — أبوظبي مول",                   en: "VOX — Abu Dhabi Mall", lat: 24.4978, lng: 54.3832, coord_source: "vox cinema page (map link)"}
   vox-al-hamra-mall-ras-al-khaimah:  {ar: "فوكس — الحمرا مول",                   en: "VOX — Al Hamra Mall", lat: 25.683001, lng: 55.781694, coord_source: "openstreetmap nominatim: Al Hamra Mall, Ras Al Khaimah"}
-  vox-al-jimi-mall:                  {ar: "فوكس — الجيمي مول",                   en: "VOX — Al Jimi Mall", lat: 24.244198, lng: 55.726727, coord_source: "openstreetmap nominatim: Al Jimi Mall, Al Ain"}
-  vox-burjuman:                      {ar: "فوكس — برجمان",                       en: "VOX — BurJuman", lat: 25.25499, lng: 55.303941, coord_source: "openstreetmap nominatim: Burjuman, Dubai"}
-  vox-city-centre-ajman:             {ar: "فوكس — سيتي سنتر عجمان",              en: "VOX — City Centre Ajman", lat: 25.39973, lng: 55.479134, coord_source: "openstreetmap nominatim: City Centre Ajman, Ajman"}
+  vox-al-jimi-mall:                  {ar: "فوكس — الجيمي مول",                   en: "VOX — Al Jimi Mall", lat: 24.2437, lng: 55.7267, coord_source: "vox cinema page (map link)"}
+  vox-burjuman:                      {ar: "فوكس — برجمان",                       en: "VOX — BurJuman", lat: 25.2531, lng: 55.3021, coord_source: "vox cinema page (map link)"}
+  vox-city-centre-ajman:             {ar: "فوكس — سيتي سنتر عجمان",              en: "VOX — City Centre Ajman", lat: 25.3995, lng: 55.4796, coord_source: "vox cinema page (map link)"}
   vox-city-centre-al-zahia:          {ar: "فوكس — سيتي سنتر الزاهية",            en: "VOX — City Centre Al Zahia", lat: 25.316892, lng: 55.455727, coord_source: "openstreetmap nominatim: City Centre Al Zahia, Sharjah"}
-  vox-city-centre-deira:             {ar: "فوكس — سيتي سنتر ديرة",               en: "VOX — City Centre Deira", lat: 25.252218, lng: 55.332254, coord_source: "openstreetmap nominatim: City Centre Deira, Dubai"}
-  vox-city-centre-fujairah:          {ar: "فوكس — سيتي سنتر الفجيرة",            en: "VOX — City Centre Fujairah", lat: 25.12559, lng: 56.302232, coord_source: "openstreetmap nominatim: City Centre Fujairah, Fujairah"}
+  vox-city-centre-deira:             {ar: "فوكس — سيتي سنتر ديرة",               en: "VOX — City Centre Deira", lat: 25.2517, lng: 55.3326, coord_source: "vox cinema page (map link)"}
+  vox-city-centre-fujairah:          {ar: "فوكس — سيتي سنتر الفجيرة",            en: "VOX — City Centre Fujairah", lat: 25.1256, lng: 56.3022, coord_source: "vox cinema page (map link)"}
   vox-city-centre-meaisem:           {ar: "فوكس — سيتي سنتر معيصم",              en: "VOX — City Centre Me'aisem", lat: 25.04034, lng: 55.196943, coord_source: "openstreetmap nominatim: City Centre Meaisem, Dubai"}
-  vox-city-centre-mirdif:            {ar: "فوكس — سيتي سنتر مردف",               en: "VOX — City Centre Mirdif", lat: 25.216022, lng: 55.408067, coord_source: "openstreetmap nominatim: City Centre Mirdif, Dubai"}
-  vox-city-centre-sharjah:           {ar: "فوكس — سيتي سنتر الشارقة",            en: "VOX — City Centre Sharjah", lat: 25.342682, lng: 55.407422, coord_source: "openstreetmap nominatim: Sharjah City Centre"}
-  vox-city-centre-shindagha:         {ar: "فوكس — سيتي سنتر الشندغة",            en: "VOX — City Centre Shindagha", lat: 25.263985, lng: 55.287123, coord_source: "openstreetmap nominatim: City Centre Shindagha, Dubai"}
+  vox-city-centre-mirdif:            {ar: "فوكس — سيتي سنتر مردف",               en: "VOX — City Centre Mirdif", lat: 25.217, lng: 55.4073, coord_source: "vox cinema page (map link)"}
+  vox-city-centre-sharjah:           {ar: "فوكس — سيتي سنتر الشارقة",            en: "VOX — City Centre Sharjah", lat: 25.3249, lng: 55.3935, coord_source: "vox cinema page (map link)"}
+  vox-city-centre-shindagha:         {ar: "فوكس — سيتي سنتر الشندغة",            en: "VOX — City Centre Shindagha", lat: 25.2639, lng: 55.2869, coord_source: "vox cinema page (map link)"}
   vox-dubai-festival-city-mall:      {ar: "فوكس — دبي فستيفال سيتي مول",         en: "VOX — Dubai Festival City Mall", lat: 25.221868, lng: 55.352589, coord_source: "openstreetmap nominatim: Dubai Festival City Mall"}
   vox-kempinski-mall-of-emirates:    {ar: "فوكس — كمبينسكي، مول الإمارات",       en: "VOX — Kempinski, Mall of the Emirates", lat: 25.1188, lng: 55.199, coord_source: "same site as vox-mall-of-the-emirates (vox cinema page (map link))"}
   vox-mall-of-the-emirates:          {ar: "فوكس — مول الإمارات",                 en: "VOX — Mall of the Emirates", lat: 25.1188, lng: 55.199, coord_source: "vox cinema page (map link)"}
   vox-megaplex-cineplex-grand-hyatt: {ar: "فوكس — ميغابلكس، جراند حياة",         en: "VOX — Megaplex, Grand Hyatt", lat: 25.227888, lng: 55.328391, coord_source: "openstreetmap nominatim: Grand Hyatt Dubai"}
-  vox-mercato:                       {ar: "فوكس — مركاتو",                       en: "VOX — Mercato", lat: 25.21636, lng: 55.253005, coord_source: "openstreetmap nominatim: Mercato, Dubai"}
-  vox-nation-towers-abu-dhabi:       {ar: "فوكس — نيشن تاورز",                   en: "VOX — Nation Towers", lat: 24.466895, lng: 54.33358, coord_source: "openstreetmap nominatim: Nation Towers, Abu Dhabi"}
+  vox-mercato:                       {ar: "فوكس — مركاتو",                       en: "VOX — Mercato", lat: 25.2165, lng: 55.253, coord_source: "vox cinema page (map link)"}
+  vox-nation-towers-abu-dhabi:       {ar: "فوكس — نيشن تاورز",                   en: "VOX — Nation Towers", lat: 24.4646, lng: 54.3286, coord_source: "vox cinema page (map link)"}
   vox-palm-jumeirah-mall:            {ar: "فوكس — مول نخلة جميرا",               en: "VOX — Palm Jumeirah Mall", lat: 25.113981, lng: 55.13834, coord_source: "openstreetmap nominatim: Palm Jumeirah Mall, Dubai"}
   vox-reem-mall-abu-dhabi:           {ar: "فوكس — ريم مول",                      en: "VOX — Reem Mall", lat: 24.488421, lng: 54.400584, coord_source: "openstreetmap nominatim: Reem Mall, Abu Dhabi"}
   vox-the-galleria-al-maryah-island: {ar: "فوكس — الغاليريا، جزيرة الماريه",     en: "VOX — The Galleria, Al Maryah Island", lat: 24.501449, lng: 54.389055, coord_source: "openstreetmap nominatim: The Galleria Al Maryah Island, Abu Dhabi"}
   vox-wafi-mall-at-wafi-city:        {ar: "فوكس — وافي مول",                     en: "VOX — Wafi Mall", lat: 25.22876, lng: 55.319227, coord_source: "openstreetmap nominatim: Wafi Mall"}
-  vox-yas-mall-abu-dhabi:            {ar: "فوكس — ياس مول",                      en: "VOX — Yas Mall", lat: 24.486065, lng: 54.607692, coord_source: "openstreetmap nominatim: Yas Mall, Abu Dhabi"}
-  vox-yas-mall:                      {ar: "فوكس — ياس مول",                      en: "VOX — Yas Mall", lat: 24.486065, lng: 54.607692, coord_source: "same site as vox-yas-mall-abu-dhabi (openstreetmap nominatim: Yas Mall, Abu Dhabi)"}
+  vox-yas-mall-abu-dhabi:            {ar: "فوكس — ياس مول",                      en: "VOX — Yas Mall", lat: 24.4882, lng: 54.6091, coord_source: "vox cinema page (map link)"}
+  vox-yas-mall:                      {ar: "فوكس — ياس مول",                      en: "VOX — Yas Mall", lat: 24.4882, lng: 54.6091, coord_source: "same site as vox-yas-mall-abu-dhabi (vox cinema page (map link))"}

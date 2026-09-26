@@ -76,6 +76,7 @@ def test_genres_table_has_the_fixed_key_set():
 @pytest.mark.parametrize("raw,want", [
     ("G", "G"), ("PG", "PG"), ("PG13", "PG13"), ("PG-13", "PG13"), ("PG 13", "PG13"), ("pg15", "PG15"),
     ("15+", "15+"), ("15", "15+"), ("18+", "18+"), ("18TC", "18+"), ("TBA-PG15", "PG15"), ("TBA", None),
+    ("21+", "21+"), ("21", "21+"), ("TBC", None),
     (None, None), ("", None), ("XYZ", None),
 ])
 def test_uae_rating(raw, want):
@@ -140,10 +141,9 @@ def test_merge_folds_film_extras_and_keeps_show_lang_subs_and_ends():
     assert vox_show["lang"] == "en" and vox_show["subs"] == ["ar"]
     assert vox_show["ends"] == "01:26"
     assert "lang" not in star_show and "subs" not in star_show   # never guessed
-    assert "ends" not in star_show                                  # its own runtime unknown here
+    assert star_show["ends"] == "21:56"   # no runtime of its own: the film's chain runtime 101 + 15
     assert not any(k.startswith("film_") for s in data["shows"] for k in s)
     normalize.finalize(data, cinema_meta={})
-    assert star_show["ends"] == "21:56"                             # film runtime 101 + 15
     assert data["chains"]["vox"]["ad_offset_min"] == 15
     assert film["family"] is True and film["kids"] is False
     assert film["rating"] == "PG13"
@@ -376,3 +376,118 @@ def test_reel_novo_cineroyal_cinemacity_extras():
     assert ex == {"film_poster": "https://img/p.jpg", "film_genres": ["Action", "Adventure"]}
     assert cinemacity.show_lang({"Localization.Language.English", "Showtime.Service.VIP"}) == {"lang": "en"}
     assert cinemacity.show_lang({"Format.Projection.Digital"}) == {}
+
+
+# ---------------------------------------------------------------- posters: limits (review I-1)
+def test_poster_rejects_non_http_oversized_and_non_image(tmp_path, monkeypatch):
+    fetched = []
+
+    def fetch(url):
+        fetched.append(url)
+        if url.endswith("huge.jpg"):
+            return b"\xff\xd8" + b"0" * (posters.MAX_BYTES + 1)
+        if url.endswith("page.jpg"):
+            return b"<!doctype html><html></html>"
+        return _jpeg(400, 630)
+    data = {"films": {"f": {"title": "F", "poster_src": ["file:///etc/passwd", "ftp://x/p.jpg",
+                                                        "https://a/huge.jpg", "https://a/page.jpg"]}}}
+    posters.mirror(data, cache_path=tmp_path / "p.json", out_dir=tmp_path / "o", fetch=fetch)
+    assert data["films"]["f"].get("poster") is None
+    assert fetched == ["https://a/huge.jpg", "https://a/page.jpg"]   # never file:// or ftp://
+    cache = json.loads((tmp_path / "p.json").read_text(encoding="utf-8"))
+    errs = {s["url"]: s["err"] for s in cache["sources"].values()}
+    assert "http(s)" in errs["file:///etc/passwd"]
+    assert "bytes" in errs["https://a/huge.jpg"]
+
+
+def test_poster_rejects_decompression_bomb(tmp_path, monkeypatch):
+    monkeypatch.setattr(posters, "MAX_PIXELS", 100 * 100)
+    data = {"films": {"f": {"title": "F", "poster_src": ["https://a/big.jpg"]}}}
+    posters.mirror(data, cache_path=tmp_path / "p.json", out_dir=tmp_path / "o", fetch=lambda u: _jpeg(200, 300))
+    assert data["films"]["f"].get("poster") is None
+
+
+def test_check_headers_and_url():
+    posters.check_headers({"content-type": "image/jpeg", "content-length": "1000"})
+    posters.check_headers({"content-type": "application/octet-stream"})   # Star's label
+    posters.check_headers({})
+    with pytest.raises(posters.Rejected):
+        posters.check_headers({"content-type": "text/html; charset=utf-8"})
+    with pytest.raises(posters.Rejected):
+        posters.check_headers({"content-type": "image/png", "content-length": str(posters.MAX_BYTES + 1)})
+    with pytest.raises(posters.Rejected):
+        posters.check_url("file:///C:/Windows/win.ini")
+    assert posters.check_url("https://x/p.jpg") == "https://x/p.jpg"
+
+
+def test_replaced_art_at_same_url_gets_a_new_name(tmp_path, monkeypatch):
+    blob = {"v": _jpeg(400, 630, (200, 30, 40))}
+    data = {"films": {"f": {"title": "F", "poster_src": ["https://a/p.jpg"]}}}
+    posters.mirror(data, cache_path=tmp_path / "p.json", out_dir=tmp_path / "o", fetch=lambda u: blob["v"])
+    first = data["films"]["f"]["poster"]
+    monkeypatch.setattr(posters, "REVALIDATE", posters.timedelta(seconds=0))
+    blob["v"] = _jpeg(400, 630, (20, 90, 200))
+    data = {"films": {"f": {"title": "F", "poster_src": ["https://a/p.jpg"]}}}
+    posters.mirror(data, cache_path=tmp_path / "p.json", out_dir=tmp_path / "o", fetch=lambda u: blob["v"])
+    assert data["films"]["f"]["poster"] != first
+
+
+# ---------------------------------------------------------------- coords: Nominatim name match (review I-2)
+def test_nominatim_hits_must_name_the_place():
+    import coords
+    assert coords.name_matches("Sharjah City Centre", "Friday Centre, University City Road, Al Qasimia") is False
+    assert coords.name_matches("Kempinski, Dubai", "Kempinski Palm Jumeirah Residences, Palm Jumeirah") is True
+    assert coords.name_matches("City Centre Mirdif, Dubai", "Mirdif City Center, D85, Mirdif, Dubai") is True
+    assert coords.name_matches("The Dubai Mall", "The Dubai Mall, Financial Center Street, Dubai") is True
+    assert coords.name_matches("Abu Dhabi Mall, Abu Dhabi", "Abu Dhabi Mall, Taxi Lane, Al Zahiyah") is True
+    assert coords.name_matches("Al Khawaneej Walk", "Khawaneej Walk, Promise Bridge, Al Khawaneej") is True
+    assert coords.name_matches("Reem Mall, Abu Dhabi", "Reem Island Mall, Al Reem Island") is True
+    assert coords.name_matches("Wafi Mall", "Home Centre, Industrial Area") is False
+
+
+def test_every_nominatim_coordinate_is_a_name_matched_cached_hit():
+    import coords
+    cache_path = ROOT / "data" / "geocode_cache.json"
+    if not cache_path.exists():
+        pytest.skip("no local geocode cache (gitignored) — run coords.py to build it")
+    cache = json.loads(cache_path.read_text(encoding="utf-8"))
+    meta = normalize.load_cinema_meta()
+    checked = 0
+    for cid, m in meta.items():
+        src = m.get("coord_source") or ""
+        if not src.startswith("openstreetmap nominatim: "):
+            continue
+        q = src.split(": ", 1)[1]
+        hits = cache.get(f"nominatim:{q}") or []
+        hit = next((h for h in hits if abs(h[0] - m["lat"]) < 1e-5 and abs(h[1] - m["lng"]) < 1e-5), None)
+        assert hit, f"{cid}: no cached hit for {q!r} at {m['lat']},{m['lng']}"
+        assert coords.name_matches(q, hit[2]), f"{cid}: {q!r} accepted {hit[2]!r}"
+        checked += 1
+    assert checked >= 10
+    assert meta["vox-city-centre-sharjah"]["coord_source"].startswith("vox cinema page")
+
+
+# ---------------------------------------------------------------- review round 1 minors
+def test_real_rating_beats_a_placeholder_whatever_the_order():
+    results = {"novo": {"cinemas": [_cinema("novo-a", "novo")], "shows": [_show(cinema="novo-a", film_rating="TBC")]},
+               "vox": {"cinemas": [_cinema("vox-a", "vox")], "shows": [_show(film_rating="PG")]}}
+    data = normalize.merge(results, None, NOW, aliases={})
+    normalize.finalize(data, cinema_meta={})
+    assert data["films"]["heart-of-the-beast"]["rating"] == "PG"
+    assert data["films"]["heart-of-the-beast"]["family"] is True
+
+
+def test_ends_never_from_an_enriched_runtime_alone():
+    results = {"vox": {"cinemas": [_cinema("vox-a", "vox")], "shows": [_show(runtime=None)]}}
+    data = normalize.merge(results, None, NOW, aliases={})
+    data["films"]["heart-of-the-beast"]["runtime"] = 118   # as if Wikidata filled it
+    normalize.finalize(data, cinema_meta={})
+    assert "ends" not in data["shows"][0]
+
+
+def test_reader_placeholder_coordinates_are_dropped():
+    data = {"chains": {}, "films": {}, "shows": [],
+            "cinemas": {"star-x": dict(_cinema("star-x", "star"), lat=21.12345, lng=31.123456)}}
+    normalize.finalize(data, cinema_meta={})
+    c = data["cinemas"]["star-x"]
+    assert c["lat"] is None and c["lng"] is None and not c.get("maps")

@@ -134,7 +134,10 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
             acc["title"] = cleaned
         if show.get("film_lang") and not acc["lang"]:
             acc["lang"] = show["film_lang"]
-        if show.get("film_rating") and not acc["rating"]:
+        # a real class beats a placeholder ("TBA"/"TBC") whichever chain comes first
+        if uae_rating(show.get("film_rating")) and not uae_rating(acc["rating"]):
+            acc["rating"] = show["film_rating"]
+        elif show.get("film_rating") and not acc["rating"]:
             acc["rating"] = show["film_rating"]
         runtime = show.get("runtime")
         if runtime is not None:
@@ -232,6 +235,17 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
     films_acc, mapping = merge_duplicates(films_acc, aliases, counts)
     for s in shows_out:
         s["film"] = mapping.get(s["film"], s["film"])
+
+    # a show whose chain gave no runtime of its own ends on the film's chain runtime (the longest
+    # any chain lists) — computed here, before enrich, so an end time never rests on Wikidata alone
+    for s in shows_out:
+        if s.get("ends"):
+            continue
+        chain = (cinemas_out.get(s.get("cinema")) or {}).get("chain")
+        ends = end_time(s["date"], s["time"], (films_acc.get(s["film"]) or {}).get("runtime"),
+                        ad_offset(chains_cfg, chain))
+        if ends:
+            s["ends"] = ends
 
     films_out = {}
     for fid, acc in films_acc.items():
@@ -439,11 +453,13 @@ def merge_duplicates(films: dict, aliases: dict | None = None, counts: dict | No
 
 # ---------------------------------------------------------------- phase 1 derived fields
 
-_RATINGS = ("G", "PG", "PG13", "PG15", "15+", "18+")
+# 21+ is its own UAE class (since 2021); no chain lists it today, but it is kept distinct rather
+# than folded into 18+ — it counts as neither family nor kids either way.
+_RATINGS = ("G", "PG", "PG13", "PG15", "15+", "18+", "21+")
 
 
 def uae_rating(raw) -> str | None:
-    """A chain's certificate -> one of G, PG, PG13, PG15, 15+, 18+ (UAE classes); None if unknown.
+    """A chain's certificate -> one of G, PG, PG13, PG15, 15+, 18+, 21+ (UAE classes); None if unknown.
     "PG-13"/"PG 13" -> PG13, "15" -> 15+, "18TC" -> 18+, Reel's "TBA-PG15" -> PG15, "TBA" -> None."""
     if not raw or not isinstance(raw, str):
         return None
@@ -454,8 +470,10 @@ def uae_rating(raw) -> str | None:
         return t
     if re.match(r"^15(\+|PLUS)?$", t):
         return "15+"
-    if re.match(r"^(18|21)(\+|PLUS)?(TC)?$", t):
+    if re.match(r"^18(\+|PLUS)?(TC)?$", t):
         return "18+"
+    if re.match(r"^21(\+|PLUS)?$", t):
+        return "21+"
     return None
 
 
@@ -509,6 +527,13 @@ def load_cinema_meta(path: str = CINEMAS_PATH) -> dict:
     return dict(_load_yaml(path).get("cinemas") or {})
 
 
+def in_uae(lat, lng) -> bool:
+    try:
+        return 22.0 < float(lat) < 26.5 and 51.0 < float(lng) < 56.6
+    except (TypeError, ValueError):
+        return False
+
+
 def maps_url(lat, lng) -> str:
     return f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
 
@@ -516,8 +541,9 @@ def maps_url(lat, lng) -> str:
 def finalize(data: dict, chains_cfg: dict | None = None, cinema_meta: dict | None = None) -> dict:
     """The fields derived after merge + enrich (so Wikidata's runtime/genres count):
     chains[*].ad_offset_min · films: rating normalised, genres as GENRES keys, family/kids ·
-    shows: ends where still missing (film runtime) · cinemas: lat/lng/coord_source from
-    cinemas.yaml (else the reader's own), maps = a Google Maps link to those coordinates."""
+    cinemas: lat/lng/coord_source from cinemas.yaml (else the reader's own, when inside the UAE —
+    never Star's 21.12345 placeholder), maps = a Google Maps link to those coordinates.
+    Show ends are set in merge() only (chain runtimes), never from an enriched runtime."""
     chains_cfg = chains_cfg if chains_cfg is not None else load_chains()
     meta = cinema_meta if cinema_meta is not None else load_cinema_meta()
 
@@ -534,20 +560,13 @@ def finalize(data: dict, chains_cfg: dict | None = None, cinema_meta: dict | Non
         f.update(derive_flags(f["rating"], f["genres"]))
 
     cinemas = data.get("cinemas") or {}
-    for s in data.get("shows") or []:
-        if s.get("ends"):
-            continue
-        film = films.get(s.get("film")) or {}
-        chain = (cinemas.get(s.get("cinema")) or {}).get("chain")
-        ends = end_time(s["date"], s["time"], film.get("runtime"), ad_offset(chains_cfg, chain))
-        if ends:
-            s["ends"] = ends
-
     for cid, c in cinemas.items():
         m = meta.get(cid) or {}
         if m.get("lat") is not None and m.get("lng") is not None:
             c["lat"], c["lng"] = float(m["lat"]), float(m["lng"])
             c["coord_source"] = m.get("coord_source")
+        elif not in_uae(c.get("lat"), c.get("lng")):
+            c["lat"] = c["lng"] = None
         if c.get("lat") is not None and c.get("lng") is not None:
             c["maps"] = maps_url(c["lat"], c["lng"])
     return data

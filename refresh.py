@@ -44,7 +44,6 @@ from zoneinfo import ZoneInfo
 
 import enrich as enrich_mod
 import normalize
-import posters as posters_mod
 import price_table
 import verdicts as verdicts_mod
 from readers import cinemacity, cineroyal, novo, reel, roxy, star, vox
@@ -301,6 +300,8 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             film.pop("poster_src", None)
     else:
         try:
+            import posters as posters_mod  # lazy: a missing Pillow costs the posters, not the run
+
             ph = posters_mod.mirror(merged)
             health["posters"] = {"ok": True, "error": None, **ph}
             summaries.append(f"posters: {ph['with_poster']}/{len(merged.get('films', {}))} films  "

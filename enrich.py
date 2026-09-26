@@ -59,6 +59,7 @@ movie_title_ar), else none. Never machine-translated.
 import json
 import os
 import re
+import sys
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -610,8 +611,9 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
                         entry["wd_trailer"] = _wikidata_trailer(ids["qid"])
                         entry["wd_trailer_at"] = datetime.now(timezone.utc).isoformat()
                         dirty = True
-                    except Exception:
-                        pass
+                    except Exception as e:  # noqa: BLE001 - retried next run; say so, don't hide it
+                        print(f"enrich: Wikidata trailer lookup for {fid} ({ids['qid']}) failed: {e}",
+                              file=sys.stderr)
                 film["trailer"] = youtube_id(entry.get("wd_trailer"))
         if ids.get("director"):
             film["director"] = ids["director"]

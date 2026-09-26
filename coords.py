@@ -88,6 +88,25 @@ CITY_WORD = {"abu-dhabi": "Abu Dhabi", "al-ain": "Al Ain", "dubai": "Dubai", "sh
 _DUMMY = {21.12345, 12.12345}
 
 
+# words that never identify a place on their own
+_STOP = {"the", "mall", "al", "at", "of", "and", "in", "uae", "dubai", "abu", "dhabi", "sharjah", "ajman",
+         "fujairah", "ras", "khaimah", "umm", "quwain", "ain", "city", "centre", "center", "shopping"}
+
+
+def _tokens(text: str) -> list[str]:
+    t = re.sub(r"[^a-z0-9 ]+", " ", (text or "").lower().replace("centre", "center"))
+    return [w for w in t.split() if w]
+
+
+def name_matches(query: str, display_name: str) -> bool:
+    """A Nominatim hit is accepted only when it names what was asked for: every distinctive
+    query token (not a city word, not "mall"/"centre") appears in its display_name; a query
+    made only of such words ("Abu Dhabi Mall", "The Dubai Mall") needs all its words there."""
+    have = set(_tokens(display_name))
+    want = [w for w in _tokens(query) if w not in _STOP] or [w for w in _tokens(query) if w != "the"]
+    return bool(want) and all(w in have for w in want)
+
+
 def in_box(city, lat, lng) -> bool:
     b = CITY_BOX.get(city)
     if not b:
@@ -109,6 +128,8 @@ def known_cinemas() -> dict:
             continue
         cin = d.get("cinemas") or {}
         for c in (cin.values() if isinstance(cin, dict) else cin):
+            if p.name == "latest.json":  # finalized: its lat/lng are cinemas.yaml's own, not a reader's
+                c = {k: v for k, v in c.items() if k not in ("lat", "lng", "coord_source", "maps")}
             prev = out.get(c["id"], {})
             out[c["id"]] = {**c, **{k: v for k, v in prev.items() if v not in (None, "")}}
     return out
@@ -137,11 +158,12 @@ class Geo:
         self.last = time.monotonic()
 
     def vox_page(self, slug):
-        key = f"vox:{slug}"
+        key = f"vox2:{slug}"
         if key not in self.cache:
             self._wait(1.2)
             r = self.s.get(f"https://uae.voxcinemas.com/cinemas/{slug}", timeout=30)
-            m = re.search(r"maps\.google\.[a-z.]+/maps\?g=(-?\d+\.\d+),(-?\d+\.\d+)", r.text) if r.status_code == 200 else None
+            # the MAP button: maps.google.com/maps?g=<lat>,<lng> or google.com/maps?q=<lat>,<lng>
+            m = re.search(r"google\.[a-z.]+/maps\?[gq]=(-?\d+\.\d+),(-?\d+\.\d+)", r.text) if r.status_code == 200 else None
             self.cache[key] = [float(m.group(1)), float(m.group(2))] if m else None
         return self.cache[key]
 
@@ -216,7 +238,7 @@ def locate(cid: str, c: dict, geo: Geo):
     qs = qs + [f"{mall}, {CITY_WORD.get(city, '')}".strip(", ")]
     for q in qs:
         for lat, lng, name in geo.nominatim(q):
-            if in_box(city, lat, lng):
+            if in_box(city, lat, lng) and name_matches(q, name):
                 return round(lat, 6), round(lng, 6), f"openstreetmap nominatim: {q}"
     return None
 
@@ -233,7 +255,8 @@ def write_yaml(results: dict) -> int:
         body += f', lat: {lat}, lng: {lng}, coord_source: "{src}"'
         lines[i] = f"{m.group(1)}{m.group(2)}:{m.group(3)}{{{body}}}"
         n += 1
-    YAML_PATH.write_text("\n".join(lines), encoding="utf-8")
+    with open(YAML_PATH, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\n".join(lines))
     return n
 
 
