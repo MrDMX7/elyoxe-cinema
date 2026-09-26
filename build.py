@@ -39,7 +39,18 @@ VERDICT = {"yes": ("يستاهل", "Worth it"), "mixed": ("بين بين", "Mixe
            "unknown": ("ما في تقييم كافي", "Not enough reviews")}
 LANGS = {"English": ("إنجليزي", "English"), "Arabic": ("عربي", "Arabic"), "Hindi": ("هندي", "Hindi"), "Telugu": ("تيلوغو", "Telugu"),
          "Malayalam": ("مالايالام", "Malayalam"), "Tamil": ("تاميل", "Tamil"), "Tagalog": ("فلبيني", "Tagalog"),
-         "Urdu": ("أوردو", "Urdu"), "French": ("فرنسي", "French"), "Korean": ("كوري", "Korean"), "Japanese": ("ياباني", "Japanese")}
+         "Urdu": ("أوردو", "Urdu"), "French": ("فرنسي", "French"), "Korean": ("كوري", "Korean"), "Japanese": ("ياباني", "Japanese"),
+         "Nepali": ("نيبالي", "Nepali"), "Punjabi": ("بنجابي", "Punjabi")}
+# live data (Task 2) carries ISO 639-1 keys per show: en, ar, hi, ml …
+LANGS.update({"en": LANGS["English"], "ar": LANGS["Arabic"], "hi": LANGS["Hindi"], "te": LANGS["Telugu"], "ml": LANGS["Malayalam"],
+              "ta": LANGS["Tamil"], "tl": LANGS["Tagalog"], "ur": LANGS["Urdu"], "fr": LANGS["French"], "ko": LANGS["Korean"],
+              "ja": LANGS["Japanese"], "ne": LANGS["Nepali"], "pa": LANGS["Punjabi"]})
+
+
+def lang_words(v, lang):
+    """A language key, or subtitle keys joined by '+' ("ar+en"), as words in the page language."""
+    sep = "، " if lang == "ar" else ", "
+    return sep.join(L(LANGS.get(k, (k, k)), lang) for k in str(v).split("+") if k)
 # older data: genres as a plain English list; Task 2 adds lowercase keys with labels in genres.py
 GENRES = {"Action": "أكشن", "Adventure": "مغامرة", "Drama": "دراما", "Horror": "رعب", "Comedy": "كوميدي", "Animation": "أنيميشن",
           "Thriller": "إثارة", "Superhero": "أبطال خارقين", "Family": "عائلي", "Romance": "رومانسي", "Sci-Fi": "خيال علمي"}
@@ -82,6 +93,7 @@ HHMM = re.compile(r"^\d{2}:\d{2}$")
 HEX = re.compile(r"^#[0-9A-Fa-f]{6}$")
 YT = re.compile(r"^[A-Za-z0-9_-]{11}$")
 SAFE_URL = re.compile(r"^https?://", re.I)
+OUR_POSTER = re.compile(r"^/posters/[A-Za-z0-9._-]+\.webp$")   # posters.py mirrors to /posters/<fid>-<hash>-342.webp
 SCHED_BUDGET = 100_000   # bytes of schedule markup per page; with the chrome a page stays under 150 KB
 BCP47 = {"English": "en", "Arabic": "ar", "Hindi": "hi", "Telugu": "te", "Malayalam": "ml", "Tamil": "ta", "Tagalog": "tl",
          "Urdu": "ur", "Bengali": "bn", "Kannada": "kn", "French": "fr", "Spanish": "es", "Japanese": "ja", "Korean": "ko",
@@ -373,6 +385,8 @@ def clean_label(label):
 
 # ---------------------------------------------------------------- the site
 class Site:
+    noindex = False   # set by build(): PREVIEW=1
+
     def __init__(self, data, disc, halls, out):
         self.d, self.disc, self.h, self.out = data, disc, halls, out
         self.now = parse_iso(data.get("generated") or dt.datetime.now().isoformat())
@@ -385,10 +399,13 @@ class Site:
         for s in self.shows:  # a chain's booking URL is a link on our page: http(s) only, never javascript:
             if s.get("book") and not SAFE_URL.match(str(s["book"])): s["book"] = None
             if s.get("ends") and not HHMM.match(str(s["ends"])): s["ends"] = None
+            if isinstance(s.get("subs"), (list, tuple)): s["subs"] = "+".join(str(x) for x in s["subs"] if x) or None
         for f in self.films.values():  # values that land in attributes or styles must not inject
             vd = f.get("verdict")
             if isinstance(vd, dict) and vd.get("verdict") not in VERDICT: f["verdict"] = dict(vd, verdict="unknown")
             for k in ("poster", "poster_2x"):
+                # our mirror is a site-root path: made absolute here (og:image and JSON-LD need a full URL)
+                if f.get(k) and OUR_POSTER.match(str(f[k])): f[k] = SITE + f[k]
                 if f.get(k) and not SAFE_URL.match(str(f[k])): f[k] = None
             if f.get("poster_color") and not HEX.match(str(f["poster_color"])): f["poster_color"] = None
             if f.get("trailer") and not YT.match(str(f["trailer"])): f["trailer"] = None
@@ -580,9 +597,14 @@ class Site:
             first = self._first_poster is None and eager
             if first: self._first_poster = f
             ss = f' srcset="{esc(f["poster"])} 1x, {esc(f["poster_2x"])} 2x"' if f.get("poster_2x") else ""
+            # a real poster carries its own title: the tile's title stays underneath, hidden, and comes back
+            # (the class drops) only if the image fails to load
             img = (f'<img src="{esc(f["poster"])}"{ss} width="{size[0]}" height="{size[1]}" alt="" decoding="async"'
-                   + (' fetchpriority="high"' if first else ' loading="lazy"') + ' onerror="this.remove()">')
-        return (f'<span class="{cls}" style="--pc:{pc}"><span class="pst-t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>{img}</span>')
+                   + (' fetchpriority="high"' if first else ' loading="lazy"')
+                   + ' onerror="this.parentNode.classList.remove(\'img\');this.remove()">')
+            return (f'<span class="{cls} img" style="--pc:{pc}"><span class="pst-t" aria-hidden="true"{self.title_attr(fid, lang)}>'
+                    f'{esc(self.ftitle(fid, lang))}</span>{img}</span>')
+        return (f'<span class="{cls}" style="--pc:{pc}"><span class="pst-t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span></span>')
 
     def backdrop(self, fid):
         """The film's poster enlarged and blurred over its colour: there is no backdrop image in the data."""
@@ -663,6 +685,7 @@ class Site:
                  + (f' data-runtime="{int(f["runtime"])}"' if f.get("runtime") else ""))
         return (f'<a class="film v-{v}{" big" if big else ""}" href="{P(lang, "film", fid)}"{attrs}>'
                 + self.poster(fid, lang, eager=True)
+                + (f'<span class="fn"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>' if f.get("poster") else "")
                 + f'<span class="fm"><span class="vw">{esc(vw)}</span><span class="sc">{self.score(f, lang)}</span></span>{rr}'
                 + f'<span class="cheap" data-cheap>{price}</span></a>')
 
@@ -691,8 +714,8 @@ class Site:
         if s.get("ends"): lines.append(f'<span>{esc(L(T["ends"], lang).format(t=s["ends"]))}</span>')
         lg = s.get("lang") or self.films[s["film"]].get("lang")
         if lg:
-            ln = L(LANGS.get(lg, (lg, lg)), lang)
-            sb = L(LANGS.get(s["subs"], (s["subs"], s["subs"])), lang) if s.get("subs") else ""
+            ln = lang_words(lg, lang)
+            sb = lang_words(s["subs"], lang) if s.get("subs") else ""
             lines.append(f'<span>{esc(ln)}{("، ترجمة " + esc(sb) if lang == "ar" else ", " + esc(sb) + " subtitles") if sb else ""}</span>')
         seats = "".join(f'<tr><th scope="row"{" lang=\"en\"" if lang == "ar" and not ARABIC.search(p["seat"]) else ""}><bdi>{esc(p["seat"])}</bdi></th>'
                         f'<td>{self.pcell(p["aed"], chain, code, hk, cid, asof, lang)}</td></tr>'
@@ -746,6 +769,7 @@ class Site:
         pdata = (f'<script type="application/json" id="cinema-p">{json.dumps(self._P, ensure_ascii=False, separators=(",", ":"))}</script>'
                  if self._P else "")
         city = next((c for c in CITIES if c[0] in parts[:1]), None)
+        if self.noindex: robots = NOINDEX      # a preview host is never indexed, whatever the page asked for
         vals.update({
             "lang": lang, "dir": "rtl" if lang == "ar" else "ltr", "locale": "ar_AE" if lang == "ar" else "en_US",
             "title": esc(title), "description": esc(desc),
@@ -1059,11 +1083,11 @@ class Site:
                 if rt.get("audience") is not None: facts.append(("الجمهور", "Audience", num(f'{rt["audience"]}%')))
                 if f.get("runtime"): facts.append(("المدة", "Runtime", num(f["runtime"]) + (" د" if lang == "ar" else " min")))
                 if f.get("rating"): facts.append(("التصنيف", "Rating", f'<bdi class="num" dir="ltr">{esc(f["rating"])}</bdi>'))
-                if f.get("lang"): facts.append(("اللغة", "Language", esc(L(LANGS.get(f["lang"], (f["lang"], f["lang"])), lang))))
+                if f.get("lang"): facts.append(("اللغة", "Language", esc(lang_words(f["lang"], lang))))
                 subs = [s["subs"] for s in shows if s.get("subs")]
                 if subs:
                     top = max(set(subs), key=subs.count)
-                    facts.append(("الترجمة", "Subtitles", esc(L(LANGS.get(top, (top, top)), lang))))
+                    facts.append(("الترجمة", "Subtitles", esc(lang_words(top, lang))))
                 gw = genre_words(f.get("genres"), lang)
                 if gw: facts.append(("النوع", "Genre", esc(("، " if lang == "ar" else ", ").join(gw))))
                 say = vd.get("ar") if lang == "ar" else vd.get("en")
@@ -1391,7 +1415,10 @@ class Site:
                           f'<xhtml:link rel="alternate" hreflang="x-default" href="{SITE + P("ar", *parts)}"/></url>')
         sm.append("</urlset>")
         self.write(os.path.join(self.out, "sitemap.xml"), "\n".join(sm))
-        self.write(os.path.join(self.out, "robots.txt"), f"User-agent: *\nAllow: /\nDisallow: /data/\n\nSitemap: {SITE}/sitemap.xml\n")
+        if self.noindex:   # preview: nothing is crawled, and no sitemap is advertised
+            self.write(os.path.join(self.out, "robots.txt"), "User-agent: *\nDisallow: /\n")
+        else:
+            self.write(os.path.join(self.out, "robots.txt"), f"User-agent: *\nAllow: /\nDisallow: /data/\n\nSitemap: {SITE}/sitemap.xml\n")
         if self.lastmod_path:
             os.makedirs(os.path.dirname(self.lastmod_path), exist_ok=True)
             json.dump(known, open(self.lastmod_path, "w", encoding="utf-8"), ensure_ascii=False, indent=0, sort_keys=True)
@@ -1417,7 +1444,16 @@ class Site:
 GENERATED = [c for c, _, _ in CITIES] + ["film", "cards", "halls", "data", "assets", "en", "cinema"]
 
 
-def build(data_path, discounts_path, out, halls_path=None, preview=False, lastmod_path=None):
+NOINDEX = '<meta name="robots" content="noindex,nofollow">'
+
+
+def preview_mode(env=None):
+    """PREVIEW=1 (or true/yes) in the environment: the build is a preview. Every page is noindex,nofollow
+    and robots.txt is `Disallow: /` with no Sitemap line. Unset or 0: the normal, indexable site."""
+    return str((env if env is not None else os.environ).get("PREVIEW", "")).strip().lower() in ("1", "true", "yes")
+
+
+def build(data_path, discounts_path, out, halls_path=None, preview=False, lastmod_path=None, noindex=None):
     data = json.load(open(data_path, encoding="utf-8"))
     disc = load_discounts(discounts_path)
     halls = Halls(halls_path or os.path.join(ROOT, "halls.yaml"))
@@ -1427,6 +1463,7 @@ def build(data_path, discounts_path, out, halls_path=None, preview=False, lastmo
         try: os.remove(os.path.join(out, f))
         except FileNotFoundError: pass
     site = Site(data, disc, halls, out); site.lastmod_path = lastmod_path
+    site.noindex = preview_mode() if noindex is None else noindex
     return site.run()
 
 

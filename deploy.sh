@@ -56,21 +56,23 @@ DIST=$(out_of DistributionId)
 [[ "$DIST" =~ ^E[A-Z0-9]+$ ]] || { echo "deploy: no distribution id from stack $STACK" >&2; exit 4; }
 DEST="s3://$BUCKET/"
 NEVER=(--exclude "tools/*")                   # the --preview dir, never uploaded (nor deleted: not ours to own)
+KEEP=(--exclude "posters/*")                  # uploaded by `posters.py --upload`, never built into out/: every
+                                              # --delete pass must leave them alone (placed last: last filter wins)
 SHORT=(--include "*.html" --include "*.xml" --include "*.txt" --include "sw.js")
 
 # 1) assets (immutable) — also the --delete pass for everything that is neither short-lived nor data
 aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete \
   --exclude "*.html" --exclude "*.xml" --exclude "*.txt" --exclude "sw.js" --exclude "*.webmanifest" \
-  --exclude "data/*" "${NEVER[@]}" \
+  --exclude "data/*" "${NEVER[@]}" "${KEEP[@]}" \
   --cache-control "public, max-age=31536000, immutable" --only-show-errors
 # 2) data slices, 10 min (with --delete: yesterday's <city>-<date>.json disappear)
-aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" --include "data/*" \
+aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" --include "data/*" "${KEEP[@]}" \
   --content-type "application/json; charset=utf-8" --cache-control "public, max-age=600" --only-show-errors
 # 3) html + sitemap + robots + service worker, 5 min (with --delete: pages of films that left are removed)
 aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" "${SHORT[@]}" \
-  --exclude "data/*" "${NEVER[@]}" --cache-control "public, max-age=300" --only-show-errors
+  --exclude "data/*" "${NEVER[@]}" "${KEEP[@]}" --cache-control "public, max-age=300" --only-show-errors
 # 4) the web manifest, 5 min, with its own content type (mimetypes does not know .webmanifest)
-aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" --include "*.webmanifest" "${NEVER[@]}" \
+aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" --include "*.webmanifest" "${NEVER[@]}" "${KEEP[@]}" \
   --content-type "application/manifest+json" --cache-control "public, max-age=300" --only-show-errors
 
 INV=$(aws cloudfront create-invalidation --distribution-id "$DIST" --paths "/*" --query Invalidation.Id --output text)

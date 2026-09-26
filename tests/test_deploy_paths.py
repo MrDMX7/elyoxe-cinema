@@ -66,3 +66,20 @@ def test_tools_preview_dir_is_never_uploaded():
     for l in code:
         if "aws s3 sync" in l and '--include "data/*"' not in l:
             assert '"${NEVER[@]}"' in l, l
+
+
+def test_posters_are_never_deleted_by_a_sync():
+    """posters/* is uploaded by `posters.py --upload`, not built into out/, so a `--delete` sync that
+    does not exclude it would wipe every poster. The exclusion must come AFTER any --include (the
+    last matching filter wins in `aws s3 sync`)."""
+    code = _code_lines()
+    assert any('KEEP=(--exclude "posters/*")' in l for l in code)
+    syncs = [l for l in code if "aws s3 sync" in l]
+    assert syncs
+    for l in syncs:
+        if "--delete" not in l:
+            continue
+        assert '"${KEEP[@]}"' in l, f"--delete pass without the posters exclusion: {l.strip()}"
+        incs = [m.start() for m in re.finditer(r"--include ", l)]
+        if incs:
+            assert l.index('"${KEEP[@]}"') > max(incs), f"posters exclusion must follow the includes: {l.strip()}"

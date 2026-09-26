@@ -524,3 +524,41 @@ def test_no_middle_dot_fact_strings(site):
         if f.endswith(".html"):
             body = re.sub(r"<script.*?</script>", "", open(f, encoding="utf-8").read().split("<body", 1)[1], flags=re.S)
             assert " · " not in body, f
+
+
+def test_real_poster_tile_puts_the_title_under_the_poster(site):
+    """A real poster carries its own title: no title drawn over it (the tile's is hidden, only for a failed
+    load), the film's name in Markazi under it. A tile with no poster keeps the title inside."""
+    out, _ = site
+    home = read(out)
+    tile = re.search(r'<a class="film[^"]*" href="/film/coyote-vs-acme/".*?</a>', home, re.S).group(0)
+    assert '<span class="pst img"' in tile and '<span class="pst-t" aria-hidden="true"' in tile
+    assert re.search(r'</span><span class="fn"[^>]*>[^<]+</span><span class="fm">', tile)
+    assert "classList.remove('img')" in tile
+    notile = re.search(r'<a class="film[^"]*" href="/film/[^"]+/"[^>]*>(?:(?!</a>).)*?<span class="pst" style="--pc:#1D2A4A">.*?</a>', home, re.S).group(0)
+    assert 'class="fn"' not in notile
+
+
+def test_live_shape_subs_list_and_iso_lang(tmp_path):
+    """Live latest.json (Task 2): show lang is an ISO key and subs a list — the ticket names them in words."""
+    def m(d):
+        for s in d["shows"]:
+            s["lang"], s["subs"] = "en", ["ar", "en"]
+    out = _built(tmp_path, m)
+    home = read(out)
+    assert "إنجليزي، ترجمة عربي، إنجليزي" in home
+    assert "English, Arabic, English subtitles" in read(out, "en")
+
+
+def test_mirrored_poster_paths_are_kept_and_made_absolute(tmp_path):
+    """posters.py writes site-root paths (/posters/<fid>-<hash>-342.webp); they must survive the URL
+    sanitiser (which only knew http/https) and become absolute for og:image. Other relative paths still drop."""
+    def m(d):
+        d["films"]["crawlers"].update(poster="/posters/crawlers-0123456789-342.webp", poster_2x="/posters/crawlers-0123456789-684.webp")
+        d["films"]["resident-evil"].update(poster="/etc/passwd", poster_2x="//evil.example/x.webp")
+    out = _built(tmp_path, m)
+    film = read(out, "film", "crawlers")
+    assert 'src="https://cinema.elyoxe.com/posters/crawlers-0123456789-342.webp"' in film
+    assert 'content="https://cinema.elyoxe.com/posters/crawlers-0123456789-684.webp"' in film
+    re_ = read(out, "film", "resident-evil")
+    assert "/etc/passwd" not in re_ and "evil.example" not in re_
