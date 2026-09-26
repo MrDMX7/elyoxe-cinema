@@ -47,6 +47,72 @@ def fmt3d(title) -> str:
     return "3D" if title and _3D.search(title) else ""
 
 
+# ---------------------------------------------------------------- per-film / per-show extras
+# Film-level extras a reader may add to each show (normalize.merge folds them onto the film and
+# never copies a film_* key onto the show):
+#   film_poster:  the chain's own poster URL (absolute) — posters.py mirrors the largest portrait one
+#   film_trailer: a YouTube URL or 11-char id the chain publishes
+#   film_genres:  the chain's raw genre labels (list of str) — genres.genre_keys() maps them
+# Show-level extras, only when the chain's payload states them (never guessed):
+#   lang: ISO-ish language key (LANG_CODES values), subs: list of such keys
+
+LANG_CODES = {
+    "english": "en", "arabic": "ar", "hindi": "hi", "malayalam": "ml", "tamil": "ta", "telugu": "te",
+    "tagalog": "tl", "filipino": "tl", "punjabi": "pa", "nepali": "ne", "korean": "ko", "japanese": "ja",
+    "french": "fr", "kannada": "kn", "urdu": "ur", "bengali": "bn", "bangla": "bn", "marathi": "mr",
+    "gujarati": "gu", "spanish": "es", "chinese": "zh", "mandarin": "zh", "cantonese": "zh",
+    "turkish": "tr", "russian": "ru", "persian": "fa", "farsi": "fa", "german": "de", "italian": "it",
+    "sinhala": "si", "thai": "th", "indonesian": "id", "portuguese": "pt",
+}
+_ISO2 = set(LANG_CODES.values())
+
+
+def lang_key(name) -> str | None:
+    """"English" / "ENGLISH" / "EN" / "Localization.Language.English" -> "en"; None when unknown."""
+    if not name or not isinstance(name, str):
+        return None
+    t = name.strip().rsplit(".", 1)[-1].strip().lower()
+    t = re.sub(r"\s*\((?:dubbed|dub)\)\s*$", "", t)
+    if t in LANG_CODES:
+        return LANG_CODES[t]
+    if t in _ISO2:
+        return t
+    if t in ("eng",):
+        return "en"
+    if t in ("ara",):
+        return "ar"
+    return None
+
+
+def subs_keys(text) -> list[str]:
+    """"Arabic | English", "Arabic & English", ["AR", "EN"] -> ["ar", "en"]; [] when none/unknown."""
+    if not text:
+        return []
+    parts = text if isinstance(text, (list, tuple)) else re.split(r"\s*(?:\||,|&|/|\band\b)\s*", str(text), flags=re.I)
+    out: list[str] = []
+    for p in parts:
+        k = lang_key(p)
+        if k and k not in out:
+            out.append(k)
+    return out
+
+
+_YT_ID = re.compile(r"^[A-Za-z0-9_-]{11}$")
+_YT_URL = re.compile(r"(?:youtube(?:-nocookie)?\.com/(?:watch\?(?:[^#]*&)?v=|embed/|shorts/|v/|live/)|youtu\.be/)"
+                     r"([A-Za-z0-9_-]{11})(?![A-Za-z0-9_-])")
+
+
+def youtube_id(v) -> str | None:
+    """A YouTube URL (watch / youtu.be / embed / shorts) or a bare 11-char id -> the id, else None."""
+    if not v or not isinstance(v, str):
+        return None
+    v = v.strip().replace("&amp;", "&").replace("&#x3D;", "=")
+    if _YT_ID.match(v):
+        return v
+    m = _YT_URL.search(v)
+    return m.group(1) if m else None
+
+
 def slug(s: str) -> str:
     s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
     return re.sub(r"[^a-z0-9]+", "-", s).strip("-")

@@ -44,6 +44,7 @@ from zoneinfo import ZoneInfo
 
 import enrich as enrich_mod
 import normalize
+import posters as posters_mod
 import price_table
 import verdicts as verdicts_mod
 from readers import cinemacity, cineroyal, novo, reel, roxy, star, vox
@@ -286,6 +287,29 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
         health["enrich"] = {"ok": False, "error": str(e)}
         print(f"refresh: enrich failed: {e}", file=sys.stderr)
         summaries.append(f"enrich: FAILED  {e}")
+
+    # phase 1 derived fields (ends, genres keys, family/kids, coordinates, ad offsets), then the
+    # poster mirror into data/posters/ (uploaded separately: `python posters.py --upload`).
+    # Neither may abort the publish.
+    try:
+        normalize.finalize(merged)
+    except Exception as e:  # noqa: BLE001
+        print(f"refresh: finalize failed: {e}", file=sys.stderr)
+        summaries.append(f"finalize: FAILED  {e}")
+    if offline:
+        for film in merged.get("films", {}).values():
+            film.pop("poster_src", None)
+    else:
+        try:
+            ph = posters_mod.mirror(merged)
+            health["posters"] = {"ok": True, "error": None, **ph}
+            summaries.append(f"posters: {ph['with_poster']}/{len(merged.get('films', {}))} films  "
+                             f"downloaded={ph['downloaded']} failed={ph['failed']}")
+        except Exception as e:  # noqa: BLE001
+            for film in merged.get("films", {}).values():
+                film.pop("poster_src", None)
+            health["posters"] = {"ok": False, "error": str(e)}
+            print(f"refresh: posters failed: {e}", file=sys.stderr)
 
     if not offline and not no_verdicts:
         verdict_health = _write_verdicts_isolated(merged)

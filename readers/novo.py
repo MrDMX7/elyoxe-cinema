@@ -18,7 +18,7 @@ import re
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from readers.common import CITIES, HALLS, Polite, arabic_title, city_of, slug
+from readers.common import CITIES, HALLS, Polite, arabic_title, city_of, lang_key, slug, subs_keys, youtube_id
 
 API = "https://uae-api.novocinemas.com/api/home"
 BOOKING_API = "https://uae-api.novocinemas.com/api/booking"
@@ -86,6 +86,28 @@ def _film_lang(movie: dict) -> str | None:
     m = re.search(r"\(([^)]+)\)\s*$", movie.get("movie_title") or "")
     # only a real language name counts: "(Live-Action)" is not a language
     return m.group(1) if m and m.group(1).strip().lower() in _LANGS else None
+
+
+def movie_extras(movie: dict) -> dict:
+    """Poster (movie_image_url, portrait — movie_banner_url is the landscape banner), trailer,
+    genres, and the language/subtitles the movie record (or its title's "(Tamil)") states."""
+    out: dict = {}
+    if (movie.get("movie_image_url") or "").startswith("http"):
+        out["film_poster"] = movie["movie_image_url"]
+    yt = youtube_id(movie.get("movie_trailer_link"))
+    if yt:
+        out["film_trailer"] = yt
+    genres = [g.get("genre_name") for g in movie.get("movie_genre") or [] if g.get("genre_name")]
+    if genres:
+        out["film_genres"] = genres
+    lang = lang_key(_film_lang(movie))
+    if lang:
+        out["lang"] = lang
+    sub = movie.get("subtitle_language")
+    subs = subs_keys(sub.get("lang_name") if isinstance(sub, dict) else sub)
+    if subs:
+        out["subs"] = subs
+    return out
 
 
 def _sample_prices(s: Polite, cinema_num, session_id) -> list[dict] | None:
@@ -163,6 +185,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
         rating = movie.get("movie_rating") or None
         runtime = movie.get("movie_duration") or None
         book = _book_url(mid, title)
+        extras = movie_extras(movie)
 
         for d in query_dates:
             r = s.get(f"{API}/sessions/{mid}/date/{d}", params={
@@ -220,6 +243,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
                         "hall_label": hall_label,
                         "prices": key,  # resolved after the loop, once each hall is sampled
                         "book": book,
+                        **extras,
                     })
 
     if calls and failed * 2 > calls:

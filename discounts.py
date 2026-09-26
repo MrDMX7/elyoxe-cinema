@@ -111,6 +111,22 @@ def compute(price: float, chain: str, hall: str | None, card: str, rules: dict |
     return price_after(entry, price), "ok", entry
 
 
+def is_official(entry: dict | None) -> bool:
+    return bool(entry) and entry.get("confidence") == "official"
+
+
+def confirmed_cards(rules: dict | None, today: str | None = None) -> list[str]:
+    """Card ids (sorted) with at least one official, not-expired, real discount at any chain —
+    the only cards the site shows (phase 1: third-party and unconfirmed rules are hidden)."""
+    today = today or _today()
+    out = set()
+    for chain_rules in (rules or {}).values():
+        for card, entry in (chain_rules or {}).items():
+            if is_official(entry) and state(entry, today) == "ok":
+                out.add(card)
+    return sorted(out)
+
+
 def apply(
     price: float,
     chain: str,
@@ -124,6 +140,7 @@ def apply(
 ) -> tuple[float | None, str]:
     """Price after `card`'s discount at `chain` for a ticket in `hall`, and an Arabic note.
 
+    Only official rules count: a third-party or unconfirmed rule answers like no rule at all.
     Returns (None, note) when the card gives nothing at that chain/hall/cinema — no offer was ever
     found (status: none_found), the offer ended (valid_until before `today`, default today in
     Dubai), or the hall/cinema is outside the offer. `rules` lets a caller pass an already-loaded
@@ -133,6 +150,8 @@ def apply(
         rules = load().get("rules", {})
     if not (rules or {}).get((chain or "").lower()):
         return None, NO_CHAIN_AR
+    if not is_official(rule(rules, chain, card)):
+        return None, NO_CARD_AR  # third-party / unconfirmed rules are never applied (phase 1)
     new, st, entry = compute(price, chain, hall, card, rules, hall_key=hall_key, cinema=cinema, today=today)
     if st == "unchecked":
         return None, NO_CARD_AR

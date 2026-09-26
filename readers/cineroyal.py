@@ -21,7 +21,7 @@ import json
 import re
 from zoneinfo import ZoneInfo
 
-from readers.common import CITIES, HALLS, Polite, city_of, slug
+from readers.common import CITIES, HALLS, Polite, city_of, lang_key, slug, youtube_id
 
 BASE = "https://cineroyal.ae"
 CHAIN = "cineroyal"
@@ -103,6 +103,26 @@ def _film_lang(film_name: str, api_language) -> str | None:
         if re.search(r"\b" + word + r"\b", low):
             return label
     return None
+
+
+def film_extras(film_meta: dict, film_lang: str | None) -> dict:
+    """Poster (poster5, 400x630 — poster1/3 are squares, poster4 a banner), trailer
+    (youTubevideoId), genres ("genere") and the language the film record or its title states."""
+    out: dict = {}
+    for k in ("poster5", "poster2"):
+        if (film_meta.get(k) or "").startswith("http"):
+            out["film_poster"] = film_meta[k]
+            break
+    yt = youtube_id(film_meta.get("youTubevideoId"))
+    if yt:
+        out["film_trailer"] = yt
+    genres = [g.strip() for g in (film_meta.get("genere") or "").split(",") if g.strip()]
+    if genres:
+        out["film_genres"] = genres
+    lang = lang_key(film_lang)
+    if lang:
+        out["lang"] = lang
+    return out
 
 
 def _runtime_minutes(length) -> int | None:
@@ -214,6 +234,7 @@ def fetch(days: int = 2) -> dict:
             film_rating = film_meta.get("rating") or None
             runtime = _runtime_minutes(film_meta.get("length"))
             film_lang = _film_lang(film_name, film_meta.get("language"))
+            extras = film_extras(film_meta, film_lang)
 
             for cinema_block in data.get("shows", []):
                 cinema_ref = cinema_block.get("cinemaRefId")
@@ -270,6 +291,7 @@ def fetch(days: int = 2) -> dict:
                         "hall_label": hall_label,
                         "prices": prices,
                         "book": f"{BASE}/home/chooseScreen?prettyUrl={pretty_url}",
+                        **extras,
                     })
 
     if not all(sh["hall"] in HALLS for sh in shows):

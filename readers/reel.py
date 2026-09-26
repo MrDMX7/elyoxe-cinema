@@ -41,9 +41,12 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from curl_cffi import requests as cr
 
-from readers.common import CITIES, HALLS, Polite, arabic_title, city_of, slug, fmt3d as _fmt3d
+from readers.common import (CITIES, HALLS, Polite, arabic_title, city_of, lang_key, slug, subs_keys,
+                            youtube_id, fmt3d as _fmt3d)
 
 BASE = "https://storage.googleapis.com/eeg-prod-reelcinema-sb/web/vista/json"
+# the site's own poster path (bundle: e4(id) = `${$3}/vista/movie_images/${id}.jpg`, 300x450)
+POSTER = "https://storage.googleapis.com/eeg-prod-reelcinema-sb/web/vista/movie_images/{}.jpg"
 API = "https://apiuae.reelcinemas.com/webapi/api"
 SITE = "https://www.reelcinemas.com"
 CHAIN = "reel"
@@ -225,6 +228,25 @@ def _num(v) -> float | None:
         return None
 
 
+def film_extras(film: dict, genre_names: dict) -> dict:
+    """Poster, trailer, genres, language and subtitles one Films.json record states."""
+    out: dict = {"film_poster": POSTER.format(film["ID"])} if film.get("ID") else {}
+    yt = youtube_id(film.get("TrailerUrl"))
+    if yt:
+        out["film_trailer"] = yt
+    genres = [genre_names[g] for g in (film.get("GenreId"), film.get("GenreId2"), film.get("GenreId3"))
+              if g and genre_names.get(g)]
+    if genres:
+        out["film_genres"] = genres
+    lang = lang_key(_clean(film.get("Language")))
+    if lang:
+        out["lang"] = lang
+    subs = subs_keys(_clean(film.get("SubTitle")))
+    if subs:
+        out["subs"] = subs
+    return out
+
+
 def fetch(days: int = 2, prices: bool = True) -> dict:
     http = Polite(gap=1.0)
 
@@ -233,6 +255,11 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
     sessions_raw = http.get(f"{BASE}/Sessions.json").json()["value"]
 
     films_by_id = {f["ID"]: f for f in films_raw}
+    try:  # genre names: a failure only costs the genres
+        genre_names = {g["ID"]: (g.get("Name") or "").strip()
+                       for g in http.get(f"{BASE}/FilmGenres.json").json()["value"]}
+    except Exception:
+        genre_names = {}
 
     now = datetime.now(DUBAI)
     today = now.date()
@@ -304,6 +331,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
             "hall_label": hall_label,
             "prices": key,  # resolved below
             "book": f"{SITE}/en-ae/movie-details/{film_id}/{_slugify(film['Title'])}",
+            **film_extras(film, genre_names),
         })
 
     if not shows:

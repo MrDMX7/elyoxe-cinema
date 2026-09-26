@@ -5,81 +5,87 @@
 # names are the Arabic the malls themselves use on their signs, sites and Google Maps labels. A cinema
 # id missing here falls back to a cleaned reader name, and tests/test_build.py fails for any cinema in
 # the real fixtures that has no entry — add it here when a chain opens one.
+#
+# lat, lng, coord_source: every cinema's location (phase 1: «أقرب سينما», «الوصول»), written by
+# `python coords.py` — the chain's own API/site first, then the Google Maps link the chain
+# publishes, then OpenStreetMap Nominatim; coord_source says which. normalize.finalize() copies
+# them onto latest.json with maps = a Google Maps link to the coordinates.
+# tests/test_data_additions.py fails for any real cinema without them.
 cinemas:
   # --- Cinemacity
-  cinemacity-alqana:                 {ar: "سينما سيتي — القناة",                 en: "Cinemacity — Al Qana"}
-  cinemacity-arabian-centre:         {ar: "سينما سيتي — المركز العربي",          en: "Cinemacity — Arabian Centre"}
-  cinemacity-fountain-views:         {ar: "سينما سيتي — فاونتن فيوز، دبي مول",   en: "Cinemacity — Fountain Views, The Dubai Mall"}
-  cinemacity-rahmania:               {ar: "سينما سيتي — الرحمانية مول",          en: "Cinemacity — Rahmania Mall"}
-  cinemacity-starlight:              {ar: "سينما سيتي — ستارلايت، مارينا مول",   en: "Cinemacity — Starlight, Marina Mall"}
-  cinemacity-zero-6-mall:            {ar: "سينما سيتي — زيرو 6 مول",             en: "Cinemacity — Zero 6 Mall"}
-  cinemacity-zero6-mall:             {ar: "سينما سيتي — زيرو 6 مول",             en: "Cinemacity — Zero 6 Mall"}
+  cinemacity-alqana:                 {ar: "سينما سيتي — القناة",                 en: "Cinemacity — Al Qana", lat: 24.402682121, lng: 54.4990316, coord_source: "cinemacity location page (schema.org geo)"}
+  cinemacity-arabian-centre:         {ar: "سينما سيتي — المركز العربي",          en: "Cinemacity — Arabian Centre", lat: 25.2346289, lng: 55.436369, coord_source: "cinemacity location page (schema.org geo)"}
+  cinemacity-fountain-views:         {ar: "سينما سيتي — فاونتن فيوز، دبي مول",   en: "Cinemacity — Fountain Views, The Dubai Mall", lat: 25.1929, lng: 55.279, coord_source: "cinemacity location page (schema.org geo)"}
+  cinemacity-rahmania:               {ar: "سينما سيتي — الرحمانية مول",          en: "Cinemacity — Rahmania Mall", lat: 25.3306, lng: 55.5999, coord_source: "cinemacity location page (schema.org geo)"}
+  cinemacity-starlight:              {ar: "سينما سيتي — ستارلايت، مارينا مول",   en: "Cinemacity — Starlight, Marina Mall", lat: 24.4755, lng: 54.3225, coord_source: "cinemacity location page (schema.org geo)"}
+  cinemacity-zero-6-mall:            {ar: "سينما سيتي — زيرو 6 مول",             en: "Cinemacity — Zero 6 Mall", lat: 25.291, lng: 55.4969, coord_source: "cinemacity location page (schema.org geo)"}
+  cinemacity-zero6-mall:             {ar: "سينما سيتي — زيرو 6 مول",             en: "Cinemacity — Zero 6 Mall", lat: 25.291, lng: 55.4969, coord_source: "same site as cinemacity-zero-6-mall (cinemacity location page (schema.org geo))"}
   # --- Cine Royal
-  cineroyal-al-dhannah-mall:         {ar: "سيني رويال — الظنة مول",              en: "Cine Royal — Al Dhannah Mall"}
-  cineroyal-dalma-mall:              {ar: "سيني رويال — دلما مول",               en: "Cine Royal — Dalma Mall"}
-  cineroyal-deerfields-mall:         {ar: "سيني رويال — ديرفيلدز مول",           en: "Cine Royal — Deerfields Mall"}
-  cineroyal-khalidiyah-mall:         {ar: "سيني رويال — الخالدية مول",           en: "Cine Royal — Khalidiyah Mall"}
-  cineroyal-wtc-mall-abu-dhabi:      {ar: "سيني رويال — مول المركز التجاري العالمي", en: "Cine Royal — WTC Mall"}
+  cineroyal-al-dhannah-mall:         {ar: "سيني رويال — الظنة مول",              en: "Cine Royal — Al Dhannah Mall", lat: 24.075498, lng: 52.671992, coord_source: "openstreetmap nominatim: Dhannah Mall"}
+  cineroyal-dalma-mall:              {ar: "سيني رويال — دلما مول",               en: "Cine Royal — Dalma Mall", lat: 24.333053, lng: 54.52384, coord_source: "openstreetmap nominatim: Dalma Mall"}
+  cineroyal-deerfields-mall:         {ar: "سيني رويال — ديرفيلدز مول",           en: "Cine Royal — Deerfields Mall", lat: 24.524503, lng: 54.673398, coord_source: "openstreetmap nominatim: Deerfields Mall"}
+  cineroyal-khalidiyah-mall:         {ar: "سيني رويال — الخالدية مول",           en: "Cine Royal — Khalidiyah Mall", lat: 24.469933, lng: 54.351822, coord_source: "openstreetmap nominatim: Khalidiyah Mall, Abu Dhabi"}
+  cineroyal-wtc-mall-abu-dhabi:      {ar: "سيني رويال — مول المركز التجاري العالمي", en: "Cine Royal — WTC Mall", lat: 24.487391, lng: 54.357323, coord_source: "openstreetmap nominatim: World Trade Center Mall, Abu Dhabi"}
   # --- Novo
-  novo-bas-mall-baniyas:             {ar: "نوفو — باس مول، بني ياس",             en: "Novo — BAS Mall, Baniyas"}
-  novo-buhairah-centre:              {ar: "نوفو — مركز البحيرة",                 en: "Novo — Buhairah Centre"}
-  novo-dragon-mart:                  {ar: "نوفو — دراغون مارت",                  en: "Novo — Dragon Mart"}
-  novo-img-worlds:                   {ar: "نوفو — آي إم جي وورلدز",              en: "Novo — IMG Worlds"}
-  novo-manar-mall:                   {ar: "نوفو — المنار مول",                   en: "Novo — Manar Mall"}
-  novo-mega-mall:                    {ar: "نوفو — ميغا مول",                     en: "Novo — Mega Mall"}
-  novo-sahara-centre:                {ar: "نوفو — مركز صحارى",                   en: "Novo — Sahara Centre"}
+  novo-bas-mall-baniyas:             {ar: "نوفو — باس مول، بني ياس",             en: "Novo — BAS Mall, Baniyas", lat: 24.31407341, lng: 54.62003208, coord_source: "novo API"}
+  novo-buhairah-centre:              {ar: "نوفو — مركز البحيرة",                 en: "Novo — Buhairah Centre", lat: 25.33111853, lng: 55.37620344, coord_source: "novo API"}
+  novo-dragon-mart:                  {ar: "نوفو — دراغون مارت",                  en: "Novo — Dragon Mart", lat: 25.17112185, lng: 55.42509798, coord_source: "novo API"}
+  novo-img-worlds:                   {ar: "نوفو — آي إم جي وورلدز",              en: "Novo — IMG Worlds", lat: 25.081394, lng: 55.318134, coord_source: "openstreetmap nominatim: IMG Worlds of Adventure"}
+  novo-manar-mall:                   {ar: "نوفو — المنار مول",                   en: "Novo — Manar Mall", lat: 25.78658525, lng: 55.96535391, coord_source: "novo API"}
+  novo-mega-mall:                    {ar: "نوفو — ميغا مول",                     en: "Novo — Mega Mall", lat: 25.34474928, lng: 55.39850891, coord_source: "novo API"}
+  novo-sahara-centre:                {ar: "نوفو — مركز صحارى",                   en: "Novo — Sahara Centre", lat: 25.29791968, lng: 55.37028487, coord_source: "novo API"}
   # --- Reel
-  reel-dubai-mall:                   {ar: "ريل — دبي مول",                       en: "Reel — The Dubai Mall"}
-  reel-dubai-marina-mall:            {ar: "ريل — دبي مارينا مول",                en: "Reel — Dubai Marina Mall"}
-  reel-the-springs-souk:             {ar: "ريل — ذا سبرينغز سوق",                en: "Reel — The Springs Souk"}
+  reel-dubai-mall:                   {ar: "ريل — دبي مول",                       en: "Reel — The Dubai Mall", lat: 25.197044, lng: 55.278952, coord_source: "openstreetmap nominatim: The Dubai Mall"}
+  reel-dubai-marina-mall:            {ar: "ريل — دبي مارينا مول",                en: "Reel — Dubai Marina Mall", lat: 25.076636, lng: 55.140219, coord_source: "openstreetmap nominatim: Dubai Marina Mall"}
+  reel-the-springs-souk:             {ar: "ريل — ذا سبرينغز سوق",                en: "Reel — The Springs Souk", lat: 25.06565, lng: 55.192846, coord_source: "openstreetmap nominatim: The Springs Souk"}
   # --- Roxy
-  roxy-al-khawaneej:                 {ar: "روكسي — الخوانيج ووك",                en: "Roxy — Al Khawaneej Walk"}
-  roxy-boxpark:                      {ar: "روكسي — بوكس بارك",                   en: "Roxy — Boxpark"}
-  roxy-circle-mall:                  {ar: "روكسي — سيركل مول",                   en: "Roxy — Circle Mall"}
-  roxy-city-walk:                    {ar: "روكسي — سيتي ووك",                    en: "Roxy — City Walk"}
-  roxy-dubai-hills-mall:             {ar: "روكسي — دبي هيلز مول",                en: "Roxy — Dubai Hills Mall"}
-  roxy-the-beach-jbr:                {ar: "روكسي — ذا بيتش، جي بي آر",           en: "Roxy — The Beach, JBR"}
+  roxy-al-khawaneej:                 {ar: "روكسي — الخوانيج ووك",                en: "Roxy — Al Khawaneej Walk", lat: 25.233408, lng: 55.472872, coord_source: "openstreetmap nominatim: Al Khawaneej Walk"}
+  roxy-boxpark:                      {ar: "روكسي — بوكس بارك",                   en: "Roxy — Boxpark", lat: 25.199341, lng: 55.24879, coord_source: "openstreetmap nominatim: Boxpark, Dubai"}
+  roxy-circle-mall:                  {ar: "روكسي — سيركل مول",                   en: "Roxy — Circle Mall", lat: 25.065708, lng: 55.215939, coord_source: "openstreetmap nominatim: Circle Mall, Jumeirah Village Circle"}
+  roxy-city-walk:                    {ar: "روكسي — سيتي ووك",                    en: "Roxy — City Walk", lat: 25.208159, lng: 55.261874, coord_source: "openstreetmap nominatim: City Walk, Dubai"}
+  roxy-dubai-hills-mall:             {ar: "روكسي — دبي هيلز مول",                en: "Roxy — Dubai Hills Mall", lat: 25.101671, lng: 55.239929, coord_source: "openstreetmap nominatim: Dubai Hills Mall"}
+  roxy-the-beach-jbr:                {ar: "روكسي — ذا بيتش، جي بي آر",           en: "Roxy — The Beach, JBR", lat: 25.076754, lng: 55.131275, coord_source: "openstreetmap nominatim: The Beach, JBR"}
   # --- Star
-  star-al-foah-al-ain:               {ar: "ستار — الفوعة مول",                   en: "Star — Al Foah Mall"}
-  star-al-ghurair-centre-dubai:      {ar: "ستار — مركز الغرير",                  en: "Star — Al Ghurair Centre"}
-  star-al-raha-abu-dhabi:            {ar: "ستار — الراحة مول",                   en: "Star — Al Raha Mall"}
-  star-al-wahda-mall-abu-dhabi:      {ar: "ستار — الوحدة مول",                   en: "Star — Al Wahda Mall"}
-  star-barari-outlet-mall-al-ain:    {ar: "ستار — براري أوتلت مول",              en: "Star — Barari Outlet Mall"}
-  star-bawadi-mall-al-ain:           {ar: "ستار — بوادي مول",                    en: "Star — Bawadi Mall"}
-  star-bawadi-mall:                  {ar: "ستار — بوادي مول",                    en: "Star — Bawadi Mall"}
-  star-central-mall-kc-abu-dhabi:    {ar: "ستار — سنترال مول، مدينة خليفة",      en: "Star — Central Mall, Khalifa City"}
-  star-century-mall-fujairah:        {ar: "ستار — سنشري مول",                    en: "Star — Century Mall"}
-  star-dana-plaza-fujairah:          {ar: "ستار — دانة بلازا",                   en: "Star — Dana Plaza"}
-  star-grand-mall-ajman:             {ar: "ستار — جراند مول",                    en: "Star — Grand Mall"}
-  star-grand-safeer-abu-dhabi:       {ar: "ستار — جراند سفير مول",               en: "Star — Grand Safeer Mall"}
-  star-junction-mall-dip-dubai:      {ar: "ستار — جنكشن مول، مجمع دبي للاستثمار", en: "Star — Junction Mall, DIP"}
-  star-makani-zakher-mall-al-ain:    {ar: "ستار — مكاني زاخر مول",               en: "Star — Makani Zakher Mall"}
-  star-mall-of-al-ain-al-ain:        {ar: "ستار — العين مول",                    en: "Star — Al Ain Mall"}
-  star-mall-of-uaq-umm-al-quwain:    {ar: "ستار — مول أم القيوين",               en: "Star — Mall of UAQ"}
-  star-national-cinema-abu-dhabi:    {ar: "ستار — السينما الوطنية",              en: "Star — National Cinema"}
-  star-star-cinemas-ras-al-khaimah:  {ar: "ستار — رأس الخيمة",                   en: "Star — Ras Al Khaimah"}
+  star-al-foah-al-ain:               {ar: "ستار — الفوعة مول",                   en: "Star — Al Foah Mall", lat: 24.3445781412277, lng: 55.7923386693157, coord_source: "star API"}
+  star-al-ghurair-centre-dubai:      {ar: "ستار — مركز الغرير",                  en: "Star — Al Ghurair Centre", lat: 25.2678001, lng: 55.3174893, coord_source: "google maps link published by star"}
+  star-al-raha-abu-dhabi:            {ar: "ستار — الراحة مول",                   en: "Star — Al Raha Mall", lat: 24.4392087616161, lng: 54.5734477223527, coord_source: "star API"}
+  star-al-wahda-mall-abu-dhabi:      {ar: "ستار — الوحدة مول",                   en: "Star — Al Wahda Mall", lat: 24.470632709139, lng: 54.3725055391599, coord_source: "star API"}
+  star-barari-outlet-mall-al-ain:    {ar: "ستار — براري أوتلت مول",              en: "Star — Barari Outlet Mall", lat: 24.0863761046315, lng: 55.830169560442, coord_source: "star API"}
+  star-bawadi-mall-al-ain:           {ar: "ستار — بوادي مول",                    en: "Star — Bawadi Mall", lat: 24.159319, lng: 55.8085897, coord_source: "google maps link published by star"}
+  star-bawadi-mall:                  {ar: "ستار — بوادي مول",                    en: "Star — Bawadi Mall", lat: 24.159319, lng: 55.8085897, coord_source: "same site as star-bawadi-mall-al-ain (google maps link published by star)"}
+  star-central-mall-kc-abu-dhabi:    {ar: "ستار — سنترال مول، مدينة خليفة",      en: "Star — Central Mall, Khalifa City", lat: 24.4112724, lng: 54.5897285, coord_source: "google maps link published by star"}
+  star-century-mall-fujairah:        {ar: "ستار — سنشري مول",                    en: "Star — Century Mall", lat: 25.1572658, lng: 56.3498242, coord_source: "google maps link published by star"}
+  star-dana-plaza-fujairah:          {ar: "ستار — دانة بلازا",                   en: "Star — Dana Plaza", lat: 25.1311352, lng: 56.3293355, coord_source: "google maps link published by star"}
+  star-grand-mall-ajman:             {ar: "ستار — جراند مول",                    en: "Star — Grand Mall", lat: 25.392724, lng: 55.439169, coord_source: "openstreetmap nominatim: Grand Mall, Ajman"}
+  star-grand-safeer-abu-dhabi:       {ar: "ستار — جراند سفير مول",               en: "Star — Grand Safeer Mall", lat: 24.3591203, lng: 54.4922453, coord_source: "google maps link published by star"}
+  star-junction-mall-dip-dubai:      {ar: "ستار — جنكشن مول، مجمع دبي للاستثمار", en: "Star — Junction Mall, DIP", lat: 24.99569184, lng: 55.15439046, coord_source: "star API"}
+  star-makani-zakher-mall-al-ain:    {ar: "ستار — مكاني زاخر مول",               en: "Star — Makani Zakher Mall", lat: 24.110019740226445, lng: 55.702203686566754, coord_source: "star API"}
+  star-mall-of-al-ain-al-ain:        {ar: "ستار — العين مول",                    en: "Star — Al Ain Mall", lat: 24.2228308, lng: 55.7826779, coord_source: "google maps link published by star"}
+  star-mall-of-uaq-umm-al-quwain:    {ar: "ستار — مول أم القيوين",               en: "Star — Mall of UAQ", lat: 25.5211723, lng: 55.5454454, coord_source: "google maps link published by star"}
+  star-national-cinema-abu-dhabi:    {ar: "ستار — السينما الوطنية",              en: "Star — National Cinema", lat: 24.4920694, lng: 54.3689923, coord_source: "google maps link published by star"}
+  star-star-cinemas-ras-al-khaimah:  {ar: "ستار — رأس الخيمة",                   en: "Star — Ras Al Khaimah", lat: 25.7946177, lng: 55.9732781, coord_source: "google maps link published by star"}
   # --- VOX
-  vox-abu-dhabi-mall-abu-dhabi:      {ar: "فوكس — أبوظبي مول",                   en: "VOX — Abu Dhabi Mall"}
-  vox-al-hamra-mall-ras-al-khaimah:  {ar: "فوكس — الحمرا مول",                   en: "VOX — Al Hamra Mall"}
-  vox-al-jimi-mall:                  {ar: "فوكس — الجيمي مول",                   en: "VOX — Al Jimi Mall"}
-  vox-burjuman:                      {ar: "فوكس — برجمان",                       en: "VOX — BurJuman"}
-  vox-city-centre-ajman:             {ar: "فوكس — سيتي سنتر عجمان",              en: "VOX — City Centre Ajman"}
-  vox-city-centre-al-zahia:          {ar: "فوكس — سيتي سنتر الزاهية",            en: "VOX — City Centre Al Zahia"}
-  vox-city-centre-deira:             {ar: "فوكس — سيتي سنتر ديرة",               en: "VOX — City Centre Deira"}
-  vox-city-centre-fujairah:          {ar: "فوكس — سيتي سنتر الفجيرة",            en: "VOX — City Centre Fujairah"}
-  vox-city-centre-meaisem:           {ar: "فوكس — سيتي سنتر معيصم",              en: "VOX — City Centre Me'aisem"}
-  vox-city-centre-mirdif:            {ar: "فوكس — سيتي سنتر مردف",               en: "VOX — City Centre Mirdif"}
-  vox-city-centre-sharjah:           {ar: "فوكس — سيتي سنتر الشارقة",            en: "VOX — City Centre Sharjah"}
-  vox-city-centre-shindagha:         {ar: "فوكس — سيتي سنتر الشندغة",            en: "VOX — City Centre Shindagha"}
-  vox-dubai-festival-city-mall:      {ar: "فوكس — دبي فستيفال سيتي مول",         en: "VOX — Dubai Festival City Mall"}
-  vox-kempinski-mall-of-emirates:    {ar: "فوكس — كمبينسكي، مول الإمارات",       en: "VOX — Kempinski, Mall of the Emirates"}
-  vox-mall-of-the-emirates:          {ar: "فوكس — مول الإمارات",                 en: "VOX — Mall of the Emirates"}
-  vox-megaplex-cineplex-grand-hyatt: {ar: "فوكس — ميغابلكس، جراند حياة",         en: "VOX — Megaplex, Grand Hyatt"}
-  vox-mercato:                       {ar: "فوكس — مركاتو",                       en: "VOX — Mercato"}
-  vox-nation-towers-abu-dhabi:       {ar: "فوكس — نيشن تاورز",                   en: "VOX — Nation Towers"}
-  vox-palm-jumeirah-mall:            {ar: "فوكس — مول نخلة جميرا",               en: "VOX — Palm Jumeirah Mall"}
-  vox-reem-mall-abu-dhabi:           {ar: "فوكس — ريم مول",                      en: "VOX — Reem Mall"}
-  vox-the-galleria-al-maryah-island: {ar: "فوكس — الغاليريا، جزيرة الماريه",     en: "VOX — The Galleria, Al Maryah Island"}
-  vox-wafi-mall-at-wafi-city:        {ar: "فوكس — وافي مول",                     en: "VOX — Wafi Mall"}
-  vox-yas-mall-abu-dhabi:            {ar: "فوكس — ياس مول",                      en: "VOX — Yas Mall"}
-  vox-yas-mall:                      {ar: "فوكس — ياس مول",                      en: "VOX — Yas Mall"}
+  vox-abu-dhabi-mall-abu-dhabi:      {ar: "فوكس — أبوظبي مول",                   en: "VOX — Abu Dhabi Mall", lat: 24.496107, lng: 54.383179, coord_source: "openstreetmap nominatim: Abu Dhabi Mall, Abu Dhabi"}
+  vox-al-hamra-mall-ras-al-khaimah:  {ar: "فوكس — الحمرا مول",                   en: "VOX — Al Hamra Mall", lat: 25.683001, lng: 55.781694, coord_source: "openstreetmap nominatim: Al Hamra Mall, Ras Al Khaimah"}
+  vox-al-jimi-mall:                  {ar: "فوكس — الجيمي مول",                   en: "VOX — Al Jimi Mall", lat: 24.244198, lng: 55.726727, coord_source: "openstreetmap nominatim: Al Jimi Mall, Al Ain"}
+  vox-burjuman:                      {ar: "فوكس — برجمان",                       en: "VOX — BurJuman", lat: 25.25499, lng: 55.303941, coord_source: "openstreetmap nominatim: Burjuman, Dubai"}
+  vox-city-centre-ajman:             {ar: "فوكس — سيتي سنتر عجمان",              en: "VOX — City Centre Ajman", lat: 25.39973, lng: 55.479134, coord_source: "openstreetmap nominatim: City Centre Ajman, Ajman"}
+  vox-city-centre-al-zahia:          {ar: "فوكس — سيتي سنتر الزاهية",            en: "VOX — City Centre Al Zahia", lat: 25.316892, lng: 55.455727, coord_source: "openstreetmap nominatim: City Centre Al Zahia, Sharjah"}
+  vox-city-centre-deira:             {ar: "فوكس — سيتي سنتر ديرة",               en: "VOX — City Centre Deira", lat: 25.252218, lng: 55.332254, coord_source: "openstreetmap nominatim: City Centre Deira, Dubai"}
+  vox-city-centre-fujairah:          {ar: "فوكس — سيتي سنتر الفجيرة",            en: "VOX — City Centre Fujairah", lat: 25.12559, lng: 56.302232, coord_source: "openstreetmap nominatim: City Centre Fujairah, Fujairah"}
+  vox-city-centre-meaisem:           {ar: "فوكس — سيتي سنتر معيصم",              en: "VOX — City Centre Me'aisem", lat: 25.04034, lng: 55.196943, coord_source: "openstreetmap nominatim: City Centre Meaisem, Dubai"}
+  vox-city-centre-mirdif:            {ar: "فوكس — سيتي سنتر مردف",               en: "VOX — City Centre Mirdif", lat: 25.216022, lng: 55.408067, coord_source: "openstreetmap nominatim: City Centre Mirdif, Dubai"}
+  vox-city-centre-sharjah:           {ar: "فوكس — سيتي سنتر الشارقة",            en: "VOX — City Centre Sharjah", lat: 25.342682, lng: 55.407422, coord_source: "openstreetmap nominatim: Sharjah City Centre"}
+  vox-city-centre-shindagha:         {ar: "فوكس — سيتي سنتر الشندغة",            en: "VOX — City Centre Shindagha", lat: 25.263985, lng: 55.287123, coord_source: "openstreetmap nominatim: City Centre Shindagha, Dubai"}
+  vox-dubai-festival-city-mall:      {ar: "فوكس — دبي فستيفال سيتي مول",         en: "VOX — Dubai Festival City Mall", lat: 25.221868, lng: 55.352589, coord_source: "openstreetmap nominatim: Dubai Festival City Mall"}
+  vox-kempinski-mall-of-emirates:    {ar: "فوكس — كمبينسكي، مول الإمارات",       en: "VOX — Kempinski, Mall of the Emirates", lat: 25.1188, lng: 55.199, coord_source: "same site as vox-mall-of-the-emirates (vox cinema page (map link))"}
+  vox-mall-of-the-emirates:          {ar: "فوكس — مول الإمارات",                 en: "VOX — Mall of the Emirates", lat: 25.1188, lng: 55.199, coord_source: "vox cinema page (map link)"}
+  vox-megaplex-cineplex-grand-hyatt: {ar: "فوكس — ميغابلكس، جراند حياة",         en: "VOX — Megaplex, Grand Hyatt", lat: 25.227888, lng: 55.328391, coord_source: "openstreetmap nominatim: Grand Hyatt Dubai"}
+  vox-mercato:                       {ar: "فوكس — مركاتو",                       en: "VOX — Mercato", lat: 25.21636, lng: 55.253005, coord_source: "openstreetmap nominatim: Mercato, Dubai"}
+  vox-nation-towers-abu-dhabi:       {ar: "فوكس — نيشن تاورز",                   en: "VOX — Nation Towers", lat: 24.466895, lng: 54.33358, coord_source: "openstreetmap nominatim: Nation Towers, Abu Dhabi"}
+  vox-palm-jumeirah-mall:            {ar: "فوكس — مول نخلة جميرا",               en: "VOX — Palm Jumeirah Mall", lat: 25.113981, lng: 55.13834, coord_source: "openstreetmap nominatim: Palm Jumeirah Mall, Dubai"}
+  vox-reem-mall-abu-dhabi:           {ar: "فوكس — ريم مول",                      en: "VOX — Reem Mall", lat: 24.488421, lng: 54.400584, coord_source: "openstreetmap nominatim: Reem Mall, Abu Dhabi"}
+  vox-the-galleria-al-maryah-island: {ar: "فوكس — الغاليريا، جزيرة الماريه",     en: "VOX — The Galleria, Al Maryah Island", lat: 24.501449, lng: 54.389055, coord_source: "openstreetmap nominatim: The Galleria Al Maryah Island, Abu Dhabi"}
+  vox-wafi-mall-at-wafi-city:        {ar: "فوكس — وافي مول",                     en: "VOX — Wafi Mall", lat: 25.22876, lng: 55.319227, coord_source: "openstreetmap nominatim: Wafi Mall"}
+  vox-yas-mall-abu-dhabi:            {ar: "فوكس — ياس مول",                      en: "VOX — Yas Mall", lat: 24.486065, lng: 54.607692, coord_source: "openstreetmap nominatim: Yas Mall, Abu Dhabi"}
+  vox-yas-mall:                      {ar: "فوكس — ياس مول",                      en: "VOX — Yas Mall", lat: 24.486065, lng: 54.607692, coord_source: "same site as vox-yas-mall-abu-dhabi (openstreetmap nominatim: Yas Mall, Abu Dhabi)"}

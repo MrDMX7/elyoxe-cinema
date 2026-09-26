@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 from datetime import datetime, timedelta, timezone
 
-from readers.common import CITIES, HALLS, Polite, city_of, slug, fmt3d as _fmt3d
+from readers.common import CITIES, HALLS, Polite, city_of, lang_key, slug, youtube_id, fmt3d as _fmt3d
 
 CHAIN = "cinemacity"
 BASE = "https://www.cinemacity.ae/api/gatsby-source-boxofficeapi"
@@ -77,6 +77,41 @@ def _film_lang(tags: set[str]) -> str | None:
         if m:
             return m.group(1)
     return None
+
+
+_SUBS_RE = re.compile(r"^Localization\.Subtitles?\.(\w+)$")
+
+
+def movie_extras(meta: dict) -> dict:
+    """Poster and genres from a `movies` record. Its trailers are boxoffice.media MP4s, not
+    YouTube — a YouTube link is taken only if one ever appears."""
+    out: dict = {}
+    poster = meta.get("poster") or (((meta.get("locale") or {}).get("poster")) or {}).get("url")
+    if (poster or "").startswith("http"):
+        out["film_poster"] = poster
+    loc = meta.get("locale") or {}
+    for v in (loc.get("hdTrailers") or []) + (loc.get("sdTrailers") or []):
+        yt = youtube_id((v or {}).get("url"))
+        if yt:
+            out["film_trailer"] = yt
+            break
+    genres = [g.strip() for g in (meta.get("genres") or "").split(",") if g.strip()]
+    if genres:
+        out["film_genres"] = genres
+    return out
+
+
+def show_lang(tags: set[str]) -> dict:
+    """{"lang", "subs"} from a showtime's Localization.* tags, only when present."""
+    out: dict = {}
+    lang = lang_key(_film_lang(tags))
+    if lang:
+        out["lang"] = lang
+    matches = [_SUBS_RE.match(t) for t in tags]
+    subs = sorted({k for k in (lang_key(m.group(1)) for m in matches if m) if k})
+    if subs:
+        out["subs"] = subs
+    return out
 
 
 def _book_url(show: dict) -> str | None:
@@ -214,6 +249,7 @@ def fetch(days: int = 2) -> dict:
             rating = certificate.replace("-", "").replace(" ", "") if certificate else None
             runtime_s = meta.get("runtime")
             runtime = round(runtime_s / 60) if runtime_s else None
+            extras = movie_extras(meta)
 
             for _business_day, showlist in by_date.items():
                 for s in showlist:
@@ -247,6 +283,8 @@ def fetch(days: int = 2) -> dict:
                         "hall_label": hall_label,
                         "prices": key,  # resolved after the loop, once every hall is sampled
                         "book": book,
+                        **extras,
+                        **show_lang(tags),
                     })
 
     for sh in shows:
