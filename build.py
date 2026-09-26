@@ -86,6 +86,7 @@ T = {  # strings shared with cinema.js (window.CT)
     "ends": ("يخلص تقريباً {t}", "Ends around {t}"), "today": ("اليوم", "Today"), "tomorrow": ("بكرة", "Tomorrow"),
     "book_at": ("احجز من موقع {chain}", "Book on the {chain} site"), "share": ("أرسلها للقروب", "Send to the group"),
     "after_card": ("بعد خصم {card}", "after {card}"), "in_cinema": ("{film} في {cinema}", "{film} at {cinema}"),
+    "left": ("باقي {n} مقعد", "{n} seats left"),
 }
 RERELEASE = ("إعادة عرض", "Re-release")
 DATE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")
@@ -416,6 +417,10 @@ class Site:
         for dp, _, fs in sorted(os.walk(SRC)):
             for f in sorted(fs): h.update(open(os.path.join(dp, f), "rb").read())
         self.v = h.hexdigest()[:10]
+        self.js = bundle_js()
+        self.js_name = f"cinema.{hashlib.sha1(self.js.encode()).hexdigest()[:10]}.js"
+        self.adhan = open(os.path.join(SRC, "js", "vendor", "adhan.umd.min.js"), encoding="utf-8").read()
+        self.adhan_name = f"adhan.{hashlib.sha1(self.adhan.encode()).hexdigest()[:10]}.js"
         # an archived film (no longer showing) keeps its page as an archive, and appears nowhere else
         self.showing = [fid for fid, f in self.films.items() if f.get("status") != "archived"]
         self.shows = [s for s in self.shows if self.films[s["film"]].get("status") != "archived"]
@@ -559,6 +564,7 @@ class Site:
         if s.get("ends"): a.append(f'data-ends="{esc(s["ends"])}"')
         if s.get("lang"): a.append(f'data-lang="{esc(s["lang"])}"')
         if s.get("subs"): a.append(f'data-subs="{esc(s["subs"])}"')
+        if isinstance(s.get("seats_left"), int) and s["seats_left"] > 0: a.append(f'data-left="{s["seats_left"]}"')
         pi = self.pidx(s)
         if pi is not None: a.append(f'data-p="{pi}"')
         if self.table_date(s) and pi is not None: a.append(f'data-asof="{esc(self.table_date(s))}"')
@@ -588,7 +594,7 @@ class Site:
         return f'<bdi lang="en">{esc(n)}</bdi>' if lang == "ar" and re.search(r"[A-Za-z]", n) else esc(n)
 
     # -------- posters
-    def poster(self, fid, lang, cls="pst", eager=False, size=(342, 513)):
+    def poster(self, fid, lang, cls="pst", eager=False, size=(342, 513), near=False):
         """The poster, or — when there is none (or it fails to load) — a typographic tile in the film's colour."""
         f = self.films[fid]
         pc = f.get("poster_color") or hue(fid)
@@ -600,7 +606,7 @@ class Site:
             # a real poster carries its own title: the tile's title stays underneath, hidden, and comes back
             # (the class drops) only if the image fails to load
             img = (f'<img src="{esc(f["poster"])}"{ss} width="{size[0]}" height="{size[1]}" alt="" decoding="async"'
-                   + (' fetchpriority="high"' if first else ' loading="lazy"')
+                   + (' fetchpriority="high"' if first else "" if near else ' loading="lazy"')
                    + ' onerror="this.parentNode.classList.remove(\'img\');this.remove()">')
             return (f'<span class="{cls} img" style="--pc:{pc}"><span class="pst-t" aria-hidden="true"{self.title_attr(fid, lang)}>'
                     f'{esc(self.ftitle(fid, lang))}</span>{img}</span>')
@@ -656,24 +662,52 @@ class Site:
             now = (f'<a class="now" href="#tonight" data-now hidden><span class="now-tx"><span class="now-l">{esc(L(T["now_label"], lang))}</span>'
                    f'<span class="now-f" data-now-film></span><span class="now-w" data-now-where></span></span>'
                    f'<span class="flip" dir="ltr" data-now-time></span></a>')
-        return f'<div class="me me-{mode}" data-me>{q}{self.card_chips(lang)}{now}</div>'
+        near = (f'<p class="near js-only"><button type="button" class="lnk" data-near>{"أقرب سينما لي" if lang == "ar" else "Nearest cinema to me"}</button>'
+                f'<span class="near-m" data-near-msg aria-live="polite"></span></p>')
+        return f'<div class="me me-{mode}" data-me>{q}{self.card_chips(lang)}{near}{now}</div>'
 
     def filters(self, lang, fids):
-        """Filter chips (cinema.js): genre, family, kids, ends before, sort by your price."""
+        """Genre chips (cinema.js): all, family, kids, and the four genres most films here share."""
         counts = {}
         for fid in fids:
             for k in genre_keys(self.films[fid]): counts[k] = counts.get(k, 0) + 1
-        top = [k for k, _ in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:3]]
+        top = [k for k, _ in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:4]]
         b = lambda attrs, label, on=False: f'<button type="button" class="chip" {attrs} aria-pressed="{"true" if on else "false"}">{esc(label)}</button>'
         chips = [b('data-filter="all"', "الكل" if lang == "ar" else "All", True),
                  b('data-filter="family"', "عائلي" if lang == "ar" else "Family"),
-                 b('data-filter="kids"', "للأطفال" if lang == "ar" else "Kids"),
-                 b('data-ends-before="24:00"', "يخلص قبل 12" if lang == "ar" else "Ends before midnight")]
+                 b('data-filter="kids"', "للأطفال" if lang == "ar" else "Kids")]
         chips += [b(f'data-filter="genre:{esc(k)}"', genre_label(k, lang)) for k in top]
-        chips.append(b('data-sort="price"', "الأرخص لك" if lang == "ar" else "Cheapest for you"))
-        return f'<div class="chips filters js-only" role="group" aria-label="{"تصفية" if lang == "ar" else "Filter"}">{"".join(chips)}</div>'
+        return f'<div class="chips filters js-only" role="group" aria-label="{"النوع" if lang == "ar" else "Genre"}">{"".join(chips)}</div>'
 
-    def film_tile(self, fid, lang, shows, big=False):
+    def controls(self, lang, sort=True, prayer=False, who=True):
+        """The second row cinema.js drives: «مع منو رايح؟» presets, «يخلص قبل», the sort, the prayer switch."""
+        ar = lang == "ar"
+        b = lambda attrs, label: f'<button type="button" class="chip" {attrs} aria-pressed="false">{esc(label)}</button>'
+        out = []
+        if who:
+            ws = [("solo", "بروحي", "Just me"), ("friends", "ربعي", "Friends"), ("family", "العائلة", "Family"), ("kids", "العيال", "The kids")]
+            out.append(f'<div class="ctl-g"><span class="ctl-l" id="who-{lang}">{"مع منو رايح؟" if ar else "Going with"}</span>'
+                       f'<div class="chips who" role="group" aria-labelledby="who-{lang}">{"".join(b(f"data-who={chr(34)}{k}{chr(34)}", a if ar else e) for k, a, e in ws)}</div></div>')
+        opts = [("", "أي وقت", "Any time"), ("21:00", "9 بالليل", "9 pm"), ("22:00", "10 بالليل", "10 pm"), ("23:00", "11 بالليل", "11 pm"), ("24:00", "12 بالليل", "Midnight")]
+        out.append(f'<label class="ctl-g ends"><span class="ctl-l">{"يخلص قبل" if ar else "Ends before"}</span>'
+                   f'<select data-ends-before="">{"".join(f"<option value={chr(34)}{v}{chr(34)}>{esc(a if ar else e)}</option>" for v, a, e in opts)}</select></label>')
+        if sort:
+            ss = [("price", "الأرخص لك", "Cheapest for you"), ("time", "الأقرب وقت", "Soonest"), ("verdict", "الأحسن تقييم", "Best reviewed")]
+            out.append(f'<div class="ctl-g"><span class="ctl-l" id="sort-{lang}">{"رتّب" if ar else "Sort"}</span>'
+                       f'<div class="chips sorts" role="group" aria-labelledby="sort-{lang}">{"".join(b(f"data-sort={chr(34)}{k}{chr(34)}", a if ar else e) for k, a, e in ss)}</div></div>')
+        if prayer: out.append(self.prayer_switch(lang))
+        return f'<div class="ctl js-only">{"".join(out)}</div>'
+
+    def prayer_switch(self, lang):
+        """«راعِ أوقات الصلاة» (off by default): cinema.js marks shows overlapping Maghrib / Isha, and can hide them."""
+        ar = lang == "ar"
+        lab = "راعِ أوقات الصلاة" if ar else "Mind prayer times"
+        return (f'<div class="ctl-g prayer"><span id="pr-{lang}">{lab}</span>'
+                f'<button type="button" class="switch" role="switch" aria-checked="false" data-prayer aria-labelledby="pr-{lang}"><i></i></button>'
+                f'<button type="button" class="chip hide-clash" data-hide-clash aria-pressed="false" hidden>{"أخفِ العروض المتقاطعة" if ar else "Hide clashing shows"}</button>'
+                f'<span class="pr-t" data-prayer-times aria-live="polite"></span></div>')
+
+    def film_tile(self, fid, lang, shows, big=False, i=99):
         f = self.films[fid]; v, vw = self.vword(fid, lang)
         fam, kids = film_flags(f)
         today = [s for s in shows if s["film"] == fid and s["date"] == self.today] or [s for s in shows if s["film"] == fid]
@@ -681,13 +715,18 @@ class Site:
         price = (f'<span class="fp">{mc[0]}</span><span class="fw">{self.cname_html(mc[1]["cinema"], lang)}</span>' if mc
                  else f'<span class="fp">{self.box(lang)}</span>')
         rr = f'<span class="rr">{esc(L(RERELEASE, lang))}</span>' if f.get("rerelease") else ""
-        attrs = (f' data-fid="{esc(fid)}" data-genres="{esc(" ".join(genre_keys(f)))}" data-family="{int(fam)}" data-kids="{int(kids)}"'
-                 + (f' data-runtime="{int(f["runtime"])}"' if f.get("runtime") else ""))
+        attrs = self.film_attrs(fid) + f' data-v="{v}"'
+        attrs += f' data-runtime="{int(f["runtime"])}"' if f.get("runtime") else ""
         return (f'<a class="film v-{v}{" big" if big else ""}" href="{P(lang, "film", fid)}"{attrs}>'
-                + self.poster(fid, lang, eager=True)
+                + self.poster(fid, lang, eager=True, near=i < 3)
                 + (f'<span class="fn"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>' if f.get("poster") else "")
                 + f'<span class="fm"><span class="vw">{esc(vw)}</span><span class="sc">{self.score(f, lang)}</span></span>{rr}'
                 + f'<span class="cheap" data-cheap>{price}</span></a>')
+
+    def film_attrs(self, fid):
+        """What cinema.js filters a film by: its id, genre keys and the family/kids flags."""
+        f = self.films[fid]; fam, kids = film_flags(f)
+        return f' data-fid="{esc(fid)}" data-genres="{esc(" ".join(genre_keys(f)))}" data-family="{int(fam)}" data-kids="{int(kids)}"'
 
     def crumbs(self, lang, *items):
         parts = [f'<a href="{P(lang)}">{esc(L(UI["s_mark"], lang))}</a>']
@@ -724,16 +763,20 @@ class Site:
         ftitle, cn = self.ftitle(s["film"], lang), self.cname(cid, lang)
         msg = f'{L(T["in_cinema"], lang).format(film=ftitle, cinema=cn)}، {day} {s["time"]}' if lang == "ar" else f'{L(T["in_cinema"], lang).format(film=ftitle, cinema=cn)}, {day} {s["time"]}'
         share = "https://wa.me/?text=" + quote(msg + "\n" + SITE + P(lang, "film", s["film"]), safe="")
-        book = (f'<a class="book" href="{esc(s["book"])}" rel="noopener nofollow" target="_blank" data-tk-book data-book="{esc(s["book"])}">{esc(L(T["book_at"], lang).format(chain=self.h.chain_name(chain, lang)))}</a>'
-                if s.get("book") else f'<a class="book off" href="{esc(self.book_url(s))}" rel="noopener nofollow" target="_blank" data-tk-book data-book="">{esc(L(T["box"], lang))}</a>')
+        # the show's own booking page, else the chain's site (never the previous show's link)
+        book = (f'<a class="book" href="{esc(self.book_url(s))}" rel="noopener nofollow" target="_blank" data-tk-book data-book="{esc(s.get("book") or "")}">'
+                f'{esc(L(T["book_at"], lang).format(chain=self.h.chain_name(chain, lang)))}</a>')
+        left = s.get("seats_left")
+        left = f'<p class="tk-left" data-tk-seats>{esc(L(T["left"], lang).format(n=int(left)))}</p>' if isinstance(left, int) and left > 0 else '<p class="tk-left" data-tk-seats hidden></p>'
         return (f'<aside class="ticket" id="ticket" data-ticket data-show="{self.sid(s)}" data-cin="{esc(cid)}" data-chain="{esc(chain)}"'
                 f' role="dialog" aria-labelledby="tk-cin"{hidden}>'
                 f'<div class="tk-top"><div class="tk-main"><p class="tk-cin" id="tk-cin" data-tk-cin>{self.cname_html(cid, lang)}</p>'
                 f'<p class="tk-film" data-tk-film{self.title_attr(s["film"], lang)}>{esc(ftitle)}</p>'
-                f'<p class="tk-when" data-tk-when aria-live="polite">{"".join(lines)}</p><p class="tk-left" data-tk-seats hidden></p></div>'
+                f'<p class="tk-when" data-tk-when>{"".join(lines)}</p>{left}</div>'
                 f'<div class="tk-stub"><span data-tk-day>{esc(day)}</span><b dir="ltr" data-tk-time>{esc(s["time"])}</b></div></div>'
                 f'<table class="tk-seats"><tbody data-tk-rows>{seats}</tbody></table>'
-                f'<p class="tk-terms" data-tk-terms hidden></p>'
+                f'<p class="tk-terms" data-tk-terms hidden></p><p class="tk-go" data-tk-go>{self.directions(self.cinemas[cid], lang)}</p>'
+                f'<p class="vh" data-tk-live aria-live="polite"></p>'
                 f'<div class="tk-act">{book}<a class="share" href="{esc(share)}" rel="noopener" target="_blank" data-tk-share data-share="{esc(msg)}">{esc(L(T["share"], lang))}</a></div>'
                 f'<button type="button" class="tk-x js-only" data-tk-close aria-label="{"سكّر" if lang == "ar" else "Close"}"></button></aside>')
 
@@ -761,6 +804,10 @@ class Site:
         strings["v"] = {k: L(v, lang) for k, v in VERDICT.items()}
         strings["cards"] = {c["id"]: (c["name_ar"] if lang == "ar" else c["name_en"]) for c in self.cards}
         strings["base"] = P(lang)
+        strings["langs"] = {k: L(v, lang) for k, v in LANGS.items()}
+        strings["ad"] = {ch: int((c or {}).get("ad_offset_min") or 15) for ch, c in (self.d.get("chains") or {}).items() if isinstance(c, dict)}
+        strings["adhan"] = "/assets/" + self.adhan_name
+        strings["days"] = sorted({s["date"] for s in self.shows})   # the slice dates that exist (no 404 for a day not built)
         pre = [f'<link rel="preload" href="/assets/fonts/{f}" as="font" type="font/woff2" crossorigin>' for f in FONTS[lang]]
         fp = self._first_poster
         if fp and fp.get("poster"):
@@ -779,7 +826,7 @@ class Site:
             "cards_href": P(lang, "cards"), "halls_href": P(lang, "halls"),
             "c_films": ' aria-current="page"' if nav == "films" else "", "c_cinemas": ' aria-current="page"' if nav == "cinemas" else "",
             "c_cards": ' aria-current="page"' if nav == "cards" else "",
-            "v": self.v, "page": pagekind, "attrs": attrs, "preload": "\n".join(pre), "robots": robots,
+            "v": self.v, "js": "/assets/" + self.js_name, "page": pagekind, "attrs": attrs, "preload": "\n".join(pre), "robots": robots,
             "og_image": esc(og_image or f"{SITE}/assets/og-{lang}.png"),
             "jsonld": json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False).replace("</", "<\\/"),
             "strings": json.dumps(strings, ensure_ascii=False).replace("</", "<\\/"),
@@ -798,10 +845,11 @@ class Site:
         text = text.translate({0x0660 + i: 0x30 + i for i in range(10)} | {0x06F0 + i: 0x30 + i for i in range(10)})
         open(path, "w", encoding="utf-8", newline="\n").write(text)
 
-    def posters_row(self, lang, fids, shows, heading, city_label=""):
-        tiles = "".join(self.film_tile(fid, lang, shows, big=i == 0) for i, fid in enumerate(fids))
+    def posters_row(self, lang, fids, shows, heading, city_label="", prayer=False):
+        tiles = "".join(self.film_tile(fid, lang, shows, big=i == 0, i=i) for i, fid in enumerate(fids))
         return (f'<section class="tonight wrap" id="tonight"><div class="sec-h"><h2>{esc(heading)}<span class="h-city" data-city-label>{esc(city_label)}</span></h2>'
-                f'{self.filters(lang, fids)}</div><div class="posters" data-films>{tiles}</div></section>')
+                f'{self.filters(lang, fids)}</div>{self.controls(lang, prayer=prayer)}<div class="posters" data-films>{tiles}</div>'
+                f'<p class="empty" data-empty hidden></p></section>')
 
     # ================================================================ pages
     def home(self):
@@ -825,7 +873,7 @@ class Site:
                         f'<p class="feat-m"><span class="vw v-{v}">{esc(vw)}</span>{"".join(f"<span>{x}</span>" for x in facts)}</p>'
                         + (f'<p class="feat-s">{dates(esc(say))}</p>' if say else "")
                         + f'<p class="feat-a"><a class="btn light" href="{P(lang, "film", fid)}">{"الأوقات والأسعار" if lang == "ar" else "Times and prices"}'
-                        + (f'<span class="from">{"من" if lang == "ar" else "from"} {mc[0]} {esc(L(T["aed"], lang))}</span>' if mc else "")
+                        + (f'<span class="from" data-from="{esc(fid)}">{"من" if lang == "ar" else "from"} {mc[0]} {esc(L(T["aed"], lang))}</span>' if mc else "")
                         + f'</a>{trailer}</p></div>')
                 body += f'<section class="hero">{self.backdrop(fid)}<div class="wrap hero-in">{feat}{self.me(lang, "dubai", "home")}</div></section>'
             else:
@@ -888,7 +936,7 @@ class Site:
                 else:
                     body += (f'<p class="lead">{f"{len(cids)} سينما و{len(fids)} فيلم اليوم. السعر لكل قاعة من السينما نفسها، وينحسب بعد خصم بطاقتك." if lang == "ar" else f"{len(cids)} cinemas and {len(fids)} films today. Every hall’s price comes from the cinema itself and is worked out after your card."}</p></section>')
                     body += f'<div class="wrap">{self.me(lang, city, "city")}</div>'
-                    if fids: body += self.posters_row(lang, fids, today, "الليلة في " + cn if lang == "ar" else "Tonight in " + cn)
+                    if fids: body += self.posters_row(lang, fids, today, "الليلة في " + cn if lang == "ar" else "Tonight in " + cn, prayer=True)
                     body += f'<section class="wrap"><h2>{"السينمات" if lang == "ar" else "Cinemas"}</h2><div class="rows">'
                     for cid in cids:
                         c = self.cinemas[cid]; pr = self.cinema_prices(cid)
@@ -907,7 +955,8 @@ class Site:
                         for fid in fids:
                             fs = [s for s in today if s["film"] == fid]
                             v, vw = self.vword(fid, lang)
-                            sched += (f'<div class="srow"><div class="sf"><a href="{P(lang, "film", fid)}">{self.title_html(fid, lang, "b", "t")}</a>'
+                            # only the id: cinema.js reads the genres and flags from the film's tile above
+                            sched += (f'<div class="srow" data-fid="{esc(fid)}"><div class="sf"><a href="{P(lang, "film", fid)}">{self.title_html(fid, lang, "b", "t")}</a>'
                                       f'<span class="vw v-{v}">{esc(vw)}</span></div><div class="sc">')
                             for cid in cids:
                                 cs = [s for s in fs if s["cinema"] == cid]
@@ -939,7 +988,7 @@ class Site:
             g, w = m or ("https://www.google.com/maps/search/?api=1&query=" + quote(c.get("name") or "")), None
         out = f'<a href="{esc(g)}" rel="noopener" target="_blank" lang="en">Google Maps</a>'
         if w: out += f'{"، " if lang == "ar" else ", "}<a href="{esc(w)}" rel="noopener" target="_blank" lang="en">Waze</a>'
-        return f'<span class="go">{"الوصول:" if lang == "ar" else "Directions:"} {out}</span>'
+        return f'<span class="go" data-go>{"الاتجاهات:" if lang == "ar" else "Directions:"} {out}</span>'
 
     def theater_ld(self, cid, lang):
         c = self.cinemas[cid]
@@ -979,6 +1028,8 @@ class Site:
                          f'<p class="meta">{self.directions(c, lang)} {self.fresh(chain, lang, always=True)}</p></section>')
                 body += f'<div class="wrap">{self.me(lang, city, "cinema")}</div>'
                 body += '<div class="wrap split"><div class="main">'
+                cfids = sorted({s["film"] for s in shows})
+                body += f'<div class="sec-h cin-h">{self.filters(lang, cfids)}</div>{self.controls(lang, prayer=True)}<p class="empty" data-empty hidden></p>'
                 # films with their times, today then tomorrow — as richly as the budget allows
                 for mode in ("full", "today", "plain"):
                     self._P, self._Pi = [], {}
@@ -1032,7 +1083,7 @@ class Site:
             for fid in fids:
                 fs = [s for s in ds if s["film"] == fid]
                 v, vw = self.vword(fid, lang)
-                out.append(f'<div class="cf"><a class="cf-p" href="{P(lang, "film", fid)}" tabindex="-1" aria-hidden="true">{self.poster(fid, lang, "pst sm")}</a>'
+                out.append(f'<div class="cf"{self.film_attrs(fid)} data-v="{v}"><a class="cf-p" href="{P(lang, "film", fid)}" tabindex="-1" aria-hidden="true">{self.poster(fid, lang, "pst sm")}</a>'
                            f'<div class="cf-b"><h3><a href="{P(lang, "film", fid)}"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</a></h3>'
                            f'<p class="cf-m"><span class="vw v-{v}">{esc(vw)}</span>{self.score(self.films[fid], lang)}</p>')
                 for k in dict.fromkeys(self.hkey(s) for s in fs):
@@ -1079,8 +1130,14 @@ class Site:
                     head += f'<p class="rr">{esc(L(RERELEASE, lang))}{" — من سنة" if lang == "ar" and yr else (" — first released" if yr else "")}{yr}</p>'
                 facts = []
                 rt = f.get("rt") or {}
-                if rt.get("critics") is not None: facts.append(("النقاد", "Critics", num(f'{rt["critics"]}%')))
-                if rt.get("audience") is not None: facts.append(("الجمهور", "Audience", num(f'{rt["audience"]}%')))
+                # the ratings sit under the verdict as two plain items, in reading order (not a mixed-language «basis»)
+                rates = [f'<span>{esc(a if lang == "ar" else e)} {num(str(rt[k]) + "%")}</span>'
+                         for k, a, e in (("critics", "النقاد", "Critics"), ("audience", "الجمهور", "Audience")) if rt.get(k) is not None]
+                if not rates and vd.get("basis"):   # no rt block: the verdict's basis carries them («RT 96% (249 ناقد)، الجمهور 91%»)
+                    b = str(vd["basis"])
+                    for rx, a, e in ((r"\bRT (\d{1,3})%", "النقاد", "Critics"), (r"(?:الجمهور|[Aa]udience) (\d{1,3})%", "الجمهور", "Audience")):
+                        m = re.search(rx, b)
+                        if m: rates.append(f'<span>{esc(a if lang == "ar" else e)} {num(m.group(1) + "%")}</span>')
                 if f.get("runtime"): facts.append(("المدة", "Runtime", num(f["runtime"]) + (" د" if lang == "ar" else " min")))
                 if f.get("rating"): facts.append(("التصنيف", "Rating", f'<bdi class="num" dir="ltr">{esc(f["rating"])}</bdi>'))
                 if f.get("lang"): facts.append(("اللغة", "Language", esc(lang_words(f["lang"], lang))))
@@ -1093,7 +1150,9 @@ class Site:
                 say = vd.get("ar") if lang == "ar" else vd.get("en")
                 info = (f'<div class="verdict v-{v}"><p class="word">{esc(L(VERDICT.get(v, VERDICT["unknown"]), lang))}</p>'
                         + (f'<p class="say">{dates(esc(say))}</p>' if say else "") + '</div>'
-                        + (f'<p class="basis"><bdi dir="ltr" lang="en">{dates(esc(str(vd["basis"]).replace(" · ", ", ")))}</bdi></p>' if vd.get("basis") else ""))
+                        + (f'<p class="basis rates">{"".join(rates)}</p>' if rates else
+                           f'<p class="basis"><bdi>{dates(esc(str(vd["basis"]).replace(" · ", "، " if lang == "ar" else ", ")))}</bdi></p>'
+                           if vd.get("basis") and vd["basis"] not in ("manual", "unknown", "template") else ""))
                 syn = (f.get("synopsis_ar") if lang == "ar" else None) or f.get("synopsis") or f.get("overview")
                 if syn: info += f'<p class="syn"{" lang=\"en\" dir=\"ltr\"" if lang == "ar" and not f.get("synopsis_ar") else ""}>{esc(syn)}</p>'
                 info += '<dl class="facts">' + "".join(f'<div><dt>{esc(a if lang == "ar" else e)}</dt><dd>{val}</dd></div>' for a, e, val in facts) + '</dl>'
@@ -1114,9 +1173,8 @@ class Site:
                 info += self.me(lang, "dubai", "film")
                 days = [d for d in (self.today, self.tomorrow) if any(s["date"] == d for s in shows)]
                 tabs = "".join(f'<button type="button" class="chip" data-day="{d}" aria-pressed="{"true" if i == 0 else "false"}">{esc(L(T["today"] if d == self.today else T["tomorrow"], lang))}</button>' for i, d in enumerate(days))
-                info += (f'<div class="bar js-only"><div class="chips days" role="group" aria-label="{"اليوم" if lang == "ar" else "Day"}">{tabs}</div>'
-                         f'<label class="prayer"><span>{"راعِ أوقات الصلاة" if lang == "ar" else "Mind prayer times"}</span>'
-                         f'<button type="button" class="switch" role="switch" aria-checked="false" data-prayer aria-label="{"راعِ أوقات الصلاة" if lang == "ar" else "Mind prayer times"}"><i></i></button></label></div>')
+                info += (f'<div class="bar js-only"><div class="chips days" role="group" aria-label="{"اليوم" if lang == "ar" else "Day"}">{tabs}</div></div>'
+                         f'{self.controls(lang, sort=False, prayer=True)}<p class="empty" data-empty hidden></p>')
                 nxt = self.first_city_show(shows, cities)
                 if not cities:
                     sched = f'<p class="lead">{"ما لقينا عروض لهذا الفيلم في اليومين الجايين." if lang == "ar" else "No shows for this film in the next two days."}</p>'
@@ -1137,7 +1195,8 @@ class Site:
                         else f"{t}: {vword}. Showtimes in UAE cinemas today and tomorrow, ticket prices per hall, and the price after your card discount.")
                 graph = [self.movie_ld(fid, lang)] + [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:30] + [self.breadcrumb_ld(lang, (t, P(lang, "film", fid)))]
                 self.page(lang, ("film", fid), title, desc, body, graph, "film",
-                          f' data-fid="{esc(fid)}" data-chains="{" ".join(sorted({self.cinemas[s["cinema"]]["chain"] for s in shows}))}"',
+                          f' data-fid="{esc(fid)}" data-chains="{" ".join(sorted({self.cinemas[s["cinema"]]["chain"] for s in shows}))}"'
+                          + (f' data-runtime="{int(f["runtime"])}"' if f.get("runtime") else ""),
                           og_image=f.get("poster_2x") or f.get("poster"))
 
     def movie_ld(self, fid, lang):
@@ -1387,6 +1446,10 @@ class Site:
                 if any(E): j["E"] = E
                 if lists["L"]: j["L"], j["Li"] = lists["L"], Li
                 self.write(os.path.join(ddir, f"{city}-{day}.json"), json.dumps(j, ensure_ascii=False, separators=(",", ":")))
+        # «أقرب سينما لي» and the ticket's directions: every cinema's city and coordinates, {cid: [city, chain, lat, lng, ar, en]}
+        geo = {cid: [c.get("city"), c["chain"], round(float(c["lat"]), 5), round(float(c["lng"]), 5), self.cname(cid, "ar"), self.cname(cid, "en")]
+               for cid, c in self.cinemas.items() if c.get("lat") is not None and c.get("lng") is not None}
+        self.write(os.path.join(ddir, "cinemas.json"), json.dumps(geo, ensure_ascii=False, separators=(",", ":")))
         rules = {ch: {card: {k: v for k, v in r.items() if k in ("status", "type", "value", "excluded_halls", "halls_excluded", "included_halls", "included_cinemas", "valid_until", "confidence", "box_office_only", "max_tickets", "note_ar")}
                       for card, r in (cards or {}).items()} for ch, cards in self.rules.items()}
         chains = {ch: self.h.chain_name(ch, "ar") for ch in set(self.rules) | {c["chain"] for c in self.cinemas.values()}}
@@ -1423,12 +1486,30 @@ class Site:
             os.makedirs(os.path.dirname(self.lastmod_path), exist_ok=True)
             json.dump(known, open(self.lastmod_path, "w", encoding="utf-8"), ensure_ascii=False, indent=0, sort_keys=True)
 
+    def offline(self):
+        """The service worker's fallback when a page is not cached and there is no network."""
+        body = (f'<section class="head wrap nf"><h1 class="pt">ما في إنترنت الحين</h1>'
+                f'<p class="lead">الصفحات اللي فتحتها قبل تشتغل بدون نت. ارجع لها، أو جرّب مرة ثانية لين يرجع الاتصال.</p>'
+                f'<p class="lead"><a href="/">الأفلام المعروضة اليوم</a></p>'
+                f'<p class="lead" lang="en" dir="ltr">You are offline. Pages you opened before still work. <a href="/en/">Films today, in English</a>.</p></section>')
+        self.page("ar", (), "ما في إنترنت — سينما", "بدون اتصال.", body, [], "offline",
+                  path=os.path.join(self.out, "offline.html"), robots='<meta name="robots" content="noindex">')
+
     def assets(self):
         adir = os.path.join(self.out, "assets")
         os.makedirs(os.path.join(adir, "fonts"), exist_ok=True)
-        for f in ("cinema.css", "cinema.js", "icon.svg"):
+        for f in ("cinema.css", "icon.svg"):
             if os.path.exists(os.path.join(SRC, f)):
                 self.write(os.path.join(adir, f), open(os.path.join(SRC, f), encoding="utf-8").read())
+        self.write(os.path.join(adir, self.js_name), self.js)
+        self.write(os.path.join(adir, self.adhan_name), self.adhan)
+        # PWA: the worker must sit at the root to control every page; the manifest names the icons
+        self.write(os.path.join(self.out, "sw.js"), open(os.path.join(SRC, "sw.js"), encoding="utf-8").read().replace("__V__", self.v))
+        self.write(os.path.join(self.out, "manifest.webmanifest"), open(os.path.join(SRC, "manifest.webmanifest"), encoding="utf-8").read())
+        idir = os.path.join(SRC, "icons")
+        os.makedirs(os.path.join(adir, "icons"), exist_ok=True)
+        for f in os.listdir(idir) if os.path.isdir(idir) else []:
+            if f.endswith(".png"): shutil.copy(os.path.join(idir, f), os.path.join(adir, "icons", f))
         for f in ("og-ar.png", "og-en.png"):
             if os.path.exists(os.path.join(SRC, f)): shutil.copy(os.path.join(SRC, f), os.path.join(adir, f))
         fdir = os.path.join(SRC, "fonts")
@@ -1436,9 +1517,32 @@ class Site:
             shutil.copy(os.path.join(fdir, f), os.path.join(adir, "fonts", f))
 
     def run(self):
-        self.home(); self.city_pages(); self.cinema_pages(); self.film_pages(); self.card_pages(); self.halls_page(); self.not_found()
+        self.home(); self.city_pages(); self.cinema_pages(); self.film_pages(); self.card_pages(); self.halls_page(); self.not_found(); self.offline()
         self.slices(); self.sitemap(); self.assets()
         return len(self.urls)
+
+
+# the client: small modules under src/js/, concatenated in this order into ONE function scope (so they share
+# helpers without globals), comments and indentation stripped. pure.js and disc.js are plain function
+# declarations with no page access: tests/test_js.py and tests/test_parity.py run them in node as they are.
+JS_MODULES = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "ticket", "trailer", "pwa", "main")
+
+
+def minify_lite(js):
+    """Drop /* */ comments, whole-line // comments and indentation. Deliberately naive: the modules never
+    put «/*» or a line-leading «//» inside a string or a regex (tests/test_js.py checks the bundle parses)."""
+    js = re.sub(r"/\*.*?\*/", "", js, flags=re.S)
+    out = []
+    for line in js.splitlines():
+        t = line.strip()
+        if t and not t.startswith("//"): out.append(t)
+    return "\n".join(out)
+
+
+def bundle_js(src=None):
+    src = src or os.path.join(SRC, "js")
+    parts = [open(os.path.join(src, m + ".js"), encoding="utf-8").read() for m in JS_MODULES]
+    return minify_lite('(function () {\n"use strict";\n' + "\n".join(parts) + "\n})();\n") + "\n"
 
 
 GENERATED = [c for c, _, _ in CITIES] + ["film", "cards", "halls", "data", "assets", "en", "cinema"]
@@ -1459,7 +1563,7 @@ def build(data_path, discounts_path, out, halls_path=None, preview=False, lastmo
     halls = Halls(halls_path or os.path.join(ROOT, "halls.yaml"))
     for sub in GENERATED:          # only what this build writes; anything else in out/ is left alone
         shutil.rmtree(os.path.join(out, sub), ignore_errors=True)
-    for f in ("index.html", "404.html", "sitemap.xml", "robots.txt"):
+    for f in ("index.html", "404.html", "offline.html", "sitemap.xml", "robots.txt", "sw.js", "manifest.webmanifest"):
         try: os.remove(os.path.join(out, f))
         except FileNotFoundError: pass
     site = Site(data, disc, halls, out); site.lastmod_path = lastmod_path

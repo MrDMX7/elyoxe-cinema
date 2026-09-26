@@ -159,8 +159,13 @@ def test_city_day_slices_for_the_client(site):
                 assert bi == -1 or (j["B"][bi] + tail).startswith("https://")
     d = json.load(open(os.path.join(out, "data", "discounts.json"), encoding="utf-8"))
     assert d["rules"]["star"]["fazaa"]["value"] == 20
-    js = os.path.getsize(os.path.join(out, "assets", "cinema.js"))
-    assert js < 25 * 1024
+    # the client is one bundle, named by its hash; the budget is 45 KB gzipped (spec: Budgets)
+    import gzip
+    home = open(os.path.join(out, "index.html"), encoding="utf-8").read()
+    name = re.search(r'<script src="/assets/(cinema\.[0-9a-f]{10}\.js)" defer></script>', home).group(1)
+    js = open(os.path.join(out, "assets", name), "rb").read()
+    assert len(gzip.compress(js)) < 45 * 1024
+    assert json.load(open(os.path.join(out, "data", "cinemas.json"), encoding="utf-8"))
 
 
 def test_percentages_are_isolated_in_arabic(site):
@@ -274,7 +279,9 @@ def test_a_percentage_inside_a_verdict_is_isolated(tmp_path):
     out = _built(tmp_path, m)
     ar = read(out, "film", "crawlers")
     assert 'بتقييم نقاد <span class="num" dir="ltr">88%</span>' in ar
-    assert 'RT <span class="num" dir="ltr">88%</span>' in ar
+    # the ratings under the verdict: two plain items in reading order, never the mixed-language «basis»
+    assert '<p class="basis rates"><span>النقاد <span class="num" dir="ltr">22%</span></span><span>الجمهور <span class="num" dir="ltr">35%</span></span></p>' in ar
+    assert "RT 88%" not in ar
 
 
 def test_rerelease_is_labelled_in_both_languages(tmp_path):
@@ -353,12 +360,13 @@ def test_bogo_price_says_per_person_with_two_tickets(tmp_path):
     build.build(DATA, os.path.join(ROOT, "discounts.yaml"), out)
     assert "للشخص — بشرط تذكرتين" in read(out, "cards", "enbd")       # the worked example
     assert "per person, with 2 tickets" in read(out, "en", "cards", "enbd")
-    js = open(os.path.join(ROOT, "src", "cinema.js"), encoding="utf-8").read()
-    home = js[js.index("function renderHome"):js.index("function slice")]
-    # the «starting now» strip and the «cheapest for you» tile both append the per-person note
-    assert home.count("ppNote(b.r)") == 2
-    assert "ppNote(x.r)" in js[js.index("function renderPrices"):js.index("function renderNote")]
-    assert "r: x.a != null ? x.r : null" in js                                   # best() keeps the rule
+    home = open(os.path.join(ROOT, "src", "js", "home.js"), encoding="utf-8").read()
+    prices = open(os.path.join(ROOT, "src", "js", "prices.js"), encoding="utf-8").read()
+    # the «starting now» strip, the «cheapest for you» tile and the featured «from» all append the per-person note
+    assert home[home.index("function renderNow"):home.index("function renderHome")].count("ppNote(b.r)") == 1
+    assert home[home.index("function renderHome"):].count("ppNote(b.r)") == 2
+    assert "ppNote(x.r)" in prices[prices.index("function priceHTML"):prices.index("function renderPrices")]
+    assert "r: x.a != null ? x.r : null" in prices                               # best() keeps the rule
 
 
 def test_film_schedule_prices_each_day_when_days_differ(tmp_path):
@@ -449,7 +457,7 @@ def test_dates_are_human_and_english_runs_marked(site):
     cin = read(out, "al-ain", "star-bawadi-mall")
     assert "<small>25 سبتمبر 2026</small>" in cin and "25 September 2026" in read(out, "en", "al-ain", "star-bawadi-mall")
     assert 'lang="en">Google Maps</a>' in cin and 'lang="en">Waze</a>' in cin
-    assert '<bdi dir="ltr" lang="en">' in read(out, "film", "crawlers")
+    assert '<p class="basis rates">' in read(out, "film", "crawlers") and '<bdi dir="ltr" lang="en">' not in read(out, "film", "crawlers")
     assert "E0816F" not in open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
     assert 'href="/assets/fonts/readex-latin.woff2"' in read(out)
 

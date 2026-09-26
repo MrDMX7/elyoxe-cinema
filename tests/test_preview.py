@@ -47,7 +47,7 @@ def test_default_build_stays_indexable(tmp_path, monkeypatch, env):
     out = run(tmp_path, monkeypatch, env)
     for p in pages(out):
         html = open(p, encoding="utf-8").read()
-        if os.path.basename(p) == "404.html":
+        if os.path.basename(p) in ("404.html", "offline.html"):   # never pages to index
             continue
         assert "noindex" not in html, p
     robots = open(os.path.join(out, "robots.txt"), encoding="utf-8").read()
