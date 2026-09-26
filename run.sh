@@ -102,13 +102,19 @@ fi
 
 # data/new_films.json: [{fid,title,title_ar,cinemas}, ...] fids refresh.py saw for the first time
 # ever this run — empty on the seeding run (no film_history.json before it) by refresh.py's own
-# rule, so this never fires on that one. One notification, up to 5 films.
+# rule, so this never fires on that one. One notification, up to 5 films. A corrupt file (should
+# not happen — refresh.py writes it atomically — but a truncated write from a killed run is not
+# impossible) is logged and skipped, never a reason to fail this already-deployed run.
 new_line=$("$PY" - <<'EOF'
 import json
+films = []
 try:
-    films = json.load(open("data/new_films.json", encoding="utf-8"))
+    with open("data/new_films.json", encoding="utf-8") as f:
+        films = json.load(f)
 except FileNotFoundError:
-    films = []
+    pass
+except (OSError, json.JSONDecodeError) as e:
+    print(f"new_films.json unreadable, skipping the new-film alert: {e}", file=__import__("sys").stderr)
 parts = [f"{f['title']} — {f['cinemas']} سينما" for f in films[:5]]
 extra = len(films) - len(parts)
 if extra > 0:

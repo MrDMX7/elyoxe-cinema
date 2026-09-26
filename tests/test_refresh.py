@@ -34,7 +34,9 @@ def sandbox(tmp_path, monkeypatch):
     monkeypatch.setattr(refresh, "HEALTH_PATH", data_dir / "health.json")
     monkeypatch.setattr(refresh, "FILMS_CACHE_PATH", data_dir / "films_cache.json")
     monkeypatch.setattr(refresh, "FILM_HISTORY_PATH", data_dir / "film_history.json")
+    monkeypatch.setattr(refresh, "FILM_HISTORY_BACKUP_PATH", data_dir / "film_history.prev.json")
     monkeypatch.setattr(refresh, "PRICE_CACHE_PATH", data_dir / "price_cache.json")
+    monkeypatch.setattr(refresh, "PRICE_CACHE_BACKUP_PATH", data_dir / "price_cache.prev.json")
     monkeypatch.setattr(refresh, "NEW_FILMS_PATH", data_dir / "new_films.json")
     monkeypatch.setattr(refresh, "FIXTURES_DIR", REAL_FIXTURES_DIR)
 

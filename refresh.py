@@ -56,7 +56,9 @@ LATEST_PATH = DATA_DIR / "latest.json"
 HEALTH_PATH = DATA_DIR / "health.json"
 FILMS_CACHE_PATH = DATA_DIR / "films_cache.json"
 FILM_HISTORY_PATH = DATA_DIR / "film_history.json"
+FILM_HISTORY_BACKUP_PATH = DATA_DIR / "film_history.prev.json"
 PRICE_CACHE_PATH = DATA_DIR / "price_cache.json"
+PRICE_CACHE_BACKUP_PATH = DATA_DIR / "price_cache.prev.json"
 NEW_FILMS_PATH = DATA_DIR / "new_films.json"
 
 CHAIN_READERS = {
@@ -107,6 +109,66 @@ def _write_json_atomic(path: Path, data) -> None:
     tmp = path.with_name(f"{path.name}.tmp{os.getpid()}")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
     os.replace(tmp, path)
+
+
+# ---------------------------------------------------------------- corruption-safe state files
+# film_history.json and price_cache.json are the two files this run's own past depends on --
+# losing price_cache.json only costs a re-sample, but losing film_history.json unnoticed causes
+# an alert storm (every current film looks "new" against an empty history) and silently drops
+# every archived film's permanent page. Both get the same policy: never trust a file that fails
+# to parse, keep it around for forensics instead of overwriting it, fall back to the last known
+# good copy, and if there isn't one, say so explicitly rather than merely returning `{}`.
+
+def _load_state_json(path: Path, backup_path: Path) -> tuple[dict | None, str]:
+    """Load a state JSON file, tolerating corruption. Returns (data, status):
+      "missing"   -- `path` doesn't exist (data is None) -- a genuinely first run.
+      "ok"        -- `path` parsed fine (data is its content).
+      "restored"  -- `path` was corrupt (renamed to "<name>.corrupt-<timestamp>", kept on disk)
+                     and `backup_path` parsed fine (data is the backup's content).
+      "no_backup" -- `path` was corrupt and `backup_path` is missing or also corrupt (data is
+                     None) -- callers must treat this the same as "missing" for any purpose that
+                     depends on the file's *history*, since none of it can be trusted.
+    Never raises: a corrupt file is renamed, not deleted, and any OSError renaming it is itself
+    swallowed (the corrupt bytes just stay at their original path instead) so a full disk or a
+    permissions quirk can't turn a bad-JSON problem into a crashed run.
+    """
+    if not path.exists():
+        return None, "missing"
+    try:
+        return json.loads(path.read_text(encoding="utf-8")), "ok"
+    except (OSError, json.JSONDecodeError) as e:
+        corrupt_path = path.with_name(f"{path.name}.corrupt-{time.strftime('%Y%m%dT%H%M%S')}")
+        try:
+            path.rename(corrupt_path)
+        except OSError:
+            corrupt_path = path
+        print(f"refresh: {path.name} was corrupt ({e}) -- kept at {corrupt_path.name}", file=sys.stderr)
+        if backup_path.exists():
+            try:
+                return json.loads(backup_path.read_text(encoding="utf-8")), "restored"
+            except (OSError, json.JSONDecodeError):
+                pass
+        return None, "no_backup"
+
+
+def _write_state_json(path: Path, backup_path: Path, data) -> None:
+    """Atomic write of `data` to `path`, first rotating `path`'s *current* content into
+    `backup_path` -- but only when that current content is itself valid JSON, so a corrupt file
+    is never promoted into "the backup" a future corruption would restore from. One generation
+    back is all this keeps; that's enough to survive a single bad write/read, which is the
+    failure mode this guards against (not a general history of every past run)."""
+    if path.exists():
+        try:
+            text = path.read_text(encoding="utf-8")
+            json.loads(text)  # only rotate a file that's actually good
+        except (OSError, json.JSONDecodeError):
+            pass
+        else:
+            try:
+                _write_json_atomic(backup_path, json.loads(text))
+            except OSError:
+                pass
+    _write_json_atomic(path, data)
 
 
 def _raw_path(chain: str) -> Path:
@@ -302,29 +364,44 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
     now = now_iso()
     today = now[:10]
 
+    results: dict = {}
+    health: dict = {}
+    summaries: list[str] = []
+
     # Price cache (data/price_cache.json): {chain: {date: {key: [{"seat","aed"}]|None}}}. Only
     # today's slice is ever handed to a reader, and only today's slice is ever written back --
     # this *is* the "resets per date" rule: a run on a new calendar date simply starts every
     # chain's cache empty again, ignoring (and dropping) whatever an earlier date left behind.
-    price_cache_on_disk = _load_json(PRICE_CACHE_PATH) or {}
+    # Corruption-safe (fix round 1): losing this file only costs a re-sample, never a crash.
+    price_cache_on_disk, price_cache_status = _load_state_json(PRICE_CACHE_PATH, PRICE_CACHE_BACKUP_PATH)
+    if price_cache_status == "restored":
+        summaries.append("price_cache.json restored from backup after corruption")
+    elif price_cache_status == "no_backup":
+        summaries.append("price_cache.json corrupt, no backup -- starting empty (re-sampling today)")
+    price_cache_on_disk = price_cache_on_disk or {}
     chain_price_caches = {
         c: dict((price_cache_on_disk.get(c) or {}).get(today) or {}) for c in PRICE_CACHE_CHAINS
     }
-
-    results: dict = {}
-    health: dict = {}
-    summaries: list[str] = []
 
     for chain in chains:
         cached = _fresh_raw(chain, force)
         if cached is not None:
             raw, ok, error, seconds = cached, True, None, 0.0
         else:
+            # fix round 1 (concurrency): hand the reader its OWN copy, never the dict this
+            # function later serializes -- an abandoned timeout thread can keep mutating this
+            # private copy in the background forever; nothing else ever looks at it again once
+            # this call returns not-ok, so it can't race with json.dumps below.
+            private_cache = dict(chain_price_caches[chain]) if chain in PRICE_CACHE_CHAINS else None
             outcome = _run_chain(chain, days, offline, timeout if timeout is not None else chain_timeout(chain),
-                                  price_cache=chain_price_caches.get(chain))
+                                  price_cache=private_cache)
             ok, error, seconds, raw = outcome["ok"], outcome["error"], outcome["seconds"], outcome["result"]
             if ok:
                 _write_json_atomic(_raw_path(chain), raw)
+                if private_cache is not None:
+                    # only a chain that actually finished within its timeout gets to update the
+                    # persisted cache -- an abandoned/timed-out attempt's copy is simply dropped
+                    chain_price_caches[chain] = private_cache
 
         if ok:
             price_table.fill(raw, table, today=now[:10])
@@ -370,9 +447,13 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             health[chain] = {"ok": False, "at": now, "error": error, "shows": 0}
             summaries.append(f"{chain}: FAILED  {error}  {seconds:.1f}s")
 
-    # persist today's price samples (mutated in place by each reader above) -- any other date
-    # already on disk is dropped here, which is the cache's "resets per date" rule in practice
-    _write_json_atomic(PRICE_CACHE_PATH, {c: {today: v} for c, v in chain_price_caches.items() if v})
+    # persist today's price samples -- any other date already on disk is dropped here, which is
+    # the cache's "resets per date" rule in practice. A dict(v) snapshot per chain: only a
+    # finished chain's cache is ever assigned back into chain_price_caches[chain] above, but this
+    # copy is cheap insurance against json.dumps iterating a dict some other code still holds a
+    # reference to (fix round 1 -- the review's concurrency finding).
+    _write_state_json(PRICE_CACHE_PATH, PRICE_CACHE_BACKUP_PATH,
+                       {c: {today: dict(v)} for c, v in chain_price_caches.items() if v})
 
     merged = normalize.merge(results, previous, now)
 
@@ -436,10 +517,27 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
     # and collect fids appearing for the first time ever -- for run.sh's one new-film notification.
     # The very first run (no film_history.json on disk yet) seeds it silently: every current film
     # is "new" only in the trivial sense of not being in an empty history, not worth alerting on.
-    history_existed = FILM_HISTORY_PATH.exists()
-    history = _load_json(FILM_HISTORY_PATH) or {}
+    #
+    # Corruption-safe (fix round 1): `history_existed` must mean "a *parsed* history existed",
+    # never merely "a file was present" -- a corrupt-but-present file used to slip through this
+    # check as True while `history` itself silently degraded to {}, producing an alert for every
+    # currently-showing film (a real run hit 60) and quietly losing every archived film's record
+    # (absent from both the empty `history` and `merged["films"]`, so update_film_history's
+    # absence loop never saw them again). Now: "ok"/"restored" both count as real prior state
+    # ("restored" recovers it from the one-generation-back backup and behaves normally); only
+    # "missing" (first run ever) and "no_backup" (corrupt with nothing to recover) suppress the
+    # alert -- and both leave `history` empty, so update_film_history's absence loop has nothing
+    # to archive against this run either, i.e. "no_backup" is a silent re-seed exactly as ruled.
+    history, history_status = _load_state_json(FILM_HISTORY_PATH, FILM_HISTORY_BACKUP_PATH)
+    if history_status == "restored":
+        summaries.append("film_history.json restored from backup after corruption")
+    elif history_status == "no_backup":
+        summaries.append("film_history.json corrupt, no backup -- re-seeded silently (no alert, nothing archived)")
+    history = history or {}
+    history_existed = history_status in ("ok", "restored")
+
     new_history, new_films = update_film_history(merged, history, today)
-    _write_json_atomic(FILM_HISTORY_PATH, new_history)
+    _write_state_json(FILM_HISTORY_PATH, FILM_HISTORY_BACKUP_PATH, new_history)
     _write_json_atomic(NEW_FILMS_PATH, new_films if history_existed else [])
     if new_films:
         summaries.append(
