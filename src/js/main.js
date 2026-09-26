@@ -53,11 +53,20 @@ function pickCard(c) {
 
 /* «اليوم / بكرة» follow the visitor's clock (UAE time), not the build's: a page built last night calls
    this morning's shows «اليوم». A day already over keeps its date. */
-function dayName(d) { return d === TODAY ? C.today : d === TOMORROW ? C.tomorrow : d; }
+function humanDay(d) {
+  try { return new Date(d + "T12:00:00Z").toLocaleDateString(AR ? "ar-AE-u-nu-latn" : "en-GB", { timeZone: "UTC", day: "numeric", month: "long" }); }
+  catch (e) { return d; }
+}
+function dayName(d) { return d === TODAY ? C.today : d === TOMORROW ? C.tomorrow : humanDay(d); }
 function relabelDays() {
   qa("[data-day]").forEach(function (b) { b.textContent = dayName(b.getAttribute("data-day")); });
   qa(".times[data-d] > .dl").forEach(function (l) { l.textContent = dayName(l.parentNode.getAttribute("data-d")); });
-  qa(".day[data-d] > h2").forEach(function (h) { var t = h.firstChild; if (t && t.nodeType === 3) t.textContent = dayName(h.parentNode.getAttribute("data-d")) + " "; });
+  /* a day heading already carries the human date in its <small>: a day that is neither today nor
+     tomorrow keeps only that, never the ISO date twice */
+  qa(".day[data-d] > h2").forEach(function (h) {
+    var d = h.parentNode.getAttribute("data-d"), t = h.firstChild;
+    if (t && t.nodeType === 3) t.textContent = d === TODAY || d === TOMORROW ? dayName(d) + " " : "";
+  });
 }
 /* a poster that fails to load gives way to the film's typographic tile (never a broken image) */
 function posterFallback() {

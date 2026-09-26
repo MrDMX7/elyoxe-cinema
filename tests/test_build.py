@@ -478,7 +478,11 @@ def test_dates_are_human_and_english_runs_marked(site):
     assert 'lang="en">Google Maps</a>' in cin and 'lang="en">Waze</a>' in cin
     assert '<p class="basis rates">' in read(out, "film", "crawlers") and '<bdi dir="ltr" lang="en">' not in read(out, "film", "crawlers")
     assert "E0816F" not in open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
-    assert 'href="/assets/fonts/readex-latin.woff2"' in read(out)
+    # font preloads: the Arabic display + body faces (en: the latin body face); the digits' latin subset comes via the stylesheet
+    assert 'href="/assets/fonts/readex-arabic.woff2"' in read(out) and 'href="/assets/fonts/markazi-700-arabic.woff2"' in read(out)
+    assert read(out).count('as="font"') == 2 and read(out, "en").count('as="font"') == 1
+    assert 'href="/assets/fonts/readex-latin.woff2"' in read(out, "en")
+    assert "fonts/readex-latin.woff2" in open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
 
 
 def test_no_poster_hero_is_not_a_colour_field(site):
@@ -503,11 +507,15 @@ def test_ends_only_when_known(site):
 def test_posters_and_tiles(site):
     out, _ = site
     home = read(out)
-    # a poster: img with its 2x, lazy except the first, preloaded
+    # a poster: img with width descriptors and the size its tile is drawn at, lazy except the first two,
+    # the first preloaded with the same srcset/sizes (so the preload is the file the img picks)
     # our own posters are root-relative in markup (absolute in og:image and JSON-LD)
-    assert re.search(r'<img src="/posters/coyote-vs-acme-342\.webp" srcset="[^"]+-684\.webp 2x"', home)
+    assert re.search(r'<img src="/posters/coyote-vs-acme-342\.webp" srcset="[^"]+-342\.webp 342w, [^"]+-684\.webp 684w" sizes="[^"]+"', home)
     assert home.count('fetchpriority="high"') == 2      # the preload link and the first poster
-    assert 'rel="preload" as="image"' in home
+    pre = re.search(r'<link rel="preload" as="image" href="([^"]+)" imagesrcset="([^"]+)" imagesizes="([^"]+)"', home)
+    first = re.search(r'<img src="([^"]+)" srcset="([^"]+)" sizes="([^"]+)"[^>]*fetchpriority="high"', home)
+    assert pre and first and pre.groups() == first.groups()
+    assert home.count('loading="lazy"') >= 1
     # no poster: a typographic tile in the film's colour (or a hue from its id), never a broken image
     assert re.search(r'<span class="pst" style="--pc:#1D2A4A"><span class="pst-t">سبايدر مان', home)
     assert re.search(r'<span class="pst" style="--pc:#[0-9A-F]{6}"><span class="pst-t"[^>]*>The Paradise', home)

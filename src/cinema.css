@@ -97,10 +97,14 @@ span.num[dir=ltr],bdi.num{unicode-bidi:isolate}
 /* «الحين»: the nearest show starting soon, its time on flip tiles */
 .now{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;margin-block-start:6px;background:var(--tint);text-decoration:none;color:var(--screen)}
 .now[hidden]{display:none}
+/* with script, the slot is laid out (invisible) before the city's shows arrive: no shift when it fills */
+.js .now[data-now][hidden]{display:flex;visibility:hidden}
+.now.quiet .now-l{color:var(--seat)}
 .now-tx{display:flex;flex-direction:column;gap:2px;min-inline-size:0}
 .now-l{font-size:12px;color:var(--live)}
 .now-f{font-size:14px;font-weight:500}
 .now-w{font-size:12px;color:var(--seat)}
+.now-f,.now-w{min-block-size:1.6em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* one line each: a fixed-height slot */
 .flip{display:flex;gap:3px;flex:0 0 auto}
 .flip .d{min-inline-size:22px;block-size:34px;display:flex;align-items:center;justify-content:center;background:var(--tile);color:var(--screen);font-weight:600;font-size:19px;
   background-image:linear-gradient(transparent 49%,rgba(0,0,0,.95) 50%,transparent 51%)}
@@ -279,6 +283,12 @@ p.rr{font-size:13px;color:var(--dim);margin-block-start:4px}
 .tk-x{position:absolute;inset-block-start:0;inset-inline-end:0;inline-size:36px;block-size:36px;border:0;background:transparent;cursor:pointer}
 .tk-x::before,.tk-x::after{content:"";position:absolute;inset-inline-start:9px;inset-block-start:17px;inline-size:18px;block-size:2px;background:var(--ink);transform:rotate(45deg)}
 .tk-x::after{transform:rotate(-45deg)}
+/* focus on ticket paper: gold on paper is 1.6:1, so the ring is ink there, and drawn inside the two dark buttons
+   in a colour that stands on each (gold on ink 9.8:1, screen light on velvet 8.9:1) */
+.ticket :focus-visible{outline:2px solid var(--ink);outline-offset:-3px}
+.tk-act .book:focus-visible{outline:2px solid var(--gold);outline-offset:-5px}
+.tk-act .share:focus-visible{outline:2px solid var(--screen);outline-offset:-5px}
+.ticket:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media (max-width:1023px){
   .js .ticket{position:fixed;inset-inline:12px;inset-block-end:12px;margin:0;z-index:40;max-block-size:calc(100vh - 80px);overflow-y:auto;
     transform:translateY(calc(100% + 24px));visibility:hidden;transition:transform .35s var(--ease),visibility 0s linear .35s}
@@ -314,6 +324,8 @@ p.rr{font-size:13px;color:var(--dim);margin-block-start:4px}
 .stale,.age.stale{color:var(--dim);font-size:12px;font-weight:500}
 .age.stale::before{content:"\26A0\FE0E  "}   /* a text marker, not a seventh colour */
 .src,.chkd{color:var(--seat);font-size:12px}
+/* small text links still get a 24 px target (WCAG 2.5.8) */
+a.src,.crumbs a,.hall .where a{display:inline-flex;align-items:center;min-block-size:24px}
 .weak{color:var(--seat);font-size:12px}
 .rows{display:grid}
 .row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm val" "sub val";column-gap:20px;row-gap:2px;padding-block:14px;border-block-end:1px solid var(--line)}
@@ -525,6 +537,14 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
   .similar .posters.grid{grid-template-columns:repeat(6,minmax(0,1fr))}
   .archived{flex-direction:row;align-items:center;justify-content:space-between;max-inline-size:640px}
 }
+/* 1024-1279: no room for three columns; the poster heads the information column (as on a phone, start-aligned)
+   and the ticket panel spans both rows at the end side */
+@media (min-width:1024px) and (max-width:1279px){
+  .fposter{display:block;grid-column:1;justify-self:start}
+  .fgrid > .finfo{grid-column:1}
+  .fgrid > .ticket{grid-column:2;grid-row:1 / span 2}
+  .pst.hero{inline-size:220px;block-size:330px;aspect-ratio:auto;box-shadow:0 30px 70px rgba(122,22,38,.35),0 30px 70px rgba(0,0,0,.5)}
+}
 @media (min-width:1280px){
   .fgrid{grid-template-columns:300px minmax(0,1fr) 360px;gap:56px}
   .fposter{display:block}
@@ -581,3 +601,11 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
 .tl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--dim);font-variant-numeric:tabular-nums;word-spacing:.4em}
 .tl small{font-size:11px;color:var(--seat);word-spacing:normal}
 .more{display:inline-block;margin-block-start:6px;font-size:13px;color:var(--seat)}
+/* long schedules: a row far below the fold is not laid out or painted until it comes near (Lighthouse's
+   main-thread time was two thirds style + layout on a busy cinema page). Paint containment clips at the
+   padding box, so each row gets 4 px of inline padding back from a negative margin: a time button's focus
+   ring at the row's edge is not cut off. Not on poster tiles: the big tile's velvet glow would be clipped. */
+.cf,.srow,.cg,.hall,.row{content-visibility:auto;contain-intrinsic-size:auto 200px;padding-inline:4px;margin-inline:-4px}
+/* poster tiles: on a phone only two of up to 66 sit in view in the sideways row. Their width comes from the
+   row or the grid; the height is remembered once drawn. The big first tile keeps its glow (not contained). */
+.film:not(.big){content-visibility:auto;contain-intrinsic-block-size:auto 340px}

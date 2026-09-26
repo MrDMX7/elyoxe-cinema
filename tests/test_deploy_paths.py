@@ -83,3 +83,12 @@ def test_posters_are_never_deleted_by_a_sync():
         incs = [m.start() for m in re.finditer(r"--include ", l)]
         if incs:
             assert l.index('"${KEEP[@]}"') > max(incs), f"posters exclusion must follow the includes: {l.strip()}"
+
+
+def test_run_uploads_new_posters_before_it_deploys():
+    """deploy.sh never uploads posters/ (it keeps them out of every --delete pass), so the scheduled run
+    must: a film first seen on the Fold would otherwise name a /posters/ file the bucket does not have."""
+    src = open(os.path.join(ROOT, "run.sh"), encoding="utf-8").read()
+    code = "\n".join(l for l in src.splitlines() if not l.strip().startswith("#"))
+    up, dep = code.find("posters.py --upload"), code.find("./deploy.sh")
+    assert up != -1 and dep != -1 and up < dep

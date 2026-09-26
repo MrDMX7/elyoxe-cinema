@@ -92,7 +92,8 @@ T = {  # strings shared with cinema.js (window.CT)
     "updated": ("آخر تحديث", "Last updated"), "weak": CONF_WEAK, "per_person": ("للشخص — بشرط تذكرتين", "per person, with 2 tickets"),
     "asof": ("السعر بتاريخ {date}", "Price as of {date}"),
     "with": ("مع {card}", "with {card}"), "ago_m": ("قبل {n} دقيقة", "{n} min ago"), "ago_h": ("قبل {n}", "{n} ago"),
-    "now_label": ("أقرب عرض يبدأ الحين", "Next show starting now"), "in_min": ("بعد {n} دقيقة", "in {n} min"),
+    "now_label": ("أقرب عرض يبدأ الحين", "Next show starting now"),
+    "now_quiet": ("ما في عرض يبدأ خلال 45 دقيقة", "Nothing starts within 45 minutes"),   # one line: the slot keeps its height "in_min": ("بعد {n} دقيقة", "in {n} min"),
     "ends": ("يخلص تقريباً {t}", "Ends around {t}"), "today": ("اليوم", "Today"), "tomorrow": ("بكرة", "Tomorrow"),
     "book_at": ("احجز من موقع {chain}", "Book on the {chain} site"), "share": ("أرسلها للقروب", "Send to the group"),
     "after_card": ("بعد خصم {card}", "after {card}"), "in_cinema": ("{film} في {cinema}", "{film} at {cinema}"),
@@ -117,7 +118,14 @@ PCT = re.compile(r"(?<![\w.])(\d+(?:\.\d+)?\s?%)")
 ARABIC = re.compile(r"[؀-ۿ]")
 MONTHS = ("يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر")
 MONTHS_EN = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
-FONTS = {"ar": ("markazi-700-arabic.woff2", "readex-arabic.woff2", "readex-latin.woff2"), "en": ("readex-latin.woff2",)}
+# the CSS width each poster class is drawn at (cinema.css): row tile, the big first tile, the film hero, list thumb
+POSTER_SIZES = {"pst": "(min-width:1024px) 15vw, 150px", "pst big": "(min-width:1024px) 15vw, 220px",
+                "pst hero": "(min-width:1280px) 300px, (min-width:1024px) 220px, min(62vw, 260px)", "pst sm": "(min-width:1024px) 96px, 72px"}
+# preloaded fonts: the faces whose late swap would move the layout — the Arabic display face (headings are
+# large: a swap from the fallback reflows everything under them) and the body face of the page's script.
+# The digits' latin subset is small in the layout and comes through the stylesheet; every preload shares a
+# slow phone link with the LCP poster.
+FONTS = {"ar": ("markazi-700-arabic.woff2", "readex-arabic.woff2"), "en": ("readex-latin.woff2",)}
 # a show with no booking URL still books somewhere: the chain's own site
 CHAIN_SITE = {"vox": "https://uae.voxcinemas.com/", "star": "https://www.starcinemas.ae/", "novo": "https://uae.novocinemas.com/",
               "reel": "https://www.reelcinemas.ae/", "roxy": "https://www.theroxycinemas.com/", "cineroyal": "https://cineroyal.ae/",
@@ -648,15 +656,18 @@ class Site:
         return f'<bdi lang="en">{esc(n)}</bdi>' if lang == "ar" and re.search(r"[A-Za-z]", n) else esc(n)
 
     # -------- posters
-    def poster(self, fid, lang, cls="pst", eager=False, size=(342, 513), lazy=True):
+    def poster(self, fid, lang, cls="pst", eager=False, size=(342, 513), lazy=True, sizes=None):
         """The poster, or — when there is none (or it fails to load) — a typographic tile in the film's colour."""
         f = self.films[fid]
         pc = f.get("poster_color") or hue(fid)
         img = ""
         if f.get("poster"):
             first = self._first_poster is None and eager
-            if first: self._first_poster = f
-            ss = f' srcset="{esc(rel(f["poster"]))} 1x, {esc(rel(f["poster_2x"]))} 2x"' if f.get("poster_2x") else ""
+            if first: self._first_poster, self._first_sizes = f, sizes or POSTER_SIZES.get(cls, POSTER_SIZES["pst"])
+            # width descriptors + the size the tile is drawn at, so a desktop grid tile or a 72 px list poster
+            # does not fetch the 684 px file on a 1x screen
+            ss = (f' srcset="{esc(rel(f["poster"]))} 342w, {esc(rel(f["poster_2x"]))} 684w" sizes="{sizes or POSTER_SIZES.get(cls, POSTER_SIZES["pst"])}"'
+                  if f.get("poster_2x") else "")
             # a real poster carries its own title: the tile's title stays underneath, hidden, and comes back
             # (the class drops) only if the image fails to load
             img = (f'<img src="{esc(rel(f["poster"]))}"{ss} width="{size[0]}" height="{size[1]}" alt="" decoding="async"'
@@ -665,12 +676,18 @@ class Site:
                     f'{esc(self.ftitle(fid, lang))}</span>{img}</span>')
         return (f'<span class="{cls}" style="--pc:{pc}"><span class="pst-t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span></span>')
 
-    def backdrop(self, fid):
-        """The film's poster enlarged and blurred over its colour: there is no backdrop image in the data."""
+    def backdrop(self, fid, hero=False):
+        """The film's poster enlarged and blurred over its colour: there is no backdrop image in the data.
+        Blurred 40 px, its resolution does not show: on a film page it asks for exactly what the hero poster
+        resolves to (same srcset and sizes, so one download serves both — and not lazy: it is the page's largest
+        paint); on the home hero (desktop only, hidden on a phone, so lazy) the 342 px file."""
         f = self.films[fid]
         pc = f.get("poster_color") or hue(fid)
         if f.get("poster"):
-            img = f'<img src="{esc(rel(f.get("poster_2x") or f["poster"]))}" alt="" width="684" height="1026" decoding="async" loading="lazy" onerror="this.remove()">'
+            ss = (f' srcset="{esc(rel(f["poster"]))} 342w, {esc(rel(f["poster_2x"]))} 684w" sizes="{POSTER_SIZES["pst hero"]}"'
+                  if hero and f.get("poster_2x") else "")
+            lz = "" if hero else ' loading="lazy"'
+            img = f'<img src="{esc(rel(f["poster"]))}"{ss} alt="" width="342" height="513" decoding="async"{lz} onerror="this.remove()">'
             return f'<div class="bd" style="--pc:{pc}" aria-hidden="true">{img}</div>'
         # no poster: never a flat colour field — night, the velvet glow, and the film's typographic tile
         return (f'<div class="bd noimg" style="--pc:{pc}" aria-hidden="true"><span class="pst bd-t">'
@@ -771,7 +788,7 @@ class Site:
         attrs = self.film_attrs(fid) + f' data-v="{v}"'
         attrs += f' data-runtime="{int(f["runtime"])}"' if f.get("runtime") else ""
         return (f'<a class="film v-{v}{" big" if big else ""}" href="{P(lang, "film", fid)}"{attrs}>'
-                + self.poster(fid, lang, eager=True, lazy=i >= 3)
+                + self.poster(fid, lang, eager=True, lazy=i >= 1, sizes=POSTER_SIZES["pst big" if big else "pst"])
                 + (f'<span class="fn"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>' if f.get("poster") else "")
                 + f'<span class="fm"><span class="vw">{esc(vw)}</span><span class="sc">{self.score(f, lang)}</span></span>{rr}'
                 + f'<span class="cheap" data-cheap>{price}</span></a>')
@@ -865,7 +882,8 @@ class Site:
         pre = [f'<link rel="preload" href="/assets/fonts/{f}" as="font" type="font/woff2" crossorigin>' for f in FONTS[lang]]
         fp = self._first_poster
         if fp and fp.get("poster"):
-            ss = f' imagesrcset="{esc(rel(fp["poster"]))} 1x, {esc(rel(fp["poster_2x"]))} 2x"' if fp.get("poster_2x") else ""
+            ss = (f' imagesrcset="{esc(rel(fp["poster"]))} 342w, {esc(rel(fp["poster_2x"]))} 684w" imagesizes="{esc(self._first_sizes)}"'
+                  if fp.get("poster_2x") else "")
             pre.insert(0, f'<link rel="preload" as="image" href="{esc(rel(fp["poster"]))}"{ss} fetchpriority="high">')
         pdata = (f'<script type="application/json" id="cinema-p">{json.dumps(self._P, ensure_ascii=False, separators=(",", ":"))}</script>'
                  if self._P else "")
@@ -1232,7 +1250,7 @@ class Site:
                     info += (f'<p class="trl"><a class="btn ghost" href="https://www.youtube-nocookie.com/embed/{esc(f["trailer"])}" data-trailer="{esc(f["trailer"])}" rel="noopener" target="_blank">'
                              f'<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>{"العرض الترويجي" if lang == "ar" else "Trailer"}</a></p>')
                 if f.get("status") == "archived":
-                    body = (f'<section class="fhero">{self.backdrop(fid)}<div class="wrap fgrid">'
+                    body = (f'<section class="fhero">{self.backdrop(fid, hero=True)}<div class="wrap fgrid">'
                             f'<div class="fposter">{self.poster(fid, lang, "pst hero", eager=True, size=(342, 513))}</div>'
                             f'<div class="finfo"><div class="fhead">{head}</div>{info}{self.archive_note(fid, lang)}</div></div></section>'
                             + self.similar(fid, lang))
@@ -1253,7 +1271,7 @@ class Site:
                 else:
                     # the schedule is most of the page's weight: render it as richly as fits what the rest leaves
                     graph0 = [self.movie_ld(fid, lang)] + [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:30]
-                    fixed = len((head + info + self.backdrop(fid) + self.poster(fid, lang, "pst hero", size=(342, 513))).encode())
+                    fixed = len((head + info + self.backdrop(fid, hero=True) + self.poster(fid, lang, "pst hero", size=(342, 513))).encode())
                     left = PAGE_TARGET - CHROME - fixed - self.ld_size(graph0) - 4500 - 1200   # the ticket, the page's wrappers
                     # full, else compact: both keep today AND tomorrow (a page built late at night still has the next
                     # day's times when the visitor's «اليوم» has moved on)
@@ -1264,7 +1282,7 @@ class Site:
                     if f'data-d="{d}"' not in sched:
                         info = re.sub(r'<button type="button" class="chip" data-day="' + d + r'"[^>]*>[^<]*</button>', "", info)
                 ticket = self.ticket(nxt, lang) if nxt else self.ticket_shell()
-                body = (f'<section class="fhero">{self.backdrop(fid)}<div class="wrap fgrid">'
+                body = (f'<section class="fhero">{self.backdrop(fid, hero=True)}<div class="wrap fgrid">'
                         f'<div class="fposter">{self.poster(fid, lang, "pst hero", eager=True, size=(342, 513))}</div>'
                         f'<div class="finfo"><div class="fhead">{head}</div>{info}<div class="cgs">{sched}</div></div>{ticket}</div></section>')
                 vword = L(VERDICT.get(v, VERDICT["unknown"]), lang)
@@ -1595,7 +1613,8 @@ a{color:#F1EAE0;text-decoration-color:#A89C8E;text-underline-offset:.2em}
         os.makedirs(os.path.join(adir, "fonts"), exist_ok=True)
         for f in ("cinema.css", "icon.svg"):
             if os.path.exists(os.path.join(SRC, f)):
-                self.write(os.path.join(adir, f), open(os.path.join(SRC, f), encoding="utf-8").read())
+                t = open(os.path.join(SRC, f), encoding="utf-8").read()
+                self.write(os.path.join(adir, f), minify_css(t) if f.endswith(".css") else t)
         self.write(os.path.join(adir, self.js_name), self.js)
         self.write(os.path.join(adir, self.adhan_name), self.adhan)
         # PWA: the worker must sit at the root to control every page; the manifest names the icons
@@ -1621,6 +1640,14 @@ a{color:#F1EAE0;text-decoration-color:#A89C8E;text-underline-offset:.2em}
 # helpers without globals), comments and indentation stripped. pure.js and disc.js are plain function
 # declarations with no page access: tests/test_js.py and tests/test_parity.py run them in node as they are.
 JS_MODULES = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "ticket", "trailer", "pwa", "main")
+
+
+def minify_css(css):
+    """Comments out, each line trimmed and joined, the space after ; { } and before { dropped. Nothing inside a
+    value is touched (content:" " and font names keep their spaces)."""
+    css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    css = "".join(line.strip() for line in css.splitlines())
+    return re.sub(r"\s*([{}])\s*|;\s+", lambda m: m.group(1) or ";", css) + "\n"
 
 
 def minify_lite(js):

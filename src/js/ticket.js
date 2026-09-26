@@ -2,7 +2,21 @@
    dialog with its focus kept inside, closed by ×, Esc, the scrim or the back button, focus going back to
    the time. Desktop: the side panel changes in place and a live region says so. */
 var PL = (function () { var el = document.getElementById("cinema-p"); try { return el ? JSON.parse(el.textContent) : []; } catch (e) { return []; } })();
-var tk = q("[data-ticket]"), tkFrom = null, tkPushed = false, scrim = null;
+var tk = q("[data-ticket]"), tkFrom = null, tkPushed = false, scrim = null, tkInert = [];
+/* while the sheet is modal, everything outside it (every sibling of the sheet and of each of its ancestors)
+   is inert: no focus, no clicks, not read out. Only what we made inert is restored. */
+function inertOn() {
+  tkInert = [];
+  for (var n = tk; n && n !== body; n = n.parentElement) {
+    var sibs = n.parentElement ? n.parentElement.children : [];
+    for (var i = 0; i < sibs.length; i++) {
+      var e = sibs[i];
+      if (e === n || e === scrim || e.inert || /^(SCRIPT|STYLE|TEMPLATE)$/.test(e.tagName)) continue;
+      e.inert = true; tkInert.push(e);
+    }
+  }
+}
+function inertOff() { tkInert.forEach(function (e) { e.inert = false; }); tkInert = []; }
 function tkSet(sel, v, html) { var el = q(sel, tk); if (el) { if (html) el.innerHTML = v; else el.textContent = v; } return el; }
 function chainName(ch) { return (D && D.chains && D.chains[lang] && D.chains[lang][ch]) || ch; }
 function words(v) { return String(v || "").split("+").filter(Boolean).map(function (k) { return (C.langs && C.langs[k]) || k; }).join(TX.sep); }
@@ -51,7 +65,7 @@ function openTicket(btn) {
   });
 }
 function fillTicket(btn, x) {
-  var dname = x.d === TODAY ? C.today : x.d === TOMORROW ? C.tomorrow : x.d, lines = [];
+  var dname = dayName(x.d), lines = [];
   tkSet("[data-tk-cin]", x.cname); tkSet("[data-tk-film]", x.film); tkSet("[data-tk-time]", x.t); tkSet("[data-tk-day]", dname);
   if (x.hk && x.hk !== "Standard" && x.hn) lines.push('<span class="tk-h"><bdi>' + esc(x.hn) + "</bdi></span>");
   if (x.ends) {
@@ -91,6 +105,7 @@ function sheetOpen(btn) {
   if (!scrim) { scrim = document.createElement("div"); scrim.className = "scrim"; scrim.addEventListener("click", closeTicket); document.body.appendChild(scrim); }
   scrim.classList.add("on");
   tk.classList.add("open");
+  inertOn();
   if (!tkPushed) { try { history.pushState({ tk: 1 }, ""); tkPushed = true; } catch (e) {} }
   var x = q("[data-tk-close]", tk);
   setTimeout(function () { (x || tk).focus(); }, 30);
@@ -98,6 +113,7 @@ function sheetOpen(btn) {
 function closeTicket(fromPop) {
   if (!tk || !tk.classList.contains("open")) return;
   tk.classList.remove("open"); tk.removeAttribute("aria-modal");
+  inertOff();
   if (scrim) scrim.classList.remove("on");
   if (tkPushed && fromPop !== true) { tkPushed = false; try { history.back(); } catch (e) {} }
   tkPushed = false;

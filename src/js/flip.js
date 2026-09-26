@@ -10,8 +10,9 @@ function flipTime(el, t) {
   var old = el.getAttribute("data-t") || "";
   if (old === t) return;
   el.setAttribute("data-t", t);
-  el.setAttribute("aria-label", t);
-  el.innerHTML = t.split("").map(function (ch, i) {
+  /* the tiles are decoration; the time itself is read from a visually hidden copy (aria-label is not
+     allowed on a plain span) */
+  el.innerHTML = '<span class="vh">' + esc(t) + "</span>" + t.split("").map(function (ch, i) {
     return ch === ":" ? '<span class="c" aria-hidden="true">:</span>'
       : '<span class="d' + (!RM && old.charAt(i) !== ch ? " go" : "") + '" aria-hidden="true">' + esc(ch) + "</span>";
   }).join("");

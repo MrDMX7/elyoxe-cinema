@@ -55,6 +55,14 @@ fi
 rc=$?
 [ "$rc" -eq 0 ] || fail "refresh.py خرج بـ$rc — كل السلاسل فشلت، ما نُشر شي" "$rc"
 
+# posters mirrored this run (new films, replaced art) go to the bucket before the pages that name them:
+# deploy.sh never uploads posters/ (nor deletes them). A failure costs only the new posters (each page
+# falls back to the film's typographic tile), never the deploy.
+if ! "$PY" posters.py --upload; then
+  echo "WARN: posters.py --upload failed — new posters show as typographic tiles until the next run"
+  note "سينما ⚠" "رفع البوسترات الجديدة فشل — بحاول الجولة الياية" "elyoxe-cinema-posters"
+fi
+
 ./deploy.sh || fail "deploy.sh فشل بعد تحديث ناجح — الموقع على النسخة السابقة" 3
 
 # verdicts/*.json written this run (new films, templates replaced, merged-away files folded) go back

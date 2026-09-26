@@ -87,8 +87,17 @@ function renderNow() {
   if (!box || !S) return;
   var n = NOW.getTime();
   var s0 = pickNow(S.shows.map(function (s) { return { at: start(s), km: kmTo(s.c), s: s }; }), n, 45);
-  box.hidden = !s0;
-  if (!s0) return;
+  /* the slot keeps its height either way (cinema.css reserves it while the slice loads), so nothing under
+     it jumps: with no show in the window it says so quietly and points at tonight's times */
+  box.hidden = false;
+  box.classList.toggle("quiet", !s0);
+  if (!s0) {
+    q("[data-now-film]", box).textContent = C.now_quiet;
+    q("[data-now-where]", box).textContent = "";
+    var ft = q("[data-now-time]", box); ft.innerHTML = ""; ft.removeAttribute("data-t");
+    box.href = "#tonight";
+    return;
+  }
   var s = s0.s, b = best([s]), mins = Math.max(0, Math.round((s0.at - n) / 60000)), bits = [esc(inMinutes(mins, lang))];
   if (s0.km != null) bits.push(esc(sub(TX.away, { km: kmText(s0.km, lang) })));
   if (b) bits.push('<span class="num">' + fmt(b.pay) + "</span> " + esc(C.aed) + ppNote(b.r) + asofNote(s.asof));
