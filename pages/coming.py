@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import datetime as dt
 
-from site_kit import L, NavItem, P, Page, Pages, Plugin, esc, genre_words, hue, human_date, rel
+from site_kit import L, NavItem, P, Page, Pages, Plugin, ar_count, esc, genre_words, hue, human_date, rel
 
 TITLE = ("نازل الخميس", "Out Thursday")
 CSS = ("coming",)
@@ -55,8 +55,8 @@ class ComingPages(Pages):
         if days == 0:
             return "اليوم" if lang == "ar" else "Today"
         if days == 1:
-            return "غداً" if lang == "ar" else "Tomorrow"
-        return (f"بعد {days} يوم" if lang == "ar" else f"In {days} days")
+            return "بكرة" if lang == "ar" else "Tomorrow"
+        return ("بعد " + ar_count(days, ("يوم", "يومين", "أيام", "يوم"))) if lang == "ar" else f"In {days} days"
 
     def _card(self, fid, f, lang):
         pc = hue(fid)

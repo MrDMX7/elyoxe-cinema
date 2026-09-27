@@ -2,3 +2,6 @@
 .ev-block+.ev-block{margin-top:8px}
 .last-chance .sec-h h2{color:var(--gold)}
 .empty{color:var(--dim);padding:8px 0 28px}
+/* phase 2 adds links to the phone's bottom bar (7 with Arabic, Events, Kids): one row that scrolls sideways, not
+   a second row eating the screen. The desktop header (min-width:1024px) is untouched. */
+@media (max-width:1023px){.nav{grid-auto-flow:column;grid-template-columns:none;grid-auto-columns:minmax(84px,1fr);overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}.nav::-webkit-scrollbar{display:none}.nav a{white-space:nowrap}}

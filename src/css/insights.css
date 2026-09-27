@@ -30,8 +30,8 @@
 .sim-l a{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--screen)}
 .sim-w{color:var(--seat);font-size:12px;padding-inline-start:58px}
 .cmp-ui{display:flex;flex-wrap:wrap;gap:10px 16px;margin-block-end:12px}
-.cmp-ui label{display:flex;flex-direction:column;gap:4px;color:var(--seat);font-size:12px}
-.cmp-ui select{background:var(--night);color:var(--screen);border:0;border-block-end:1px solid var(--line-2);font:inherit;font-size:15px;padding:6px 0;min-inline-size:12rem}
+.cmp-ui label{display:flex;flex-direction:column;gap:4px;color:var(--seat);font-size:12px;min-inline-size:0;max-inline-size:100%}
+.cmp-ui select{background:var(--night);color:var(--screen);border:0;border-block-end:1px solid var(--line-2);font:inherit;font-size:15px;padding:6px 0;min-inline-size:12rem;max-inline-size:100%;text-overflow:ellipsis}
 .cmp-t td{white-space:normal;min-inline-size:9rem}
 .cmp-t td .p{color:var(--gold);font-weight:600}
 .qa .ans{font-size:18px;line-height:1.7;max-inline-size:64ch}

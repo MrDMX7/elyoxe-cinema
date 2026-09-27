@@ -114,3 +114,21 @@ def test_last_chance_strip_on_home_and_its_city_only(out):
 
     dubai = read(out, "dubai", "index.html")
     assert "class=\"tonight wrap last-chance\"" not in dubai   # only the al-ain slice has one
+
+
+def test_phone_bottom_bar_stays_one_row_with_the_feature_links(out):
+    """Seven links in a four-column grid wrapped to a second 58 px row on phones (seen at 375 px, 2026-09-27)."""
+    nav = re.search(r'<nav class="nav".*?</nav>', read(out, "index.html"), re.S).group(0)
+    assert nav.count("<a ") > 4
+    css = read(out, "assets", "cinema.css")
+    assert re.search(r"@media \(max-width:\s*1023px\)\s*\{\s*\.nav\{grid-auto-flow:\s*column", css)
+
+
+def test_countdown_counts_days_in_arabic_grammar():
+    import types
+    from pages import coming as cm
+    now = types.SimpleNamespace(date=lambda: __import__("datetime").date(2026, 9, 27))
+    cd = lambda d, lang="ar": cm.ComingPages._countdown(types.SimpleNamespace(now=now), d, lang)
+    assert cd("2026-09-28") == "بكرة" and cd("2026-09-29") == "بعد يومين"
+    assert cd("2026-10-01") == "بعد 4 أيام" and cd("2026-10-09") == "بعد 12 يوم"
+    assert cd("2026-10-01", "en") == "In 4 days" and cd("2026-09-28", "en") == "Tomorrow"
