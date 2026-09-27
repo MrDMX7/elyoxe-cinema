@@ -1,0 +1,4 @@
+/* seasons (phase 2): Ramadan iftar/taraweeh banner, /kids/, /summer/, /eid/. «هـ»: no radius, no shadows,
+   no cards; gold used only where the base sheet already reserves it for a price/live state. */
+.iftar{font-size:14px;color:var(--seat);margin-block:10px 0;padding-block-start:10px;border-block-start:1px solid var(--line)}
+.empty{color:var(--seat);font-size:14px}

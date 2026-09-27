@@ -507,3 +507,126 @@ def fold_merged(mapping: dict[str, str]) -> dict[str, str]:
             op.unlink()
             done[old] = "deleted"
     return done
+
+
+# ---------------------------------------------------------------------------------------------
+# Phase 2, task 6 (docs/superpowers/specs/2026-09-27-phase2-design.md, section B): «يستاهل
+# IMAX/MAX؟» — one line saying whether a film is worth seeing in a premium format, additive to
+# the film's existing verdicts/<fid>.json (a new "imax" key; the main "verdict"/"ar"/"en"/"basis"
+# fields are never touched). Written only when the film actually plays IMAX or MAX somewhere
+# AND there is a cited basis (a format/scale mention in the research notes, a spectacle genre,
+# or a long runtime) — "otherwise nothing" per the spec, so a film with no basis gets no "imax"
+# key at all, not even a template placeholder. Reuses EMIRATI_SYSTEM_NOTE and the same
+# _dialect_violation/_english_violation post-check as the main verdict, for the reason
+# feedback_emirati_dialect.md documents (prog-01: 256 lines re-recorded because a dialect check
+# was skipped) — a rejected draft is regenerated, never shipped.
+PREMIUM_FORMATS = {"IMAX", "MAX"}
+SPECTACLE_GENRES = {"action", "adventure", "scifi", "fantasy"}
+LONG_RUNTIME_MIN = 140
+_FORMAT_MENTION = re.compile(r"(imax|large[- ]format|big screen|large screen|scale|spectacle)[^.\n]{0,80}", re.I)
+
+
+def imax_basis(film: dict, formats: set, notes: str | None = None) -> str | None:
+    """A short citation for the IMAX/MAX line, or None when there's no real basis. Never
+    invents: a spectacle genre or a long runtime is cited as exactly that, not dressed up as a
+    critic's opinion the way a fabricated "basis" would be."""
+    if not (formats & PREMIUM_FORMATS):
+        return None
+    if notes:
+        m = _FORMAT_MENTION.search(_sanitize_notes(notes))
+        if m:
+            return m.group(0).strip()[:120]
+    genre_field = film.get("genres")
+    keys = set(genre_field.get("en") or ()) if isinstance(genre_field, dict) else set(genre_field or ())
+    keys = {str(g).lower() for g in keys}
+    hit = sorted(keys & SPECTACLE_GENRES)
+    if hit:
+        return f"genre: {hit[0]}"
+    if film.get("runtime") and film["runtime"] >= LONG_RUNTIME_MIN:
+        return f"runtime {film['runtime']} min"
+    return None
+
+
+def _imax_prompt(film: dict, which: str, basis: str) -> str:
+    return (
+        f"الفيلم: {film.get('title')} ({film.get('title_ar') or 'بلا عنوان عربي'})\n"
+        f"يعرض بصيغة: {which}\n"
+        f"الأساس (استعمله فقط، بلا أي إضافة من عندك): {basis}\n"
+        "اكتب جملة واحدة قصيرة بالإماراتية: هل يستاهل الفيلم مشاهدته بهذي الصيغة، أو تكفي الصالة "
+        "العادية؟ اعتمد فقط على الأساس المعطى أعلاه.\n"
+        'رد بـJSON فقط بهذا الشكل بلا أي نص آخر: {"ar": "...", "en": "one short sentence in English"}'
+    )
+
+
+def _generate_imax_one(client, film: dict, which: str, basis: str) -> dict:
+    prompt = _imax_prompt(film, which, basis)
+    last_reason = None
+    for _attempt in range(MAX_ATTEMPTS):
+        sys_note = EMIRATI_SYSTEM_NOTE
+        if last_reason:
+            sys_note += f"\n\nمحاولتك السابقة رُفضت لأن: {last_reason}. أعد الصياغة بلا هذه المخالفة."
+        resp = client.messages.create(model=MODEL, max_tokens=300, system=sys_note,
+                                       messages=[{"role": "user", "content": prompt}])
+        text = "".join(b.text for b in resp.content if getattr(b, "type", None) == "text")
+        try:
+            parsed = _extract_json(text)
+        except (ValueError, json.JSONDecodeError) as e:
+            last_reason = f"invalid JSON ({e})"
+            continue
+        ar = parsed.get("ar", "")
+        reason = _dialect_violation(ar) or _english_violation(parsed.get("en", ""))
+        if reason:
+            last_reason = reason
+            continue
+        return {"ar": ar, "en": parsed.get("en", ""), "basis": basis, "which": which,
+                "written": date.today().isoformat(), "by": "claude"}
+    raise RuntimeError(f"imax line rejected {MAX_ATTEMPTS} times (last reason: {last_reason})")
+
+
+def write_imax(data: dict, film_formats: dict, force: bool = False,
+                notes: dict | None = None, only_fids: set | None = None) -> dict:
+    """film_formats: {fid: set of hall-format codes the film plays anywhere, e.g. {"Standard",
+    "IMAX"}} — the caller (pages/seasons.py) derives this from data["shows"]/data["cinemas"], so
+    this module stays free of the show/hall schema. Writes or clears the "imax" key inside
+    verdicts/<fid>.json: no basis removes it (nothing shown), a changed basis regenerates it,
+    an unchanged one is left as-is unless force=True. Never touches any other key in the file."""
+    VERDICTS_DIR.mkdir(exist_ok=True)
+    notes = notes or {}
+    client = None
+    results = {}
+
+    for fid, film in data.get("films", {}).items():
+        if only_fids is not None and fid not in only_fids:
+            continue
+        formats = film_formats.get(fid) or set()
+        basis = imax_basis(film, formats, notes.get(fid))
+        path = VERDICTS_DIR / f"{fid}.json"
+        existing = {}
+        if path.exists():
+            try:
+                existing = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                existing = {}
+
+        cur = existing.get("imax")
+        if basis is None:
+            if cur is not None:
+                del existing["imax"]
+                _write(path, existing)
+                results[fid] = None
+            continue
+
+        broken = cur and (_dialect_violation(cur.get("ar") or "") or _english_violation(cur.get("en") or ""))
+        if cur and not force and not broken and cur.get("basis") == basis:
+            continue
+
+        if client is None:
+            client = _client()
+        which = "IMAX" if "IMAX" in formats else "MAX"
+        line = _generate_imax_one(client, film, which, basis)
+        existing["imax"] = line
+        existing.setdefault("fid", fid)
+        _write(path, existing)
+        results[fid] = line
+
+    return results

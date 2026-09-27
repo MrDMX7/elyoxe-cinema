@@ -497,6 +497,7 @@ def _blank_film_fields(film):
     film.setdefault("imdb_score", None)
     film.setdefault("rt", None)
     film.setdefault("poster", film.get("poster"))
+    film.setdefault("post_credits", None)  # see post_credits_for() below — the field + UI slot exist; left empty for now
 
 
 def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool = False) -> dict:
@@ -651,3 +652,29 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
         _save_cache(cache_path, cache)
 
     return data
+
+
+# ---------------------------------------------------------------------------------------------
+# Phase 2, task 6 (docs/superpowers/specs/2026-09-27-phase2-design.md, section B): post-credits
+# scene, "only from a sourced dataset (Wikipedia/Wikidata or a named site); otherwise nothing."
+#
+# Checked (2026-09-27, offline research, no network access from this session to re-verify):
+# Wikidata has no dedicated property for "has a post-credits scene" — P... none of the film
+# properties (P462 color, P2047 duration, P364 language, etc.) cover it, and neither Wikidata
+# nor the English Wikipedia infobox schema carries this as a structured field; it only ever
+# shows up as unstructured prose inside a "Home media" or trivia section, which is not a named,
+# fetchable dataset we can cite a URL for per-film. Per the spec's own fallback ("if none
+# reliable, implement the field + UI slot and leave it empty, report"): film["post_credits"] is
+# now always present (see _blank_film_fields above, default None) and pages/seasons.py renders
+# its slot only when a value is set, so wiring in a real source later (a specific named site,
+# once one is chosen and approved) needs no schema change here or in the page module.
+#
+# post_credits_for() is the seam for that future source: still a stub, on purpose, until a
+# reliable one is chosen. It must never guess -- returning a made-up True/False would be the
+# same mistake enrich.py's module docstring already rejects for TMDB/OMDb ("no key exists and
+# none is created... no invention").
+def post_credits_for(qid: str | None) -> dict | None:  # pragma: no cover - stub, no source wired yet
+    """{"has": bool, "note": str|None, "source": url} once a reliable dataset is wired in; None
+    (unknown, shown as nothing) until then. `qid` (Wikidata id) is the seam a real source hangs
+    off of -- unused for now."""
+    return None
