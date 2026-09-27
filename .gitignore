@@ -17,3 +17,5 @@ venv/
 *.pyc
 .pytest_cache/
 data/posters/
+data/*.bak
+data/*.corrupt-*
