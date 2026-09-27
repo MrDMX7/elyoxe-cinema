@@ -509,6 +509,123 @@ def test_a_hand_edited_verdict_is_never_rewritten(vdir, monkeypatch):
     assert client.calls == 0 and report["hand"] == ["resident-evil"] and state == {}
 
 
+# --- review finding 1: the real resident-evil has no basis in the data (no RT, no CinemaScore), and a
+# forced rewrite used to replace its researched 96 % «yes» with the "not enough ratings" template.
+RE_NO_BASIS = {k: v for k, v in RE_FILM.items() if k != "rt"}
+RE_ON_FILE = {"ar": "رزدنت إيفل حصل 96% من النقاد على روتن توميتوز، ووايد ناس يقولون أحسن فيلم مقتبس من لعبة.",
+              "basis": "RT 96% (249 ناقد) · الجمهور 91%", "by": "claude",
+              "en": "Resident Evil scored 96% with critics on Rotten Tomatoes.", "fid": "resident-evil",
+              "verdict": "yes", "written": "2026-09-26"}   # the real file: no basis_numbers line
+
+
+def _put(d, fid, v):
+    path = d / f"{fid}.json"
+    path.write_text(json.dumps(v, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+    return path
+
+
+class _VerdictClient(FakeClient):
+    """Like FakeClient, but answers with a chosen verdict and keeps every prompt."""
+
+    def __init__(self, ar_for, verdict="yes"):
+        super().__init__(ar_for)
+        self.verdict, self.prompts = verdict, []
+
+    def create(self, model, max_tokens, system, messages):
+        self.calls += 1
+        self.prompts.append(messages[0]["content"])
+        return _Msg(json.dumps({"verdict": self.verdict, "ar": self.ar_for(messages[0]["content"]),
+                                "en": "Critics love it.", "basis": "RT 96% (249 ناقد)"}, ensure_ascii=False))
+
+
+def test_a_text_fix_of_a_film_with_no_basis_rewrites_from_its_own_verdict(vdir, monkeypatch):
+    assert not verdicts.has_basis(RE_NO_BASIS)
+    _put(vdir, "resident-evil", RE_ON_FILE)
+    client = _VerdictClient(lambda p: f"{_site_title(p)} حصل 96% من النقاد، ورعب حقيقي بأجواء اللعبة.")
+    monkeypatch.setattr(verdicts, "_client", lambda: client)
+    state, report = verdicts.fix_text_mismatches({"films": {"resident-evil": RE_NO_BASIS}}, {}, today=TODAY)
+    assert client.calls == 1
+    assert report["rewritten"] == ["resident-evil"] and report["no_basis"] == ["resident-evil"] and report["ok"]
+    new = json.loads((vdir / "resident-evil.json").read_text(encoding="utf-8"))
+    assert new["by"] == "claude" and new["verdict"] == "yes"            # never the template
+    assert new["ar"].startswith("ريزدنت ايفل حصل 96%") and new["ar"] != verdicts.TEMPLATE_AR
+    assert new["basis_numbers"] == {"rt": 96, "rt_count": 249, "cinemascore": None}   # what it stood on
+    # the model saw the verdict on file as its notes, and the site's own spelling
+    assert "النص الحالي بالعربي: رزدنت إيفل حصل 96%" in client.prompts[0] and "«ريزدنت ايفل»" in client.prompts[0]
+    assert verdicts.text_mismatches({"films": {"resident-evil": RE_NO_BASIS}}) == {}
+
+
+def test_a_no_basis_film_whose_rewrite_fails_keeps_its_file_byte_for_byte(vdir, monkeypatch):
+    path = _put(vdir, "resident-evil", RE_ON_FILE)
+    before = path.read_bytes()
+    client = _VerdictClient(lambda p: "رزدنت إيفل حصل 96% من النقاد.")   # the model keeps the wrong spelling
+    monkeypatch.setattr(verdicts, "_client", lambda: client)
+    state, report = verdicts.fix_text_mismatches({"films": {"resident-evil": RE_NO_BASIS}}, {}, today=TODAY)
+    assert client.calls == verdicts.MAX_ATTEMPTS and report["unfixed"] == ["resident-evil"]
+    assert path.read_bytes() == before
+
+
+def test_a_forced_run_with_nothing_to_write_from_never_templates_a_researched_verdict(vdir, monkeypatch):
+    """write_missing itself (seed_verdicts --fix goes through it too): no RT, no CinemaScore, no notes."""
+    path = _put(vdir, "resident-evil", RE_ON_FILE)
+    before = path.read_bytes()
+    client = _VerdictClient(lambda p: "x")
+    monkeypatch.setattr(verdicts, "_client", lambda: client)
+    assert verdicts.write_missing({"films": {"resident-evil": RE_NO_BASIS}}, force=True,
+                                  only_fids={"resident-evil"}) == {}
+    assert client.calls == 0 and path.read_bytes() == before
+    # a claude «unknown» with nothing behind it still becomes the template, as on the regular path
+    _put(vdir, "u", dict(RE_ON_FILE, fid="u", verdict="unknown", ar="ما عندنا شي عنه."))
+    assert verdicts.write_missing({"films": {"u": {"title": "U"}}}, force=True)["u"]["by"] == "template"
+
+
+@pytest.mark.parametrize("film", [RE_FILM, RE_NO_BASIS])
+def test_a_text_fix_never_changes_the_verdict_itself(vdir, monkeypatch, film):
+    path = _put(vdir, "resident-evil", RE_ON_FILE)
+    before = path.read_bytes()
+    client = _VerdictClient(lambda p: f"{_site_title(p)} رعب عادي ومب لازم تستعجل عليه.", verdict="skip")
+    monkeypatch.setattr(verdicts, "_client", lambda: client)
+    state, report = verdicts.fix_text_mismatches({"films": {"resident-evil": film}}, {}, today=TODAY)
+    assert client.calls == 1 and path.read_bytes() == before
+    assert report["unfixed"] == ["resident-evil"] and "'yes' into 'skip'" in report["error"]
+    assert state["resident-evil"]["ok"] is False   # waits for a new basis, never loops
+
+
+# --- review finding 2: true sentences the runtime check used to flag
+@pytest.mark.parametrize("text, runtime", [
+    ("الفيلم أطول من ساعتين بس ما تحس فيها.", 186),   # a bound («طول» inside «أطول» was read as a runtime cue)
+    ("آخر ساعة ونص من الفيلم أقوى شي.", 105),         # a stretch of the film
+    ("أول 90 دقيقة بطيئة.", 150),
+    ("the first 90 minutes drag", 150),
+    ("over 2 hours of action", 186),
+    ("قرابة 3 ساعات، بس تستاهل.", 186),               # a rounded figure
+    ("3 ساعات تقريباً", 186),
+    ("about 3 hours", 186),
+    ("ما يوصل ساعتين", 105),
+])
+def test_true_runtime_sentences_are_not_flagged(text, runtime):
+    assert verdicts.text_mismatch({"ar": text}, {"runtime": runtime}) is None
+
+
+@pytest.mark.parametrize("text, runtime, why", [
+    ("الفيلم أطول من ساعتين", 105, "over 120"),
+    ("over 2 hours of action", 100, "over 120"),
+    ("قرابة 3 ساعات", 150, "about 180"),
+    ("ما يوصل ساعتين", 140, "under 120"),
+    ("مدته 3 ساعات ودقيقة", 190, "181"),
+])
+def test_a_broken_bound_or_a_far_rounded_figure_is_still_flagged(text, runtime, why):
+    assert why in verdicts.text_mismatch({"ar": text}, {"runtime": runtime})
+
+
+def test_the_construct_state_of_a_title_with_al_is_its_own_spelling():
+    film = {"title": "The Odyssey", "title_ar": "الأوديسة", "runtime": 180}
+    for ok in ("أوديسة نولان تحفة.", "الأوديسة تحفة.", "للأوديسة جمهورها."):
+        assert verdicts.text_mismatch({"ar": ok}, film) is None
+    assert "Latin" in verdicts.text_mismatch({"ar": "The Odyssey تحفة."}, film)
+    assert verdicts.text_mismatch({"ar": "رزدنت إيفل"}, RE_FILM)   # the audit case still flags
+
+
 def test_refresh_rewrites_only_the_mismatch_and_reports_it(tmp_path, monkeypatch, offline_steps, no_posters):
     """The hourly wiring: every other verdict is left alone, the mismatch goes through the model once, and
     health.json says what happened. Two runs: the second makes no call."""

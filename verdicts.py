@@ -31,6 +31,7 @@ from pathlib import Path
 
 VERDICTS_DIR = Path(__file__).resolve().parent / "verdicts"
 VALID_VERDICTS = {"yes", "mixed", "skip", "unknown"}
+RESEARCHED_VERDICTS = VALID_VERDICTS - {"unknown"}
 MODEL = "claude-sonnet-5"
 MAX_ATTEMPTS = 5
 
@@ -470,9 +471,10 @@ def write_missing(data: dict, force: bool = False, notes: dict[str, str] | None 
     """Writes or refreshes verdicts/<fid>.json per needs_rewrite().
 
     A film with no basis (has_basis) gets the template without a model call. force=True also
-    regenerates claude-written verdicts (never a hand-edited one). `notes` is an optional
-    {fid: extra research text} map folded into the prompt. `only_fids`, if given, restricts the
-    run to that set of fids.
+    regenerates claude-written verdicts (never a hand-edited one), but never replaces a researched
+    claude yes/mixed/skip with the template: with nothing to write from, the file stays (the regular
+    path keeps it too when the basis is gone). `notes` is an optional {fid: extra research text} map
+    folded into the prompt. `only_fids`, if given, restricts the run to that set of fids.
     """
     VERDICTS_DIR.mkdir(exist_ok=True)
     notes = notes or {}
@@ -489,10 +491,13 @@ def write_missing(data: dict, force: bool = False, notes: dict[str, str] | None 
                 existing = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
                 existing = {"by": "claude"}  # unreadable: rewrite it
-        if not needs_rewrite(existing, film, notes.get(fid), force):
+        why = needs_rewrite(existing, film, notes.get(fid), force)
+        if not why:
             continue
 
         if not has_basis(film, notes.get(fid)):
+            if why == "force" and existing.get("verdict") in RESEARCHED_VERDICTS:
+                continue   # a forced run with nothing to write from never downgrades a researched verdict
             verdict = template_verdict(fid)
         else:
             if client is None:
@@ -556,7 +561,10 @@ def _title_mismatch(text: str, title_ar: str, title_en: str | None) -> str | Non
         return None
     n = len(title)
     windows = [toks[i:i + n] for i in range(len(toks) - n + 1)]
-    if any(_window_distance(w, title, 0) == 0 for w in windows):
+    exact = [title]
+    if len(title[0]) > 4 and title[0].startswith("ال"):
+        exact.append([title[0][2:]] + title[1:])   # construct state: «أوديسة نولان» for «الأوديسة»
+    if any(_window_distance(w, t, 0) == 0 for t in exact for w in windows):
         return None
     cap = len("".join(title)) // 4
     if cap:
@@ -581,28 +589,62 @@ _EN_HM = re.compile(r"(?<![\w.])([1-4])\s*(?:hours?|hrs?|h)\s*(?:and\s*)?(\d{1,2
 _EN_H = re.compile(r"(?<![\w.])([1-4])\s*(?:hours?|hrs?)(?![a-z])")
 _EN_MIN = re.compile(r"(?<![\w.])(\d{2,3})[\s-]*(?:minutes?|mins?)(?![a-z])")
 _AR_MIN_WORDS = {"دقيقه": 1, "دقيقتين": 2, "نص": 30, "نصف": 30, "ربع": 15, "ثلث": 20}
-_AR_CUE = re.compile(r"مد[ته]|طول|يمتد|runtime")   # «مدته»، «مدتها»، «مدة»، «طوله»، «يمتد»
+# «مدته»، «مدتها»، «مدة»، «طوله»، «بطول»، «يمتد» -- a word of its own, so «أطول» is no cue
+_AR_CUE = re.compile(rf"(?<![{_AR_LETTERS}])[وب]?(?:مد[ته]|طول|يمتد)|runtime")
+# How a time is stated, read from the words right before (or after) it. A part of the film («أول 90
+# دقيقة», «آخر ساعة ونص», "the first 90 minutes") is no runtime; a bound («أطول من ساعتين», "over 2
+# hours") is checked in its own direction; a rounded figure («قرابة 3 ساعات») gets a wider tolerance.
+_W = rf"(?<![{_AR_LETTERS}\w])"
+_Q_BEFORE = (
+    ("part", re.compile(rf"{_W}[وبلف]?(?:اول|اخر|بدايه|نهايه|first|last|final|opening|closing)\s*$")),
+    ("<", re.compile(rf"{_W}(?:اقل من|اقصر من|تحت|ما يوصل|ما يتعدى|ما يتجاوز|under|less than|shorter than|"
+                     rf"at most)\s*$")),
+    (">", re.compile(rf"{_W}(?:اطول من|اكثر من|اكبر من|فوق|يتعدى|يتجاوز|over|more than|longer than|at least)\s*$")),
+    ("~", re.compile(rf"{_W}(?:قرابه|حوالي|تقريبا|يقارب|بحدود|about|around|nearly|almost|roughly|"
+                     rf"approximately|close to)\s*$")),
+)
+_Q_AFTER = (("~", re.compile(r"^\s*(?:تقريبا|or so\b)")), (">", re.compile(r"^\s*(?:و\s*شوي|او اكثر|plus\b|or more\b)")),
+            ("<", re.compile(r"^\s*(?:او اقل|or less\b)")))
+RUNTIME_APPROX_TOLERANCE = 15
 
 
-def stated_runtimes(text: str) -> list[int]:
-    """Every runtime a verdict line states, in minutes: «3 ساعات ودقيقة» 181, «ساعتين و41 دقيقة» 161,
-    «ساعة ونص» 90, «181 دقيقة», "3h01", "2 hours 30 minutes", "181 minutes". A bare minute count
-    under 60 («آخر 20 دقيقة») and an hour count outside 1-4 («72 ساعة قبل») are not a runtime."""
+def _how_stated(t: str, start: int, end: int) -> str:
+    """"=" a runtime, "~" a rounded one, ">" / "<" a bound, "part" a stretch of the film (not a runtime)."""
+    for kind, rx in _Q_BEFORE:
+        if rx.search(t, max(0, start - 24), start):
+            return kind
+    for kind, rx in _Q_AFTER:
+        if rx.match(t[end:end + 16]):
+            return kind
+    return "="
+
+
+def runtime_claims(text: str) -> list[tuple[int, str]]:
+    """Every runtime a verdict line states, in minutes, with how it is stated (_how_stated):
+    «3 ساعات ودقيقة» (181, "="), «ساعتين و41 دقيقة» 161, «ساعة ونص» 90, «181 دقيقة», "3h01", "2 hours 30
+    minutes", "181 minutes", «أطول من ساعتين» (120, ">"), «قرابة 3 ساعات» (180, "~"). A bare minute count
+    under 60 («آخر 20 دقيقة»), an hour count outside 1-4 («72 ساعة قبل») and a stretch of the film («أول 90
+    دقيقة») are not a runtime."""
     t = _strip_diacritics(text or "").translate(_AR_FOLD).lower()
     found = []
 
+    def add(start, end, mins, bare=False):
+        kind = _how_stated(t, start, end)
+        if kind == "part":
+            return (start, end)   # claimed, so the minutes inside are not read again
+        if bare and kind == "=" and not _AR_CUE.search(t, max(0, start - 14), start):
+            return None           # «كل ساعة» is not a runtime; «مدته ساعتين» and «ساعة ونص» are
+        found.append((mins, kind))
+        return (start, end)
+
     def take(m, hours, bare=False):
         mins = hours * 60
-        rest = t[m.end():]
-        a = _AR_MIN_AFTER.match(rest) or _AR_MIN_LESS.match(rest)
-        if bare and not a and not _AR_CUE.search(t[max(0, m.start() - 14):m.start()]):
-            return None   # «أول ساعة» / «كل ساعة» is not a runtime; «مدته ساعتين» and «ساعة ونص» are
+        a = _AR_MIN_AFTER.match(t[m.end():]) or _AR_MIN_LESS.match(t[m.end():])
         if a is not None and a.re is _AR_MIN_LESS:
             mins -= 15
         elif a:
             mins += int(a.group(1)) if a.group(1) else _AR_MIN_WORDS[a.group(2)]
-        found.append(mins)
-        return (m.start(), m.end() + (a.end() if a else 0))
+        return add(m.start(), m.end() + (a.end() if a else 0), mins, bare=bare and not a)
 
     spans = []
     for m in _AR_H.finditer(t):
@@ -615,25 +657,31 @@ def stated_runtimes(text: str) -> list[int]:
             spans.append(span)
     for m in _AR_MIN.finditer(t):
         if not any(a <= m.start() < b for a, b in spans) and 60 <= int(m.group(1)) <= 300:
-            found.append(int(m.group(1)))
+            add(m.start(), m.end(), int(m.group(1)))
     en_spans = []
     for m in _EN_HM.finditer(t):
-        found.append(int(m.group(1)) * 60 + int(m.group(2)))
+        add(m.start(), m.end(), int(m.group(1)) * 60 + int(m.group(2)))
         en_spans.append((m.start(), m.end()))
     for m in _EN_H.finditer(t):
         if not any(a <= m.start() < b for a, b in en_spans):
-            found.append(int(m.group(1)) * 60)
+            add(m.start(), m.end(), int(m.group(1)) * 60)
             en_spans.append((m.start(), m.end()))
     for m in _EN_MIN.finditer(t):
         if not any(a <= m.start() < b for a, b in en_spans) and 60 <= int(m.group(1)) <= 300:
-            found.append(int(m.group(1)))
+            add(m.start(), m.end(), int(m.group(1)))
     return found
+
+
+def stated_runtimes(text: str) -> list[int]:
+    """The minutes of every runtime_claims() entry, in order."""
+    return [mins for mins, _ in runtime_claims(text)]
 
 
 def text_mismatch(verdict: dict, film: dict) -> str | None:
     """Why a verdict's text contradicts the site's own data for this film, else None: it spells the
     film differently from the site's Arabic title (or writes the Latin title where the Arabic page
-    shows an Arabic one), or it states a runtime more than RUNTIME_TEXT_TOLERANCE minutes off."""
+    shows an Arabic one), or it states a runtime more than RUNTIME_TEXT_TOLERANCE minutes off (a
+    rounded one RUNTIME_APPROX_TOLERANCE; a bound only when the site's runtime breaks it)."""
     ar, en = verdict.get("ar") or "", verdict.get("en") or ""
     if film.get("title_ar"):
         why = _title_mismatch(ar, film["title_ar"], film.get("title"))
@@ -641,9 +689,12 @@ def text_mismatch(verdict: dict, film: dict) -> str | None:
             return why
     site_rt = film.get("runtime")
     if site_rt:
-        for said in stated_runtimes(ar) + stated_runtimes(en):
-            if abs(said - int(site_rt)) > RUNTIME_TEXT_TOLERANCE:
-                return f"states a runtime of {said} min where the site says {int(site_rt)}"
+        rt, tol = int(site_rt), RUNTIME_TEXT_TOLERANCE
+        for said, kind in runtime_claims(ar) + runtime_claims(en):
+            if ((kind == "=" and abs(said - rt) > tol) or (kind == "~" and abs(said - rt) > RUNTIME_APPROX_TOLERANCE)
+                    or (kind == ">" and rt < said - tol) or (kind == "<" and rt > said + tol)):
+                how = {"=": "", "~": "about ", ">": "over ", "<": "under "}[kind]
+                return f"states a runtime of {how}{said} min where the site says {rt}"
     return None
 
 
@@ -677,20 +728,36 @@ def text_basis(film: dict) -> str:
     return f"{film.get('title_ar') or film.get('title') or ''}|{film.get('runtime') or ''}"
 
 
+def _own_text_notes(v: dict) -> str:
+    """The notes for a text fix of a film the data carries no basis for (no RT, no CinemaScore): the
+    verdict on file was written from research that is not in the repo, so it is the only source there
+    is. Without it write_missing would template a researched verdict (review of W0-P4, finding 1)."""
+    lines = [f"الحكم المكتوب الحين على موقعنا (من بحث سابق، وما عندنا اليوم أرقام أحدث منه): {v.get('verdict')}",
+             f"النص الحالي بالعربي: {v.get('ar') or ''}",
+             f"النص الحالي بالإنجليزي: {v.get('en') or ''}"]
+    if v.get("basis"):
+        lines.append(f"الأساس: {v['basis']}")
+    lines.append("المطلوب: نفس الحكم ونفس الأرقام، وصحّح بس اسم الفيلم والمدة على بيانات موقعنا فوق.")
+    return "\n".join(lines)
+
+
 def fix_text_mismatches(data: dict, state: dict | None, cap: int = TEXT_FIX_CAP,
                         today: str | None = None) -> tuple[dict, dict]:
     """The hourly targeted rewrite. Returns (new state, health report).
 
     Each mismatched fid gets ONE forced rewrite per text_basis, through
     write_missing(data, force=True, only_fids={fid}) (a hand-edited verdict is never touched there),
-    at most `cap` a run. A fid whose rewrite fails, or still mismatches, is listed under "unfixed" and
-    is not tried again on the same basis -- it waits in the health report, never loops. State:
-    {fid: {"basis", "at", "ok"}}, kept only for fids that still mismatch."""
+    at most `cap` a run. A film with no basis in the data is rewritten from its own verdict
+    (_own_text_notes; listed under "no_basis") and keeps the numbers that verdict stood on. A text fix
+    never changes a researched verdict itself (yes/mixed/skip): a draft that does is thrown away and the
+    file is restored byte for byte. A fid whose rewrite fails, or still mismatches, is listed under
+    "unfixed" and is not tried again on the same basis -- it waits in the health report, never loops.
+    State: {fid: {"basis", "at", "ok"}}, kept only for fids that still mismatch."""
     state = {k: dict(v) for k, v in (state or {}).items() if isinstance(v, dict)}
     films = data.get("films") or {}
     mism = text_mismatches(data)
     report = {"ok": True, "error": None, "mismatches": len(mism), "rewritten": [], "unfixed": [],
-              "hand": [], "deferred": []}
+              "hand": [], "deferred": [], "no_basis": []}
     attempts = 0
     for fid in sorted(mism):
         film = films[fid]
@@ -708,9 +775,26 @@ def fix_text_mismatches(data: dict, state: dict | None, cap: int = TEXT_FIX_CAP,
             continue
         attempts += 1
         ok = False
+        path = VERDICTS_DIR / f"{fid}.json"
+        no_basis = not has_basis(film)
         try:
-            write_missing(data, force=True, only_fids={fid})
-            ok = text_mismatch(_read_verdict(fid) or {}, film) is None
+            before = path.read_text(encoding="utf-8")
+            if no_basis:
+                report["no_basis"].append(fid)
+            write_missing(data, force=True, only_fids={fid},
+                          notes={fid: _own_text_notes(v)} if no_basis else None)
+            new = _read_verdict(fid) or {}
+            if new == v:
+                pass   # nothing was written
+            elif v.get("verdict") in RESEARCHED_VERDICTS and new.get("verdict") != v.get("verdict"):
+                path.write_text(before, encoding="utf-8")
+                report["error"] = (f"{fid}: the text fix turned {v.get('verdict')!r} into "
+                                   f"{new.get('verdict')!r}; the old file is kept")
+                new = v
+            elif no_basis:
+                new["basis_numbers"] = _stored_numbers(v)   # it still stands on the numbers it was written from
+                _write(path, new)
+            ok = text_mismatch(new, film) is None
         except Exception as e:  # noqa: BLE001 - one film's failure is recorded, never raised
             report["error"] = f"{fid}: {e}"
         state[fid] = {"basis": basis, "at": today or date.today().isoformat(), "ok": ok}
