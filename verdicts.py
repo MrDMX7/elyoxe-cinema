@@ -273,16 +273,44 @@ def _sanitize_notes(text: str) -> str:
     return "\n".join(l for l in out_lines if l).strip()
 
 
+def _genre_labels(genres) -> list[str]:
+    """latest.json carries genre KEYS (genres.py) -- a list; an older enrich shape was {"ar": [...], "en": [...]}."""
+    if isinstance(genres, dict):
+        return list(genres.get("ar") or genres.get("en") or [])
+    try:
+        from genres import GENRES
+    except ImportError:  # pragma: no cover - genres.py ships with this repo
+        GENRES = {}
+    return [GENRES.get(g, (g,))[0] for g in genres or [] if isinstance(g, str)]
+
+
+def _site_lines(film: dict) -> list[str]:
+    """The film's name and runtime exactly as the site prints them (W0-P4, legend §4.1 #36): a verdict
+    that spells the film another way, or states another runtime, contradicts the page it sits on."""
+    out = []
+    if film.get("title_ar"):
+        out.append(f"اسم الفيلم على موقعنا بالعربي: «{film['title_ar']}» — إذا ذكرت اسم الفيلم فاكتبه بهذا الرسم "
+                   "حرفياً، لا بحروف لاتينية ولا برسم ثاني.")
+    elif film.get("title"):
+        out.append(f"اسم الفيلم على موقعنا: {film['title']} (بحروف لاتينية) — إذا ذكرته فاكتبه بهذا الرسم.")
+    if film.get("runtime"):
+        rt = int(film["runtime"])
+        out.append(f"مدة الفيلم على موقعنا: {rt} دقيقة — إذا ذكرت المدة فلازم تطابق هالرقم (مثلاً «{rt} دقيقة»)، "
+                   "ولا تاخذ مدة من معرفتك.")
+    return out
+
+
 def _film_prompt(fid: str, film: dict, extra_notes: str | None) -> str:
     rt = film.get("rt") or {}
     lines = [
         f"الفيلم: {film.get('title')} ({film.get('title_ar') or 'بلا عنوان عربي'})",
+        *_site_lines(film),
         f"السنة: {film.get('year')}",
         f"المخرج: {film.get('director')}",
-        f"الأنواع: {', '.join(film.get('genres', {}).get('ar') or film.get('genres', {}).get('en') or [])}",
+        f"الأنواع: {', '.join(_genre_labels(film.get('genres')))}",
     ]
-    if film.get("language"):
-        lines.append(f"لغة الفيلم: {film['language']}")
+    if film.get("language") or film.get("lang"):
+        lines.append(f"لغة الفيلم: {film.get('language') or film.get('lang')}")
     if rt.get("critics") is not None:
         lines.append(f"Rotten Tomatoes (النقاد، جُلِب الآن — الأحدث والمصدر الأساسي للأساس، "
                      f"تجاهل أي رقم RT مختلف بالملاحظات فهو قديم): {rt['critics']}% من {rt.get('critics_count')} نقد")
@@ -337,7 +365,8 @@ def _generate_one(client, fid: str, film: dict, extra_notes: str | None) -> dict
 
         ar = parsed.get("ar", "")
         verdict = parsed.get("verdict")
-        reason = _dialect_violation(ar) or _english_violation(parsed.get("en", ""))
+        reason = (_dialect_violation(ar) or _english_violation(parsed.get("en", ""))
+                  or text_mismatch({"ar": ar, "en": parsed.get("en", "")}, film))
         if reason:
             last_reason = reason
             continue
@@ -473,6 +502,222 @@ def write_missing(data: dict, force: bool = False, notes: dict[str, str] | None 
         results[fid] = verdict
 
     return results
+
+
+# ---------------------------------------------------------------------------------------------
+# W0-P4 (legend §4.1 #36): the verdict text against the site's own data. A prompt change alone
+# regenerates nothing (needs_rewrite() rewrites only a new verdict, a moved basis or a dialect
+# break), so a check finds the verdicts whose text spells the film differently from the site's
+# title or states a runtime more than RUNTIME_TEXT_TOLERANCE minutes from the site's, and only those
+# are rewritten -- at most TEXT_FIX_CAP a run, once per fid per title-and-runtime basis. Never a mass
+# regeneration (cost, and dialect drift in 60 texts at once).
+# The tolerance is 5, not the plan's "more than 10": the plan's own case, «3 ساعات ودقيقة» (181) against
+# 190, is 9 minutes apart and must be flagged. 5 is also how far the chains' own listings of one film
+# sit from their median (100-105 around 105), so a line within 5 of the site agrees with the chains.
+RUNTIME_TEXT_TOLERANCE = 5
+TEXT_FIX_CAP = 10
+_AR_LETTERS = "\u0600-\u06FF"
+_AR_FOLD = str.maketrans({"أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ى": "ي", "ة": "ه", "ـ": None})
+_PROCLITICS = "وبلفك"
+
+
+def _norm(text: str) -> str:
+    """Letters only, alef/yaa/taa-marbuta folded, no diacritics or tatweel, Latin lower-cased."""
+    t = _strip_diacritics(text or "").translate(_AR_FOLD).lower()
+    return re.sub(r"[^\w]+|_", " ", t).strip()
+
+
+def _variants(tok: str) -> set[str]:
+    """A token and the same token without one attached proclitic («وقلب» -> «قلب», «للأوديسة» -> «الاوديسه»)."""
+    out = {tok}
+    if len(tok) > 3 and tok[0] in _PROCLITICS:
+        out.add(tok[1:])
+    if tok.startswith("لل") and len(tok) > 3:
+        out.add("ال" + tok[2:])
+    return out
+
+
+def _window_distance(window: list[str], title: list[str], cap: int) -> int:
+    """Edit distance between a run of the text's tokens and the title's, the first token tried with
+    and without an attached proclitic (the smallest wins)."""
+    from normalize import _lev
+    rest = " ".join(window[1:])
+    best = cap + 1
+    for first in _variants(window[0]):
+        w = (first + " " + rest).strip()
+        best = min(best, _lev(w, " ".join(title), cap))
+    return best
+
+
+def _title_mismatch(text: str, title_ar: str, title_en: str | None) -> str | None:
+    title = _norm(title_ar).split()
+    toks = _norm(text).split()
+    if not title or not toks:
+        return None
+    n = len(title)
+    windows = [toks[i:i + n] for i in range(len(toks) - n + 1)]
+    if any(_window_distance(w, title, 0) == 0 for w in windows):
+        return None
+    cap = len("".join(title)) // 4
+    if cap:
+        for w in windows:
+            d = _window_distance(w, title, cap)
+            if 0 < d <= cap and any(v[:1] == title[0][:1] for v in _variants(w[0])):
+                return f"spells the film «{' '.join(w)}» where the site shows «{title_ar}»"
+    latin = _norm(title_en or "").split()
+    if latin and re.search(r"[a-z]", " ".join(latin)) and any(
+            toks[i:i + len(latin)] == latin for i in range(len(toks) - len(latin) + 1)):
+        return f"writes the Latin title «{title_en}» where the Arabic page shows «{title_ar}»"
+    return None
+
+
+_AR_H = re.compile(rf"(?<![\d{_AR_LETTERS}])([1-4])\s*(?:ساعات|ساعه)(?![{_AR_LETTERS}])")
+_AR_H_WORD = re.compile(rf"(?<![{_AR_LETTERS}])(ساعتين|ساعتان|ساعه)(?![{_AR_LETTERS}])")
+_AR_MIN_AFTER = re.compile(rf"^\s*و\s*(?:(\d{{1,2}})\s*(?:دقيقه|دقايق|دقائق|د)(?![{_AR_LETTERS}])"
+                           rf"|(دقيقه|دقيقتين|نص|نصف|ربع|ثلث)(?![{_AR_LETTERS}]))")
+_AR_MIN_LESS = re.compile(rf"^\s*[اإ]لا\s*ربع(?![{_AR_LETTERS}])")
+_AR_MIN = re.compile(rf"(?<![\d.])(\d{{2,3}})\s*(?:دقيقه|دقايق|دقائق)(?![{_AR_LETTERS}])")
+_EN_HM = re.compile(r"(?<![\w.])([1-4])\s*(?:hours?|hrs?|h)\s*(?:and\s*)?(\d{1,2})\s*(?:minutes?|mins?|m)?(?![a-z])")
+_EN_H = re.compile(r"(?<![\w.])([1-4])\s*(?:hours?|hrs?)(?![a-z])")
+_EN_MIN = re.compile(r"(?<![\w.])(\d{2,3})[\s-]*(?:minutes?|mins?)(?![a-z])")
+_AR_MIN_WORDS = {"دقيقه": 1, "دقيقتين": 2, "نص": 30, "نصف": 30, "ربع": 15, "ثلث": 20}
+_AR_CUE = re.compile(r"مد[ته]|طول|يمتد|runtime")   # «مدته»، «مدتها»، «مدة»، «طوله»، «يمتد»
+
+
+def stated_runtimes(text: str) -> list[int]:
+    """Every runtime a verdict line states, in minutes: «3 ساعات ودقيقة» 181, «ساعتين و41 دقيقة» 161,
+    «ساعة ونص» 90, «181 دقيقة», "3h01", "2 hours 30 minutes", "181 minutes". A bare minute count
+    under 60 («آخر 20 دقيقة») and an hour count outside 1-4 («72 ساعة قبل») are not a runtime."""
+    t = _strip_diacritics(text or "").translate(_AR_FOLD).lower()
+    found = []
+
+    def take(m, hours, bare=False):
+        mins = hours * 60
+        rest = t[m.end():]
+        a = _AR_MIN_AFTER.match(rest) or _AR_MIN_LESS.match(rest)
+        if bare and not a and not _AR_CUE.search(t[max(0, m.start() - 14):m.start()]):
+            return None   # «أول ساعة» / «كل ساعة» is not a runtime; «مدته ساعتين» and «ساعة ونص» are
+        if a is not None and a.re is _AR_MIN_LESS:
+            mins -= 15
+        elif a:
+            mins += int(a.group(1)) if a.group(1) else _AR_MIN_WORDS[a.group(2)]
+        found.append(mins)
+        return (m.start(), m.end() + (a.end() if a else 0))
+
+    spans = []
+    for m in _AR_H.finditer(t):
+        spans.append(take(m, int(m.group(1))))
+    for m in _AR_H_WORD.finditer(t):
+        if any(a <= m.start() < b for a, b in spans) or re.search(r"\d\s*$", t[:m.start()]):
+            continue   # part of «3 ساعات», or «72 ساعة» (not a runtime)
+        span = take(m, 2 if m.group(1) in ("ساعتين", "ساعتان") else 1, bare=True)
+        if span:
+            spans.append(span)
+    for m in _AR_MIN.finditer(t):
+        if not any(a <= m.start() < b for a, b in spans) and 60 <= int(m.group(1)) <= 300:
+            found.append(int(m.group(1)))
+    en_spans = []
+    for m in _EN_HM.finditer(t):
+        found.append(int(m.group(1)) * 60 + int(m.group(2)))
+        en_spans.append((m.start(), m.end()))
+    for m in _EN_H.finditer(t):
+        if not any(a <= m.start() < b for a, b in en_spans):
+            found.append(int(m.group(1)) * 60)
+            en_spans.append((m.start(), m.end()))
+    for m in _EN_MIN.finditer(t):
+        if not any(a <= m.start() < b for a, b in en_spans) and 60 <= int(m.group(1)) <= 300:
+            found.append(int(m.group(1)))
+    return found
+
+
+def text_mismatch(verdict: dict, film: dict) -> str | None:
+    """Why a verdict's text contradicts the site's own data for this film, else None: it spells the
+    film differently from the site's Arabic title (or writes the Latin title where the Arabic page
+    shows an Arabic one), or it states a runtime more than RUNTIME_TEXT_TOLERANCE minutes off."""
+    ar, en = verdict.get("ar") or "", verdict.get("en") or ""
+    if film.get("title_ar"):
+        why = _title_mismatch(ar, film["title_ar"], film.get("title"))
+        if why:
+            return why
+    site_rt = film.get("runtime")
+    if site_rt:
+        for said in stated_runtimes(ar) + stated_runtimes(en):
+            if abs(said - int(site_rt)) > RUNTIME_TEXT_TOLERANCE:
+                return f"states a runtime of {said} min where the site says {int(site_rt)}"
+    return None
+
+
+def _read_verdict(fid: str) -> dict | None:
+    path = VERDICTS_DIR / f"{fid}.json"
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def text_mismatches(data: dict) -> dict[str, str]:
+    """{fid: reason} for every film whose verdicts/<fid>.json text contradicts the site's data
+    (text_mismatch). A template verdict says nothing about the film, so it never mismatches."""
+    out = {}
+    for fid, film in (data.get("films") or {}).items():
+        if film.get("status") == "archived":
+            continue
+        v = _read_verdict(fid)
+        if not v or v.get("by") == "template":
+            continue
+        why = text_mismatch(v, film)
+        if why:
+            out[fid] = why
+    return out
+
+
+def text_basis(film: dict) -> str:
+    """What a forced rewrite is made against: the site's title and runtime. A new basis (W1-D2's Arabic
+    titles, a runtime the chains changed) earns the film one more try."""
+    return f"{film.get('title_ar') or film.get('title') or ''}|{film.get('runtime') or ''}"
+
+
+def fix_text_mismatches(data: dict, state: dict | None, cap: int = TEXT_FIX_CAP,
+                        today: str | None = None) -> tuple[dict, dict]:
+    """The hourly targeted rewrite. Returns (new state, health report).
+
+    Each mismatched fid gets ONE forced rewrite per text_basis, through
+    write_missing(data, force=True, only_fids={fid}) (a hand-edited verdict is never touched there),
+    at most `cap` a run. A fid whose rewrite fails, or still mismatches, is listed under "unfixed" and
+    is not tried again on the same basis -- it waits in the health report, never loops. State:
+    {fid: {"basis", "at", "ok"}}, kept only for fids that still mismatch."""
+    state = {k: dict(v) for k, v in (state or {}).items() if isinstance(v, dict)}
+    films = data.get("films") or {}
+    mism = text_mismatches(data)
+    report = {"ok": True, "error": None, "mismatches": len(mism), "rewritten": [], "unfixed": [],
+              "hand": [], "deferred": []}
+    attempts = 0
+    for fid in sorted(mism):
+        film = films[fid]
+        basis = text_basis(film)
+        v = _read_verdict(fid) or {}
+        if v.get("by") != "claude":
+            report["hand"].append(fid)
+            continue
+        prev = state.get(fid)
+        if prev and prev.get("basis") == basis:
+            report["unfixed"].append(fid)
+            continue
+        if attempts >= cap:
+            report["deferred"].append(fid)
+            continue
+        attempts += 1
+        ok = False
+        try:
+            write_missing(data, force=True, only_fids={fid})
+            ok = text_mismatch(_read_verdict(fid) or {}, film) is None
+        except Exception as e:  # noqa: BLE001 - one film's failure is recorded, never raised
+            report["error"] = f"{fid}: {e}"
+        state[fid] = {"basis": basis, "at": today or date.today().isoformat(), "ok": ok}
+        (report["rewritten"] if ok else report["unfixed"]).append(fid)
+    state = {fid: st for fid, st in state.items() if fid in mism and not st.get("ok")}
+    report["ok"] = not report["unfixed"]
+    return state, report
 
 
 def fold_merged(mapping: dict[str, str]) -> dict[str, str]:

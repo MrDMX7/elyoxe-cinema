@@ -83,3 +83,57 @@ def fill(data_or_reader_output: dict, table: dict, today: str | None = None) -> 
         filled += 1
 
     return filled
+
+
+# Chains whose later-day shows borrow today's live price for the same cinema x hall (legend §4.1 #34).
+# VOX samples one seat-map legend per cinema x hall x date and gives up after a failure or a block, so
+# on 2026-09-28 a third of its next-day shows had no price at all («السعر في الشباك») while the same
+# hall had a price read that same day. Other chains read (nearly) every date they list.
+CARRY_TODAY_CHAINS = ("vox",)
+
+
+def _is_3d(title) -> bool:
+    from readers.common import fmt3d
+    return bool(fmt3d(title))
+
+
+def carry_today(reader_output: dict, today: str, chains=CARRY_TODAY_CHAINS) -> int:
+    """Give a later-day show with no price the price read TODAY for the same cinema x hall (x 3D),
+    dated: it is marked like a fallback-table price (`price_source: "table"`, `price_checked`: today),
+    so every page prints its date («السعر بتاريخ …») instead of passing it off as that day's live
+    price, and price_history never records it as that day's reading. `price_basis: "today"` names
+    where it came from. Only live prices are carried (a show already priced, or today's own
+    table-filled price, is never a source). Returns how many shows were given one."""
+    cinema_chain = _cinema_chain_map(reader_output)
+    shows = reader_output.get("shows", [])
+
+    def key(s):
+        return (s.get("cinema"), s.get("hall_label") or s.get("hall"), _is_3d(s.get("film_title")))
+
+    todays: dict = {}
+    for s in shows:
+        if s.get("date") != today or not s.get("prices") or s.get("price_source"):
+            continue
+        if cinema_chain.get(s.get("cinema")) not in chains:
+            continue
+        best = todays.setdefault(key(s), {})
+        for p in s["prices"]:
+            if p.get("seat") and p.get("aed") and p["aed"] > 0:
+                cur = best.get(p["seat"])
+                best[p["seat"]] = p["aed"] if cur is None else min(cur, p["aed"])
+
+    carried = 0
+    for s in shows:
+        if s.get("prices") is not None or not s.get("date") or s["date"] <= today:
+            continue
+        if cinema_chain.get(s.get("cinema")) not in chains:
+            continue
+        seats = todays.get(key(s))
+        if not seats:
+            continue
+        s["prices"] = [{"seat": k, "aed": v} for k, v in seats.items()]
+        s["price_source"] = "table"
+        s["price_checked"] = today
+        s["price_basis"] = "today"
+        carried += 1
+    return carried
