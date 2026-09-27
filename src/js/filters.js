@@ -12,12 +12,26 @@ function firstStart(el) {
   return m;
 }
 function payOf(fid) { var t = q('.film[data-fid="' + fid + '"]'); return t ? +t.getAttribute("data-pay") || 1e9 : 1e9; }
+/* «الأحسن تقييم»: films with both a critics and an audience score first, then those with one, then those with
+   none; inside each, the higher score (critics + audience); the verdict only breaks ties. sc = [critics,
+   audience] from the page's #cinema-sc (pages/scores.py), either may be null. */
+function scoreRank(sc, v) {
+  var c = sc && typeof sc[0] === "number" ? sc[0] : null, a = sc && typeof sc[1] === "number" ? sc[1] : null;
+  var tier = c != null && a != null ? 0 : c != null || a != null ? 1 : 2;
+  var miss = tier === 0 ? 200 - c - a : tier === 1 ? 2 * (100 - (c != null ? c : a)) : 0;
+  return tier * 1e4 + Math.max(0, miss) * 10 + verdictRank(v);
+}
+var SCORES = null;
+function scoresOf(fid) {
+  if (!SCORES) { var el = document.getElementById("cinema-sc"); try { SCORES = el ? JSON.parse(el.textContent) || {} : {}; } catch (e) { SCORES = {}; } }
+  return SCORES[fid] || null;
+}
 function sortKey(el) {
   var o = +el.getAttribute("data-o") || 0, tile = el.classList.contains("film"), off = tile && el.classList.contains("off") ? 1e7 : 0;
   var fid = el.getAttribute("data-fid");
   if (ST.sort === "price") return off + (tile ? +el.getAttribute("data-pay") || 1e9 : payOf(fid)) * 1e3 + o;
   if (ST.sort === "time") return off + (tile ? +el.getAttribute("data-first") / 6e4 || 1e9 : firstStart(el)) * 1e3 + o;
-  if (ST.sort === "verdict") { var t = el.hasAttribute("data-v") ? el : q('.film[data-fid="' + fid + '"]') || el; return off + verdictRank(t.getAttribute("data-v")) * 1e5 + o; }
+  if (ST.sort === "verdict") { var t = el.hasAttribute("data-v") ? el : q('.film[data-fid="' + fid + '"]') || el; return (off ? 1e11 : 0) + scoreRank(scoresOf(fid), t.getAttribute("data-v")) * 1e3 + o; }
   return off + o;
 }
 function sortIn(box, sel) {
@@ -35,6 +49,19 @@ function markControls() {
   qa("select[data-ends-before]").forEach(function (s) { s.value = ST.before; if (s.value !== ST.before) s.value = ""; s.parentNode.classList.toggle("on", !!ST.before); });
 }
 
+/* a hall, a cinema, a film's row or a day whose every time has passed (on the day showing) is gone: the build
+   leaves such a hall out, and this hides one whose last time passes while the page is open. A block with no
+   time at all is not judged. The filters mark what they hide with xf; x (display:none) is xf or gone. */
+var GONE = ".hl, .tl, .scin, .cg, .cf, .srow, .fcity, .day[data-d]";
+function tmLive(a) { return !a.classList.contains("past") && !a.closest(".times[hidden]"); }
+function isGone(el) { var ts = qa(".tm[data-start]", el); return ts.length > 0 && !ts.some(tmLive); }
+function hideBy(el, v) { el.classList.toggle(el.matches(GONE) ? "xf" : "x", v); }
+function hidePassed() {
+  qa(GONE).forEach(function (el) {
+    if (el.closest(".similar, [data-ticket]")) return;
+    el.classList.toggle("x", el.classList.contains("xf") || isGone(el));
+  });
+}
 function applyFilters() {
   markControls();   /* first: the empty-state line reads the controls' state */
   var late = whoPreset(ST.who).late, hide = ST.prayer && ST.hide, timeOn = !!(ST.before || late || hide);
@@ -43,7 +70,7 @@ function applyFilters() {
     a.classList.toggle("x", !endsOk(sp, ST.before) || !lateOk(sp, late) || (hide && a.classList.contains("clash")));
   });
   [".times[data-d]", ".hl", ".scin", ".cg", ".fcity"].forEach(function (sel) {
-    qa(sel).forEach(function (el) { el.classList.toggle("x", timeOn && !anyTm(el)); });
+    qa(sel).forEach(function (el) { hideBy(el, timeOn && !anyTm(el)); });
   });
   qa(".film[data-fid], .srow[data-fid], .cf[data-fid]").forEach(function (el) {
     if (el.closest(".similar")) return;
@@ -51,12 +78,14 @@ function applyFilters() {
     var f = { genres: (src.getAttribute("data-genres") || "").split(" "), family: src.getAttribute("data-family") === "1", kids: src.getAttribute("data-kids") === "1" };
     var ok = filmOk(f, filt());
     if (ok && timeOn) ok = el.classList.contains("film") ? !S || el.getAttribute("data-fit") !== "0" : anyTm(el);
-    el.classList.toggle("x", !ok);
+    hideBy(el, !ok);
   });
+  hidePassed();
   sortIn(q("[data-films]"), ".film[data-fid]");
   sortIn(q(".sched"), ".srow");
   qa(".cfilms").forEach(function (c) { sortIn(c, ".cf"); });
-  var list = page === "film" ? qa(".cg") : page === "cinema" ? qa(".cf") : qa("[data-films] .film");
+  /* «nothing matches» is said only when the filters emptied the list, never when the day's times ran out */
+  var list = (page === "film" ? qa(".cg") : page === "cinema" ? qa(".cf") : qa("[data-films] .film")).filter(function (el) { return !isGone(el); });
   var none = list.length > 0 && !list.some(function (el) { return !el.classList.contains("x") && !el.closest(".x"); });
   qa("[data-empty]").forEach(function (e) {
     e.hidden = !none;

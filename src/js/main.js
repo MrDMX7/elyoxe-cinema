@@ -34,7 +34,7 @@ function pickCity(c) {
   qa("[data-city-name]").forEach(function (el) { el.textContent = C.cities[c] || c; });
   qa("[data-citypick] a[data-city]").forEach(function (a) { if (a.getAttribute("data-city") === c) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
   if (page === "home") loadCity();
-  if (page === "film") { renderFilm(); if (ST.prayer) applyPrayer(); }
+  if (page === "film") { renderFilm(); if (ST.prayer) applyPrayer(); rollTicket(); }
 }
 function markCard() {
   qa("button[data-card]").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-card") === card ? "true" : "false"); });
@@ -114,8 +114,14 @@ function lazyRow() {
       applyFilters();
     });
   });
-  relabelDays();
-  var days = qa("[data-day]"), cur = days.filter(function (b) { return b.getAttribute("data-day") === TODAY; })[0] ||
+  relabelDays(); upgradeTimes();
+  /* the day showing first: today while it still has a time to come, else the next day that has one */
+  var days = qa("[data-day]"), ahead = function (b) {
+    var d = b.getAttribute("data-day");
+    return qa('.times[data-d="' + d + '"] [data-start]').some(function (a) { return uae(d + "T" + a.getAttribute("data-start")).getTime() >= NOW.getTime(); });
+  };
+  var cur = days.filter(function (b) { return b.getAttribute("data-day") >= TODAY && ahead(b); })[0] ||
+    days.filter(function (b) { return b.getAttribute("data-day") === TODAY; })[0] ||
     days.filter(function (b) { return b.getAttribute("data-day") > TODAY; })[0] || days[0];
   if (cur) cur.click();
   document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-forget]")) forgetLoc(); });
@@ -134,6 +140,13 @@ function lazyRow() {
     if (tk) renderTerms(tk.getAttribute("data-chain"));
   });
   if (page === "home" || page === "city") loadCity();
-  /* the clock: every minute «الحين», the struck times and the ages move on */
-  setInterval(function () { var d = TODAY; tick(); if (d !== TODAY) relabelDays(); marks(); ages(); renderNow(); }, 60e3);
+  /* a show link (#s-…) opens its ticket; else the desktop column moves off a show that has started */
+  if (!showFromHash()) rollTicket();
+  /* the clock: every minute «الحين», the struck times, the halls whose last time passed, the desktop ticket,
+     the leave-by line and the ages move on */
+  setInterval(function () {
+    var d = TODAY; tick(); if (d !== TODAY) relabelDays();
+    marks(); hidePassed(); ages(); renderNow(); rollTicket();
+    if (typeof planRefresh === "function" && tk && !tk.hidden) planRefresh();
+  }, 60e3);
 })();

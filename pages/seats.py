@@ -7,6 +7,8 @@ No page of its own. Two data files for the lazy chunk src/js/seatmap.js (loaded 
   best x, free, total, at, [status rows]]]}} — the show's own fresh sample (its map, its seats' status, its best
   free seat), else its screen's shape only when steps/occupancy.py could tell it for certain (`seatmap`), with the
   best place in it; a show with neither is left out (no drawing, no seat total).
+- /data/seats/index.json ["cinema", …] — the cinemas that have a seats file, always written (an empty list when
+  none has one), so the chunk asks only for files that exist instead of a 404 on every ticket tap.
 Shapes and status strings are seats.compact()'s."""
 from site_kit import Plugin
 import seats as seatsmod
@@ -63,7 +65,7 @@ def register(site):
     private_off(site.d.get("shows") or [])
     private_off(site.shows)
     occ, per = build_data(site)
-    data = {"data/occupancy.json": occ}
+    data = {"data/occupancy.json": occ, "data/seats/index.json": sorted(per)}
     for cid, f in sorted(per.items()):
         data[f"data/seats/{cid}.json"] = f
     return Plugin(data=data, page_js={k: ("seatmap",) for k in KINDS})

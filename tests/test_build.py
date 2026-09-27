@@ -551,6 +551,7 @@ def test_archived_film_keeps_its_page(site):
     for page in (read(out), read(out, "al-ain"), read(out, "al-ain", "star-bawadi-mall")):
         assert "/film/weapons/" not in page and "/film/the-long-walk/" not in page
     for f in os.listdir(os.path.join(out, "data")):
+        if os.path.isdir(os.path.join(out, "data", f)): continue   # data/seats/ (W0-P3: its index.json is always written)
         if f == "search.json":
             # pages/search.py (task A5, ruling round 2, task-A5-review.md): search is a lookup surface, not
             # a listing -- an archived film keeps a real page (this very test asserts that above), so it
