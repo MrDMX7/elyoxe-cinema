@@ -38,6 +38,7 @@ run(data, ctx) -> {"rendered": n, "skipped": n, "cities": {fid: city_slug, ...}}
 """
 from __future__ import annotations
 
+import functools
 import hashlib
 import os
 import sys
@@ -49,7 +50,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 import site_kit as sk  # noqa: E402  (CITY names, human_date — plain strings, no HTML)
 
-RENDER_VERSION = "v2"  # bump whenever _card()'s output changes independently of the data (font-coverage fix)
+RENDER_VERSION = "v3"  # v3: Arabic runs in visual RTL order, text clear of the poster, archived cards drop the date. bump whenever _card()'s output changes independently of the data (font-coverage fix)
 W, H = 1200, 630
 NIGHT, VELVET, GOLD, SCREEN, SEAT = (15, 11, 12), (122, 22, 38), (226, 182, 89), (241, 234, 224), (168, 156, 142)
 CITY_ORDER = [c for c, _, _ in sk.CITIES]
@@ -123,28 +124,79 @@ def _runs(text: str):
     return out
 
 
+def _visual_runs(text: str, lang: str):
+    """The runs of `text` in VISUAL order, left to right. Arabic is a right-to-left paragraph: its runs
+    are laid right to left, so the first logical run («من») ends up rightmost and a Western-numeral run
+    keeps its own left-to-right digits in its place (release fix: the v2 cards laid Arabic runs left to
+    right, which read «دبي في الليلة درهم 46 من»). English stays one run."""
+    if lang != "ar":
+        return [(False, text)] if text else []
+    out = []
+    for ar, t in reversed(_runs(text)):
+        core = t.strip()
+        if not ar and core:   # an LTR run inside RTL: its logical leading space sits on its right, trailing on its left
+            lead, trail = t[:len(t) - len(t.lstrip())], t[len(t.rstrip()):]
+            t = trail + core + lead
+        out.append((ar, t))
+    return out
+
+
+def _text_anchor(lang: str, has_poster: bool):
+    """(x, right_anchored) for the text block, which sits opposite the poster. Arabic: poster on the
+    right, text right-aligned against the poster's left edge (release fix: v2 left-anchored it at
+    POSTER_W+90, so it ran across the poster). English: poster left, text left-aligned after it."""
+    if lang == "ar":
+        return (W - POSTER_W - 70 if has_poster else W - 90), True
+    return (POSTER_W + 70 if has_poster else 90), False
+
+
+@functools.lru_cache(maxsize=2)
+def _backdrop(poster_side_right: bool):
+    """The velvet glow behind the text: identical for every card on the same side, so drawn once."""
+    from PIL import Image, ImageDraw, ImageFilter
+    im = Image.new("RGB", (W, H), NIGHT)
+    glow = Image.new("RGB", (W, H), NIGHT)
+    g = ImageDraw.Draw(glow)
+    cx = (W - POSTER_W - 260) if poster_side_right else (POSTER_W + 260)
+    for r in range(380, 0, -6):
+        k = (1 - r / 380) ** 1.6
+        c = tuple(int(NIGHT[i] + (VELVET[i] - NIGHT[i]) * k * .7) for i in range(3))
+        g.ellipse((cx - r * 1.3, 250 - r, cx + r * 1.3, 250 + r), fill=c)
+    return Image.blend(im, glow.filter(ImageFilter.GaussianBlur(50)), 1.0)
+
+
+@functools.lru_cache(maxsize=None)
+def _ttf_bytes(name: str) -> bytes:
+    """src/fonts/<name> (woff2) decoded to plain TrueType, once per process (final review I1: this
+    conversion was ~95% of a card's render time when it ran six times per card)."""
+    import io
+    from fontTools.ttLib import TTFont
+    t = TTFont(str(ROOT / "src" / "fonts" / name)); t.flavor = None
+    b = io.BytesIO(); t.save(b)
+    return b.getvalue()
+
+
+@functools.lru_cache(maxsize=None)
+def _font(name: str, size: int):
+    import io
+    from PIL import ImageFont
+    return ImageFont.truetype(io.BytesIO(_ttf_bytes(name)), size)
+
+
 def _card(lang, title, price, city_label, day, poster_path, wordmark):
     """Build one 1200x630 PNG (bytes). Raises on any Pillow/font failure — the caller decides what a
     failure means (skip that film/lang, never abort the whole step)."""
-    from PIL import Image, ImageDraw, ImageFilter, ImageFont, features
-    from fontTools.ttLib import TTFont
+    from PIL import Image, ImageDraw, features
 
-    fonts_dir = ROOT / "src" / "fonts"
     raqm = features.check("raqm")
-
-    def font(name, size):
-        t = TTFont(str(fonts_dir / name)); t.flavor = None
-        import io
-        b = io.BytesIO(); t.save(b); b.seek(0)
-        return ImageFont.truetype(b, size)
+    font = _font
 
     def draw_line(d, x, y, text, ar_font, other_font, fill, right_anchor):
         """One line, right- or left-anchored at x: each run drawn with the font that actually has its
         glyphs (ar_font for Arabic letters, other_font — always Latin, which covers digits — for
-        everything else), positioned in logical/reading order so digits inside Arabic text still read
-        left-to-right at their place in the sentence, exactly as the un-split line used to (when every
-        glyph existed in one font)."""
-        runs = _runs(text) if lang == "ar" else [(False, text)]
+        everything else), laid out in visual order (`_visual_runs`: right to left for Arabic, so a digit
+        run keeps its place in the sentence and its own left-to-right digits)."""
+        runs = _visual_runs(text, lang)
         fonts = [ar_font if ar else other_font for ar, _ in runs]
         widths = [f.getlength(t) for f, (_, t) in zip(fonts, runs)]
         total = sum(widths)
@@ -155,15 +207,7 @@ def _card(lang, title, price, city_label, day, poster_path, wordmark):
 
     is_ar = lang == "ar"
     poster_side_right = is_ar  # reading-start side: right for ar, left for en
-    im = Image.new("RGB", (W, H), NIGHT)
-    glow = Image.new("RGB", (W, H), NIGHT)
-    g = ImageDraw.Draw(glow)
-    cx = (W - POSTER_W - 260) if poster_side_right else (POSTER_W + 260)
-    for r in range(380, 0, -6):
-        k = (1 - r / 380) ** 1.6
-        c = tuple(int(NIGHT[i] + (VELVET[i] - NIGHT[i]) * k * .7) for i in range(3))
-        g.ellipse((cx - r * 1.3, 250 - r, cx + r * 1.3, 250 + r), fill=c)
-    im = Image.blend(im, glow.filter(ImageFilter.GaussianBlur(50)), 1.0)
+    im = _backdrop(poster_side_right).copy()
     d = ImageDraw.Draw(im)
 
     if poster_path:
@@ -181,8 +225,7 @@ def _card(lang, title, price, city_label, day, poster_path, wordmark):
         except Exception:
             pass  # a poster that fails to open still leaves the typographic side intact
 
-    text_right = not poster_side_right  # the text block sits on the side opposite the poster
-    tx = W - 90 if text_right else (POSTER_W + 90 if poster_path else 90)
+    tx, text_right = _text_anchor(lang, bool(poster_path))
 
     # every subset font here covers ONE script only (fontTools cmap, review fix): the Arabic display/body
     # fonts have no digits, the Latin ones have no Arabic — so an Arabic line pairs its own font with a
@@ -201,7 +244,23 @@ def _card(lang, title, price, city_label, day, poster_path, wordmark):
     right = text_right
 
     draw_line(d, tx, 130, wordmark[:60], wm_ar, wm_other, GOLD, right)
-    draw_line(d, tx, 300, title[:60], tt_ar, tt_other, SCREEN, right)
+    # the title fits the text column (release fix: a long English title ran off the card's edge): step the
+    # size down to a floor, then cut on a word with "..." -- never past the poster or the card's edge
+    avail = (tx - 60) if right else (W - 60 - tx)
+    title = title[:60]
+    ar_name, other_name = ("markazi-700-arabic.woff2", "markazi-700-latin.woff2") if is_ar else (None, "readex-latin.woff2")
+    size = 74 if is_ar else 62
+
+    def width(t, sz):
+        return sum((font(ar_name, sz) if ar else font(other_name, sz)).getlength(r) for ar, r in _runs(t) if (ar_name or not ar))
+
+    while size > 40 and width(title, size) > avail:
+        size -= 4
+    while width(title, size) > avail and " " in title.strip():
+        title = title.rstrip(". ").rsplit(" ", 1)[0] + "..."
+    tt_ar = font(ar_name, size) if ar_name else None
+    tt_other = font(other_name, size)
+    draw_line(d, tx, 300, title, tt_ar, tt_other, SCREEN, right)
     y = 400
     if price is not None and city_label:
         line = f"من {price} درهم الليلة في {city_label}" if is_ar else f"From AED {price} tonight in {city_label}"
@@ -211,7 +270,7 @@ def _card(lang, title, price, city_label, day, poster_path, wordmark):
 
     import io as _io
     buf = _io.BytesIO()
-    im.save(buf, "PNG", optimize=True)
+    im.save(buf, "PNG", compress_level=6)   # optimize=True cost 4.5x the encode time for 3% fewer bytes (I1)
     return buf.getvalue()
 
 
@@ -236,10 +295,10 @@ def run(data: dict, ctx: dict) -> dict | None:
         st = poster.stat()
         og_field = f.get("og") if isinstance(f.get("og"), dict) else {}
         for lang in ("ar", "en"):
-            title = f.get("title_ar") or f.get("title") if lang == "ar" else f.get("title") or f.get("title_ar")
+            title = (f.get("title_ar") or f.get("title")) if lang == "ar" else (f.get("title") or f.get("title_ar"))
             title = str(title or fid)
             wordmark = "سينما" if lang == "ar" else "Cinema"
-            day = sk.human_date(today, lang)
+            day = "" if archived else sk.human_date(today, lang)   # an archived card never shows a date it would keep forever
             price_here = None if archived else price
             city_here = None if archived else (city_label[0] if lang == "ar" and city_label else
                                                  city_label[1] if city_label else None)

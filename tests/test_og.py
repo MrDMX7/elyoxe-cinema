@@ -168,6 +168,35 @@ def test_every_glyph_the_renderer_draws_exists_in_the_font_it_picks_for_it():
             assert not missing, f"{label}: {ar_name if is_ar else other_name} has no glyph for {missing!r} in {run_text!r}"
 
 
+def test_arabic_runs_are_laid_right_to_left():
+    """Release fix: v2 cards laid Arabic runs left to right, so «من 90 درهم الليلة في دبي» read
+    «دبي في الليلة درهم 90 من». Visual order (left to right) must be the logical order reversed, with a
+    digit run kept whole (its digits stay left to right)."""
+    vis = [t for _, t in og_step._visual_runs("من 90 درهم", "ar")]
+    assert vis == ["درهم", " 90 ", "من"]
+    date = [t for _, t in og_step._visual_runs("27 سبتمبر 2026", "ar")]
+    assert date == ["2026 ", "سبتمبر", " 27"]           # rightmost is the day; the spaces stay BETWEEN the words
+    assert og_step._visual_runs("From AED 35 tonight", "en") == [(False, "From AED 35 tonight")]
+
+
+def test_text_block_never_runs_across_the_poster():
+    x, right = og_step._text_anchor("ar", True)
+    assert right and x <= og_step.W - og_step.POSTER_W - 40      # right-aligned, ending left of the poster
+    x, right = og_step._text_anchor("en", True)
+    assert not right and x >= og_step.POSTER_W + 40              # left-aligned, starting right of the poster
+
+
+def test_a_card_renders_fast_once_fonts_are_warm(cache):
+    """Final review I1: the woff2 -> TTF conversion ran 6x per card (~2.5 s/card); it is memoised now."""
+    import time
+    poster = cache / "posters" / "test-film-684.webp"
+    og_step._card("ar", "فيلم", 35, "دبي", "27 سبتمبر 2026", poster, "سينما")     # warm the caches
+    t = time.perf_counter()
+    for lang in ("ar", "en"):
+        og_step._card(lang, "فيلم تجربة", 35, "دبي", "27 سبتمبر 2026", poster, "سينما")
+    assert (time.perf_counter() - t) / 2 < 0.5
+
+
 def test_missing_poster_is_skipped_not_crashed(tmp_path):
     data = _data()
     r = og_step.run(data, {"data_dir": str(tmp_path / "data"), "now": data["generated"]})
@@ -193,6 +222,26 @@ def test_film_page_og_image_points_at_the_rendered_file(tmp_path, cache):
     assert f'og:image" content="{site_kit.SITE}/og/{name_ar}"' in html
     assert os.path.isfile(os.path.join(out, "og", name_ar))
     assert '<p class="pshare">' in html and 'data-share-url="' in html
+    # I2: the rendered card is 1200x630, so the page says so
+    assert '<meta property="og:image:width" content="1200">' in html
+    assert '<meta property="og:image:height" content="630">' in html
+
+
+def test_og_dims_only_for_1200x630_images(tmp_path):
+    """I2: a film page with no rendered card falls back to its portrait poster -- no 1200x630 claim there;
+    a page on the site-wide default og-<lang>.png keeps it."""
+    data = _data()                                   # no steps/og run: no data["films"][..]["og"]
+    disc_path = os.path.join(ROOT, "fixtures", "sample_discounts.yaml")
+    out = str(tmp_path / "out")
+    site = build.Site(data, build.load_discounts(disc_path), build.Halls(os.path.join(ROOT, "halls.yaml")), out,
+                      modules=build.discover(only={"core", "og"}))
+    site.run()
+    film = open(os.path.join(out, "film", "test-film", "index.html"), encoding="utf-8").read()
+    assert 'og:image" content="https://cinema.elyoxe.com/posters/test-film-684.webp"' in film
+    assert "og:image:width" not in film and "og:image:height" not in film
+    home = open(os.path.join(out, "index.html"), encoding="utf-8").read()
+    assert f'og:image" content="{site_kit.SITE}/assets/og-ar.png"' in home
+    assert '<meta property="og:image:width" content="1200">' in home
 
 
 def _node(tmp_path, search, script):
