@@ -123,6 +123,19 @@ def test_malls_pick_the_first_cinema_that_has_a_city_not_just_the_first_listed()
     assert out["test-mall"]["path"] == "dubai/has-city-cinema"
 
 
+def test_closed_panel_css_guards_the_hidden_attribute(out):
+    """Critical bug (A4 review): `.srch{display:flex}` alone beats the UA stylesheet's bare `[hidden]`
+    rule on specificity-tie-by-source-order (this partial is appended after src/cinema.css), so a CLOSED
+    search panel rendered as a full-screen layer over every page and swallowed clicks -- a tap on the
+    home page's first poster never navigated. Every other `hidden`-toggled element in this codebase
+    (src/cinema.css: `.now[hidden]`, `.film[hidden]`, `.ticket[hidden]`, `.empty[hidden]`, …) carries its
+    own explicit `[hidden]{display:none}` override for exactly this reason; `.srch` must too."""
+    css = read(out, "assets", "cinema.css")
+    assert ".srch[hidden]{display:none}" in css
+    # the guard must win: same class, plus the attribute, out-specifies the bare .srch{display:flex} rule
+    assert css.index(".srch[hidden]") > css.index(".srch{")
+
+
 def test_every_entry_has_a_name_a_path_and_at_least_one_key(index):
     for e in index:
         assert e["t"] in ("f", "c", "m", "p")

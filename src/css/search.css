@@ -9,6 +9,7 @@
 html.srch-open{overflow:hidden}
 .srch{position:fixed;inset:0;background:rgba(15,11,12,.85);display:flex;align-items:flex-start;
   justify-content:center;padding:10vh 16px 16px;z-index:50}
+.srch[hidden]{display:none}
 .srch-box{background:var(--night);border:1px solid var(--line-2);inline-size:min(560px,100%);max-block-size:70vh;
   display:flex;flex-direction:column;overflow:hidden}
 .srch-in{display:flex;align-items:center;border-block-end:1px solid var(--line)}
