@@ -8,12 +8,19 @@ the Gulf" (the design spec's other half of this hub) has no signal anywhere in t
 reader captures a film's production country) -- left out rather than inferred; see
 task-2-report.md.
 
-/events/: the design spec asks for chain-labelled events (K-Fest, ladies' nights, immersive
-dining, classics) "from reader labels already in data". No reader currently emits any such
-label (checked: no film/show field named event/label/tag exists in normalize.py or any
-readers/*.py) -- so this page reads `film.get("event_labels")` (a list of strings), which is
-wired for whenever a future reader/step adds it, and renders an honest "none yet" state until
-then instead of inventing entries. Documented as a gap in task-2-report.md, not guessed here.
+/events/: fix round 1 (review, Critical) -- reads `data["events"]` (steps/events.py, one entry
+per recognised chain-labelled event with >= 1 match: K-Fest, Immersive Dining, ... -- see that
+step's own docstring and events.yaml for how the label survives normalize.py's title cleanup;
+confirmed against the live data/raw/*.json in this worktree, so the empty state below is no
+longer the expected case in production). When there are genuinely none, the page stays an
+honest "none yet" empty state -- indexable, same as `/arabic/`'s own empty state, and unlike the
+review's "at minimum" noindex fallback suggestion: `tests/test_preview.py::
+test_default_build_stays_indexable` (a pre-existing, project-wide contract this task doesn't
+own) asserts no page carries "noindex" outside its own two named exemptions, and
+`fixtures/sample_latest.json` (also not this task's to edit) has no `events` data, so a noindex
+empty state here would fail that test on every default build. Recovering the real label (done)
+already answers the review's actual concern -- an indexed placeholder for a state that isn't
+expected to persist is the honest trade-off, not a guess.
 
 «آخر فرصة» strip: steps/last_chance.py's data["last_chance"][city] -> the same site.film_tile()
 core.py's own posters row uses, so a last-chance film looks and behaves exactly like any other
@@ -63,28 +70,32 @@ class HubPages(Pages):
         return {"title": title, "desc": desc, "body": body, "kind": "arabic", "nav": "arabic", "graph": graph}
 
     # -------------------------------------------------------------- /events/
-    def event_films(self):
-        out = []
-        for fid in self.showing:
-            labels = self.films[fid].get("event_labels") or []
-            if labels:
-                out.append((fid, [str(x) for x in labels if x]))
-        return out
+    def events_list(self):
+        """data["events"] (steps/events.py), each with its recognised name in this language and
+        only the fids that are still real film pages (film_fid on a raw title always matches a
+        real data["films"] entry once that film is merged -- see steps/events.py's docstring --
+        but this stays defensive rather than assuming it)."""
+        return [ev for ev in (self.d.get("events") or []) if any(fid in self.films for fid in ev.get("fids") or [])]
 
     def events_page(self, lang):
         title = L(TITLE_EV, lang)
-        items = self.event_films()
+        events = self.events_list()
         desc = ("فعاليات السينمات: مهرجانات، ليالي خاصة، وعروض كلاسيكية." if lang == "ar"
                 else "Cinema chains' own events: festivals, special nights, and classics screenings.")
         head = f'<section class="head wrap">{self.crumbs(lang, (title, None))}<h1 class="pt">{esc(title)}</h1>' \
                f'<p class="lead">{esc(desc)}</p></section>'
-        if items:
-            rows = "".join(
-                f'<li class="ev-row"><a href="{P(lang, "film", fid)}">{esc(self.ftitle(fid, lang))}</a>'
-                f'<span class="ev-tags">{"".join(f"<span class=\"chip\">{esc(t)}</span>" for t in labels)}</span></li>'
-                for fid, labels in items)
-            body = head + f'<section class="wrap"><ul class="rows ev-list">{rows}</ul></section>'
+        if events:
+            sections = []
+            for ev in events:
+                name = (ev.get("name_ar") if lang == "ar" else ev.get("name_en")) or ev["label"]
+                rows = "".join(
+                    f'<div class="row"><a class="nm" href="{P(lang, "film", fid)}">{esc(self.ftitle(fid, lang))}</a></div>'
+                    for fid in ev.get("fids") or [] if fid in self.films)
+                sections.append(f'<section class="wrap ev-block"><h2>{esc(name)}</h2><div class="rows">{rows}</div></section>')
+            body = head + "".join(sections)
         else:
+            # honest and indexable, exactly like /arabic/'s own empty state above -- see the
+            # module docstring for why this stays indexed rather than noindex.
             empty = ("ما عندنا فعاليات مؤكدة من السينمات الحين — نضيفها أول ما تعلنها سينما." if lang == "ar"
                      else "No chain-confirmed events yet — added as soon as a chain announces one.")
             body = head + f'<section class="wrap"><p class="empty">{esc(empty)}</p></section>'

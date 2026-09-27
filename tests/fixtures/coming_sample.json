@@ -9947,5 +9947,22 @@
   "al-ain": [
    "heart-of-the-beast"
   ]
- }
+ },
+ "events": [
+  {
+   "label": "k-fest",
+   "name_ar": "مهرجان كي-فست",
+   "name_en": "K-Fest",
+   "kind": "festival",
+   "fids": [
+    "heart-of-the-beast"
+   ],
+   "chains": [
+    "roxy"
+   ],
+   "cities": [
+    "dubai"
+   ]
+  }
+ ]
 }

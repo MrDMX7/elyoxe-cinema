@@ -58,6 +58,59 @@ def test_merges_two_chains_by_fid_and_unions_fields(monkeypatch):
     assert out["chains"]["vox"]["ok"] is True and out["chains"]["star"]["ok"] is True
 
 
+def test_excludes_a_fid_already_showing_in_data_films(monkeypatch):
+    mod = _load()
+    results = {"roxy": {"ok": True, "error": None, "items": [
+        {"title": "Digger", "title_ar": None, "release_date": None, "poster": None,
+         "trailer": None, "genres": [], "chain": "roxy"},
+    ]}}
+    monkeypatch.setattr(mod.coming, "fetch_all", lambda: results)
+    fake_posters = type(sys)("posters")
+    fake_posters.mirror = lambda view: {}
+    monkeypatch.setitem(sys.modules, "posters", fake_posters)
+
+    # roxy's homepage "coming soon" tab still lists it (a day stale), but it's already in
+    # data["films"] and not archived -- must never show up in data["coming"].
+    data = {"films": {"digger": {"title": "Digger", "status": None}}}
+    out = mod.run(data, {"offline": False, "now": "2026-09-27T12:00:00+04:00"})
+    assert data["coming"] == {}
+    assert out["films"] == 0
+
+
+def test_excludes_a_fid_with_a_show_today_or_tomorrow_even_if_not_yet_in_films(monkeypatch):
+    mod = _load()
+    results = {"cineroyal": {"ok": True, "error": None, "items": [
+        {"title": "Revolver", "title_ar": None, "release_date": None, "poster": None,
+         "trailer": None, "genres": [], "chain": "cineroyal"},
+    ]}}
+    monkeypatch.setattr(mod.coming, "fetch_all", lambda: results)
+    fake_posters = type(sys)("posters")
+    fake_posters.mirror = lambda view: {}
+    monkeypatch.setitem(sys.modules, "posters", fake_posters)
+
+    data = {"shows": [{"film": "revolver", "cinema": "cineroyal-x", "date": "2026-09-28"}]}
+    out = mod.run(data, {"offline": False, "now": "2026-09-27T12:00:00+04:00"})
+    assert data["coming"] == {}
+    assert out["films"] == 0
+
+
+def test_an_archived_film_is_not_treated_as_showing(monkeypatch):
+    mod = _load()
+    results = {"star": {"ok": True, "error": None, "items": [
+        {"title": "Gatto", "title_ar": None, "release_date": "2027-03-25", "poster": None,
+         "trailer": None, "genres": [], "chain": "star"},
+    ]}}
+    monkeypatch.setattr(mod.coming, "fetch_all", lambda: results)
+    fake_posters = type(sys)("posters")
+    fake_posters.mirror = lambda view: {}
+    monkeypatch.setitem(sys.modules, "posters", fake_posters)
+
+    data = {"films": {"gatto": {"title": "Gatto", "status": "archived"}}}
+    out = mod.run(data, {"offline": False, "now": "2026-09-27T12:00:00+04:00"})
+    assert "gatto" in data["coming"]   # archived is not "showing" -- still a valid coming-soon fid
+    assert out["films"] == 1
+
+
 def test_a_broken_chain_never_drops_the_others(monkeypatch):
     mod = _load()
     results = {

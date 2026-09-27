@@ -64,10 +64,34 @@ def test_arabic_hub_english_variant(out):
     assert "Arabic & Gulf" in en
 
 
-def test_events_hub_is_honest_about_missing_labels_not_invented(out):
+def test_events_hub_lists_recognised_events_from_data(out):
     h = read(out, "events", "index.html")
+    assert "K-Fest" in h or "مهرجان كي-فست" in h
+    assert '<a class="nm" href="/film/heart-of-the-beast/">' in h
+    assert "noindex" not in h   # real event data exists -- indexed normally
+    sm = read(out, "sitemap.xml")
+    assert "<loc>https://cinema.elyoxe.com/events/</loc>" in sm
+
+
+def test_events_hub_empty_state_is_honest_and_still_indexable(tmp_path):
+    # test_preview.py::test_default_build_stays_indexable is a pre-existing, project-wide
+    # contract this task doesn't own: no page may carry "noindex" outside its own two named
+    # exemptions. An empty /events/ must honor that -- same as /arabic/'s own empty state.
+    data = json.loads(open(DATA, encoding="utf-8").read())
+    data["events"] = []
+    empty_data = tmp_path / "no_events.json"
+    empty_data.write_text(json.dumps(data), encoding="utf-8")
+    o = str(tmp_path / "out")
+    build.build(str(empty_data), DISC, o, modules=MODULES)
+
+    h = open(os.path.join(o, "events", "index.html"), encoding="utf-8").read()
     assert "ما عندنا فعاليات مؤكدة" in h
-    assert "ev-row" not in h   # no chain currently emits event labels -- nothing invented
+    assert "noindex" not in h
+    en = open(os.path.join(o, "en", "events", "index.html"), encoding="utf-8").read()
+    assert "No chain-confirmed events yet" in en and "noindex" not in en
+
+    sm = open(os.path.join(o, "sitemap.xml"), encoding="utf-8").read()
+    assert "<loc>https://cinema.elyoxe.com/events/</loc>" in sm
 
 
 def test_last_chance_strip_on_home_and_its_city_only(out):

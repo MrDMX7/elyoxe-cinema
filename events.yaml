@@ -1,0 +1,19 @@
+# Recognised chain-labelled event names, one entry per label actually seen in a chain's raw
+# title text (steps/events.py) — never invented. A candidate extracted from a title that is not
+# in this list (a language tag like "[Arabic]", a premium-format note like "(Infinity Vision)",
+# or plain junk) is silently ignored. Add a new entry here only after seeing it in
+# data/raw/<chain>.json's own film_title text (2026-09-27: grepped all seven chains).
+#
+# match: the exact bracketed/parenthesised suffix or leading "<match> - " prefix text, matched
+#        case-insensitively (steps/events.py lower-cases both sides).
+# kind:  a loose category (festival, ladies, dining, classics, other) -- informational only,
+#        not read anywhere else yet.
+labels:
+  - match: "K-Fest"
+    name_ar: "مهرجان كي-فست"
+    name_en: "K-Fest"
+    kind: festival
+  - match: "Immersive Dining"
+    name_ar: "عشاء غامر"
+    name_en: "Immersive Dining"
+    kind: dining

@@ -10,6 +10,18 @@ def test_iso_date_formats():
     assert coming._iso_date("not a date") is None
 
 
+def test_iso_date_converts_utc_to_asia_dubai_before_truncating():
+    # UTC 21:30 is Dubai (+4) 01:30 the *next* day -- the naive s[:10] truncation this review
+    # flagged would have kept the UTC date instead.
+    assert coming._iso_date("2026-10-08T21:30:00Z") == "2026-10-09"
+    assert coming._iso_date("2026-10-08T23:59:00+00:00") == "2026-10-09"
+    # a Dubai offset already on the string: no shift needed, still the same calendar day
+    assert coming._iso_date("2026-10-08T23:30:00+04:00") == "2026-10-08"
+    # a naive datetime (no offset) is readers' own convention for "already Dubai local" --
+    # never shifted
+    assert coming._iso_date("2026-09-24T00:00:00") == "2026-09-24"
+
+
 def test_parse_novo_filters_the_real_coming_soon_signal():
     # movie_is_coming_soon is true even for now-showing films (docs/probe/novo.md) -- only
     # coming_soon_order (non-null) means "not yet playing".

@@ -13,17 +13,45 @@ Two chains naming the same film slightly differently (a stray subtitle, punctuat
 two fids here -- that's the same limitation normalize.merge_duplicates solves for showtimes, and
 out of scope for this step; each is still a real, correctly-sourced coming-soon entry either way.
 
+A fid already showing (in data["films"] and not archived, or with a show dated today/tomorrow)
+is never listed here -- see _already_showing_fids(). roxy and cineroyal are scraped from a
+homepage tab/div rather than a dedicated coming-soon endpoint and can go a day stale.
+
 Offline (ctx["offline"] or COMING_OFFLINE fixtures unavailable): network calls are skipped
 entirely and data["coming"] is left untouched (never wiped) -- a step that can't refresh its
 data must not blank what a previous successful run wrote.
 """
 from __future__ import annotations
 
+from datetime import date, datetime, timedelta
+
 import coming
 import normalize
 
 
-def _merge(data: dict, results: dict) -> int:
+def _today_tomorrow(now_iso) -> tuple[str, str]:
+    try:
+        d = datetime.fromisoformat(now_iso).date() if now_iso else date.today()
+    except ValueError:
+        d = date.today()
+    return d.isoformat(), (d + timedelta(days=1)).isoformat()
+
+
+def _already_showing_fids(data: dict, today: str, tomorrow: str) -> set[str]:
+    """fix round 1 (review, Important): a fid must never appear in data["coming"] once it is
+    actually showing -- roxy and cineroyal are scraped from a homepage tab/div rather than a
+    dedicated coming-soon endpoint, and can go a day stale if a chain forgets to move a film out
+    of it. Two independent signals, either is enough: the fid is in data["films"] and not
+    archived (site_kit.py's own site.showing rule), or it has a show dated today/tomorrow at all
+    (belt-and-suspenders against a film not yet folded into data["films"] this run)."""
+    out = {fid for fid, f in (data.get("films") or {}).items() if f.get("status") != "archived"}
+    for s in data.get("shows") or []:
+        if s.get("date") in (today, tomorrow) and s.get("film"):
+            out.add(s["film"])
+    return out
+
+
+def _merge(data: dict, results: dict, today: str, tomorrow: str) -> int:
     out = dict(data.get("coming") or {})
     for chain, r in results.items():
         for item in r.get("items") or []:
@@ -45,6 +73,8 @@ def _merge(data: dict, results: dict) -> int:
             if chain not in cur["chains"]:
                 cur["chains"].append(chain)
             out[fid] = cur
+    showing = _already_showing_fids(data, today, tomorrow)
+    out = {fid: f for fid, f in out.items() if fid not in showing}
     data["coming"] = out
     return len(out)
 
@@ -53,8 +83,9 @@ def run(data: dict, ctx: dict) -> dict | None:
     if ctx.get("offline"):
         return {"chains": {}, "films": len(data.get("coming") or {}), "note": "offline: left as-is"}
 
+    today, tomorrow = _today_tomorrow(ctx.get("now"))
     results = coming.fetch_all()
-    n = _merge(data, results)
+    n = _merge(data, results, today, tomorrow)
 
     # best-effort poster mirror, reusing posters.py's own mirror() against a {"films": ...}-shaped
     # view of data["coming"] (same cache/bucket/prefix as the main film posters -- a coming-soon

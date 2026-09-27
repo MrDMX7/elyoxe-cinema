@@ -41,21 +41,35 @@ from __future__ import annotations
 import re
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from readers.common import Polite, arabic_title, youtube_id
 
 CHAINS = ("vox", "star", "novo", "reel", "roxy", "cineroyal", "cinemacity")
 GAP = 1.0  # seconds between requests, shared by every chain fetcher below
+# Dubai has stayed at a fixed UTC+4 with no DST (same fixed-offset choice normalize.py's own
+# _local_now makes) -- a chain that publishes a tz-aware release timestamp near midnight can
+# name the wrong calendar day if it's read as-is; convert first, exactly like normalize.py does.
+_DUBAI_TZ = timezone(timedelta(hours=4))
 
 
 def _iso_date(s) -> str | None:
-    """A date string in one of the formats these feeds use -> "YYYY-MM-DD", else None."""
+    """A date string in one of the formats these feeds use -> "YYYY-MM-DD" in Asia/Dubai, else
+    None. A tz-aware timestamp is converted to Dubai local before its date is taken (fix round 1:
+    a bare s[:10] truncation named the UTC day, not the Dubai one, for a late-UTC/early-Dubai
+    timestamp). A naive one (no offset) is readers' own convention for "already Dubai local" --
+    taken as-is, never shifted."""
     if not s or not isinstance(s, str):
         return None
     s = s.strip()
     if re.match(r"^\d{4}-\d{2}-\d{2}", s):
-        return s[:10]
+        try:
+            dt_ = datetime.fromisoformat(s.replace("Z", "+00:00"))
+        except ValueError:
+            return s[:10]
+        if dt_.tzinfo is not None:
+            dt_ = dt_.astimezone(_DUBAI_TZ)
+        return dt_.date().isoformat()
     s = re.sub(r"\s+", " ", s.replace(",", " ")).strip()
     for fmt in ("%d %B %Y", "%d %b %Y"):
         try:
