@@ -9,17 +9,24 @@
 # (data/price_cache.json), so the extra runs cost showtime/listing calls only.
 # By hand, in the foreground:  bash run.sh [--force]   (arguments go to refresh.py)
 #
-# Exit: 0 = deployed (possibly with degraded chains). 2 = DEGRADED — a failure (tests/pull/refresh/
-#   deploy/memory-wait) that was already alerted and is STILL going on: nothing new deployed, logged
-#   as DEGRADED, quiet except at most one reminder per Asia/Dubai calendar day (ruling, docs/CUTOVER.md
-#   §6) -- run-job.sh's state/<job>.state must record "degraded" (not "ok") for this exit code, never
-#   silently exit 0 for an ongoing failure. Any other non-zero = a FRESH failure just alerted, nothing
-#   deployed (6 = the test suite failed on the pulled code, 7 = git pull failed, 3 = deploy.sh failed;
-#   the live site is left as it was).
+# Exit: 0 = deployed (possibly with degraded chains). $DEGRADED_RC (78) = DEGRADED — a failure
+#   (tests/pull/refresh/deploy/memory-wait) that was already alerted and is STILL going on: nothing
+#   new deployed, logged as DEGRADED, quiet except at most one reminder per Asia/Dubai calendar day
+#   (ruling, docs/RULINGS.md:37) -- run-job.sh's state/<job>.state must record "degraded" (not
+#   "ok") for this exit code, never silently exit 0 for an ongoing failure. NOT plain 2: run-job.sh
+#   already used 2 for its own "unknown job name" fallback before this convention existed, so this
+#   script and run-job.sh's finish() must agree on the SAME dedicated code (78) or a mistyped job
+#   name would get silently read as "degraded" instead of "failed" (review finding, Task A1 round
+#   1). Any other non-zero = a FRESH failure just alerted, nothing deployed (6 = the test suite
+#   failed on the pulled code, 7 = git pull failed, 3 = deploy.sh failed; the live site is left as
+#   it was).
 # Notifications (final review I3): on a CHANGE of state only -- alerts.py keeps data/alert_state.json and
 # says whether a condition just started (notify), just cleared (notify once) or is still the same (quiet).
 # run-job.sh keeps this job quiet on success (QUIET_OK).
 set -uo pipefail
+# DEGRADED_RC must match run-job.sh's own constant of the same name -- see that file's comment
+# for why 78 and not 2 (docs/RULINGS.md:37).
+DEGRADED_RC=78
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$HERE"
 LOG_DIR=/data/data/com.termux/files/usr/var/log/elyoxe
@@ -47,8 +54,12 @@ except Exception:
     print("")
 PYEOF
 }
+# write_marker_atomic <path> <content> — never leaves a half-written marker behind (tmp + mv,
+# same convention as statefile.py's write_json_atomic; these markers are polled across runs, so a
+# killed run must not leave one truncated).
+write_marker_atomic() { printf '%s\n' "$2" > "$1.tmp.$$" && mv -f "$1.tmp.$$" "$1"; }
 # remind_once <key> <message> — at most one notification per Asia/Dubai calendar day while a
-# condition stays bad (ruling, docs/CUTOVER.md §6). data/.reminded-<key> holds the last date
+# condition stays bad (ruling, docs/RULINGS.md:37). data/.reminded-<key> holds the last date
 # reminded; fail() also stamps it the day the FRESH alert fires, so the reminder cycle only starts
 # the following day (the owner already knows about today's failure from that first alert).
 remind_once() {
@@ -56,27 +67,28 @@ remind_once() {
   today=$(TZ=Asia/Dubai date +%F)
   marker="$HERE/data/.reminded-$key"
   [ "$(cat "$marker" 2>/dev/null)" = "$today" ] && return 0
-  echo "$today" > "$marker"
+  write_marker_atomic "$marker" "$today"
   note "سينما ⚠" "$msg" "elyoxe-cinema-$key"
 }
 # ok_now <key> <message on clear> — a condition is absent this run; notify once if it had been
 # alerted, and drop its reminder marker so a future recurrence of the same key starts a fresh cycle
 ok_now() { local m; m=$(alert cond "$1" --ok --clear "$2"); rm -f "$HERE/data/.reminded-$1"; [ -z "$m" ] || note "سينما ✓" "$m" "elyoxe-cinema-$1"; }
 fail() {  # fail <message> <rc> <key> -- <rc> is the FRESH-failure exit code (6 tests, 7 pull, 3
-  # deploy, refresh.py's own rc). A failure that was already alerted and is STILL going on exits 2
-  # (degraded) instead of repeating <rc> or going quiet with 0 -- so run-job.sh's state/<job>.state
-  # records "degraded" with a since-time, not "ok" -- with at most one reminder per calendar day
-  # while it lasts (remind_once above).
+  # deploy, refresh.py's own rc). A failure that was already alerted and is STILL going on exits
+  # $DEGRADED_RC (78, NOT 2 -- see the top-of-file comment and docs/RULINGS.md:37) instead of
+  # repeating <rc> or going quiet with 0 -- so run-job.sh's state/<job>.state records "degraded"
+  # with a since-time, not "ok" -- with at most one reminder per calendar day while it lasts
+  # (remind_once above).
   echo "FAILED: $1"
   if [ -z "$(alert cond "$3" --bad "$1" --clear "")" ]; then
     local since; since=$(since_of "$3")
     echo "DEGRADED: $3 since ${since:-?} — quiet unless today's reminder is still due"
     remind_once "$3" "سينما: ما زال $1 من ${since:-?}"
-    exit 2
+    exit "$DEGRADED_RC"
   fi
   # run-job.sh notifies a non-zero exit; notify here only when run on its own
   [ -z "${ELYOXE_JOB:-}" ] && note "سينما ✗" "$1" "elyoxe-cinema"
-  echo "$(TZ=Asia/Dubai date +%F)" > "$HERE/data/.reminded-$3"   # today already covered by this fresh alert
+  write_marker_atomic "$HERE/data/.reminded-$3" "$(TZ=Asia/Dubai date +%F)"   # today already covered by this fresh alert
   exit "${2:-1}"
 }
 

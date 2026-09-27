@@ -149,14 +149,14 @@ def test_a_fresh_test_failure_exits_6_and_alerts_once(sandbox):
 
 def test_an_ongoing_failure_is_degraded_not_ok_or_a_repeat_failure(sandbox):
     """The exact bug the ruling closes: a second run of the same still-broken condition used to
-    exit 0 (read as "ok" by run-job.sh). It must now exit 2 (DEGRADED) -- neither 0 nor the
+    exit 0 (read as "ok" by run-job.sh). It must now exit 78 (DEGRADED) -- neither 0 nor the
     original 6 -- and log the condition with its since-time."""
     set_tests(sandbox[0], passing=False)
     run_cinema(sandbox)                       # run 1: fresh alert
     since_after_first = alert_state(sandbox)["tests"]["since"]
 
     rc, out, log = run_cinema(sandbox)        # run 2: still broken, already alerted
-    assert rc == 2, out
+    assert rc == 78, out
     assert "DEGRADED: tests" in log
     assert since_after_first in log           # the since-time is recorded, not just "still broken"
     # the condition is unchanged (same sig/since) -- alerts.py's own state never repeats itself
@@ -180,7 +180,7 @@ def test_a_reminder_fires_once_when_a_new_day_starts_while_still_broken(sandbox)
     (tmp_path / "data" / ".reminded-tests").write_text("2000-01-01", encoding="utf-8")  # simulate a new day
 
     rc, out, log = run_cinema(sandbox)
-    assert rc == 2
+    assert rc == 78
     assert "notify (unavailable): سينما ⚠ — سينما: ما زال" in log
     assert "من " in log                                   # "<condition> من <since>" -- the template shape
     assert reminded_marker(sandbox, "tests") != "2000-01-01"  # the marker actually advanced
@@ -188,7 +188,7 @@ def test_a_reminder_fires_once_when_a_new_day_starts_while_still_broken(sandbox)
     # and it does NOT fire again later the same (simulated-new) day
     log_before = log
     rc2, out2, log2 = run_cinema(sandbox)
-    assert rc2 == 2
+    assert rc2 == 78
     new_lines = log2[len(log_before):] if log2.startswith(log_before) else log2
     assert "ما زال" not in new_lines or reminded_marker(sandbox, "tests") == reminded_marker(sandbox, "tests")
     # the authoritative check: the marker from the reminder run did not change on this quiet run
@@ -232,5 +232,5 @@ def test_a_second_failed_pull_is_also_degraded_not_a_repeat_alert(sandbox):
     assert "FAILED: git pull" in log
 
     rc2, out2, log2 = run_cinema(sandbox)
-    assert rc2 == 2, out2
+    assert rc2 == 78, out2
     assert "DEGRADED: pull" in log2
