@@ -333,6 +333,47 @@ def site_out(tmp_path_factory):
     return out, s0, s1, key
 
 
+def test_build_keeps_a_sample_taken_after_the_refresh_started(tmp_path):
+    """data["generated"] is the refresh's start; its occupancy step samples ~30 min later and records its own clock
+    (data["seats_now"]). The build judges each sample against that clock, so this run's samples are published."""
+    d = json.load(open(DATA, encoding="utf-8"))
+    gen = seats._parse_at(d["generated"])
+    s0 = next(s for s in d["shows"] if (s["date"], s["time"]) > (gen.date().isoformat(), (gen + timedelta(hours=1)).strftime("%H:%M")))
+    shape, st = seats.compact(seats.normalise("reel", fx("reel")))
+    key = seats.shape_key(shape)
+    s0["seats"] = {"free": 36, "total": 39, "at": (gen + timedelta(minutes=30)).isoformat(), "m": key, "st": st,
+                   "best": {"row": "C", "x": 4}}
+    d["seatmaps"] = {"maps": {key: shape}}
+    d["seats_now"] = (gen + timedelta(minutes=33)).isoformat()
+    p = tmp_path / "latest.json"
+    p.write_text(json.dumps(d), encoding="utf-8")
+    out = str(tmp_path / "o")
+    build.build(str(p), DISC, out, noindex=False)
+    occ = json.load(open(os.path.join(out, "data", "occupancy.json"), encoding="utf-8"))["o"]
+    assert any(v[0][1] == 36 for v in occ.values())
+    del d["seats_now"]                                   # without the step's clock: a sample "from the future" is dropped
+    p.write_text(json.dumps(d), encoding="utf-8")
+    build.build(str(p), DISC, str(tmp_path / "o2"), noindex=False)
+    occ = json.load(open(os.path.join(str(tmp_path / "o2"), "data", "occupancy.json"), encoding="utf-8"))["o"]
+    assert not any(v[0][1] == 36 for v in occ.values())
+
+
+def test_step_judges_freshness_by_when_it_runs_not_when_the_refresh_started(tmp_path, monkeypatch):
+    """ctx["now"] is the refresh's start; the chains take ~30 min before the steps run (measured 2026-09-27: 28 min,
+    and every sample of that run was dropped as "from the future"). A live step samples and attaches on its own clock."""
+    mod = step()
+    raw = fx("reel")
+    monkeypatch.setattr(seats, "_sampler", lambda chain, budget: ((lambda s: (budget.spend(1), raw)[1]), 1))
+    wall = datetime.now(DUBAI).replace(second=0, microsecond=0)
+    at = wall + timedelta(hours=1)
+    d = {"cinemas": {"re": {"chain": "reel"}}, "shows": [
+        {"cinema": "re", "film": "f", "date": at.date().isoformat(), "time": at.strftime("%H:%M"), "hall_label": "Premium 19",
+         "_sid": "0001|718096|PREMIUM|Premium 19"}]}
+    got = mod.run(d, {"offline": False, "now": (wall - timedelta(minutes=30)).isoformat(), "data_dir": str(tmp_path)})
+    assert got["attached"] == 1 and d["shows"][0]["seats"]["free"] == 36
+    assert seats._parse_at(d["seats_now"]) >= wall                 # the clock the build judges freshness by
+
+
 def test_site_writes_occupancy_and_per_cinema_maps(site_out):
     out, s0, s1, key = site_out
     occ = json.load(open(os.path.join(out, "data", "occupancy.json"), encoding="utf-8"))["o"]

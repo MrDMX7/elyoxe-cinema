@@ -67,12 +67,16 @@ def run(data, ctx):
     occ_shows, occ_maps = dict(occ.get("shows") or {}), dict(occ.get("maps") or {})
     report = {}
     if not ctx.get("offline"):
+        # ctx["now"] is the refresh's start, and the chains run first (~30 min on a day's first run): a live
+        # step picks, stamps and judges freshness on its own clock, or every sample looks "from the future"
+        now = max(now, datetime.now(seats.DUBAI))
         todo = []
         for s, h in zip(shows, handles):
             chain = (cinemas.get(s.get("cinema")) or {}).get("chain")
             if chain in seats.SUPPORTED:
                 todo.append({**s, "_chain": chain, "_sid": h.get("_sid")})
         got, report = seats.sample(todo, now, recent=occ_shows)
+        now = max(now, datetime.now(seats.DUBAI))       # the sampler ran up to ~4 minutes
         for k, v in got.items():
             key = seats.shape_key(v["shape"])
             occ_maps[key] = v["shape"]
@@ -108,6 +112,7 @@ def run(data, ctx):
             s["seatmap"] = m
             used[m] = maps[m]
             drawn += 1
+    data["seats_now"] = now.isoformat()   # the build judges each sample's freshness by this clock (pages/seats.py)
     if used:
         data["seatmaps"] = {"maps": used}
     else:

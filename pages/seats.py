@@ -31,12 +31,14 @@ def _epoch(at):
 def build_data(site):
     """(occupancy.json, {cinema: seats/<cinema>.json}) from the site's shows and data["seatmaps"]."""
     maps = (site.d.get("seatmaps") or {}).get("maps") or {}
+    # the occupancy step's own clock: it runs after the chains, ~30 min past data["generated"] on a first run
+    ref = max(site.now, seatsmod._parse_at(site.d.get("seats_now")) or site.now)
     occ, per, best_of = {}, {}, {}
     for s in site.shows:
         cid, hk = s["cinema"], site.hkey(s)
         key = f"{s['film']}|{s['date']}|{s['time']}"
         o = s.get("seats") if isinstance(s.get("seats"), dict) else None
-        if o and not (seatsmod.fresh(o, site.now) and o.get("m") in maps):
+        if o and not (seatsmod.fresh(o, ref) and o.get("m") in maps):
             o = None
         mkey = o["m"] if o else (s.get("seatmap") if s.get("seatmap") in maps else None)
         if not mkey:
