@@ -1,7 +1,8 @@
 /* Feel (roadmap 203, 204): what makes the next page arrive at once.
-   Prerender (the speculation rules in src/page.html) opens a film page before the tap lands. A prerendered
-   page is not seen yet, so it must not act yet: every feature (feature(fn), docs/PLUGINS.md) registered after
-   this file waits for activation (a feature asking /geo, say), and whenActive(fn) is there for anything else.
+   Prerender (the speculation rules in src/page.html) opens a film, city or cinema page before the tap lands.
+   A prerendered page is not seen yet, so it must not act yet: src/page.html's «boot» loader does not even run
+   this bundle until the page is shown. whenActive(fn) and the feature() wrapper below are a second line
+   (a feature registered after this file also waits for activation), for a bundle ever loaded another way.
    View transitions (src/css/transitions.css): on the page being left, the tapped poster tile is named «poster»
    so it grows into the film page's hero. */
 function whenActive(fn) {

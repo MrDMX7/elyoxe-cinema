@@ -74,7 +74,7 @@ def test_example_css_partial_and_lazy_chunk(hello):
     if NODE:
         r = subprocess.run([NODE, "--check", os.path.join(hello, *url.strip("/").split("/"))], capture_output=True, text=True)
         assert r.returncode == 0, r.stderr
-    js = re.search(r'<script src="/assets/(cinema\.[0-9a-f]{10}\.js)" defer></script>', read(hello, "index.html")).group(1)
+    js = re.search(r'<link rel="preload" href="/assets/(cinema\.[0-9a-f]{10}\.js)" as="script">', read(hello, "index.html")).group(1)
     assert len(gzip.compress(open(os.path.join(hello, "assets", js), "rb").read())) < 45 * 1024
 
 

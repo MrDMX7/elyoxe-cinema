@@ -18,7 +18,8 @@ import build  # noqa: E402
 DATA = os.path.join(ROOT, "fixtures", "sample_latest.json")
 DISC = os.path.join(ROOT, "fixtures", "sample_discounts.yaml")
 NODE = shutil.which("node")
-PRERENDER = ["/film/*", "/en/film/*"]
+CITIES = ["abu-dhabi", "dubai", "sharjah", "ajman", "umm-al-quwain", "ras-al-khaimah", "fujairah", "al-ain"]
+PRERENDER = ["/film/*", "/en/film/*"] + [f"/{c}/*" for c in CITIES] + [f"/en/{c}/*" for c in CITIES]
 
 
 def read(out, *p):
@@ -63,7 +64,7 @@ def test_every_page_carries_the_rules_in_its_head(site):
     assert n > 20
 
 
-def test_prerender_only_film_pages_on_moderate_prefetch_the_rest(site):
+def test_prerender_film_city_and_cinema_pages_on_moderate_prefetch_the_rest(site):
     r = rules(read(site, "index.html"))
     (pre,), (pf,) = r["prerender"], r["prefetch"]
     assert pre["eagerness"] == pf["eagerness"] == "moderate"          # hover (200 ms) or pointerdown, never on load
@@ -73,8 +74,8 @@ def test_prerender_only_film_pages_on_moderate_prefetch_the_rest(site):
     assert "[href*='?']" in no and "[target]" in no and "[download]" in no and "[data-nospec]" in no
     assert pf["where"]["and"][0] == {"href_matches": "/*"}
     skip = pf["where"]["and"][1]["not"]["href_matches"]
-    # city and cinema pages are prefetched only: their script saves the page's city on load (core.js), so a
-    # prerender on hover would change the visitor's city without a tap; files and data are never fetched ahead
+    # film, city and cinema pages prerender (no script runs until they are shown: the «boot» loader); the rest
+    # is prefetched; files and data are never fetched ahead
     for p in PRERENDER + ["/data/*", "/assets/*", "/posters/*", "/*.*"]:
         assert p in skip, p
 
@@ -85,6 +86,56 @@ def test_data_saver_and_back_type_script_follows_the_rules(site):
     guard = h[i:h.index("</script>", h.index("</script>", i) + 1)]
     assert "saveData" in guard and "prefers-reduced-data: reduce" in guard and 'getElementById("spec")' in guard
     assert "pagereveal" in guard and '"traverse"' in guard and 'types.add("back")' in guard
+
+
+def test_every_page_loads_the_bundle_through_the_boot_loader(site):
+    n = 0
+    for p in pages(site):
+        h = open(p, encoding="utf-8").read()
+        if 'rel="canonical"' not in h: continue
+        js = re.search(r'<link rel="preload" href="(/assets/cinema\.[0-9a-f]{10}\.js)" as="script">', h).group(1)
+        assert f'<script src="{js}"' not in h and "defer></script>" not in h       # never a plain script tag
+        boot = re.search(r'<script id="boot">(.*?)</script>', h).group(1)
+        assert boot.endswith(f'("{js}",document)') and "d.prerendering" in boot and '"prerenderingchange"' in boot
+        assert h.index('<script id="boot">') > h.index("<script>window.CT =")  # the strings are there first
+        n += 1
+    assert n > 20
+
+
+@pytest.mark.skipif(not NODE, reason="node not installed")
+def test_boot_inserts_nothing_while_prerendering(tmp_path, site):
+    boot = re.search(r'<script id="boot">(.*?)</script>', read(site, "film", next(iter(os.listdir(os.path.join(site, "film")))), "index.html")).group(1)
+    harness = """
+var L = {}, added = [], registered = 0;
+var navigator = { serviceWorker: { register: function () { registered++; return { catch: function () {} }; } } };
+function mk(prerendering, ready) {
+  L = {}; added = [];
+  return { prerendering: prerendering, readyState: ready,
+    addEventListener: function (t, f, o) { (L[t] = L[t] || []).push(f); },
+    createElement: function (tag) { return { tag: tag }; },
+    body: { appendChild: function (el) { added.push(el); } } };
+}
+var out = {};
+var document = mk(true, "complete");
+(function (document) { BOOT })(document);
+out.during = added.length; out.listeners = Object.keys(L);
+document.prerendering = false; (L.prerenderingchange || []).forEach(function (f) { f(); });
+out.after = added.map(function (e) { return e.tag + " " + e.src; });
+added[0].onload && added[0].onload(); out.sw = registered;
+document = mk(false, "loading");
+(function (document) { BOOT })(document);
+out.normal = added.length; out.normalOnload = !!added[0].onload;
+process.stdout.write(JSON.stringify(out));
+""".replace("BOOT", boot)
+    (tmp_path / "b.js").write_text(harness, encoding="utf-8")
+    r = subprocess.run([NODE, str(tmp_path / "b.js")], capture_output=True, text=True, encoding="utf-8", timeout=60)
+    assert r.returncode == 0, r.stderr
+    got = json.loads(r.stdout)
+    js = re.search(r'\("([^"]+)",document\)$', boot).group(1)
+    assert got["during"] == 0 and got["listeners"] == ["prerenderingchange"]    # nothing runs, nothing is fetched to run
+    assert got["after"] == ["script " + js]
+    assert got["sw"] == 1              # shown after its load event: the worker registration pwa.js waits on is done here
+    assert got["normal"] == 1 and got["normalOnload"] is False                  # an ordinary visit: straight in, as before
 
 
 def test_view_transitions_only_without_reduced_motion_and_only_in_the_full_build(site, core_only):
