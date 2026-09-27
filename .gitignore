@@ -18,6 +18,7 @@ venv/
 .pytest_cache/
 data/posters/
 data/og/
+data/backdrops_work/
 data/*.bak
 data/*.corrupt-*
 data/.req-hash

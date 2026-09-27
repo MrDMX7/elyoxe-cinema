@@ -101,6 +101,7 @@ YT = re.compile(r"^[A-Za-z0-9_-]{11}$")
 FID = re.compile(r"^[a-z0-9][a-z0-9_-]{0,120}$")   # a slug: safe as a path segment and in an attribute
 SAFE_URL = re.compile(r"^https?://", re.I)
 OUR_POSTER = re.compile(r"^/posters/[A-Za-z0-9._-]+\.webp$")   # posters.py mirrors to /posters/<fid>-<hash>-342.webp
+OUR_BACKDROP = re.compile(r"^/posters/bd-[A-Za-z0-9._-]+\.webp$")   # steps/backdrops.py: /posters/bd-<fid>-<hash>-1280.webp
 SCHED_BUDGET = 100_000   # bytes of schedule markup per page; with the chrome a page stays under 150 KB
 # every page is rendered as richly as fits PAGE_TARGET (the spec's budget is 150 KB; the target leaves
 # headroom for busier days): each schedule tries its modes in order and the last, «compact», is bounded —
@@ -515,6 +516,12 @@ class Kit:
                 if f.get(k) and not SAFE_URL.match(str(f[k])): f[k] = None
             if f.get("poster_color") and not HEX.match(str(f["poster_color"])): f["poster_color"] = None
             if f.get("trailer") and not YT.match(str(f["trailer"])): f["trailer"] = None
+            bd = f.get("backdrop")
+            if isinstance(bd, dict):
+                if not (OUR_BACKDROP.match(str(bd.get("w1280"))) and OUR_BACKDROP.match(str(bd.get("w640")))):
+                    f["backdrop"] = None   # steps/backdrops.py's own paths only -- never a hotlinked/tampered value
+            elif bd is not None:
+                f["backdrop"] = None
         self.tpl = open(os.path.join(SRC, "page.html"), encoding="utf-8").read()
         self.og_override = {}   # (lang, parts) -> full URL; a feature (pages/og.py) fills this before pages render
         self.urls, self.hashes, self.lastmod_path = [], {}, None
@@ -758,12 +765,25 @@ class Kit:
         return (f'<span class="{cls}" style="--pc:{pc}"><span class="pst-t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span></span>')
 
     def backdrop(self, fid, hero=False):
-        """The film's poster enlarged and blurred over its colour: there is no backdrop image in the data.
-        Blurred 40 px, its resolution does not show: on a film page it asks for exactly what the hero poster
-        resolves to (same srcset and sizes, so one download serves both — and not lazy: it is the page's largest
-        paint); on the home hero (desktop only, hidden on a phone, so lazy) the 342 px file."""
+        """A real frame from the film's trailer (steps/backdrops.py) when one was scored clean, at 640/1280
+        widths, `sizes="100vw"` (it is drawn full-bleed, never at a fixed column like the poster): eager +
+        `fetchpriority="high"` for the hero (the page's largest paint), lazy otherwise. Falls back to the
+        old poster-blurred-over-its-colour treatment when the film has no backdrop entry yet (steps/backdrops.py
+        hasn't reached it, its trailer failed every frame, or Kit's own sanitising in __init__ dropped a
+        malformed entry) -- and to night + the velvet glow + the typographic tile when there is no poster
+        either. Blurred 40 px, its resolution does not show: on a film page the poster-fallback path asks
+        for exactly what the hero poster resolves to (same srcset and sizes, so one download serves both);
+        on the home hero (desktop only, hidden on a phone, so lazy) the 342 px file."""
         f = self.films[fid]
         pc = f.get("poster_color") or hue(fid)
+        bd = f.get("backdrop")
+        if isinstance(bd, dict) and bd.get("w1280") and bd.get("w640"):
+            w1280, w640 = esc(rel(bd["w1280"])), esc(rel(bd["w640"]))
+            w, h = bd.get("w") or 1280, bd.get("h") or 720
+            attrs = (' fetchpriority="high"' if hero else "") + ("" if hero else ' loading="lazy"')
+            img = (f'<img src="{w1280}" srcset="{w640} 640w, {w1280} 1280w" sizes="100vw" width="{w}" height="{h}"'
+                   f' alt="" decoding="async"{attrs} onerror="this.remove()">')
+            return f'<div class="bd" style="--pc:{pc}" aria-hidden="true">{img}</div>'
         if f.get("poster"):
             ss = (f' srcset="{esc(rel(f["poster"]))} 342w, {esc(rel(f["poster_2x"]))} 684w" sizes="{POSTER_SIZES["pst hero"]}"'
                   if hero and f.get("poster_2x") else "")
