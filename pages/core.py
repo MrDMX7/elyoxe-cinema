@@ -14,6 +14,7 @@ from site_kit import Emit, Pages, Plugin
 JS = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "ticket", "trailer", "pwa", "main")
 CSS = ()            # src/cinema.css is the base sheet; features append src/css/<name>.css
 LAZY_JS = ()
+TOMORROW_AT_CINEMA = ("مواعيد بكرة تنزل هني الصبح.", "Tomorrow’s times appear here in the morning.")
 DIRS = tuple(c for c, _, _ in CITIES) + ("film", "cards", "halls", "data", "assets", "en", "cinema")
 
 
@@ -215,13 +216,18 @@ class CorePages(Pages):
                     rows += self.card_row(card, chain, r, st, lang, P(lang, "cards", card["id"]))
                 if rows:
                     rest += f'<section><h2>{"البطاقات في " + self.h.chain_name(chain, lang) if lang == "ar" else "Cards at " + self.h.chain_name(chain, lang)}</h2><div class="rows">{rows}</div></section>'
-                rest += '</div>' + (self.ticket(nxt, lang) if nxt else self.ticket_shell()) + '</div>'
+                rest += '</div>'
+                tk = lambda n: (self.ticket(n, lang) if n else self.ticket_shell()) + '</div>'
                 # films with their times, today then tomorrow — as richly as fits what the rest of the page leaves
                 th0 = self.theater_ld(cid, lang)
                 th0["event"] = [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:40]
-                left = PAGE_TARGET - CHROME - len(body.encode()) - len(rest.encode()) - self.ld_size([th0]) - 600
+                left = PAGE_TARGET - CHROME - len(body.encode()) - len((rest + tk(nxt)).encode()) - self.ld_size([th0]) - 600
                 sched, _ = self.fit(lambda m: self.cinema_schedule(shows, lang, m, self.sid(nxt) if nxt else None), ("full", "today", "plain", "compact"), left)
-                body += sched + rest
+                on = nxt
+                if not sched and any(s["date"] == self.today for s in shows):
+                    # every time today has started and tomorrow's aren't listed yet: say when they come, no ticket
+                    sched, on = f'<p class="hint">{L(TOMORROW_AT_CINEMA, lang)}</p>', None
+                body += sched + rest + tk(on)
                 title = (f"{name} — أسعار التذاكر ومواعيد اليوم وخصم البطاقات" if lang == "ar" else f"{name} — ticket prices, today’s showtimes and card discounts")
                 desc = (f"مواعيد أفلام {name} اليوم، سعر التذكرة لكل قاعة وفئة، شو الفرق بين القاعات، والسعر بعد خصم فزعة وإسعاد والبنوك." if lang == "ar"
                         else f"Today’s showtimes at {name}, ticket prices per hall and seat class, what each hall offers, and the price after Fazaa, Esaad and bank cards.")
@@ -255,7 +261,7 @@ class CorePages(Pages):
                 out.append('</div></div>')
             out.append('</div></section>')
         if mode not in ("full", "compact"):
-            out.append(f'<p class="hint">{"مواعيد بكرة تنزل هني الصبح." if lang == "ar" else "Tomorrow’s times appear here in the morning."}</p>')
+            out.append(f'<p class="hint">{L(TOMORROW_AT_CINEMA, lang)}</p>')
         return "".join(out)
 
     # -------------------------------------------------- film (film → cinemas → times → ticket)
@@ -321,8 +327,9 @@ class CorePages(Pages):
                 info += (f'<div class="bar js-only"><div class="chips days" role="group" aria-label="{"اليوم" if lang == "ar" else "Day"}">{tabs}</div></div>'
                          f'{self.controls(lang, sort=False, prayer=True)}<p class="empty" data-empty hidden></p>')
                 nxt = self.first_city_show(shows, cities)
+                none = f'<p class="lead">{"ما لقينا عروض لهذا الفيلم في اليومين الجايين." if lang == "ar" else "No shows for this film in the next two days."}</p>'
                 if not cities:
-                    sched = f'<p class="lead">{"ما لقينا عروض لهذا الفيلم في اليومين الجايين." if lang == "ar" else "No shows for this film in the next two days."}</p>'
+                    sched = none
                 else:
                     # the schedule is most of the page's weight: render it as richly as fits what the rest leaves
                     graph0 = [self.movie_ld(fid, lang)] + [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:30]
@@ -332,6 +339,9 @@ class CorePages(Pages):
                     # day's times when the visitor's «اليوم» has moved on)
                     sched, mode = self.fit(lambda m: self.film_schedule(shows, cities, lang, m, self.sid(nxt) if nxt else None), ("full", "compact"), left)
                     if mode not in ("full", "compact") and nxt and nxt["date"] != self.today: nxt = self.first_city_show([s for s in shows if s["date"] == self.today], cities) or nxt
+                    # every hall's times have started and the next day isn't listed (a film's last night, after its
+                    # last start): the page says so, as for a film with no shows, and holds no ticket for a started show
+                    if 'class="fcity"' not in sched: sched, nxt = none, None
                 # a day tab only for a day the schedule actually has
                 for d in days:
                     if f'data-d="{d}"' not in sched:

@@ -159,7 +159,7 @@ def test_compare_data_and_chunk(none):
     assert f'data-cmp-src="{url}"' in read(none, "boxoffice", "index.html")
     archived = read(none, "film", "weapons", "index.html")
     assert "data-cmp" not in archived and "compare" not in json.dumps(ct(archived).get("chunks") or {})
-    assert "data-cmp-src" in read(none, "assets", re.search(r'\("/assets/(cinema\.[0-9a-f]{10}\.js)",document\)', film).group(1))
+    assert "data-cmp-src" in read(none, "assets", re.search(r'"/assets/(cinema\.[0-9a-f]{10}\.js)"', film).group(1))
 
 
 def test_similar_on_showing_film_pages_only(none):

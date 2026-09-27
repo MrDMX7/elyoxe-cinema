@@ -4,7 +4,9 @@ of #30). One test per acceptance line; tools/check_w0_p1.cjs checks the same thi
 The build is the sample fixture with three changes that make each bug reachable: the Fujairah cinema moves to
 Umm Al Quwain (a city with one cinema), VOX Al Jimi gets a GOLD show of «قلب الوحش» that started before the
 data was built (a hall with nothing left to show) and a GOLD pair for «The Paradise» (one past, one to come), and
-the VOX Fazaa rule carries the live file's raw note («… رجع Page Not Found»)."""
+the VOX Fazaa rule carries the live file's raw note («… رجع Page Not Found»). Two pages are left with nothing to
+show: «Last Night», a film on its last night after its last start (one GOLD show at 11:00, none tomorrow), and VOX
+City Centre Sharjah, which keeps only today's shows before 18:00 (tomorrow's aren't listed yet)."""
 import json
 import os
 import re
@@ -26,6 +28,8 @@ DISC = os.path.join(ROOT, "fixtures", "sample_discounts.yaml")
 NODE = shutil.which("node")
 RAW_NOTE = "ما لقينا عرض فزعة قائم الآن — الرابط الرسمي رجع Page Not Found"
 JIMI = "vox-al-jimi-mall"
+SHJ = "vox-city-centre-sharjah"
+SHELL = '<aside class="ticket" id="ticket" data-ticket hidden></aside>'
 
 
 def read(out, *p):
@@ -51,6 +55,8 @@ def out(tmp_path_factory):
     fuj = next(cid for cid, c in d["cinemas"].items() if c["city"] == "fujairah")
     d["cinemas"][fuj]["city"] = "umm-al-quwain"
     d["shows"] += [gold("heart-of-the-beast", "11:00", today), gold("the-paradise", "11:00", today), gold("the-paradise", "21:00", today)]
+    d["films"]["last-night"] = dict({k: v for k, v in d["films"]["sacrifice"].items() if k != "title_ar"}, title="Last Night")
+    d["shows"] = [s for s in d["shows"] if not (s["cinema"] == SHJ and (s["date"] != today or s["time"] >= "18:00"))] + [gold("last-night", "11:00", today)]
     (tmp / "data.json").write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
     disc = yaml.safe_load(open(DISC, encoding="utf-8"))
     disc["rules"]["vox"]["fazaa"]["note_ar"] = RAW_NOTE
@@ -176,6 +182,11 @@ def test_a_source_error_is_said_in_arabic():
     assert site_kit.note_ar({"note_ar": "404 من الموقع"}) == site_kit.SOURCE_GONE_AR
     assert site_kit.note_ar({"note_ar": "من الشباك فقط، 4 تذاكر باليوم"}) == "من الشباك فقط، 4 تذاكر باليوم"
     assert site_kit.note_ar({}) == "" and site_kit.note_ar(None) == ""
+    # beside a discount the site shows, «فما نعرض الخصم» would be false: a live rule's terms drop the error instead
+    assert site_kit.note_ar({"note_ar": RAW_NOTE}, ok=True) == ""
+    assert site_kit.note_ar({"note_ar": "من الشباك فقط، 4 تذاكر باليوم"}, ok=True) == "من الشباك فقط، 4 تذاكر باليوم"
+    live = {"type": "percent", "value": 20, "box_office_only": True, "note_ar": RAW_NOTE}
+    assert site_kit.rule_terms(live, "ar") == ["من الشباك فقط"]
 
 
 def test_the_fazaa_page_and_the_vox_pages_print_no_raw_source_error(out):
@@ -222,6 +233,8 @@ def test_the_ticket_names_each_condition_once(tmp_path):
     assert ar == "، من الشباك فقط، 4 تذاكر باليوم"          # was «من الشباك فقط، لين 4 تذاكر، من الشباك فقط، 4 تذاكر باليوم»
     (en,) = _terms(tmp_path, [star], False)
     assert en == ", box office only, up to 4 tickets"          # English prints no Arabic note: the flags stay
+    (raw,) = _terms(tmp_path, [dict(star, note_ar=RAW_NOTE)], True)
+    assert raw == "، من الشباك فقط، لين 4 تذاكر"               # a raw source error is dropped, as note_ar(r, ok=True)
     real = yaml.safe_load(open(os.path.join(ROOT, "discounts.yaml"), encoding="utf-8"))["rules"]
     rules = [r for cs in real.values() for r in (cs or {}).values() if isinstance(r, dict) and r.get("type")]
     for lang in (True, False):
@@ -300,3 +313,22 @@ def test_live_halls_keeps_a_hall_with_any_time_to_come():
     shows.append({"cinema": "a", "date": "2026-09-26", "time": "09:00", "k": "gold2"})
     kept = cp.live_halls(shows, lambda s: s["k"])
     assert [s["time"] for s in kept] == ["12:00", "19:00", "09:00"]              # gold (past only) goes; max keeps its 12:00
+
+
+def test_a_film_with_every_show_started_says_it_has_none_to_come(out):
+    """Review I1: a film's last night after its last start (no tomorrow listed) printed an empty schedule under the
+    day controls. It now reads as a film with no shows: the lead, no day tab, and no ticket for a started show."""
+    for parts, say in (((), "ما لقينا عروض لهذا الفيلم في اليومين الجايين."), (("en",), "No shows for this film in the next two days.")):
+        h = read(out, *parts, "film", "last-night", "index.html")
+        assert f'<div class="cgs"><p class="lead">{say}</p></div>' in h, parts
+        assert '<div class="hl"' not in h and 'class="chip" data-day=' not in h and SHELL in h, parts
+    busy = read(out, "film", "heart-of-the-beast", "index.html")
+    assert '<section class="fcity"' in busy and 'class="chip" data-day=' in busy and SHELL not in busy
+
+
+def test_a_cinema_with_every_time_today_started_says_when_tomorrows_come(out):
+    for parts, say in (((), "مواعيد بكرة تنزل هني الصبح."), (("en",), "Tomorrow’s times appear here in the morning.")):
+        h = read(out, *parts, "sharjah", SHJ, "index.html")
+        assert f'<p class="hint">{say}</p>' in h and '<section class="day"' not in h and SHELL in h, parts
+    busy = read(out, "al-ain", JIMI, "index.html")
+    assert '<section class="day"' in busy and "مواعيد بكرة تنزل هني الصبح." not in busy and SHELL not in busy

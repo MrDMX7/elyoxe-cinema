@@ -346,16 +346,17 @@ def rule_offer(r, lang):
     return f"خصم {v}%" if lang == "ar" else f"{v}% off"
 
 
-def note_ar(r):
+def note_ar(r, ok=False):
     """A rule's Arabic note as the site prints it: a note carrying the source check's raw English error
-    («الرابط الرسمي رجع Page Not Found») becomes one Arabic sentence (SOURCE_GONE_AR)."""
+    («الرابط الرسمي رجع Page Not Found») becomes one Arabic sentence (SOURCE_GONE_AR). Beside a discount the
+    site does show (`ok`, the terms of a live rule) that sentence would be false, so there the error is dropped."""
     n = (r or {}).get("note_ar") or ""
-    return SOURCE_GONE_AR if SOURCE_GONE.search(n) else n
+    return ("" if ok else SOURCE_GONE_AR) if SOURCE_GONE.search(n) else n
 
 
 def rule_terms(r, lang):
     t = []
-    note = note_ar(r) if lang == "ar" else ""
+    note = note_ar(r, ok=True) if lang == "ar" else ""
     if r.get("box_office_only") and "الشباك" not in note: t.append("من الشباك فقط" if lang == "ar" else "Box office only")
     if r.get("max_tickets") and not re.search("تذاكر|تذكرة", note): t.append(f'{r["max_tickets"]} تذاكر بالحد' if lang == "ar" else f'Up to {r["max_tickets"]} tickets')
     inc, exc = r.get("included_halls"), r.get("excluded_halls") or r.get("halls_excluded")
