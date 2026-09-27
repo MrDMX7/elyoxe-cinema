@@ -8,6 +8,7 @@ data/latest.json
 data/health.json
 data/lastmod.json
 data/*.json
+data/price_history.jsonl
 star_bundle.js
 data/.run.lock
 data/.last_pages
@@ -16,3 +17,5 @@ venv/
 *.pyc
 .pytest_cache/
 data/posters/
+data/*.bak
+data/*.corrupt-*

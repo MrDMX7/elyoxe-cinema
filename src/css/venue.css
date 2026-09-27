@@ -1,0 +1,16 @@
+/* venue.css — Phase 2 Task 4: mall-closing note, snacks table and double-feature list on cinema/film
+   pages (pages/venue.py). Reuses the design's tokens (cinema.css :root) and its existing .hint/.src/
+   .chkd/.prices classes; only the new blocks are styled here. */
+.mall-note,.snacks,.dfeat{padding-block:14px 16px;border-block-end:1px solid var(--line)}
+.mall-note h2,.snacks h2,.dfeat h2{font-size:20px;margin-block-end:6px}
+.mall-late{color:var(--gold);font-size:13px;margin-block-start:8px;line-height:1.6}
+.snacks h3{font-size:15px;font-family:var(--body);font-weight:600;margin-block:12px 4px}
+.snacks .ndesc{display:block;color:var(--seat);font-size:12px;font-weight:400}
+.food-disc{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.food-disc li{color:var(--dim);font-size:13px;line-height:1.6}
+.dfeat ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.dfeat li{color:var(--dim);font-size:13px;line-height:1.6}
+.dfeat li b{color:var(--screen);font-weight:600}
+.plan-add{margin-block-start:10px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:baseline}
+.plan-leave{color:var(--seat);font-size:12px;flex-basis:100%;margin:0}
+

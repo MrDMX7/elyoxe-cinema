@@ -34,7 +34,7 @@ from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 from curl_cffi import requests as cr
 
-from readers.common import (CACHE_MISS, CITIES, HALLS, cache_get, cache_set, city_of, lang_key,
+from readers.common import (CACHE_MISS, CITIES, HALLS, cache_get, cache_set, city_of, keep_layout, lang_key,
                              slug as _slug, subs_keys, youtube_id, fmt3d as _fmt3d)
 
 BASE = "https://uae.voxcinemas.com"
@@ -239,7 +239,7 @@ class _Blocked(Exception):
     pass
 
 
-def _sample_prices(client: _Client, book_url: str) -> list[dict] | None:
+def _sample_prices(client: _Client, book_url: str, on_layout=None) -> list[dict] | None:
     """One read of the pre-selection seat map for this session, then abandon the empty order."""
     r = client.get(book_url)
     if r is None or r.status_code in (403, 429):
@@ -261,6 +261,8 @@ def _sample_prices(client: _Client, book_url: str) -> list[dict] | None:
                 raise _Blocked(f"seats: {p.status_code}")
             if p.status_code == 200 and str(p.url).rstrip("/").endswith("/seats"):
                 prices = _legend_prices(p.text)
+                if on_layout:
+                    on_layout(p.text)
                 break
             time.sleep(2 * (attempt + 1))  # still on /seats/processing
         return prices
@@ -356,7 +358,8 @@ def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict
             tries[key] = tries.get(key, 0) + 1
             health["attempted"] += 1
             try:
-                price_of[key] = _sample_prices(client, sh["book"])
+                price_of[key] = _sample_prices(client, sh["book"], on_layout=lambda raw, s=sh: keep_layout(
+                    "vox", s["cinema"], s["hall_label"], s["date"], raw))
                 cache_set(cache, key, price_of[key])
             except _Blocked as e:
                 health["error"] = f"price sampling stopped on a block: {e}"

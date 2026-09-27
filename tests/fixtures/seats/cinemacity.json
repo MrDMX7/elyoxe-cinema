@@ -1,0 +1,495 @@
+{
+"_note": "POST launch/seatpreview (Cinema City VIP, Screen 13, 2026-09-27 15:45), rows A C F, keys trimmed, dataToken dropped; EDITED: C4 status 1 (sold), C5 isUnavailable",
+"selectSeatsModel": {
+"seatsLayoutModel": {
+"rows": [
+{
+"physicalName": "A",
+"index": 0,
+"seats": [
+{
+"index": 0,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 1,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 2,
+"text": "1",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "A1",
+"type": 100,
+"style": 0
+},
+{
+"index": 3,
+"text": "2",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "A2",
+"type": 100,
+"style": 0
+},
+{
+"index": 4,
+"text": "3",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "A3",
+"type": 100,
+"style": 0
+},
+{
+"index": 5,
+"text": "4",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "A4",
+"type": 100,
+"style": 0
+},
+{
+"index": 6,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 7,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 8,
+"text": "5",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "A5",
+"type": 100,
+"style": 0
+},
+{
+"index": 9,
+"text": "6",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "A6",
+"type": 100,
+"style": 0
+},
+{
+"index": 10,
+"text": "7",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "A7",
+"type": 100,
+"style": 0
+},
+{
+"index": 11,
+"text": "8",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "A8",
+"type": 100,
+"style": 0
+},
+{
+"index": 12,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 13,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+}
+]
+},
+{
+"physicalName": "C",
+"index": 2,
+"seats": [
+{
+"index": 0,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 1,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 2,
+"text": "1",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "C1",
+"type": 100,
+"style": 0
+},
+{
+"index": 3,
+"text": "2",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "C2",
+"type": 100,
+"style": 0
+},
+{
+"index": 4,
+"text": "3",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "C3",
+"type": 100,
+"style": 0
+},
+{
+"index": 5,
+"text": "4",
+"status": 1,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "C4",
+"type": 100,
+"style": 0
+},
+{
+"index": 6,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 7,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 8,
+"text": "5",
+"status": 0,
+"isASeat": true,
+"isUnavailable": true,
+"areaId": "1",
+"seatName": "C5",
+"type": 100,
+"style": 0
+},
+{
+"index": 9,
+"text": "6",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "C6",
+"type": 100,
+"style": 0
+},
+{
+"index": 10,
+"text": "7",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "C7",
+"type": 100,
+"style": 0
+},
+{
+"index": 11,
+"text": "8",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "C8",
+"type": 100,
+"style": 0
+},
+{
+"index": 12,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 13,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+}
+]
+},
+{
+"physicalName": "F",
+"index": 5,
+"seats": [
+{
+"index": 0,
+"text": "1",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "F1",
+"type": 100,
+"style": 0
+},
+{
+"index": 1,
+"text": "2",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "F2",
+"type": 100,
+"style": 0
+},
+{
+"index": 2,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 3,
+"text": "3",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "F3",
+"type": 100,
+"style": 0
+},
+{
+"index": 4,
+"text": "4",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "F4",
+"type": 100,
+"style": 0
+},
+{
+"index": 5,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 6,
+"text": "5",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "F5",
+"type": 100,
+"style": 0
+},
+{
+"index": 7,
+"text": "6",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "F6",
+"type": 100,
+"style": 0
+},
+{
+"index": 8,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 9,
+"text": "7",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "F7",
+"type": 100,
+"style": 0
+},
+{
+"index": 10,
+"text": "8",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "F8",
+"type": 100,
+"style": 0
+},
+{
+"index": 11,
+"text": null,
+"status": 0,
+"isASeat": false,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": null,
+"type": null,
+"style": 0
+},
+{
+"index": 12,
+"text": "9",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "F9",
+"type": 100,
+"style": 0
+},
+{
+"index": 13,
+"text": "10",
+"status": 0,
+"isASeat": true,
+"isUnavailable": false,
+"areaId": "1",
+"seatName": "F10",
+"type": 100,
+"style": 0
+}
+]
+}
+],
+"areas": [
+{
+"areaNumber": "1",
+"name": "VIP"
+}
+]
+}
+}
+}

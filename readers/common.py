@@ -153,6 +153,17 @@ def cache_set(cache: dict | None, key, value) -> None:
         cache[_join_key(key)] = value
 
 
+def keep_layout(chain: str, cinema: str, hall_label: str, date: str, raw, screen=None) -> None:
+    """Phase-2 hook (seats.py): the seat-layout response a reader just fetched for a price, kept as that
+    screen's map (`screen` when the chain names the physical screen) for the ticket's drawing. Never raises,
+    never makes a request."""
+    try:
+        import seats
+        seats.keep(chain, cinema, hall_label, date, raw, screen=screen)
+    except Exception:  # noqa: BLE001 - the map is a bonus; the price sample must never suffer for it
+        pass
+
+
 class Polite:
     """requests.Session that waits `gap` seconds between calls and retries twice on 429/5xx/timeouts."""
 

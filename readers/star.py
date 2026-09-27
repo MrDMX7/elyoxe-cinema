@@ -14,7 +14,7 @@ import sys
 import time
 from zoneinfo import ZoneInfo
 
-from readers.common import (CACHE_MISS, CITIES, HALLS, Polite, cache_get, cache_set, city_of,
+from readers.common import (CACHE_MISS, CITIES, HALLS, Polite, cache_get, cache_set, city_of, keep_layout,
                              lang_key, slug, subs_keys, youtube_id, fmt3d as _fmt3d)
 
 BASE = "https://web-api.starcinemas.ae/api/v3/external"
@@ -356,7 +356,9 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                         # the listing/showtime calls above trigger a token refresh + raise).
                         if pr is not None and pr.status_code == 200:
                             try:
-                                seat_recs = pr.json().get("Records") or []
+                                body = pr.json()
+                                seat_recs = body.get("Records") or []
+                                keep_layout(CHAIN, cinema["id"], hall_label, date, body, screen=rec.get("screen_name"))
                             except json.JSONDecodeError:
                                 seat_recs = []
                             by_type: dict[str, float] = {}
@@ -395,6 +397,9 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                     "hall_label": hall_label,
                     "prices": prices,
                     "book": _book_url(movie_id),
+                    # the session and its screen, for seats.py (steps/occupancy.py strips both before publishing)
+                    "_sid": rec.get("ss_id"),
+                    "_screen": rec.get("screen_name"),
                     **extras_by_movie.get(movie_id, {}),
                     **show_lang(rec),
                 }

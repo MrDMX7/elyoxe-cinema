@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 from datetime import datetime, timedelta, timezone
 
-from readers.common import (CACHE_MISS, CITIES, HALLS, Polite, cache_get, cache_set, city_of,
+from readers.common import (CACHE_MISS, CITIES, HALLS, Polite, cache_get, cache_set, city_of, keep_layout,
                              lang_key, slug, youtube_id, fmt3d as _fmt3d)
 
 CHAIN = "cinemacity"
@@ -131,7 +131,7 @@ def _session_uuid(book: str | None) -> str | None:
     return m.group(1) if m else None
 
 
-def _sample_prices(sess: Polite, session_uuid: str) -> list[dict] | None:
+def _sample_prices(sess: Polite, session_uuid: str, on_layout=None) -> list[dict] | None:
     """Seat-class prices for one showtime, from the widget's own pre-seat calls. None on any failure."""
     hdr = {"Accept": "application/json", "Content-Type": "application/json"}
     try:
@@ -141,6 +141,8 @@ def _sample_prices(sess: Polite, session_uuid: str) -> list[dict] | None:
         if r.status_code != 200:
             return None
         pv = r.json()
+        if on_layout:
+            on_layout(pv)
         token = pv.get("dataToken")
         layout = ((pv.get("selectSeatsModel") or {}).get("seatsLayoutModel")) or {}
         area_name = {str(a.get("areaNumber")): (a.get("name") or "").strip() for a in layout.get("areas") or []}
@@ -276,7 +278,9 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                     if price_cache.get(key) is None and price_tries.get(key, 0) < 2:
                         price_tries[key] = price_tries.get(key, 0) + 1
                         uuid = _session_uuid(book)
-                        price_cache[key] = _sample_prices(sess, uuid) if uuid else None
+                        price_cache[key] = _sample_prices(
+                            sess, uuid, on_layout=lambda raw, h=hall_label, d=date, sc=(s.get("screen") or {}).get("name"): keep_layout(
+                                CHAIN, cid, h, d, raw, screen=sc)) if uuid else None
                         health["attempted"] += 1
                         cache_set(cache, key, price_cache[key])
                     shows.append({
@@ -291,6 +295,7 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                         "hall_label": hall_label,
                         "prices": key,  # resolved after the loop, once every hall is sampled
                         "book": book,
+                        "_screen": (s.get("screen") or {}).get("name"),  # for seats.py, stripped before publishing
                         **extras,
                         **show_lang(tags),
                     })

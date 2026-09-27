@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from readers.common import (CACHE_MISS, CITIES, HALLS, Polite, arabic_title, cache_get, cache_set,
-                             city_of, lang_key, slug, subs_keys, youtube_id)
+                             city_of, keep_layout, lang_key, slug, subs_keys, youtube_id)
 
 API = "https://uae-api.novocinemas.com/api/home"
 BOOKING_API = "https://uae-api.novocinemas.com/api/booking"
@@ -111,7 +111,7 @@ def movie_extras(movie: dict) -> dict:
     return out
 
 
-def _sample_prices(s: Polite, cinema_num, session_id) -> list[dict] | None:
+def _sample_prices(s: Polite, cinema_num, session_id, on_layout=None) -> list[dict] | None:
     """Seat-area prices for one session, from the seat-selection page's load call. None on failure."""
     try:
         r = s.get(f"{BOOKING_API}/seat-layout/cinemas/{cinema_num}/sessions/{session_id}",
@@ -121,6 +121,8 @@ def _sample_prices(s: Polite, cinema_num, session_id) -> list[dict] | None:
         body = r.json()
         if not body.get("success"):
             return None
+        if on_layout:
+            on_layout(body)
         out: dict[str, float] = {}
         for a in (body.get("data") or {}).get("areas") or []:
             name, cents = (a.get("name") or "").strip(), a.get("priceInCents") or 0
@@ -235,7 +237,9 @@ def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict
                     if (prices and price_cache.get(key) is None and price_tries.get(key, 0) < 2
                             and start > now + timedelta(hours=1) and sess.get("session_id")):
                         price_tries[key] = price_tries.get(key, 0) + 1
-                        price_cache[key] = _sample_prices(s, sess.get("cinemaId"), sess["session_id"])
+                        price_cache[key] = _sample_prices(
+                            s, sess.get("cinemaId"), sess["session_id"],
+                            on_layout=lambda raw, c=cinema_id, h=hall_label, d=cal_date: keep_layout("novo", c, h, d, raw))
                         health["attempted"] += 1
                         cache_set(cache, key, price_cache[key])
                     shows.append({
@@ -251,6 +255,8 @@ def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict
                         "hall_label": hall_label,
                         "prices": key,  # resolved after the loop, once each hall is sampled
                         "book": book,
+                        # the session, for seats.py's occupancy sample (stripped before publishing)
+                        "_sid": f"{sess.get('cinemaId')}|{sess.get('session_id')}" if sess.get("session_id") else None,
                         **extras,
                     })
 

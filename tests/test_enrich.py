@@ -18,6 +18,13 @@ import verdicts as verdicts_mod
 from verdicts import _dialect_violation, write_missing
 
 
+@pytest.fixture(autouse=True)
+def _no_wikidata_trailer_lookup(monkeypatch):
+    """The Wikidata trailer fallback is a live lookup: stubbed for every test here (conftest refuses the network);
+    a test about it replaces this stub with its own."""
+    monkeypatch.setattr(enrich_mod, "_wikidata_trailer", lambda qid: None)
+
+
 def _raise(*a, **kw):
     raise AssertionError("network was called when the cache should have been used")
 

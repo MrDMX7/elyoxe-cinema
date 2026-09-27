@@ -44,7 +44,7 @@ from zoneinfo import ZoneInfo
 
 from curl_cffi import requests as cr
 
-from readers.common import (CACHE_MISS, CITIES, HALLS, cache_get, cache_set, city_of, lang_key,
+from readers.common import (CACHE_MISS, CITIES, HALLS, cache_get, cache_set, city_of, keep_layout, lang_key,
                              slug, subs_keys, youtube_id)
 
 BASE = "https://www.theroxycinemas.com"
@@ -141,12 +141,14 @@ def _seat_selection_url(site_cinema_id: str, session_id: str, nid: str, cinema_n
             f"{quote(cinema_name)}/{quote(raw_date)}/{time_}/{quote(hall_raw)}")
 
 
-def _sample_prices(client: "_Client", url: str) -> list[dict] | None:
+def _sample_prices(client: "_Client", url: str, on_layout=None) -> list[dict] | None:
     """One read of the seat-selection page for one representative session in a
     cinema x hall x date group. Returns None (never raises) on anything but a clean 200."""
     r = client.get(url)
     if r is None or r.status_code != 200:
         return None
+    if on_layout:
+        on_layout(r.text)
     return _seat_legend_prices(r.text)
 
 
@@ -449,7 +451,8 @@ def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict
                                        sh["_raw_cname"], sh["_raw_date"], sh["time"], sh["_hall_raw"])
             health["attempted"] += 1
             try:
-                price_of[key] = _sample_prices(client, url)
+                price_of[key] = _sample_prices(client, url, on_layout=lambda raw, s=sh: keep_layout(
+                    "roxy", s["cinema"], s["hall_label"], s["date"], raw))
             except Exception as e:  # never fail the chain on a price error
                 price_of[key] = None
                 health["error"] = f"{type(e).__name__}: {e}"
@@ -460,6 +463,9 @@ def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict
         if health["attempted"] and not health["priced"] and not health["error"]:
             health["error"] = f"0/{health['attempted']} seat-selection legend samples priced"
 
+    for sh in shows:   # the session's public seat-selection page, for seats.py (stripped before publishing)
+        sh["_sid"] = _seat_selection_url(sh["_site_cid"], sh["_session"], sh["_nid"], sh["_raw_cname"],
+                                         sh["_raw_date"], sh["time"], sh["_hall_raw"])
     _label_twin_sessions(shows)
     for sh in shows:
         for k in ("_site_cid", "_nid", "_raw_date", "_raw_cname", "_hall_raw"):

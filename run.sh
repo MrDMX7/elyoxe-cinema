@@ -10,7 +10,7 @@
 # By hand, in the foreground:  bash run.sh [--force]   (arguments go to refresh.py)
 #
 # Exit: 0 = deployed (possibly with degraded chains), non-zero = nothing deployed (6 = the test suite
-#   failed on the pulled code; the live site is left as it was) -- except a failure that was already
+#   failed on the pulled code, 7 = git pull failed; the live site is left as it was) -- except a failure that was already
 #   alerted and is still going on: logged, exit 0, so an hourly job doesn't repeat it (see below).
 # Notifications (final review I3): on a CHANGE of state only -- alerts.py keeps data/alert_state.json and
 # says whether a condition just started (notify), just cleared (notify once) or is still the same (quiet).
@@ -52,9 +52,13 @@ export PY PYTHONUNBUFFERED=1
 echo "== cinema run start (py: $PY)"
 # run-job.sh only starts this after its memory wait passed: a memory-wait failure it alerted has cleared
 ok_now mem "الذاكرة رجعت — سينما اشتغلت من جديد"
+# a pull that fails must not deploy the old code as if it were the release (final review M3): stop, tell
+# the owner once (alerts.py), and let every later run stop the same way until the checkout is fixed --
+# e.g. files dirty with line endings only: `git diff --ignore-all-space --quiet && git reset --hard origin/main`
 if ! git pull --ff-only -q; then
-  echo "WARN: git pull --ff-only failed — running the checked-out code"
+  fail "git pull فشل على $(git log --oneline -1 | cut -c1-40) — ما نُشر شي، الموقع على النسخة السابقة (git status في saas/cinema)" 7 pull
 fi
+ok_now pull "git pull رجع يشتغل"
 echo "   at $(git log --oneline -1)"
 
 # test gate (ruling 2026-09-26): whatever was just pulled must pass the suite before it can publish.

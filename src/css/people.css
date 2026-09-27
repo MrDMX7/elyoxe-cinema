@@ -1,0 +1,22 @@
+/* people (phase 2): the person page and the cast strip on film pages. «هـ»: no radius, no shadows, no cards;
+   gold only for prices; logical properties only. */
+.pp{display:flex;gap:20px;align-items:flex-start}
+.pp-ph{flex:0 0 160px;margin:0}
+.pp-ph img{display:block;inline-size:160px;block-size:200px;object-fit:cover;background:var(--tile)}
+.pp-ph figcaption{font-size:11px;line-height:1.5;color:var(--seat);margin-block-start:6px;overflow-wrap:anywhere}
+.pp-ph figcaption a{color:var(--seat)}
+.pp-t{min-inline-size:0}
+.pp-role{font-size:14px;color:var(--dim);margin-block-start:6px}
+.pp-src{font-size:12px;margin-block-start:4px}
+.pp-arch h2{font-family:var(--display);font-weight:var(--dw);font-size:24px;margin-block-end:10px}
+.pp-l{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px}
+.pp-l a{color:var(--screen)}
+.pp-l .nw{color:var(--dim)}
+.cast{margin-block-start:18px}
+.cast-h{font-size:13px;font-weight:500;color:var(--seat);margin-block-end:8px}
+.cast-l{list-style:none;margin:0;padding:0;display:flex;gap:14px;overflow-x:auto;scrollbar-width:none}
+.cast-l::-webkit-scrollbar{display:none}
+.cast-l a{display:flex;flex-direction:column;align-items:flex-start;gap:4px;inline-size:72px;color:var(--screen);text-decoration:none;font-size:12px;line-height:1.3}
+.cast-l img,.cast-i{display:block;inline-size:48px;block-size:60px;object-fit:cover;background:var(--tint)}
+.cast-l small{color:var(--seat);font-size:11px}
+@media (max-width:560px){.pp{flex-direction:column}.pp .pt{font-size:32px}}
