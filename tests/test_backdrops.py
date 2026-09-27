@@ -14,6 +14,14 @@ sys.path.insert(0, ROOT)
 import steps.backdrops as bd  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def _no_real_override_file(monkeypatch, tmp_path):
+    """Every test in this file gets its own (non-existent, unless a test writes one) override path
+    -- never the real repo-root backdrops_override.yaml (which has its own `sacrifice: none` entry;
+    none of these tests use that fid, but isolating from real repo content is the honest default)."""
+    monkeypatch.setattr(bd, "OVERRIDE_PATH", tmp_path / "backdrops_override.yaml")
+
+
 # -------- score_frame
 
 def _flat(color, size=(320, 180)):
@@ -209,22 +217,54 @@ def test_cache_hit_skips_the_pipeline_entirely(tmp_path, monkeypatch):
     assert data["films"]["film-a"]["backdrop"]["w1280"] == "/posters/bd-film-a-deadbeef01-1280.webp"
 
 
-def test_failure_is_cached_and_not_retried_within_seven_days(tmp_path, monkeypatch):
-    monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video, fail_all_frames=True))
+def test_content_rejection_is_kind_rejected_and_not_retried_within_seven_days(tmp_path, monkeypatch):
+    """Every sampled frame decodes fine but scores None (a solid black frame: luma 0) -- a content
+    problem, not an infra one -- so the cached failure is `kind: "rejected"` under the full 7-day
+    FAIL_TTL_REJECTED (fix round 1, review Important #1)."""
+    monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video, frame_color=(0, 0, 0)))
     data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
     r1 = bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
     assert r1 == {"new": 1, "failed": 1, "cached": 0}
     cache1 = json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))
-    assert cache1["film-a"] == {"trailer": "AAAAAAAAAAA", "fail": "2026-09-27T12:00:00+00:00"}
+    assert cache1["film-a"] == {"trailer": "AAAAAAAAAAA", "fail": "2026-09-27T12:00:00+00:00", "kind": "rejected"}
     assert "backdrop" not in data["films"]["film-a"]
 
     def boom(cmd, **kw):
-        raise AssertionError("a failure inside the 7-day TTL must not be retried")
+        raise AssertionError("a 'rejected' failure inside the 7-day TTL must not be retried")
 
     monkeypatch.setattr(bd.subprocess, "run", boom)
     data2 = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
-    r2 = bd.run(data2, {"data_dir": str(tmp_path), "now": "2026-09-28T12:00:00+00:00"})
+    # 7 hours later: well past the 6h transient TTL, but nowhere near the 7-day rejected one
+    r2 = bd.run(data2, {"data_dir": str(tmp_path), "now": "2026-09-27T19:00:00+00:00"})
     assert r2 == {"new": 0, "failed": 0, "cached": 1}
+
+
+def test_transient_failure_is_kind_transient_and_retried_after_six_hours_not_seven_days(tmp_path, monkeypatch):
+    """The download itself fails (network/yt-dlp trouble) -- an infra problem, so `kind: "transient"`
+    under the much shorter FAIL_TTL_TRANSIENT (fix round 1, review Important #1): the task's own real
+    run hit exactly this (heart-of-the-beast, task-1-report.md Concern #2)."""
+    monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video, fail_download=True))
+    data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
+    r1 = bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
+    assert r1 == {"new": 1, "failed": 1, "cached": 0}
+    cache1 = json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))
+    assert cache1["film-a"] == {"trailer": "AAAAAAAAAAA", "fail": "2026-09-27T12:00:00+00:00", "kind": "transient"}
+
+    # 3 hours later: inside the 6h transient TTL, still not retried
+    def boom(cmd, **kw):
+        raise AssertionError("a transient failure inside its own 6h TTL must not be retried")
+
+    monkeypatch.setattr(bd.subprocess, "run", boom)
+    r2 = bd.run(_data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}}),
+                {"data_dir": str(tmp_path), "now": "2026-09-27T15:00:00+00:00"})
+    assert r2 == {"new": 0, "failed": 0, "cached": 1}
+
+    # 7 hours later: past the 6h transient TTL -- retried, and this time it succeeds
+    monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video))
+    r3 = bd.run(_data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}}),
+                {"data_dir": str(tmp_path), "now": "2026-09-27T19:00:00+00:00"})
+    assert r3 == {"new": 1, "failed": 0, "cached": 0}
+    assert "fail" not in json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))["film-a"]
 
 
 def test_failure_past_the_ttl_is_retried(tmp_path, monkeypatch):
@@ -236,6 +276,22 @@ def test_failure_past_the_ttl_is_retried(tmp_path, monkeypatch):
     r = bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
     assert r == {"new": 1, "failed": 0, "cached": 0}
     assert "fail" not in json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))["film-a"]
+
+
+def test_old_cache_entry_with_no_kind_defaults_to_the_longer_rejected_ttl(tmp_path, monkeypatch):
+    """A fail entry written before this round (no `kind` key at all) must not suddenly get hammered
+    with retries the moment this ships -- it defaults to the conservative, longer TTL."""
+    (tmp_path / "backdrops.json").write_text(json.dumps({
+        "film-a": {"trailer": "AAAAAAAAAAA", "fail": "2026-09-27T06:00:00+00:00"}   # 6h ago, no "kind"
+    }), encoding="utf-8")
+
+    def boom(cmd, **kw):
+        raise AssertionError("an unlabelled old failure must default to the 7-day ttl, not 6h")
+
+    monkeypatch.setattr(bd.subprocess, "run", boom)
+    data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
+    r = bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
+    assert r == {"new": 0, "failed": 0, "cached": 1}
 
 
 def test_new_films_per_run_are_capped(tmp_path, monkeypatch):
@@ -328,6 +384,166 @@ def test_trailer_id_change_invalidates_the_old_cache_entry(tmp_path, monkeypatch
     assert r["new"] == 1
     cache = json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))
     assert cache["film-a"]["trailer"] == "NEWNEWNEWNE"
+
+
+# -------- fix round 1: wall-clock budget (review Minor #2)
+
+def test_new_films_stop_starting_once_the_budget_is_spent(tmp_path, monkeypatch):
+    monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video))
+    monkeypatch.setenv("CINEMA_BACKDROPS_BUDGET_S", "0")   # already "spent" before the first attempt
+    films = {f"film-{i}": {"status": "showing", "trailer": f"{'A' * 10}{i}"} for i in range(3)}
+    data = _data(films=films)
+    r = bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
+    assert r == {"new": 0, "failed": 0, "cached": 0}
+    cache_path = tmp_path / "backdrops.json"
+    assert not cache_path.exists() or json.loads(cache_path.read_text(encoding="utf-8")) == {}
+
+
+def test_budget_default_is_generous_enough_for_a_normal_run(tmp_path, monkeypatch):
+    """No env override: the default (480s) must not itself block a normal, fast (mocked) run."""
+    monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video))
+    data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
+    r = bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
+    assert r == {"new": 1, "failed": 0, "cached": 0}
+
+
+# -------- fix round 1: manual override (review Important #2)
+
+def test_override_none_is_never_attempted_and_never_attached(tmp_path, monkeypatch):
+    (tmp_path / "backdrops_override.yaml").write_text("film-a: none\n", encoding="utf-8")
+    monkeypatch.setattr(bd, "OVERRIDE_PATH", tmp_path / "backdrops_override.yaml")
+
+    def boom(cmd, **kw):
+        raise AssertionError("an fid overridden to 'none' must never start a subprocess")
+
+    monkeypatch.setattr(bd.subprocess, "run", boom)
+    data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
+    r = bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
+    assert r == {"new": 0, "failed": 0, "cached": 1}
+    assert "backdrop" not in data["films"]["film-a"]
+    cache = json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))
+    assert cache["film-a"] == {"trailer": "AAAAAAAAAAA", "override": "none"}
+
+
+def test_override_none_hides_an_already_good_cached_backdrop(tmp_path, monkeypatch):
+    """An override added AFTER a clean frame was already cached still wins -- a human overriding a
+    frame they've now looked at and don't like takes priority over whatever's on disk."""
+    (tmp_path / "backdrops.json").write_text(json.dumps({
+        "film-a": {"trailer": "AAAAAAAAAAA", "w1280": "/posters/bd-film-a-deadbeef01-1280.webp",
+                   "w640": "/posters/bd-film-a-deadbeef01-640.webp", "w": 1280, "h": 720,
+                   "t": 5.0, "at": "2026-09-20T12:00:00+00:00"}
+    }), encoding="utf-8")
+    (tmp_path / "posters").mkdir()
+    (tmp_path / "posters" / "bd-film-a-deadbeef01-1280.webp").write_bytes(b"x")
+    (tmp_path / "posters" / "bd-film-a-deadbeef01-640.webp").write_bytes(b"x")
+    (tmp_path / "backdrops_override.yaml").write_text("film-a: none\n", encoding="utf-8")
+    monkeypatch.setattr(bd, "OVERRIDE_PATH", tmp_path / "backdrops_override.yaml")
+    monkeypatch.setattr(bd.subprocess, "run", lambda cmd, **kw: (_ for _ in ()).throw(
+        AssertionError("must not reprocess just because of an override")))
+
+    data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
+    r = bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
+    assert r == {"new": 0, "failed": 0, "cached": 1}
+    assert "backdrop" not in data["films"]["film-a"]
+    # and the now-orphaned webp files are pruned, since nothing wants them any more
+    assert not (tmp_path / "posters" / "bd-film-a-deadbeef01-1280.webp").exists()
+    assert not (tmp_path / "posters" / "bd-film-a-deadbeef01-640.webp").exists()
+
+
+def test_override_seconds_skips_scoring_and_re_extracts_when_the_value_changes(tmp_path, monkeypatch):
+    """The frame color returned by the fake ffmpeg is BLACK -- score_frame would reject it outright
+    (luma < 35) -- so a successful save here proves the override path never calls score_frame at
+    all. Changing the override value must re-extract (a different `override_t` never matches a
+    cached one), which this test proves by checking the cache's `t` moves with it."""
+    override_path = tmp_path / "backdrops_override.yaml"
+    override_path.write_text("film-a: 10\n", encoding="utf-8")
+    monkeypatch.setattr(bd, "OVERRIDE_PATH", override_path)
+    monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video, frame_color=(0, 0, 0)))
+
+    data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
+    r1 = bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
+    assert r1 == {"new": 1, "failed": 0, "cached": 0}
+    cache1 = json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))
+    assert cache1["film-a"]["t"] == 10.0 and cache1["film-a"]["override_t"] == 10.0
+
+    # same value again: a cache hit, no subprocess call at all
+    monkeypatch.setattr(bd.subprocess, "run", lambda cmd, **kw: (_ for _ in ()).throw(
+        AssertionError("the override value did not change -- must not reprocess")))
+    data2 = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
+    r2 = bd.run(data2, {"data_dir": str(tmp_path), "now": "2026-09-27T13:00:00+00:00"})
+    assert r2 == {"new": 0, "failed": 0, "cached": 1}
+
+    # the value changes: re-extracted, even though nothing else about the film changed
+    override_path.write_text("film-a: 40\n", encoding="utf-8")
+    monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video, frame_color=(0, 0, 0)))
+    data3 = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
+    r3 = bd.run(data3, {"data_dir": str(tmp_path), "now": "2026-09-27T14:00:00+00:00"})
+    assert r3 == {"new": 1, "failed": 0, "cached": 0}
+    cache3 = json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))
+    assert cache3["film-a"]["t"] == 40.0 and cache3["film-a"]["override_t"] == 40.0
+    assert data3["films"]["film-a"]["backdrop"]["t"] == 40.0
+
+
+def test_malformed_override_entries_are_ignored(tmp_path, monkeypatch):
+    override_path = tmp_path / "backdrops_override.yaml"
+    override_path.write_text("film-a: not-a-number-or-none\nBAD FID !!: 5\n", encoding="utf-8")
+    monkeypatch.setattr(bd, "OVERRIDE_PATH", override_path)
+    monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video))
+    data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
+    r = bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
+    assert r == {"new": 1, "failed": 0, "cached": 0}   # processed normally -- the bad override line was ignored
+
+
+# -------- fix round 1: orphaned bd-*.webp pruning, og.py's own convention (review Minor #3)
+
+def test_a_films_own_poster_mirror_files_are_never_touched_by_pruning(tmp_path, monkeypatch):
+    (tmp_path / "posters").mkdir()
+    real_poster = tmp_path / "posters" / "film-a-abc1234567-342.webp"
+    real_poster.write_bytes(b"a real poster, not a backdrop")
+    monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video))
+    data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
+    bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
+    assert real_poster.exists()   # the prune glob is "bd-*.webp" only
+
+
+def test_orphaned_backdrop_is_pruned_when_the_film_leaves_showing_and_coming(tmp_path, monkeypatch):
+    monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video))
+    data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
+    bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
+    cache = json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))
+    old_names = [os.path.basename(cache["film-a"]["w1280"]), os.path.basename(cache["film-a"]["w640"])]
+    for n in old_names:
+        assert (tmp_path / "posters" / n).exists()
+
+    # the film is archived this run (no longer showing or coming) -- nothing should reprocess it,
+    # but its now-unwanted cache entry and files must be pruned
+    data2 = _data(films={"film-a": {"status": "archived", "trailer": "AAAAAAAAAAA"}})
+    r2 = bd.run(data2, {"data_dir": str(tmp_path), "now": "2026-09-27T13:00:00+00:00"})
+    assert r2 == {"new": 0, "failed": 0, "cached": 0}
+    cache2 = json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))
+    assert "film-a" not in cache2
+    for n in old_names:
+        assert not (tmp_path / "posters" / n).exists()
+
+
+def test_orphaned_backdrop_is_pruned_when_the_trailer_id_changes(tmp_path, monkeypatch):
+    monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video, frame_color=(90, 140, 200)))
+    data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
+    bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
+    cache = json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))
+    old_names = [os.path.basename(cache["film-a"]["w1280"]), os.path.basename(cache["film-a"]["w640"])]
+
+    monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video, frame_color=(30, 200, 60)))
+    data2 = _data(films={"film-a": {"status": "showing", "trailer": "BBBBBBBBBBB"}})
+    r2 = bd.run(data2, {"data_dir": str(tmp_path), "now": "2026-09-27T13:00:00+00:00"})
+    assert r2["new"] == 1
+    for n in old_names:
+        assert not (tmp_path / "posters" / n).exists()   # the old trailer's frame is gone
+    cache2 = json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))
+    assert cache2["film-a"]["trailer"] == "BBBBBBBBBBB"
+    new_names = [os.path.basename(cache2["film-a"]["w1280"]), os.path.basename(cache2["film-a"]["w640"])]
+    for n in new_names:
+        assert (tmp_path / "posters" / n).exists()
 
 
 def test_real_step_is_quick_and_offline_over_the_sample_fixture():

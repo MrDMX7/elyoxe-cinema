@@ -13,21 +13,42 @@ with no separate wiring — and recorded in `<data_dir>/backdrops.json`:
 
     {fid: {"trailer": <yt id>, "w1280": "/posters/bd-<fid>-<hash>-1280.webp",
            "w640": "/posters/bd-<fid>-<hash>-640.webp", "w": 1280, "h": <int>, "t": <seconds>, "at": <iso>}}
-    {fid: {"trailer": <yt id>, "fail": <iso>}}                       # every sampled frame was rejected
+    {fid: {"trailer": <yt id>, "fail": <iso>, "kind": "transient" | "rejected"}}
 
 ("w"/"h" — the pixel size of the 1280w file — are an addition beyond the brief's own schema sketch,
 kept because Kit.backdrop() needs *some* width/height to draw an `<img>` without a layout shift, and a
 letterbox-cropped trailer frame is not reliably 16:9.)
 
 A cache entry is reused forever as long as the film's trailer id hasn't changed (a chain that swaps a
-teaser for the real trailer gets a fresh frame); a failure is retried after FAIL_TTL (7 days). At most
-CINEMA_BACKDROPS_MAX (env, default DEFAULT_MAX_NEW=8) films with NO usable cache entry are attempted
-per run — the phone this runs on has one heavy process at a time and nothing here is worth blocking a
-refresh over; a film left over the cap is simply picked up by a later run (nothing about it is
-written, so it is not "cached" either way). The downloaded video is deleted after each film whether it
-succeeded or failed (`process_film`'s `finally`), so nothing here grows `data/` across runs. A single
-film's failure — network, yt-dlp, ffmpeg, "no frame passed the scorer" — never fails the step, same
-convention as og.py/posters.py: caught in `run()`'s per-film loop and recorded as a cache failure.
+teaser for the real trailer gets a fresh frame). A failure is retried after a TTL that depends on
+its `kind` (fix round 1, review Important #1): "transient" (the download/ffprobe/every ffmpeg seek
+itself failed — network, yt-dlp, a missing binary, a timeout) retries after FAIL_TTL_TRANSIENT (6h);
+"rejected" (the video was read fine, every sampled frame was just scored None) retries after the
+full FAIL_TTL_REJECTED (7 days) — a one-off hiccup shouldn't sit behind a week-long delay the way a
+genuinely unusable trailer should. At most CINEMA_BACKDROPS_MAX (env, default DEFAULT_MAX_NEW=8)
+films with NO usable cache entry are attempted per run, AND no NEW film is started once
+CINEMA_BACKDROPS_BUDGET_S (env, default DEFAULT_BUDGET_S=480s/8min) of wall-clock time has passed
+since `run()` began (fix round 1, review Minor #2) — the phone this runs on has one heavy process at
+a time and nothing here is worth blocking an hourly refresh over; a film left over either limit is
+simply picked up by a later run (nothing about it is written, so it is not "cached" either way). The
+downloaded video is deleted after each film whether it succeeded or failed (`process_film`'s
+`finally`), so nothing here grows `data/` across runs. A single film's failure never fails the step,
+same convention as og.py/posters.py: caught in `run()`'s per-film loop and recorded as a cache
+failure.
+
+Manual override (fix round 1, review Important #2): `<repo root>/backdrops_override.yaml` —
+`{fid: "none"}` forces the poster-blur fallback forever (the film is skipped entirely, and any
+existing cache entry/files for it are dropped); `{fid: <seconds>}` skips scoring and takes exactly
+that timestamp instead (still letterbox-cropped and encoded normally) — changing the number
+re-extracts, since the cache entry records which override value produced it (`"override_t"`).
+Malformed entries/fids are ignored, never an error. See backdrops_override.yaml's own header for the
+full contract and the `sacrifice` example this round's real-run false-accept prompted.
+
+Orphaned `bd-*.webp` pruning (fix round 1, review Minor #3): after every run, any cache entry for a
+fid that is no longer showing/coming, or whose `trailer` no longer matches that film's CURRENT
+trailer, is dropped from the cache, and any `bd-*.webp` file in `<data_dir>/posters/` not named by a
+surviving cache entry is deleted — the same "collect what's still wanted, remove whatever else is on
+disk" convention `steps/og.py` already uses for `data/og/`.
 
 Offline (`ctx.get("offline")`): no subprocess is started at all — the step returns immediately. Not a
 courtesy: run_steps() runs every `steps/*.py` (including this one) with `--offline` in the test suite,
@@ -37,7 +58,8 @@ Every cache entry whose trailer id still matches the film's CURRENT trailer, and
 exist on disk, is copied onto `data["films"][fid]["backdrop"]` (never `data["coming"][fid]` —
 pages/coming.py never calls Kit.backdrop(); the cache entry still sits there ready for the day the
 film starts showing, so it costs nothing to have fetched it early) for site_kit.Kit.backdrop() to
-prefer over the poster-blur fallback.
+prefer over the poster-blur fallback. A film overridden to "none" is never attached, however stale a
+cache entry from before the override existed.
 
 run(data, ctx) -> {"new": n, "failed": n, "cached": n} | {"new": 0, "failed": 0, "cached": 0, "offline": True}
 """
@@ -52,12 +74,15 @@ import shutil
 import statistics
 import subprocess
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import yaml
 from PIL import Image, ImageFilter, ImageStat
 
 ROOT = Path(__file__).resolve().parent.parent
+OVERRIDE_PATH = ROOT / "backdrops_override.yaml"
 
 YT = re.compile(r"^[A-Za-z0-9_-]{11}$")   # same shape site_kit.YT validates a trailer id against
 FID = re.compile(r"^[a-z0-9][a-z0-9_-]{0,120}$")
@@ -67,7 +92,9 @@ START_FRAC, END_FRAC = 0.12, 0.80
 WIDTHS = (1280, 640)
 WEBP_QUALITY = 80
 DEFAULT_MAX_NEW = 8
-FAIL_TTL = timedelta(days=7)
+DEFAULT_BUDGET_S = 480   # 8 minutes of wall clock spent STARTING new films, per run (fix round 1)
+FAIL_TTL_TRANSIENT = timedelta(hours=6)    # download/ffprobe/ffmpeg/network trouble -- probably a blip
+FAIL_TTL_REJECTED = timedelta(days=7)      # the video played fine, every sampled frame just scored None
 DOWNLOAD_TIMEOUT = 240
 FFPROBE_TIMEOUT = 20
 FFMPEG_TIMEOUT = 30
@@ -217,15 +244,20 @@ def _extract_frame(video: Path, t: float, run=None):
 
 
 def _pick_best_frame(video: Path, duration, run=None):
-    """-> (score, PIL.Image, t) for the best of SAMPLE_COUNT candidates, or None if every candidate
-    either failed to extract or was rejected by score_frame."""
+    """-> (best, any_extracted). `best` is (score, PIL.Image, t) for the highest-scoring of
+    SAMPLE_COUNT candidates, or None if none scored. `any_extracted` is True as soon as even one
+    frame was successfully pulled off the video and decoded -- it is what lets the caller tell
+    "every seek itself failed" (transient: ffmpeg/the video is the problem) apart from "frames came
+    back fine but score_frame rejected all of them" (rejected: the content is the problem) -- fix
+    round 1, review Important #1."""
     if not duration or duration <= 0:
-        return None
+        return None, False
     lo, hi = START_FRAC * duration, END_FRAC * duration
     if hi <= lo:
         hi = lo + 0.5
     step = (hi - lo) / (SAMPLE_COUNT - 1) if SAMPLE_COUNT > 1 else 0
     best = None
+    any_extracted = False
     for i in range(SAMPLE_COUNT):
         t = lo + step * i
         blob = _extract_frame(video, t, run=run)
@@ -237,13 +269,14 @@ def _pick_best_frame(video: Path, duration, run=None):
             img = img.convert("RGB")
         except Exception:   # noqa: BLE001 - a truncated/corrupt frame is simply not a candidate
             continue
+        any_extracted = True
         img = crop_letterbox(img)
         s = score_frame(img)
         if s is None:
             continue
         if best is None or s > best[0]:
             best = (s, img, t)
-    return best
+    return best, any_extracted
 
 
 def _save_webp(img: Image.Image, out_dir: Path, fid: str):
@@ -266,24 +299,48 @@ def _save_webp(img: Image.Image, out_dir: Path, fid: str):
     return h, names, h1280
 
 
-def process_film(fid: str, trailer_id: str, work_dir: Path, out_dir: Path, run=None):
-    """-> {"trailer", "w1280", "w640", "w", "h", "t"} on success, else None. Always deletes whatever
-    it downloaded for this fid, success or failure (the caller decides what a None means: a cached
-    failure, never a crash — see run())."""
+def process_film(fid: str, trailer_id: str, work_dir: Path, out_dir: Path, run=None, forced_t=None):
+    """-> ({"trailer", "w1280", "w640", "w", "h", "t"}, None) on success, else (None, kind) where
+    kind is "transient" (download/ffprobe failed, or every ffmpeg seek itself failed) or "rejected"
+    (frames came back fine, score_frame rejected all of them) -- see the module docstring and
+    run()'s use of this to pick a retry TTL. Always deletes whatever it downloaded for this fid,
+    success or failure (the caller decides what None means: a cached failure, never a crash — see
+    run()).
+
+    `forced_t`, when given (backdrops_override.yaml's `fid: <seconds>` form), skips ffprobe and the
+    16-sample scoring loop entirely: exactly that one timestamp is extracted, still letterbox-cropped
+    and encoded the normal way, but never scored/rejected -- a human already decided it's clean."""
     work_dir.mkdir(parents=True, exist_ok=True)
     video = None
     try:
         video = _yt_dlp_download(trailer_id, work_dir, fid, run=run)
         if not video or not video.is_file():
-            return None
-        duration = _ffprobe_duration(video, run=run)
-        best = _pick_best_frame(video, duration, run=run)
-        if not best:
-            return None
-        score, img, t = best
+            return None, "transient"
+
+        if forced_t is not None:
+            blob = _extract_frame(video, forced_t, run=run)
+            if not blob:
+                return None, "transient"
+            try:
+                img = Image.open(io.BytesIO(blob))
+                img.load()
+                img = img.convert("RGB")
+            except Exception:   # noqa: BLE001 - a truncated/corrupt frame at the forced timestamp
+                return None, "transient"
+            img = crop_letterbox(img)
+            t = forced_t
+        else:
+            duration = _ffprobe_duration(video, run=run)
+            if not duration or duration <= 0:
+                return None, "transient"
+            best, any_extracted = _pick_best_frame(video, duration, run=run)
+            if not best:
+                return None, ("rejected" if any_extracted else "transient")
+            _, img, t = best
+
         h, names, h1280 = _save_webp(img, out_dir, fid)
         return {"trailer": trailer_id, "w1280": f"/posters/{names[1280]}", "w640": f"/posters/{names[640]}",
-                "w": 1280, "h": h1280, "t": round(t, 1)}
+                "w": 1280, "h": h1280, "t": round(t, 1)}, None
     finally:
         for p in work_dir.glob(f"{fid}.*"):   # the finished file plus any yt-dlp .part/.ytdl leftovers
             try:
@@ -317,9 +374,46 @@ def _parse_iso(s):
         return None
 
 
-def _fail_is_stale(fail_iso, now_dt) -> bool:
-    at = _parse_iso(fail_iso)
-    return at is None or now_dt - at >= FAIL_TTL
+def _fail_is_stale(entry: dict, now_dt) -> bool:
+    """A `fail` entry's TTL depends on its `kind` (fix round 1): "transient" retries after 6h, a
+    genuine content "rejected" (or an old entry from before this fix, with no `kind` at all) keeps
+    the full 7-day TTL -- defaulting an unlabelled entry to the LONGER ttl is the conservative
+    choice, so a pre-fix cache never gets hammered by an unintended mass-retry the moment this
+    ships."""
+    at = _parse_iso(entry.get("fail"))
+    ttl = FAIL_TTL_TRANSIENT if entry.get("kind") == "transient" else FAIL_TTL_REJECTED
+    return at is None or now_dt - at >= ttl
+
+
+def _load_overrides(path: Path | None = None) -> dict:
+    """fid -> None ("none": force the poster-blur fallback, never attempt this film) | float
+    (seconds: skip scoring, take exactly this frame). See backdrops_override.yaml's own header.
+    A missing file, unparsable YAML, or a malformed entry is never an error -- just ignored/empty.
+
+    `path` defaults to the MODULE-LEVEL `OVERRIDE_PATH`, read here (not as this function's own
+    default argument value, which Python would bind once at import time) so a test's
+    `monkeypatch.setattr(steps.backdrops, "OVERRIDE_PATH", ...)` is actually honoured."""
+    path = OVERRIDE_PATH if path is None else path
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError):
+        return {}
+    if not isinstance(raw, dict):
+        return {}
+    out = {}
+    for fid, v in raw.items():
+        if not FID.match(str(fid)):
+            continue
+        if isinstance(v, str) and v.strip().lower() == "none":
+            out[fid] = None
+            continue
+        try:
+            t = float(v)
+        except (TypeError, ValueError):
+            continue
+        if t >= 0:
+            out[fid] = t
+    return out
 
 
 def _candidates(data: dict) -> dict:
@@ -361,44 +455,101 @@ def run(data: dict, ctx: dict | None = None) -> dict:
         max_new = int(os.environ.get("CINEMA_BACKDROPS_MAX", DEFAULT_MAX_NEW))
     except ValueError:
         pass
+    budget_s = DEFAULT_BUDGET_S
+    try:
+        budget_s = float(os.environ.get("CINEMA_BACKDROPS_BUDGET_S", DEFAULT_BUDGET_S))
+    except ValueError:
+        pass
 
     now_iso = ctx.get("now") or datetime.now(timezone.utc).isoformat()
     now_dt = _parse_iso(now_iso) or datetime.now(timezone.utc)
     cache = _load(cache_path)
     candidates = _candidates(data)
+    overrides = _load_overrides()
+    t_start = time.monotonic()
+
+    def over_budget() -> bool:
+        return (time.monotonic() - t_start) >= budget_s
 
     new_count = failed = cached = 0
     try:
         for fid, trailer in candidates.items():
+            if fid in overrides and overrides[fid] is None:
+                # "none": never show a backdrop for this film -- no attempt, no retry, and the
+                # marker itself is enough for the prune step below to keep any stale files off disk.
+                cache[fid] = {"trailer": trailer, "override": "none"}
+                cached += 1
+                continue
+
+            forced_t = overrides.get(fid)   # a float here means "take exactly this second"
             entry = cache.get(fid)
-            if isinstance(entry, dict) and entry.get("trailer") == trailer:
+
+            if forced_t is not None:
+                if (isinstance(entry, dict) and entry.get("trailer") == trailer
+                        and entry.get("override_t") == forced_t and entry.get("w1280")):
+                    cached += 1
+                    continue   # already extracted at this exact override value
+            elif isinstance(entry, dict) and entry.get("trailer") == trailer and entry.get("override") != "none":
                 if entry.get("fail"):
-                    if not _fail_is_stale(entry["fail"], now_dt):
+                    if not _fail_is_stale(entry, now_dt):
                         cached += 1
                         continue
-                    # stale failure: falls through to a fresh attempt below, still subject to the cap
-                else:
+                    # stale failure: falls through to a fresh attempt below, still subject to the
+                    # cap/budget
+                elif entry.get("w1280"):
                     cached += 1
                     continue
-            if new_count >= max_new:
-                continue   # left uncached on purpose -- a later run picks it up (the brief's cap)
+                # else: a malformed/partial entry (e.g. a leftover "none" marker whose override was
+                # just removed) -- fall through and reprocess normally
+
+            if new_count >= max_new or over_budget():
+                continue   # left uncached on purpose -- a later run picks it up (the brief's cap/budget)
             new_count += 1
             try:
-                result = process_film(fid, trailer, work_dir, out_dir)
+                result, kind = process_film(fid, trailer, work_dir, out_dir, forced_t=forced_t)
             except Exception as e:   # noqa: BLE001 - one film's failure must never fail the step
-                result = None
+                result, kind = None, "transient"   # an unhandled exception is an infra problem, not a content one
                 print(f"backdrops: {fid}: {e}", file=sys.stderr)
             if result:
-                cache[fid] = {**result, "at": now_iso}
+                cache[fid] = {**result, "at": now_iso, **({"override_t": forced_t} if forced_t is not None else {})}
             else:
-                cache[fid] = {"trailer": trailer, "fail": now_iso}
+                cache[fid] = {"trailer": trailer, "fail": now_iso, "kind": kind or "transient",
+                              **({"override_t": forced_t} if forced_t is not None else {})}
                 failed += 1
     finally:
         shutil.rmtree(work_dir, ignore_errors=True)
         _save(cache_path, cache)
 
+    # prune: a cache entry for a fid no longer showing/coming, or whose trailer has moved on since
+    # this entry was written, is dropped -- and with it, any bd-*.webp file nothing else still wants
+    # (same "collect what's kept, delete whatever else is on disk" convention as steps/og.py's own
+    # out_dir prune) -- fix round 1, review Minor #3.
+    keep_names = set()
+    for fid in list(cache):
+        entry = cache[fid]
+        if not isinstance(entry, dict):
+            del cache[fid]
+            continue
+        current_trailer = candidates.get(fid)
+        if current_trailer is None or entry.get("trailer") != current_trailer:
+            del cache[fid]
+            continue
+        for key in ("w1280", "w640"):
+            name = entry.get(key)
+            if name:
+                keep_names.add(os.path.basename(name))
+    for p in out_dir.glob("bd-*.webp"):
+        if p.name not in keep_names:
+            try:
+                p.unlink()
+            except OSError:
+                pass
+    _save(cache_path, cache)
+
     # attach a still-valid, still-on-disk entry onto the film for Kit.backdrop() to read this build
     for fid, f in (data.get("films") or {}).items():
+        if fid in overrides and overrides[fid] is None:
+            continue   # forced no-backdrop: never attach, however stale a pre-override entry is
         entry = cache.get(fid)
         if not isinstance(entry, dict) or entry.get("fail") or not entry.get("w1280"):
             continue

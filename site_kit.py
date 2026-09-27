@@ -779,7 +779,17 @@ class Kit:
         bd = f.get("backdrop")
         if isinstance(bd, dict) and bd.get("w1280") and bd.get("w640"):
             w1280, w640 = esc(rel(bd["w1280"])), esc(rel(bd["w640"]))
-            w, h = bd.get("w") or 1280, bd.get("h") or 720
+            # int()'d like every other numeric attribute in this file (size[0]/size[1] above) --
+            # never an f-string interpolation of a raw value, even one steps/backdrops.py itself
+            # always writes as a plain int today (fix round 1, review Minor #1).
+            try:
+                w = int(bd.get("w") or 1280)
+            except (TypeError, ValueError):
+                w = 1280
+            try:
+                h = int(bd.get("h") or 720)
+            except (TypeError, ValueError):
+                h = 720
             attrs = (' fetchpriority="high"' if hero else "") + ("" if hero else ' loading="lazy"')
             img = (f'<img src="{w1280}" srcset="{w640} 640w, {w1280} 1280w" sizes="100vw" width="{w}" height="{h}"'
                    f' alt="" decoding="async"{attrs} onerror="this.remove()">')
