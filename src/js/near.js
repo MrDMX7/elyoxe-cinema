@@ -10,7 +10,7 @@ function nearMsg(t) {
     if (t && LOC) el.insertAdjacentHTML("beforeend", ' <button type="button" class="lnk" data-forget>' + esc(TX.forget) + "</button>");
   });
 }
-function forgetLoc() { LOC = null; set("loc", ""); nearMsg(""); qa("[data-dist]").forEach(function (e) { e.textContent = ""; }); if (S) renderNow(); }
+function forgetLoc() { LOC = null; set("loc", ""); nearMsg(""); qa("[data-dist]").forEach(function (e) { e.textContent = ""; }); if (S) { renderNow(); renderNear(); } }
 
 function sortByKm(els) {
   if (els.length < 2) return;
@@ -40,7 +40,7 @@ function nearest() {
 function applyNear(fromTap) {
   return geo().then(function () {
     showDistances();
-    if (S) renderNow();
+    if (S) { renderNow(); renderNear(); }
     if (!fromTap && LOC) qa("[data-near-msg]").forEach(function (el) { if (!el.firstChild) el.innerHTML = '<button type="button" class="lnk" data-forget>' + esc(TX.forget) + "</button>"; });
     var n = nearest();
     if (!n || !fromTap) return;

@@ -47,7 +47,7 @@ span.num[dir=ltr],bdi.num{unicode-bidi:isolate}
 .js .js-only{display:flex!important}
 .nojs{margin-block-start:10px;font-size:14px}
 .wrap{max-inline-size:var(--max);margin-inline:auto;padding-inline:var(--gut)}
-[lang=en] .pst-t,[lang=en] .feat-t,[lang=en] .ft{letter-spacing:-.01em}
+[lang=en] .pst-t,[lang=en] .ft{letter-spacing:-.01em}
 
 /* ------------------------------------------------ the chrome (UI redesign Task 2): one header line, a phone tab bar,
    the footer, and the sheets the header's pills open */
@@ -152,8 +152,7 @@ html.sheet-open{overflow:hidden}
 .fd{display:inline-block;animation:flip .5s var(--ease) both;animation-delay:calc(var(--i) * 45ms);transform-origin:50% 50%}
 @keyframes flip{0%{transform:rotateX(90deg)}100%{transform:none}}
 
-/* ------------------------------------------------ home hero (the featured film shows on desktop only) */
-.hero{position:relative}
+/* ------------------------------------------------ backdrops (the home billboard's and the film page's)
 /* the backdrop is the poster blurred and darkened to the light a screen throws on a dark hall (brightness .38
    caps any pixel at sRGB .38, so screen-light text keeps >= 5:1 even before the gradients); never a colour wash */
 .bd{position:absolute;inset-inline:0;inset-block-start:calc(-1 * var(--head));block-size:236px;overflow:hidden;background:var(--night);z-index:-1}
@@ -164,10 +163,7 @@ html.sheet-open{overflow:hidden}
   linear-gradient(to var(--to-end),var(--night) 0%,rgba(15,11,12,0) 45%),
   linear-gradient(180deg,rgba(15,11,12,.1) 0%,rgba(15,11,12,.5) 60%,var(--night) 100%)}
 .bd.noimg::after{background:linear-gradient(180deg,rgba(15,11,12,.15) 0%,rgba(15,11,12,.55) 60%,var(--night) 100%)}
-.hero .bd{display:none}
 .fhero .bd-t{display:none}
-.feat{display:none}
-.hero-in{position:relative}
 
 /* ------------------------------------------------ section heads, poster rows */
 .sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-block:18px 10px}
@@ -222,8 +218,8 @@ html.sheet-open{overflow:hidden}
 .head .meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--seat);margin-block-start:10px}
 .go a{color:var(--screen)}
 .hint{color:var(--seat);font-size:13px;margin-block-start:10px}
-main > section:not(.hero):not(.head):not(.fhero),main > .wrap > section,.split .main > section{margin-block-start:36px}
-main > section > h2,.main > section > h2,.cities > h2,.cardsx > h2,.srcs > h2{font-size:26px;padding-block-end:10px;margin-block-end:4px;border-block-end:1px solid var(--line)}
+main > section:not(.bill):not(.rail):not(.all):not(.head):not(.fhero),main > .wrap > section,.split .main > section{margin-block-start:36px}
+main > section > h2,.main > section > h2,.cities > h2,.srcs > h2{font-size:26px;padding-block-end:10px;margin-block-end:4px;border-block-end:1px solid var(--line)}
 h2 small{font-family:var(--body);font-weight:400;font-size:13px;color:var(--seat)}
 
 /* ------------------------------------------------ film page */
@@ -380,7 +376,6 @@ a.src,.crumbs a,.hall .where a{display:inline-flex;align-items:center;min-block-
 .ex s{color:var(--seat)}
 .ex b{color:var(--gold);font-weight:600;font-size:18px}
 .cardrows .crd{border-block-end:0}
-.cardsx .lead{font-size:14px}
 .more{margin-block-start:14px}
 
 /* schedules on a city page: film → cinemas → times */
@@ -461,30 +456,6 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
   .alt{display:inline-flex;align-items:center;min-block-size:40px;margin-inline-start:4px}
   .tabs{display:none}
 
-  /* home hero: 600 px of the featured film, the control panel at the end side */
-  .hero{min-block-size:530px}
-  .hero .bd{display:block;block-size:600px;background:radial-gradient(520px 360px at var(--gx-end) 220px,rgba(122,22,38,.55),rgba(15,11,12,0)),var(--night)}
-  .hero .bd img{inset:-60px;inline-size:calc(100% + 120px);block-size:calc(100% + 120px);filter:blur(40px) saturate(1.1) brightness(.38);object-fit:cover;object-position:center 30%}
-    .hero .bd.noimg::after{background:linear-gradient(180deg,transparent 75%,var(--night) 100%)}
-  .bd-t{display:flex;position:absolute;inset-block-start:calc(var(--head) + 60px);inset-inline-end:calc(var(--gut) + 400px);inline-size:280px;block-size:420px;aspect-ratio:auto;opacity:.55;
-    box-shadow:0 40px 90px rgba(122,22,38,.45)}
-  .bd-t .pst-t{font-size:40px}
-  .hero .bd::after{background:radial-gradient(520px 360px at var(--gx-end) 220px,rgba(122,22,38,.5),rgba(122,22,38,0)),
-    linear-gradient(to var(--to-end),var(--night) 0%,rgba(15,11,12,.85) 38%,rgba(15,11,12,.1) 70%),linear-gradient(180deg,transparent 65%,var(--night) 100%)}
-  .hero-in{display:grid;grid-template-columns:minmax(0,640px) 360px;justify-content:space-between;align-items:start;gap:40px;padding-block-start:70px}
-  .feat{display:flex;flex-direction:column;gap:14px}
-  .eyebrow{font-size:14px;color:var(--dim)}
-  .feat-t{font-family:var(--display);font-weight:var(--dw);font-size:104px;line-height:.9}
-  [lang=en] .feat-t{font-size:80px;letter-spacing:-.03em;line-height:.95}
-  .feat-t a{text-decoration:none}
-  .feat-m{display:flex;flex-wrap:wrap;gap:6px 28px;align-items:baseline;font-size:15px;color:var(--dim)}
-  .feat-m .vw{font-family:var(--display);font-weight:var(--dw);font-size:34px}
-  .feat-m .num{color:var(--dim)}
-  .feat-s{font-size:16px;line-height:1.7;color:var(--dim);max-inline-size:520px}
-  .feat-a{display:flex;gap:12px;margin-block-start:8px}
-  .feat-a .btn{min-block-size:56px;padding-inline:28px}
-  .feat-a .btn.ghost{padding-inline:22px}
-  .me-home{margin-block-start:100px;gap:14px}
   .now-f{font-size:14px;font-weight:400}
   .flip .d{min-inline-size:24px;block-size:38px;font-size:21px}
   .flip .c{font-size:21px}
@@ -507,7 +478,7 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
   [lang=en] .pt{font-size:52px}
   .head{padding-block:34px 10px}
   .lead{font-size:16px}
-  main > section > h2,.main > section > h2,.cities > h2,.cardsx > h2,.srcs > h2,.day > h2{font-size:34px}
+  main > section > h2,.main > section > h2,.cities > h2,.srcs > h2,.day > h2{font-size:34px}
   .clist a{font-size:26px}
   .srow{grid-template-columns:minmax(12rem,20rem) minmax(0,1fr);gap:8px 40px}
   .sf{flex-direction:column;justify-content:flex-start}
@@ -647,3 +618,172 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
 /* poster tiles: on a phone only two of up to 66 sit in view in the sideways row. Their width comes from the
    row or the grid; the height is remembered once drawn. The big first tile keeps its glow (not contained). */
 .film:not(.big){content-visibility:auto;contain-intrinsic-block-size:auto 340px}
+
+/* ------------------------------------------------ home (UI redesign Task 3): the billboard, «يبدأ قريب منك», the rows,
+   the tile, «كل الأفلام» and its filter sheet. Measurements from the approved mock (ui-mock/mock.css). */
+body[data-page=home]::before{display:none}
+/* the billboard: a trailer frame full-bleed under the header, night rising from the foot and from the text's side */
+.bill{position:relative;block-size:78vh;min-block-size:520px;max-block-size:820px;margin-block-start:calc(-1 * var(--head));
+  display:flex;align-items:flex-end;overflow:hidden}
+.bill-bd{position:absolute;inset:0}
+.bill .bd{inset:0;block-size:auto;z-index:0;transition:opacity .7s var(--ease)}
+.bill .bd.in{opacity:0}
+.bill .bd img.fr{inset:0;inline-size:100%;block-size:100%;filter:none;object-fit:cover;object-position:center 30%}
+.bill .bd-t{display:none}
+/* no frame yet: the poster, full-bleed and darkened on a phone; blurred behind a sharp copy on a desktop */
+.bill .bd.pf img.pb{inset:0;inline-size:100%;block-size:100%;object-fit:cover;object-position:center 20%;filter:brightness(.62) saturate(1.05)}
+.bill .bd.pf img.ps{display:none}
+.bill .bd::after{background:linear-gradient(0deg,var(--night) 0%,rgba(15,11,12,.55) 38%,rgba(15,11,12,0) 70%),
+  linear-gradient(to var(--to-end),rgba(15,11,12,.85) 0%,rgba(15,11,12,0) 60%)}
+.bill-w{inline-size:100%;position:static}
+.bill-in{position:relative;z-index:1;max-inline-size:640px;padding-block-end:48px}
+.bill .eyebrow{font-size:13px;color:var(--seat);margin-block-end:8px}
+.bill-t{font-size:clamp(44px,15vw,64px);line-height:1.02;margin-block-end:12px}
+[lang=en] .bill-t{font-size:clamp(34px,10vw,52px);letter-spacing:-.02em}
+.bill-t a{text-decoration:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.bill-v{font-size:15px;line-height:1.6;max-inline-size:52ch;margin-block-end:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.bill-v b{font-weight:500;color:var(--screen)}
+.bill-v b.v-yes{color:var(--gold)}
+.bill-f{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--seat);margin-block-end:20px}
+.bill-f span:first-child{color:var(--screen)}
+.bill-f .num{color:inherit}
+.cta{display:flex;gap:10px;flex-wrap:wrap}
+.btn.main{background:var(--screen);color:var(--night);font-weight:500;min-block-size:48px;font-size:15px;justify-content:center}
+.btn.main .from{display:inline-flex;align-items:baseline;gap:6px;margin-inline-start:6px;color:var(--velvet);font-weight:600}
+.btn.main .from[hidden]{display:none}
+.btn.main .p .num,.btn.main .p b{color:var(--velvet)}
+.btn.main .p s{color:var(--ink-3)}
+.btn.main .p small{display:none}
+.cta{gap:8px}
+.cta .btn{min-block-size:48px;font-size:15px;padding-inline:16px}
+.btn.ghost{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.btn.ghost[hidden]{display:none}
+.btn svg{flex:0 0 auto}
+/* the indicators: a line each, inside a 28×24 button */
+.dots{position:absolute;z-index:1;inset-block-end:12px;inset-inline-end:var(--gut);gap:2px}
+.dots button{inline-size:28px;block-size:24px;display:grid;place-items:center;padding:0;border:0;background:none;cursor:pointer}
+.dots i{display:block;inline-size:22px;block-size:2px;background:var(--line-2)}
+.dots button[aria-pressed=true] i{background:var(--screen)}
+.dots button:hover i{background:var(--dim)}
+.dots:empty{display:none!important}
+
+/* rows: a heading line, then a sideways strip from edge to edge (its start in line with the page's text) */
+.rail{margin-block-start:34px}
+.rail[hidden]{display:none}
+.rail-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 14px;margin-block-end:12px}
+.rail-h h2{font-size:26px}
+[lang=en] .rail-h h2,[lang=en] .all-h h2{font-size:22px;letter-spacing:-.01em}
+:root[dir=rtl] .bill-t a[dir=ltr]{text-align:right}
+.rail-h .sub{font-size:13px;color:var(--seat)}
+.rail-h .all-l{margin-inline-start:auto;font-size:13px;color:var(--seat);text-decoration:none;min-block-size:24px;display:inline-flex;align-items:center}
+.rail-h .all-l:hover{color:var(--screen)}
+.rail-h .near-ask{font-size:13px;min-block-size:24px;margin-inline-start:10px}
+.rail-h .near-ask[hidden]{display:none}
+.rail-h .near-m{flex-basis:100%;font-size:12px;color:var(--dim)}
+.js .arr.js-only{display:none!important}
+.strip{--edge:max(var(--gut),calc((100% - var(--max)) / 2 + var(--gut)));display:flex;gap:16px;overflow-x:auto;overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;padding-inline:var(--edge);scroll-padding-inline:var(--edge);padding-block:6px 4px;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.strip > *{flex:0 0 auto;scroll-snap-align:start}
+
+/* the tile: poster, title on one line, the price (or «السعر في الشباك»); a corner tag; on a desktop pointer a panel
+   over the poster's foot with the verdict word and the next time — over it, so nothing below moves */
+.tile{display:flex;flex-direction:column;min-inline-size:0;text-decoration:none;color:var(--screen);gap:0}
+.strip .tile{inline-size:128px}
+.tp{position:relative;display:block;overflow:hidden;background:#1D1517}
+.tile .pst{padding:8px}
+.tile .pst.img{padding:0}
+.tile .pst-t{font-size:22px}
+.tile .tag{position:absolute;z-index:2;inset-block-start:0;inset-inline-start:0;background:var(--velvet);color:var(--screen);font-size:11px;line-height:1.6;padding:2px 7px}
+.tile .t{font-size:14px;line-height:1.4;margin-block-start:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* an English title on the Arabic page lines up with the Arabic ones (the start of the RTL column), its ellipsis at its own end */
+:root[dir=rtl] .tile .t[dir=ltr]{text-align:right}
+.tile .m{font-size:13px;line-height:1.45;color:var(--seat)}
+.tile .m .p,.tile .m .pv{display:inline;white-space:nowrap}
+.tile .m .p .num,.tile .m .p b,.tile .m .pv .num{font-weight:500}
+.tile .m .p s{font-size:11px;margin-inline-start:4px}
+.tile .m .p small,.tile .m .asof{display:block;font-size:11px}
+.tile .m .fw,.tile .m .na{font-size:12px;color:var(--seat)}
+.tile.off .tp{opacity:.55}
+.tile .hv{display:none}
+.grid .film,.grid .film.big{inline-size:auto;flex:none}
+.film.tile{gap:0}
+.grid .film:not(.big){contain-intrinsic-block-size:auto 240px}
+.tile.soon .m{color:var(--dim)}
+
+/* «يبدأ قريب منك»: small poster, the time with «بعد N» in live green, the film, the cinema and how far */
+.nr{inline-size:250px;display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:center;padding:10px;background:var(--tint);text-decoration:none;color:var(--screen)}
+.nr-p{display:block;aspect-ratio:2/3;background:#1D1517;overflow:hidden}
+.nr-p img{display:block;inline-size:100%;block-size:100%;object-fit:cover}
+.nr-b{display:flex;flex-direction:column;min-inline-size:0}
+.nr-tm{display:flex;align-items:baseline;gap:6px}
+.nr-tm b{font-size:22px;font-weight:500;line-height:1.1}
+.nr-tm small{font-size:12px;color:var(--live)}
+.nr-t{font-size:13px;margin-block-start:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nr-c,.nr-pr{font-size:12px;color:var(--seat);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nr-pr .num{color:var(--gold);font-weight:500}
+
+/* «كل الأفلام»: 3 columns on a phone, 7 on a desktop, under «تصفية» (a badge counting what filters) and the sort */
+.all{margin-block-start:44px;scroll-margin-block-start:calc(var(--head) + 8px)}
+.all-h{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-block-end:16px}
+.all-h h2{font-size:26px;margin-inline-end:auto;flex-basis:100%}
+.all-n{font-family:var(--body);font-weight:400;font-size:15px;color:var(--seat)}
+.all-h .chip{min-block-size:36px;padding-inline:14px;gap:8px}
+.all-h .chip svg{inline-size:16px;block-size:16px}
+.fbadge{background:var(--gold);color:var(--ink);min-inline-size:18px;padding-inline:4px;text-align:center;font-size:11px;line-height:18px;font-weight:500}
+.fbadge[hidden]{display:none}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 12px}
+/* the filter sheet: chips per section, the prayer switch, then «مسح» and «اعرض N فيلم» held at its foot */
+.sheet .go{position:sticky;inset-block-end:calc(-20px - env(safe-area-inset-bottom));display:flex;gap:10px;margin-block-start:10px;
+  padding-block:12px calc(20px + env(safe-area-inset-bottom));margin-block-end:calc(-20px - env(safe-area-inset-bottom));background:#17100F}
+.sheet .go .btn{flex:1 1 0;justify-content:center;min-block-size:48px;padding-inline:12px;font-size:15px}
+.sheet .prayer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin:0;font-size:14px;color:var(--screen)}
+.sheet .prayer .chip{min-block-size:40px}
+.sheet .pr-t{flex-basis:100%}
+@media (min-width:1024px){
+  .bill-in{padding-block-end:56px}
+  .bill .bd.pf img.pb{inset:-60px;inline-size:calc(100% + 120px);block-size:calc(100% + 120px);filter:blur(40px) saturate(1.1) brightness(.38)}
+  .bill .bd.pf img.ps{display:block;position:absolute;inset:auto;inset-block-start:calc(var(--head) + 50px);inset-inline-end:calc(var(--gut) + 60px);
+    inline-size:300px;block-size:450px;max-block-size:calc(100% - var(--head) - 110px);inline-size:auto;aspect-ratio:2/3;filter:none;object-fit:cover;z-index:1;
+    box-shadow:0 40px 90px rgba(122,22,38,.45),0 40px 90px rgba(0,0,0,.5)}
+  .cta{gap:10px}
+  .cta .btn{padding-inline:22px}
+  .all-h h2{flex-basis:auto}
+  .bill-t{font-size:96px;line-height:.98}
+  [lang=en] .bill-t{font-size:72px}
+  .bill .eyebrow{font-size:14px}
+  .bill-v{font-size:16px}
+  .dots{inset-block-end:40px}
+  .rail{margin-block-start:40px}
+  .rail-h h2{font-size:30px}
+  .strip{gap:12px}
+  .strip .tile{inline-size:188px}
+  .nr{inline-size:250px}
+  .grid{grid-template-columns:repeat(7,minmax(0,1fr));gap:26px 14px}
+  .grid .film:not(.big){contain-intrinsic-block-size:auto 330px}
+  .all{margin-block-start:56px}
+  .all-h h2{font-size:30px}
+}
+/* a desktop pointer: the row's arrows, the tile's lift and its panel */
+@media (hover:hover) and (min-width:1024px){
+  .js .arr.js-only{display:flex!important;gap:4px;opacity:0;transition:opacity .2s}
+  .rail:hover .arr,.rail:focus-within .arr{opacity:1}
+  .arr .icon{inline-size:32px;block-size:32px;border:1px solid var(--line-2)}
+  .arr .icon svg{inline-size:16px;block-size:16px}
+  .arr .icon:hover{border-color:var(--screen)}
+  [dir=rtl] .arr svg{transform:scaleX(-1)}
+  .tp{transition:transform .25s var(--ease)}
+  .tile:hover .tp,.tile:focus-visible .tp{transform:translateY(-4px)}
+  .tile .hv{display:flex;flex-direction:column;gap:2px;position:absolute;z-index:2;inset-inline:0;inset-block-end:0;padding:36px 10px 10px;
+    background:linear-gradient(rgba(15,11,12,0),rgba(15,11,12,.94) 45%);font-size:12px;line-height:1.4;opacity:0;transform:translateY(8px);
+    transition:opacity .2s,transform .2s var(--ease)}
+  .tile .hv .vw{font-family:var(--display);font-weight:var(--dw);font-size:20px;line-height:1.1;color:var(--screen)}
+  .tile.v-yes .hv .vw{color:var(--gold)}
+  .tile .hv .nx{color:var(--dim)}
+  .tile .hv .nx:empty{display:none}
+  .tile:hover .hv,.tile:focus-visible .hv{opacity:1;transform:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .bill .bd,.tp,.tile .hv,.arr{transition:none}
+  .tile:hover .tp,.tile:focus-visible .tp{transform:none}
+}

@@ -109,7 +109,11 @@ def test_events_hub_with_real_events_is_indexed_and_in_sitemap(out):
 
 def test_last_chance_strip_on_home_and_its_city_only(out):
     home = read(out, "index.html")
-    assert "آخر فرصة" in home and 'data-fid="heart-of-the-beast"' in home
+    # home (UI redesign Task 3): «آخر فرصة» is a row once 4 films are in their last days; with one (this fixture)
+    # its tile in «كل الأفلام» carries the «آخر أسبوع» tag, and no strip comes from the slot
+    tile = re.search(r'<a class="film tile[^"]*" href="/film/heart-of-the-beast/".*?</a>', home, re.S).group(0)
+    assert '<span class="tag">آخر أسبوع</span>' in tile
+    assert "last-chance" not in home and 'aria-labelledby="r-last"' not in home
 
     al_ain = read(out, "al-ain", "index.html")
     assert "آخر فرصة" in al_ain and 'data-fid="heart-of-the-beast"' in al_ain

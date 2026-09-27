@@ -38,7 +38,7 @@ if (C.cities && !C.cities[city]) city = "dubai";
 if (C.cards && card && !C.cards[card]) card = "";
 if (pageCity) set("city", pageCity);
 var ST = { who: get("who") || "", filt: get("filt") || "all", before: get("before") || "", sort: get("sort") || "",
-  prayer: get("prayer") === "1", hide: get("hide") === "1" };
+  prayer: get("prayer") === "1", hide: get("hide") === "1", flang: get("flang") || "" };
 function save(k, v) { ST[k] = v; set(k, v === true ? "1" : v === false ? "" : v); }
 var LOC = (function () {
   var v = get("loc"), m = v && /^(-?[\d.]+),(-?[\d.]+),(\d+)$/.exec(v);
@@ -56,7 +56,9 @@ var TX = AR ? {
   ends_b: "يخلص قبل {t}", no_clash: "بدون العروض المتقاطعة مع الصلاة", forget: "انسَ موقعي",
   clash: "يتقاطع مع {p}", maghrib: "المغرب", isha: "العشاء", ptimes: "المغرب {m}، العشاء {i}",
   ticket: "التذكرة: {film}، {cin}، {t}", close: "سكّر", trailer: "العرض الترويجي",
-  install: "ثبّت سينما على شاشتك", install_yes: "ثبّت", install_no: "لا، شكراً", share_t: "{film} في {cin}، {day} {t}"
+  install: "ثبّت سينما على شاشتك", install_yes: "ثبّت", install_no: "لا، شكراً", share_t: "{film} في {cin}، {day} {t}",
+  top: "الأكثر عرضاً الليلة", top_in: "الأكثر عرضاً في {city} الليلة", from: "من", next: "أقرب عرض {t}، {cin}", near_sub: "{city}، الحين {t}",
+  sort0: "الأكثر عرضاً", show: "اعرض {n}", n_live: "{n} بعد التصفية"
 } : {
   starts: "The film starts around {s} and ends around {e}", at: "Starts at {s}", subs: "{s} subtitles", sep: ", ",
   near_ask: "Finding the nearest cinema…", near_no: "We couldn’t get your location. No problem, pick your city above.",
@@ -66,7 +68,9 @@ var TX = AR ? {
   ends_b: "ends before {t}", no_clash: "no shows that overlap a prayer", forget: "Forget my location",
   clash: "Overlaps {p}", maghrib: "Maghrib", isha: "Isha", ptimes: "Maghrib {m}, Isha {i}",
   ticket: "Ticket: {film}, {cin}, {t}", close: "Close", trailer: "Trailer",
-  install: "Add Cinema to your home screen", install_yes: "Add", install_no: "No, thanks", share_t: "{film} at {cin}, {day} {t}"
+  install: "Add Cinema to your home screen", install_yes: "Add", install_no: "No, thanks", share_t: "{film} at {cin}, {day} {t}",
+  top: "Most shown tonight", top_in: "Most shown in {city} tonight", from: "from", next: "Next {t}, {cin}", near_sub: "{city}, now {t}",
+  sort0: "Most shown", show: "Show {n}", n_live: "{n} after filtering"
 };
 
 /* features (docs/PLUGINS.md): a module in this bundle (pages/<feature>.py JS) calls feature(fn), and fn runs at

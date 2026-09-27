@@ -40,13 +40,16 @@ function spanOf(a) {
 }
 function mm(m) { return ("0" + Math.floor(m / 60)).slice(-2) + ":" + ("0" + m % 60).slice(-2); }
 
+/* the home and city tiles work out which shows still fit (renderHome's showOk reads the clashes); elsewhere the
+   time buttons were just marked */
+function prayerDone() { if (S && (page === "home" || page === "city")) renderHome(false); else applyFilters(); }
 function applyPrayer() {
   qa("[data-prayer]").forEach(function (sw) { sw.setAttribute("aria-checked", ST.prayer ? "true" : "false"); });
   qa("[data-hide-clash]").forEach(function (b) { b.hidden = !ST.prayer; b.setAttribute("aria-pressed", ST.hide ? "true" : "false"); });
   if (!ST.prayer) {
     qa(".tm.clash").forEach(function (a) { a.classList.remove("clash"); a.removeAttribute("title"); var z = q(".pz", a); if (z) z.remove(); });
     qa("[data-prayer-times]").forEach(function (el) { el.textContent = ""; });
-    applyFilters();
+    prayerDone();
     return Promise.resolve();
   }
   return loadAdhan().then(function () {
@@ -62,6 +65,6 @@ function applyPrayer() {
     });
     var today = prayersFor(pageCity || city, TODAY);
     qa("[data-prayer-times]").forEach(function (el) { el.textContent = today ? sub(TX.ptimes, { m: mm(today.maghrib), i: mm(today.isha) }) : ""; });
-    applyFilters();
+    prayerDone();
   }).catch(function () {});
 }

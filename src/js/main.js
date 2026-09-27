@@ -33,7 +33,7 @@ function pickCity(c) {
   city = c; set("city", c);
   qa("[data-city-name]").forEach(function (el) { el.textContent = C.cities[c] || c; });
   qa("[data-citypick] a[data-city]").forEach(function (a) { if (a.getAttribute("data-city") === c) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
-  if (page === "home") loadCity();
+  if (page === "home") { loadCity(); billCity(); }
   if (page === "film") { renderFilm(); if (ST.prayer) applyPrayer(); }
 }
 function markCard() {
@@ -84,11 +84,20 @@ function lazyRow() {
   var io = new IntersectionObserver(function (es) {
     es.forEach(function (e) {
       if (!e.isIntersecting) return;
-      var tile = e.target.closest(".film"), n = tile, k = 0;
+      var tile = e.target.closest(".film, .tile"), n = tile, k = 0;
       while (n && k++ < 3) { var im = q("img[loading=lazy]", n); if (im) { im.loading = "eager"; io.unobserve(im); } n = n.nextElementSibling; }
     });
   }, { rootMargin: "200px" });
-  qa(".posters img[loading=lazy]").forEach(function (im) { io.observe(im); });
+  qa(".posters img[loading=lazy], .strip img[loading=lazy]").forEach(function (im) { io.observe(im); });
+}
+/* a home row's arrows (desktop): a strip's width at a time, toward the inline end or back (RTL scrolls negative) */
+function bindRails() {
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-rail]");
+    if (!b) return;
+    var st = q("[data-strip]", b.closest(".rail"));
+    if (st) st.scrollBy({ left: +b.getAttribute("data-rail") * st.clientWidth * 0.9 * (AR ? -1 : 1), behavior: RM ? "auto" : "smooth" });
+  });
 }
 
 (function init() {
@@ -125,7 +134,7 @@ function lazyRow() {
   upgradeTimes(); posterFallback();
   markCard(); marks(); ages(); renderPrices(false);
   if (page === "film") renderFilm();
-  bindSheets(); bindFilters(); bindTicket(); bindTrailer(); bindPWA(); lazyRow();
+  bindSheets(); bindFilters(); bindBill(); bindRails(); bindTicket(); bindTrailer(); bindPWA(); lazyRow();
   startFeatures();
   applyFilters();
   if (ST.prayer) applyPrayer();
@@ -137,5 +146,5 @@ function lazyRow() {
   });
   if (page === "home" || page === "city") loadCity();
   /* the clock: every minute «الحين», the struck times and the ages move on */
-  setInterval(function () { var d = TODAY; tick(); if (d !== TODAY) relabelDays(); marks(); ages(); renderNow(); }, 60e3);
+  setInterval(function () { var d = TODAY; tick(); if (d !== TODAY) relabelDays(); marks(); ages(); renderNow(); renderNear(); }, 60e3);
 })();

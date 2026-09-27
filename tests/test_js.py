@@ -103,3 +103,11 @@ def test_service_worker_and_manifest(tmp_path):
     assert {i["sizes"] for i in m["icons"]} == {"192x192", "512x512"} and any(i["purpose"] == "maskable" for i in m["icons"])
     for i in m["icons"]:
         assert os.path.exists(os.path.join(ROOT, "src", "icons", os.path.basename(i["src"])))
+
+
+def test_language_filter_and_film_count(tmp_path):
+    """Home's filter sheet (UI redesign Task 3): the language chip, and «اعرض N فيلم» counted as site_kit.films_n."""
+    assert run(tmp_path, '[langOk("English", ""), langOk("English", "English"), langOk("Hindi", "English"), langOk("", "Arabic")]') == [True, True, False, False]
+    got = run(tmp_path, '[1, 2, 5, 23].map(function (n) { return filmsN(n, "ar"); }).concat([filmsN(1, "en"), filmsN(23, "en")])')
+    assert got == [build.Site.films_n(1, "ar"), build.Site.films_n(2, "ar"), build.Site.films_n(5, "ar"), build.Site.films_n(23, "ar"), "1 film", "23 films"]
+    assert got[:4] == ["فيلم واحد", "فيلمين", "5 أفلام", "23 فيلم"]

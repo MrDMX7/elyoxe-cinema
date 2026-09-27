@@ -11,7 +11,7 @@ from site_kit import Emit, Pages, Plugin
 # helpers without globals), comments and indentation stripped. pure.js and disc.js are plain function
 # declarations with no page access: tests/test_js.py and tests/test_parity.py run them in node as they are.
 # main.js (start-up) stays last: a feature's main-bundle modules go in just before it (build.js_files).
-JS = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "ticket", "trailer", "pwa", "sheet", "main")
+JS = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "bill", "ticket", "trailer", "pwa", "sheet", "main")
 CSS = ()            # src/cinema.css is the base sheet; features append src/css/<name>.css
 LAZY_JS = ()
 DIRS = tuple(c for c, _, _ in CITIES) + ("film", "cards", "halls", "data", "assets", "en", "cinema", "cinemas", "sources")
@@ -28,40 +28,34 @@ def register(site):
 class CorePages(Pages):
     # ================================================================ pages
     def home(self):
+        """The home page (UI redesign Task 3, docs/superpowers/specs/2026-09-27-ui-redesign-design.md «Home»): the
+        billboard (the default city's most-shown film over a frame of its trailer, then its top 5 in turn), «يبدأ
+        قريب منك» (drawn by cinema.js from the city's slice), the rows, the feature slot, then «كل الأفلام» with
+        the filter sheet. The cities grid, the cards list and the chains' freshness live in the header's sheets,
+        /cinemas/, /cards/ and /sources/ now."""
         films = sorted(self.showing, key=lambda fid: (-self.today_count.get(fid, 0), fid))
+        today = [s for s in self.shows if s["date"] == self.today]
+        tops = {}
+        for c, _, _ in CITIES:
+            cnt = {}
+            for s in today:
+                if self.cinemas[s["cinema"]].get("city") == c: cnt[s["film"]] = cnt.get(s["film"], 0) + 1
+            tops[c] = sorted(cnt, key=lambda f: (-cnt[f], f))[:5]
+        tops["*"] = films[:5]   # a city with nothing tonight: the country's
         for lang in ("ar", "en"):
-            by_city = {c: len([x for x in self.cinemas.values() if x.get("city") == c]) for c, _, _ in CITIES}
-            body = ""
-            if films:
-                fid = films[0]; f = self.films[fid]; v, vw = self.vword(fid, lang)
-                vd = f.get("verdict") or {}
-                say = vd.get("ar") if lang == "ar" else vd.get("en")
-                facts = [x for x in [self.score(f, lang),
-                                     (f'{"الجمهور" if lang == "ar" else "Audience"} {num(str((f.get("rt") or {})["audience"]) + "%")}'
-                                      if (f.get("rt") or {}).get("audience") is not None and (f.get("rt") or {}).get("critics") is not None else ""),
-                                     (num(f["runtime"]) + (" دقيقة" if lang == "ar" else " min")) if f.get("runtime") else ""] if x]
-                mc = self.min_cell(self._by_film.get(fid, []), lang)
-                trailer = (f'<a class="btn ghost" href="https://www.youtube-nocookie.com/embed/{esc(f["trailer"])}" data-trailer="{esc(f["trailer"])}" rel="noopener" target="_blank">'
-                           f'<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>{"العرض الترويجي" if lang == "ar" else "Trailer"}</a>') if f.get("trailer") else ""
-                feat = (f'<div class="feat"><p class="eyebrow">{"الأكثر عرضاً الليلة" if lang == "ar" else "Most shown tonight"}</p>'
-                        f'<p class="feat-t"{self.title_attr(fid, lang)}><a href="{P(lang, "film", fid)}">{esc(self.ftitle(fid, lang))}</a></p>'
-                        f'<p class="feat-m"><span class="vw v-{v}">{esc(vw)}</span>{"".join(f"<span>{x}</span>" for x in facts)}</p>'
-                        + (f'<p class="feat-s">{dates(esc(say))}</p>' if say else "")
-                        + f'<p class="feat-a"><a class="btn light" href="{P(lang, "film", fid)}">{"الأوقات والأسعار" if lang == "ar" else "Times and prices"}'
-                        + (f'<span class="from" data-from="{esc(fid)}">{"من" if lang == "ar" else "from"} {mc[0]} {esc(L(T["aed"], lang))}</span>' if mc else "")
-                        + f'</a>{trailer}</p></div>')
-                body += f'<section class="hero">{self.backdrop(fid)}<div class="wrap hero-in">{feat}{self.me(lang, "dubai", "home")}</div></section>'
-            else:
-                body += f'<section class="hero"><div class="wrap hero-in">{self.me(lang, "dubai", "home")}</div></section>'
+            self.site._first_poster = {}   # no tile claims the page's image priority: the billboard's frame is the LCP
+            body = self.billboard(lang, tops, today) if films else ""
             body += (f'<h1 class="vh">{"كل سينما في الإمارات، والسعر بعد خصم بطاقتك" if lang == "ar" else "Every cinema in the UAE, priced after your card discount"}</h1>')
-            body += self.posters_row(lang, films, self.shows, "الليلة" if lang == "ar" else "Tonight")
+            body += self.rail(lang, "near", L(HOME_T["near"], lang), "",
+                              sub=f'<span data-near-sub></span><button type="button" class="lnk near-ask" data-near hidden>{esc(L(CHROME_T["near"], lang))}</button>',
+                              attrs=" data-near-row hidden")
+            body += self.home_rows(lang, films)
             body += self.slot("home.after_tonight", lang)
-            body += (f'<section class="wrap cities" id="cities"><h2>{"السينمات حسب المدينة" if lang == "ar" else "Cinemas by city"}</h2><ul class="clist">'
-                     + "".join(f'<li><a href="{P(lang, c)}">{esc(L((a, e), lang))}</a> <span class="n">{num(by_city[c])} {"سينما" if lang == "ar" else ("cinema" if by_city[c] == 1 else "cinemas")}</span></li>' for c, a, e in CITIES)
-                     + '</ul></section>')
+            # a film in its last days is tagged in the grid too (the «آخر فرصة» row needs 4 films to be drawn)
+            last = {f: L(HOME_T["tag_last"], lang) for fs in (self.d.get("last_chance") or {}).values() for f in fs}
+            body += self.posters_row(lang, films, self.shows, L(HOME_T["all_films"], lang), tags=last)
             hn = self.first_city_show(self.shows, ["dubai"])
-            # the chains' freshness moved to /sources/ (the footer's «من وين الأسعار», UI redesign Task 2)
-            body += self.cards_strip(lang) + (self.ticket(hn, lang, hidden=True) if hn else self.ticket_shell())
+            body += self.ticket(hn, lang, hidden=True) if hn else self.ticket_shell()
             title = ("سينما الإمارات اليوم — الأفلام والأسعار وخصم فزعة وإسعاد" if lang == "ar"
                      else "UAE cinemas today — films, ticket prices and card discounts")
             desc = ("مواعيد أفلام اليوم في كل سينمات الإمارات، سعر التذكرة لكل قاعة وفئة، والسعر بعد خصم فزعة وإسعاد وعروض البنوك، وهل الفيلم يستاهل."
@@ -71,6 +65,138 @@ class CorePages(Pages):
                          {"@type": "ListItem", "position": i + 1, "url": SITE + P(lang, "film", fid), "name": self.ftitle(fid, lang)} for i, fid in enumerate(films)]},
                      self.breadcrumb_ld(lang)]
             self.page(lang, (), title, desc, body, graph, "home")
+
+    # -------------------------------------------------- home: the billboard
+    def bill_facts(self, fid, lang):
+        """The billboard's facts, each its own span (no dots): the critics' (or audience's) score, the runtime,
+        the rating when the score did not already take its place, two genres."""
+        f = self.films[fid]; rt = f.get("rt") or {}
+        out = [self.score(f, lang)]
+        if f.get("runtime"): out.append(f'{num(f["runtime"])} {L(HOME_T["min"], lang)}')
+        if f.get("rating") and (rt.get("critics") is not None or rt.get("audience") is not None):
+            out.append(f'<bdi class="num" dir="ltr">{esc(f["rating"])}</bdi>')
+        g = genre_words(f.get("genres"), lang)[:2]
+        if g: out.append(esc(("، " if lang == "ar" else ", ").join(g)))
+        return [x for x in out if x]
+
+    def bill_film(self, fid, lang):
+        """One film as the billboard's script swaps it in (the JSON island): what the server writes for the first."""
+        f = self.films[fid]; v, vw = self.vword(fid, lang); vd = f.get("verdict") or {}
+        say = vd.get("ar") if lang == "ar" else vd.get("en")
+        bd = f.get("backdrop") if isinstance(f.get("backdrop"), dict) else None
+        o = {"t": self.ftitle(fid, lang), "h": P(lang, "film", fid), "v": v, "w": vw, "x": self.bill_facts(fid, lang),
+             "c": f.get("poster_color") or hue(fid)}
+        if self.title_attr(fid, lang): o["e"] = 1
+        if say: o["s"] = dates(esc(say))
+        if f.get("trailer"): o["tr"] = f["trailer"]
+        if bd and bd.get("w1280") and bd.get("w640"): o["b"] = [rel(bd["w640"]), rel(bd["w1280"])]
+        elif f.get("poster"): o["p"] = [rel(f["poster"]), rel(f.get("poster_2x") or f["poster"])]
+        return o
+
+    BILL_SIZES = "(min-width:1024px) 300px, 100vw"
+
+    def bill_frame(self, fid, o):
+        """The billboard's picture: the trailer frame (Kit.backdrop); with none yet, the poster itself — full-bleed
+        and darkened on a phone (a portrait screen fits a poster), blurred behind a sharp copy at the inline end
+        with the velvet glow on a desktop (both from one srcset and one `sizes`: one download); with no poster,
+        Kit.backdrop's typographic fallback. src/js/bill.js draws the same for the next films."""
+        if o.get("b") or not o.get("p"): return self.backdrop(fid, hero=True)
+        ss = f'src="{esc(o["p"][0])}" srcset="{esc(o["p"][0])} 342w, {esc(o["p"][1])} 684w" sizes="{self.BILL_SIZES}"'
+        self.site._preload = (f'<link rel="preload" as="image" href="{esc(o["p"][0])}" imagesrcset="{esc(o["p"][0])} 342w, {esc(o["p"][1])} 684w"'
+                              f' imagesizes="{self.BILL_SIZES}" fetchpriority="high">')
+        return (f'<div class="bd pf" style="--pc:{esc(o["c"])}" aria-hidden="true"><img {ss} class="pb" alt="" width="342" height="513" decoding="async" fetchpriority="high">'
+                f'<img {ss} class="ps" alt="" width="342" height="513" decoding="async"></div>')
+
+    def bill_price(self, fid, shows):
+        """[aed, chain, hall, hall key, cinema, table date]: the film's cheapest ticket among `shows`, the price
+        cell's inputs (cinema.js reprices it after the visitor's card), or None."""
+        b = self.min_price([s for s in shows if s["film"] == fid])
+        if not b: return None
+        aed, s = b; code, _ = self.hall_code_label(s)
+        return [money(aed), self.cinemas[s["cinema"]]["chain"], code, self.hkey(s), s["cinema"], self.table_date(s)]
+
+    def billboard(self, lang, tops, today):
+        """The first of the default city's top 5, server-rendered over its trailer frame (Kit.backdrop, the page's
+        LCP, preloaded), and the top 5 of every city as a JSON island: src/js/bill.js swaps the slide when the
+        city changes and every 6 s (never under reduced motion; paused on hover, focus and a hidden tab)."""
+        city = "dubai" if tops.get("dubai") else "*"
+        fids = tops[city]; fid = fids[0]; o = self.bill_film(fid, lang)
+        cn = L(CITY["dubai"], lang)
+        eye = L(HOME_T["top_in"], lang).format(city=cn) if city != "*" else L(HOME_T["top"], lang)
+        in_city = [s for s in today if self.cinemas[s["cinema"]].get("city") == "dubai"] if city != "*" else today
+        if o.get("b"):
+            self.site._preload = (f'<link rel="preload" as="image" href="{esc(o["b"][1])}" imagesrcset="{esc(o["b"][0])} 640w, {esc(o["b"][1])} 1280w"'
+                             f' imagesizes="100vw" fetchpriority="high">')
+        mc = self.min_cell(in_city and [s for s in in_city if s["film"] == fid] or self._by_film.get(fid, []), lang)
+        frm = (f'<span class="from" data-from="{esc(fid)}">{esc(L(HOME_T["from"], lang))} {mc[0]}</span>' if mc
+               else f'<span class="from" data-from="{esc(fid)}" hidden></span>')
+        tr = o.get("tr")
+        trailer = (f'<a class="btn ghost" data-bill-tr href="{"https://www.youtube-nocookie.com/embed/" + esc(tr) if tr else "#"}"'
+                   + (f' data-trailer="{esc(tr)}"' if tr else " hidden") + ' rel="noopener" target="_blank">'
+                   f'<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>{esc(L(HOME_T["trailer"], lang))}</a>')
+        say = f' {o["s"]}' if o.get("s") else ""
+        slide = (f'<p class="eyebrow" data-bill-eye>{esc(eye)}</p>'
+                 f'<h2 class="bill-t"><a href="{o["h"]}" data-bill-a{self.title_attr(fid, lang)}>{esc(o["t"])}</a></h2>'
+                 f'<p class="bill-v" data-bill-v><b class="v-{o["v"]}">{esc(o["w"])}{"." if lang == "ar" or say else ""}</b>{say}</p>'
+                 f'<p class="bill-f" data-bill-f>{"".join(f"<span>{x}</span>" for x in o["x"])}</p>'
+                 f'<p class="cta"><a class="btn main" href="{o["h"]}" data-bill-go>{esc(L(HOME_T["times"], lang))}{frm}</a>{trailer}</p>')
+        dots = "".join(f'<button type="button" aria-label="{esc(self.ftitle(x, lang))}" aria-pressed="{"true" if i == 0 else "false"}"><i></i></button>'
+                       for i, x in enumerate(fids))
+        # the island: each film once, then per city its top 5 with each one's cheapest ticket there
+        by_city = {}
+        for c, ids in tops.items():
+            if not ids: continue   # nothing tonight there: bill.js shows the country's ("*")
+            shows = today if c == "*" else [s for s in today if self.cinemas[s["cinema"]].get("city") == c]
+            by_city[c] = [[x, self.bill_price(x, shows)] for x in ids]
+        ffs = {x: self.bill_film(x, lang) for ids in tops.values() for x in ids}
+        island = json.dumps({"f": ffs, "c": by_city}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+        return (f'<section class="bill" data-bill aria-roledescription="{"عرض" if lang == "ar" else "carousel"}" aria-label="{esc(L(HOME_T["slides"], lang))}">'
+                f'<div class="bill-bd" data-bill-bd>{self.bill_frame(fid, o)}</div>'
+                f'<div class="wrap bill-w"><div class="bill-in" data-bill-slide>{slide}</div>'
+                f'<div class="dots js-only" data-bill-dots role="group" aria-label="{esc(L(HOME_T["slides"], lang))}">{dots if len(fids) > 1 else ""}</div></div>'
+                f'<script type="application/json" id="bill-data">{island}</script></section>')
+
+    # -------------------------------------------------- home: the rows
+    def home_rows(self, lang, films):
+        """The rows, in the spec's order, each from the data the site already keeps: tonight's show counts, the
+        verdicts, the cheapest ticket, the family flag, «نازل الخميس» (data["coming"], pages/coming.py's fold),
+        «آخر فرصة» (data["last_chance"], steps/last_chance.py) and Arabic (pages/hubs.py's rule: the film's own
+        `lang`). A row with fewer than 4 films is not drawn. «الكل» goes to the feature's page, or to «كل الأفلام»
+        with the matching sort or filter chosen (?sort= / ?f= / ?fl=, read by src/js/filters.js)."""
+        N = 10
+        home = P(lang)
+        keys = {it.key for it in self.nav_items}
+        tile = lambda fid, tag=None: self.film_tile(fid, lang, self.shows, row=True, live=True, tag=tag)
+        out = []
+
+        def row(key, title, fids, more=None, sub="", tag=None, attrs=""):
+            if len(fids) >= 4:
+                out.append(self.rail(lang, key, L(title, lang), "".join(tile(f, tag) for f in fids[:N]), sub=sub, more=more, attrs=attrs))
+
+        # «الأكثر عرضاً الليلة»: by tonight's shows (cinema.js re-sorts it by the visitor's city)
+        row("top", HOME_T["top"], films, home + "#all", attrs=' data-rail-sort="count"')
+        row("yes", HOME_T["yes"], [f for f in films if (self.films[f].get("verdict") or {}).get("verdict") == "yes"],
+            home + "?sort=verdict#all", sub=esc(L(HOME_T["yes_sub"], lang)))
+        # «أرخص لك الليلة»: the cheapest ticket before any card here; after the visitor's card and in their city there
+        priced = [(self.min_price([s for s in self._by_film.get(f, []) if s["date"] == self.today]), f) for f in films]
+        cheap = [f for b, f in sorted(((b, f) for b, f in priced if b), key=lambda x: (x[0][0], x[1]))]
+        row("cheap", HOME_T["cheap"], cheap, home + "?sort=price#all", sub='<span data-card-sub></span>', attrs=' data-rail-sort="pay"')
+        row("family", HOME_T["family"], [f for f in films if film_flags(self.films[f])[0]], home + "?f=family#all")
+        coming = self.d.get("coming") or {}
+        if coming and "thursday" in keys:
+            from pages.coming import fold_near_duplicates, _thursday_of
+            thu = _thursday_of(self.today)
+            items = sorted(fold_near_duplicates(coming), key=lambda kv: (not kv[1].get("release_date"), kv[1].get("release_date") or "", kv[1]["title"]))
+            items = [(k, f) for k, f in items if not f.get("release_date") or f["release_date"] >= self.today]
+            if len(items) >= 4:
+                tiles = "".join(self.coming_tile(k, f, lang, L(HOME_T["tag_thu"], lang) if f.get("release_date") and _thursday_of(f["release_date"]) == thu else None)
+                                for k, f in items[:N])
+                out.append(self.rail(lang, "coming", L(HOME_T["coming"], lang), tiles, more=P(lang, "coming")))
+        last = list(dict.fromkeys(f for fs in (self.d.get("last_chance") or {}).values() for f in fs if f in self.films and f in self.showing))
+        row("last", HOME_T["last"], last, tag=L(HOME_T["tag_last"], lang))
+        arabic = [f for f in films if str(self.films[f].get("lang") or "").lower() in ("arabic", "ar")]
+        row("arabic", HOME_T["arabic"], arabic, P(lang, "arabic") if "arabic" in keys else home + "?fl=Arabic#all")
+        return "".join(out)
 
     def cards_strip(self, lang):
         gov = [c for c in self.cards if c.get("kind") == "gov"]
@@ -189,7 +315,8 @@ class CorePages(Pages):
                             sched += '</div></div>'
                         return sched + '</div></section>'
                     graph0 = [{"@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "item": self.theater_ld(c, lang)} for i, c in enumerate(cids)]}]
-                    left = PAGE_TARGET - CHROME - len(body.encode()) - len(tk.encode()) - self.ld_size(graph0) - 600
+                    # the filter and sort sheets (posters_row) ride after the footer: counted here like the body
+                    left = PAGE_TARGET - CHROME - len(body.encode()) - len("".join(self._sheets).encode()) - len(tk.encode()) - self.ld_size(graph0) - 600
                     sched, _ = self.fit(city_sched, ("links", "plain", "compact", "digest3", "digest2", "digest1"), left)
                     body += f'<div class="wrap split"><div class="main">{sched}</div>{tk}</div>'
                 title = (f"سينما {cn} اليوم — الأفلام والأسعار وخصم فزعة" if lang == "ar" else f"{cn} cinemas today — films, prices and card discounts")

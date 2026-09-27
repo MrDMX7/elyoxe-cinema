@@ -44,7 +44,7 @@ the sitemap and the assets.
 
 | slot | where | ctx |
 |---|---|---|
-| `home.after_tonight` | home, under «الليلة» | — |
+| `home.after_tonight` | home, after its rows, before «كل الأفلام» (UI redesign Task 3) | — |
 | `city.after_tonight` | a city page, under its «الليلة» | `city` |
 | `cinema.after_halls` | a cinema page, after «القاعات والأسعار» | `cid` |
 | `film.info` | a film page (showing or archived), after the facts and the trailer | `fid` |

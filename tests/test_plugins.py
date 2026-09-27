@@ -59,7 +59,8 @@ def test_example_nav_and_slot_reach_core_pages(hello):
     assert '<a href="/en/hello/">Hello</a>' in read(hello, "en", "index.html")
     assert '<a href="/hello/" aria-current="page">أهلاً</a>' in read(hello, "hello", "index.html")
     assert '<p class="wrap hello"><span class="num">' in home
-    assert home.index('id="tonight"') < home.index('<p class="wrap hello">')
+    # home (UI redesign Task 3): the slot comes after the rows, before «كل الأفلام»
+    assert home.index('<p class="wrap hello">') < home.index('id="all"')
 
 
 def test_example_css_partial_and_lazy_chunk(hello):

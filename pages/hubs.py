@@ -48,7 +48,8 @@ def register(site):
         + [Page(("events",), lang, lambda lang=lang: p.events_page(lang)) for lang in ("ar", "en")],
         nav=[NavItem("arabic", href=lambda lang: P(lang, "arabic"), label=TITLE_AR),
              NavItem("events", href=lambda lang: P(lang, "events"), label=TITLE_EV)],
-        slots={"home.after_tonight": last_chance_strip, "city.after_tonight": last_chance_strip})
+        # home draws «آخر فرصة» as one of its rows (pages/core.py home_rows, UI redesign Task 3) from the same data
+        slots={"city.after_tonight": last_chance_strip})
 
 
 class HubPages(Pages):

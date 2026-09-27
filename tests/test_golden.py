@@ -59,6 +59,10 @@ def inv(b):
     h = b.decode("utf-8")
     one = lambda rx: re.findall(rx, h, re.S)
     m = h[h.index("<main"):h.index("</main>")] if "<main" in h else ""
+    # the home's featured «من X درهم» (data-from) is left out on purpose: UI redesign Task 3 made the featured film
+    # the default city's (Dubai's) most shown tonight, priced from its cheapest ticket THERE, where phase 1 took the
+    # country's most shown and its cheapest ticket anywhere — the same kind of cell, a different film and show
+    m = re.sub(r'(data-from="[^"]*"[^>]*>[^<]*<span class="p") data-aed="[^"]*" data-chain="[^"]*" data-hall="[^"]*"', r"\1", m)
     cells = lambda attr: sorted(re.findall(r'\sdata-' + attr + r'="([^"]*)"', m))
     return {"links": one(r'<link rel="(?:canonical|alternate)"[^>]*>'), "title": one(r"<title>(.*?)</title>"),
             "desc": one(r'<meta name="description"[^>]*>'), "robots": one(r'<meta name="robots"[^>]*>'),

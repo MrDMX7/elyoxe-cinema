@@ -51,6 +51,13 @@ function filmOk(f, filt) {
   if (filt.indexOf("genre:") === 0) return (f.genres || []).indexOf(filt.slice(6)) >= 0;
   return true;
 }
+/* the language filter (home's filter sheet): "" = any; else the film's own language, as the data spells it */
+function langOk(lg, want) { return !want || lg === want; }
+/* «23 فيلم», «فيلمين», «5 أفلام» / "23 films" — as site_kit.films_n */
+function filmsN(n, lg) {
+  if (lg === "en") return n + (n === 1 ? " film" : " films");
+  return arCount(n, ["فيلم واحد", "فيلمين", "أفلام", "فيلم"]);
+}
 /* a remembered filter applies only where the page offers it (each page has its own genre chips):
    anything else reads as «الكل» there, and stays remembered for the pages that have it */
 function effectiveFilter(filt, offered) { return filt && offered.indexOf(filt) >= 0 ? filt : "all"; }

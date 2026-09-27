@@ -382,9 +382,10 @@ def test_bogo_price_says_per_person_with_two_tickets(tmp_path):
     assert "per person, with 2 tickets" in read(out, "en", "cards", "enbd")
     home = open(os.path.join(ROOT, "src", "js", "home.js"), encoding="utf-8").read()
     prices = open(os.path.join(ROOT, "src", "js", "prices.js"), encoding="utf-8").read()
-    # the «starting now» strip, the «cheapest for you» tile and the featured «from» all append the per-person note
-    assert home[home.index("function renderNow"):home.index("function renderHome")].count("ppNote(b.r)") == 1
-    assert home[home.index("function renderHome"):].count("ppNote(b.r)") == 2
+    # the «starting now» slot, the home's «يبدأ قريب منك» row, every tile and the billboard's «from» all append the
+    # per-person note (UI redesign Task 3: the row and renderFrom are their own functions now)
+    fn = lambda name: home[home.index("function " + name + "("):].split("\nfunction ", 1)[0]
+    assert all(fn(n).count("ppNote(b.r)") == 1 for n in ("renderNow", "renderNear", "renderFrom", "renderHome"))
     assert "ppNote(x.r)" in prices[prices.index("function priceHTML"):prices.index("function renderPrices")]
     assert "r: x.a != null ? x.r : null" in prices                               # best() keeps the rule
 
@@ -488,16 +489,24 @@ def test_dates_are_human_and_english_runs_marked(site):
 
 
 def test_no_poster_hero_is_not_a_colour_field(site):
+    """The home billboard (UI redesign Task 3) with no trailer frame: the poster itself (full-bleed on a phone, sharp
+    over its blur on a desktop), preloaded; with no poster either, Kit.backdrop's typographic fallback."""
     out, _ = site
-    home = read(out)                                   # the fixture's featured film (Coyote) has a poster URL
-    assert '<div class="bd" style="--pc:#7A5A1C" aria-hidden="true"><img' in home
+    home = read(out)                                   # the fixture's Dubai top tonight (The Paradise) has no poster
+    bill = home[home.index('<section class="bill"'):home.index("</section>", home.index('<section class="bill"'))]
+    assert '<div class="bd noimg"' in bill and '<span class="pst bd-t">' in bill
 
     def m(d):
-        for f in d["films"].values(): f["poster"] = None
+        d["films"]["the-paradise"].update(poster="https://cinema.elyoxe.com/posters/the-paradise-342.webp",
+                                          poster_2x="https://cinema.elyoxe.com/posters/the-paradise-684.webp")
     import tempfile
-    o = _built(__import__("pathlib").Path(tempfile.mkdtemp()), m)
-    h = read(o)
-    assert '<div class="bd noimg"' in h and '<span class="pst bd-t">' in h
+    h = read(_built(__import__("pathlib").Path(tempfile.mkdtemp()), m))
+    assert re.search(r'<div class="bd pf" style="--pc:#[0-9A-Fa-f]{6}" aria-hidden="true"><img src="/posters/the-paradise-342\.webp"[^>]* class="pb"[^>]*fetchpriority="high">'
+                     r'<img [^>]*class="ps"', h)
+    pre = re.search(r'<link rel="preload" as="image" href="([^"]+)" imagesrcset="([^"]+)" imagesizes="([^"]+)"', h)
+    first = re.search(r'<img src="([^"]+)" srcset="([^"]+)" sizes="([^"]+)"[^>]*fetchpriority="high"', h)
+    assert pre and first and pre.groups() == first.groups()
+    assert h.count('fetchpriority="high"') == 2      # the preload link and the billboard's poster: no tile claims it
 
 
 def test_ends_only_when_known(site):
@@ -509,20 +518,18 @@ def test_ends_only_when_known(site):
 def test_posters_and_tiles(site):
     out, _ = site
     home = read(out)
-    # a poster: img with width descriptors and the size its tile is drawn at, lazy except the first two,
-    # the first preloaded with the same srcset/sizes (so the preload is the file the img picks)
-    # our own posters are root-relative in markup (absolute in og:image and JSON-LD)
-    assert re.search(r'<img src="/posters/coyote-vs-acme-342\.webp" srcset="[^"]+-342\.webp 342w, [^"]+-684\.webp 684w" sizes="[^"]+"', home)
-    assert home.count('fetchpriority="high"') == 2      # the preload link and the first poster
-    pre = re.search(r'<link rel="preload" as="image" href="([^"]+)" imagesrcset="([^"]+)" imagesizes="([^"]+)"', home)
-    first = re.search(r'<img src="([^"]+)" srcset="([^"]+)" sizes="([^"]+)"[^>]*fetchpriority="high"', home)
-    assert pre and first and pre.groups() == first.groups()
+    # a grid tile's poster: img with width descriptors and the size the grid draws it at (3 columns / 7);
+    # our own posters are root-relative in markup (absolute in og:image and JSON-LD). The billboard is the
+    # page's image priority (tests above): no tile has fetchpriority, and all but the first are lazy
+    assert re.search(r'<img src="/posters/coyote-vs-acme-342\.webp" srcset="[^"]+-342\.webp 342w, [^"]+-684\.webp 684w" sizes="\(min-width:1024px\) 13vw, 32vw"', home)
+    assert 'fetchpriority="high"' not in home
     assert home.count('loading="lazy"') >= 1
     # no poster: a typographic tile in the film's colour (or a hue from its id), never a broken image
     assert re.search(r'<span class="pst" style="--pc:#1D2A4A"><span class="pst-t">سبايدر مان', home)
     assert re.search(r'<span class="pst" style="--pc:#[0-9A-F]{6}"><span class="pst-t"[^>]*>The Paradise', home)
     assert 'data-genres="animation comedy family" data-family="1" data-kids="1"' in home
-    assert 'data-filter="family"' in home and 'data-sort="price"' in home and 'data-ends-before=' in home
+    # the controls live in the filter sheet now (UI redesign Task 3)
+    assert 'data-filter="family"' in home and 'data-sort="price"' in home and 'data-before="21:00"' in home
 
 
 def test_hostile_media_fields_are_dropped(tmp_path):
@@ -575,18 +582,19 @@ def test_no_middle_dot_fact_strings(site):
 
 
 def test_real_poster_tile_puts_the_title_under_the_poster(site):
-    """A real poster carries its own title: no title drawn over it (the tile's is hidden, only for a failed
-    load), the film's name in Markazi under it. A tile with no poster keeps the title inside."""
+    """A tile (UI redesign Task 3): the poster, then the title on its own line under it, then the price. A real
+    poster carries its own title, so nothing is drawn over it; a tile with no poster keeps its typographic title
+    inside too (the line under it names the film either way)."""
     out, _ = site
     home = read(out)
     tile = re.search(r'<a class="film[^"]*" href="/film/coyote-vs-acme/".*?</a>', home, re.S).group(0)
-    assert '<span class="pst img"' in tile and '<span class="pst-t" aria-hidden="true"' in tile
-    assert re.search(r'</span><span class="fn"[^>]*>[^<]+</span><span class="fm">', tile)
-    # a failed image gives way to the tile: cinema.js posterFallback() (no inline handler per tile)
+    assert '<span class="pst img"' in tile and 'class="pst-t"' not in tile
+    assert re.search(r'</span></span><span class="t"[^>]*>كايوتي ضد أكمي</span><span class="m" data-cheap>', tile)
+    # a failed image gives way to the tile's colour: cinema.js posterFallback() (no inline handler per tile)
     assert "onerror" not in tile
     assert "classList.remove(\"img\")" in open(os.path.join(ROOT, "src", "js", "main.js"), encoding="utf-8").read()
     notile = re.search(r'<a class="film[^"]*" href="/film/[^"]+/"[^>]*>(?:(?!</a>).)*?<span class="pst" style="--pc:#1D2A4A">.*?</a>', home, re.S).group(0)
-    assert 'class="fn"' not in notile
+    assert '<span class="pst-t">سبايدر مان' in notile and '<span class="t">سبايدر مان' in notile
 
 
 def test_live_shape_subs_list_and_iso_lang(tmp_path):
