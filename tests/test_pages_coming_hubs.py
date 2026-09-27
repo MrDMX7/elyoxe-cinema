@@ -132,3 +132,73 @@ def test_countdown_counts_days_in_arabic_grammar():
     assert cd("2026-09-28") == "بكرة" and cd("2026-09-29") == "بعد يومين"
     assert cd("2026-10-01") == "بعد 4 أيام" and cd("2026-10-09") == "بعد 12 يوم"
     assert cd("2026-10-01", "en") == "In 4 days" and cd("2026-09-28", "en") == "Tomorrow"
+
+
+# ------------------------------------------------------------------ final review M1: /coming/ polish
+def _coming_build(tmp_path, coming):
+    data = json.loads(open(DATA, encoding="utf-8").read())
+    data["coming"] = coming
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    p = tmp_path / "data.json"
+    p.write_text(json.dumps(data), encoding="utf-8")
+    o = str(tmp_path / "out")
+    build.build(str(p), DISC, o, modules=MODULES)
+    return o
+
+
+def _c(title, date="2026-10-01", chains=("vox",), genres=()):
+    return {"title": title, "title_ar": None, "release_date": date, "poster": None, "trailer": None,
+            "genres": list(genres), "chains": list(chains)}
+
+
+def test_coming_names_chains_not_keys_and_uses_the_arabic_comma(tmp_path):
+    o = _coming_build(tmp_path, {"verity": _c("Verity", chains=("vox", "star", "cineroyal"))})
+    ar, en = read(o, "coming", "index.html"), read(o, "en", "coming", "index.html")
+    chains_ar = re.search(r'<span class="cs-chains">(.*?)</span>', ar).group(1)
+    assert "vox" not in chains_ar and "cineroyal" not in chains_ar
+    assert "فوكس" in chains_ar and "ستار" in chains_ar and "، " in chains_ar and ", " not in chains_ar
+    chains_en = re.search(r'<span class="cs-chains">(.*?)</span>', en).group(1)
+    assert "VOX" in chains_en.upper() and ", " in chains_en and "cineroyal" not in chains_en
+
+
+def test_coming_translates_genres_and_omits_unknown_labels(tmp_path):
+    o = _coming_build(tmp_path, {"x-film": _c("X Film", genres=("Psychological", "Creature", "Sci Fi"))})
+    ar = read(o, "coming", "index.html")
+    meta = re.search(r'<span class="cs-meta">(.*?)</span>', ar).group(1)
+    assert "Psychological" not in meta and "Creature" not in meta and "Sci Fi" not in meta
+    assert "إثارة" in meta and "خيال علمي" in meta and "، " in meta
+    o2 = _coming_build(tmp_path / "b", {"y-film": _c("Y Film", genres=("Creature",))})
+    assert 'class="cs-meta"' not in read(o2, "coming", "index.html")   # nothing known -> no genre line
+
+
+def test_coming_folds_near_identical_titles_into_one_card(tmp_path):
+    o = _coming_build(tmp_path, {
+        "the-legendaires": _c("The Legendaires", chains=("reel",)),
+        "the-legendaries": _c("The Legendaries", chains=("star", "cineroyal")),
+        "donand-39-t-trouble-the-trouble": _c("Don&#39;t Trouble The Trouble", "2026-10-02", ("vox",)),
+        "don-t-trouble-the-trouble": _c("Don't Trouble The Trouble", "2026-10-02", ("star",)),
+        "dont-trouble-the-trouble": _c("Dont Trouble The Trouble (Telugu)", "2026-10-02", ("reel",)),
+        "the-shawshank-redemption": _c("The Shawshank Redemption (Re Release)", "2026-10-15", ("reel",)),
+        "the-shawshank-redemption-re-release": _c("The Shawshank Redemption - Re release", "2026-10-15", ("star",)),
+        # guards: a different date, or a different number, never folds
+        "the-mongoose": _c("The Mongoose", "2026-10-25"), "the-mangoose": _c("The Mangoose", "2026-10-29"),
+        "golmaal-4": _c("Golmaal 4", "2026-11-01"), "golmaal-5": _c("Golmaal 5", "2026-11-01"),
+    })
+    ar = read(o, "coming", "index.html")
+    assert ar.count("cs-card") == 7
+    assert "The Legendaries" in ar and "The Legendaires" not in ar     # the spelling more chains use wins
+    names = re.findall(r'<span class="cs-n">(.*?)</span>', ar)
+    assert sum("Trouble The Trouble" in n for n in names) == 1 and "&amp;#39;" not in ar   # an HTML entity in a feed title is decoded once
+    card = re.search(r'<li class="cs-card">(?:(?!</li>).)*Legendaries.*?</li>', ar, re.S).group(0)
+    assert all(n in card for n in ("ريل", "ستار", "سيني رويال"))           # the chains of both spellings
+    assert sum("Shawshank" in n for n in names) == 1
+    assert "The Mongoose" in ar and "The Mangoose" in ar and "Golmaal 4" in ar and "Golmaal 5" in ar
+
+
+def test_near_duplicate_guard_unit():
+    import pages.coming as pc
+    assert pc._same_title("The Legendaires", "The Legendaries")
+    assert pc._same_title("Don&#39;t Trouble The Trouble", "Dont Trouble The Trouble (Telugu)")
+    assert not pc._same_title("Golmaal 4", "Golmaal 5")
+    assert not pc._same_title("Wake", "Make")           # short titles need an exact match
+    assert not pc._same_title("Ramayana", "Ramayana: Part One (Hindi)")

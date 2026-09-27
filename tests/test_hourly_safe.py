@@ -425,6 +425,22 @@ def test_run_sh_routes_every_notification_through_alert_state():
     assert "3-hour" not in sh
 
 
+def test_a_failed_pull_stops_the_run_and_alerts():
+    """final review M3: `git pull --ff-only` failing (EOL-dirty files, a diverged checkout) used to log a
+    WARN and deploy the old code as if it were the release. It must go through fail() -- one alert via
+    alerts.py, a non-zero exit -- before the test gate, refresh or deploy can run.
+    Manual check (docs/CUTOVER-PHASE2.md §2): in a clone with no upstream, `bash run.sh` prints
+    "FAILED: git pull ..." and exits 7."""
+    sh = (ROOT / "run.sh").read_text(encoding="utf-8")
+    code = "\n".join(l for l in sh.splitlines() if not l.strip().startswith("#"))
+    m = re.search(r"if ! git pull --ff-only -q; then\n(.*?)\nfi", code, re.S)
+    assert m, "the pull must be checked"
+    assert re.match(r"\s*fail \".*\" 7 pull$", m.group(1)), m.group(1)
+    assert "WARN: git pull" not in code
+    assert code.index("git pull --ff-only") < code.index("-m pytest") < code.index("refresh.py") < code.index("./deploy.sh")
+    assert "ok_now pull " in code
+
+
 def test_wire_cloudfront_is_gone():
     assert not (ROOT / "wire_cloudfront.py").exists()
     live = [*ROOT.glob("*.py"), *ROOT.glob("*.sh"), *ROOT.glob("infra/*"), *ROOT.glob(".github/**/*.yml"),

@@ -13,8 +13,12 @@ from the home page to here.
 from __future__ import annotations
 
 import datetime as dt
+import html
+import re
 
-from site_kit import L, NavItem, P, Page, Pages, Plugin, ar_count, esc, genre_words, hue, human_date, rel
+from genres import GENRES, genre_keys
+from normalize import film_fid
+from site_kit import L, NavItem, P, Page, Pages, Plugin, ar_count, esc, hue, human_date, rel
 
 TITLE = ("نازل الخميس", "Out Thursday")
 CSS = ("coming",)
@@ -26,6 +30,71 @@ def _thursday_of(iso_date: str) -> str:
     """The Thursday of the ISO week `iso_date` falls in (UAE releases land on Thursdays)."""
     d = dt.date.fromisoformat(iso_date)
     return (d + dt.timedelta(days=(3 - d.weekday()) % 7)).isoformat()
+
+
+_RERELEASE = re.compile(r"-?re-?release$")
+
+
+def _title_key(title: str) -> str:
+    """normalize.film_fid's slug of the decoded title, without hyphens or a re-release tag: the
+    chains' own spellings of one film ("Don&#39;t…", "Don't…", "Dont… (Telugu)") meet here."""
+    return _RERELEASE.sub("", film_fid(html.unescape(title or ""))).replace("-", "")
+
+
+def _edits(a: str, b: str) -> int:
+    """Levenshtein distance (the titles are short; a plain two-row table is enough)."""
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1]
+
+
+def _same_title(a: str, b: str) -> bool:
+    """One film under two spellings (final review M1: "The Legendaires"/"The Legendaries"): the same
+    key, or at most 2 edits apart when both keys are 10+ letters long and carry the same numbers
+    (so "Golmaal 4"/"Golmaal 5" and short titles like "Wake"/"Make" never fold)."""
+    ka, kb = _title_key(a), _title_key(b)
+    if ka == kb:
+        return bool(ka)
+    if min(len(ka), len(kb)) < 10 or re.findall(r"\d+", ka) != re.findall(r"\d+", kb):
+        return False
+    return _edits(ka, kb) <= 2
+
+
+def fold_near_duplicates(coming: dict) -> list:
+    """[(fid, film)] with near-identical titles on the same release date merged into one card: the
+    spelling most chains use (then the shorter fid) names it, chains and genres are the union, and
+    poster/trailer come from whichever entry has them. Titles are HTML-unescaped once for display."""
+    groups: list[list] = []
+    for fid, f in sorted(coming.items()):
+        for g in groups:
+            if g[0][1].get("release_date") == f.get("release_date") and _same_title(g[0][1]["title"], f["title"]):
+                g.append((fid, f))
+                break
+        else:
+            groups.append([(fid, f)])
+    out = []
+    for g in groups:
+        g.sort(key=lambda kv: (-len(kv[1].get("chains") or []), len(kv[0]), kv[0]))
+        fid, base = g[0]
+        f = dict(base, title=html.unescape(base["title"]),
+                 title_ar=html.unescape(base["title_ar"]) if base.get("title_ar") else base.get("title_ar"))
+        f["chains"] = sorted({c for _, x in g for c in (x.get("chains") or [])})
+        f["genres"] = [x for _, m in g for x in (m.get("genres") or [])]
+        for k in ("poster", "trailer", "title_ar"):
+            if not f.get(k):
+                f[k] = next((m[k] for _, m in g if m.get(k)), f.get(k))
+        out.append((fid, f))
+    return out
+
+
+def genre_labels(raw, lang) -> list:
+    """The chains' raw genre words through genres.py's vocabulary; a word it does not know is left
+    out (never printed in English on the Arabic page, never shown as «أخرى»)."""
+    return [GENRES[k][0 if lang == "ar" else 1] for k in genre_keys(raw or []) if k != "other"]
 
 
 def register(site):
@@ -41,7 +110,7 @@ class ComingPages(Pages):
         """{thursday-iso|None: [(fid, film), ...]} sorted by date, undated (None) group last."""
         coming = self.d.get("coming") or {}
         groups: dict = {}
-        for fid, f in coming.items():
+        for fid, f in fold_near_duplicates(coming):
             key = _thursday_of(f["release_date"]) if f.get("release_date") else None
             groups.setdefault(key, []).append((fid, f))
         for key in groups:
@@ -65,10 +134,10 @@ class ComingPages(Pages):
         title_ar = f.get("title_ar")
         titles = (f'<span class="cs-n">{esc(f["title"])}</span>' + (f'<bdi class="cs-ar">{esc(title_ar)}</bdi>' if title_ar and lang == "ar" else "")
                   if lang == "en" or not title_ar else f'<span class="cs-n">{esc(title_ar)}</span><bdi class="cs-ar" lang="en">{esc(f["title"])}</bdi>')
-        genres = genre_words(f.get("genres") or [], lang)
-        meta = "، ".join(genres[:2]) if lang == "ar" else ", ".join(genres[:2])
+        sep = "، " if lang == "ar" else ", "
+        meta = sep.join(genre_labels(f.get("genres"), lang)[:2])
         cd = self._countdown(f["release_date"], lang) if f.get("release_date") else ("قريباً" if lang == "ar" else "Coming soon")
-        chains = ", ".join(sorted(f.get("chains") or []))
+        chains = sep.join(self.h.chain_name(c, lang) for c in sorted(f.get("chains") or []))
         trailer = (f'<a class="cs-yt" href="https://www.youtube-nocookie.com/embed/{esc(f["trailer"])}" '
                    f'data-trailer="{esc(f["trailer"])}" rel="noopener" target="_blank">'
                    f'{"العرض الترويجي" if lang == "ar" else "Trailer"}</a>') if f.get("trailer") else ""

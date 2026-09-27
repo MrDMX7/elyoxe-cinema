@@ -243,6 +243,18 @@ def test_build_summer_page_out_of_season_is_noindex_and_unlinked(tmp_path):
     assert 'name="robots" content="noindex,nofollow"' in summer
     home = _read(out, "index.html")
     assert '<a href="/summer/">' not in home
+    # final review I2: a noindex page never goes in the sitemap (Search Console: "Submitted URL marked noindex")
+    sm = _read(out, "sitemap.xml")
+    assert "/summer/" not in sm
+    assert os.path.exists(os.path.join(out, "en", "summer", "index.html"))
+
+
+def test_summer_in_season_is_in_the_sitemap(tmp_path):
+    def m(d):
+        d["generated"] = "2026-07-15T09:00:00+04:00"
+    out = _build(tmp_path, m)
+    sm = _read(out, "sitemap.xml")
+    assert "https://cinema.elyoxe.com/summer/" in sm and "/en/summer/" in sm
 
 
 # --------------------------------------------------------------------------------- post-credits

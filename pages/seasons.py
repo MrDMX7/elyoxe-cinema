@@ -22,6 +22,7 @@ a minute or two -- fine for a line already labelled «تقريباً».
 from __future__ import annotations
 
 import math
+import os
 from datetime import date, timedelta
 
 from site_kit import CITIES, NOINDEX, L, NavItem, P, Page, Plugin, esc, film_flags, num
@@ -277,7 +278,9 @@ class SeasonsPages:
         body = f'<section class="head wrap">{self.crumbs(lang, (title, None))}<h1 class="pt">{esc(title)}</h1>'
         if not in_summer:
             body += (f'<p class="lead">{"صفحة الصيف تفتح يوليو وأغسطس. رجعوا وقتها." if lang == "ar" else "The summer page opens in July and August. Come back then."}</p></section>')
-            return {"title": title, "desc": title, "body": body, "kind": "summer", "robots": NOINDEX}
+            # path=: written at its normal place but kept out of the sitemap while noindex (final review I2)
+            return {"title": title, "desc": title, "body": body, "kind": "summer", "robots": NOINDEX,
+                    "path": os.path.join(self.out, *(["en"] if lang == "en" else []), "summer", "index.html")}
         # family films (film_flags index 0), any time of day -- no "before 14:00" cutoff: the
         # brief states that restriction for the kids preset only, not for /summer/ (kids_shows()
         # docstring). Reuses kids_shows() rather than repeating its filter/group loop here.

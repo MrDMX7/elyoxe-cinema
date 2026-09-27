@@ -55,16 +55,49 @@ width, one page of each type, Arabic and English:
 | a cinema page (`/dubai/reel-dubai-mall/`) | mall closing time, snacks, double features, «باقي N مقعد» under times; open a ticket → the hall drawing and best seat |
 | the phone nav | one row that scrolls sideways (7 links) |
 
-## 2. Merge and push (laptop)
+## 2. Merge and push (laptop), then land it on the Fold
+
+**Line endings first (final review C1).** `fixtures/sample_latest.json` and `src/og_make.py` (and 21 other blobs
+committed with CRLF before `.gitattributes`) show as modified on both checkouts although only their line endings
+differ. phase2 renormalizes exactly these paths, so `git merge` on the laptop and `git pull --ff-only` on the
+Fold both abort ("Your local changes … would be overwritten"). Clear them — only after proving the diff is
+line endings only; any other diff is real work: stop and look.
 
 ```bash
 cd C:/Users/requi/workspace/saas/cinema               # main is checked out here (phase2 is the worktree)
+git status --short                                    # expect only EOL-dirty tracked files (and untracked data/)
+git diff --ignore-all-space --quiet && echo EOL-ONLY  # must print EOL-ONLY; if not, STOP
+git checkout -- fixtures/sample_latest.json src/og_make.py   # or: git reset --hard origin/main (EOL-only proven)
 git checkout main && git pull --ff-only origin main
 git merge --no-ff phase2 -m "phase 2: people, coming, hubs, questions, seats, insights, seasons (merge phase2)"
                                                       # a conflict in verdicts/: take main's side (the Fold wrote it)
 python -m pytest -q -p no:cacheprovider               # echo $? -> 0 on the merge itself
 git push origin main
 ```
+
+Then **immediately on the Fold** (between runs: check `data/.run.lock` is free and the time is not :10–:50
+of 06/12/18/23 Asia/Dubai). The laptop's `data/price_history.jsonl` goes over first (final review M2: it holds
+the laptop's real sampled days; the old public bucket copy is already gone, so without it the history starts
+from zero):
+
+```bash
+# ssh lands inside the Debian chroot (cron reaches the same place through /data/local/debian-boot.sh -c)
+scp C:/Users/requi/workspace/saas/cinema/data/price_history.jsonl \
+    root@100.92.45.87:/root/workspace/saas/cinema/data/price_history.jsonl     # (or the phase2 worktree's copy)
+ssh root@100.92.45.87 'cd /root/workspace/saas/cinema && TZ=Asia/Dubai date \
+  && flock -n data/.run.lock true && git status --short \
+  && git diff --ignore-all-space --quiet && echo EOL-ONLY \
+  && git fetch -q origin && git reset --hard origin/main && git status -sb && free -m'
+      # EOL-ONLY, then "## main...origin/main" clean on the merge commit; available >= 2000.
+      # reset --hard leaves ignored/untracked data/ alone (price_history.jsonl, caches, .last_pages).
+ssh root@100.92.45.87 '/root/workspace/automation/phone/run-job.sh cinema'
+      # the cron wrapper (wake lock, memory wait) around run.sh, in the foreground -- never nohup
+```
+
+run.sh now stops on a failed `git pull` (final review M3): `FAILED: git pull …`, one notification, exit 7,
+nothing deployed — instead of deploying the old code with a WARN. Manual check of that path: in a scratch
+clone with no upstream (`git init`, copy run.sh, alerts.py, statefile.py), `bash run.sh` prints
+`FAILED: git pull …` and exits 7; a second run stays quiet (already alerted).
 
 Best time: right after a scheduled run has finished (e.g. 12:40), so the first phase-2 run is the next :10 and
 you can watch it — or start it by hand on the Fold (`bash run.sh`, foreground; its flock makes an overlapping
@@ -91,25 +124,35 @@ inside the hour. Under hourly cron a run that is still going makes the next one 
 no overlap, no double deploy.
 
 The first run also: fetches ~122 people from Wikidata/Wikipedia (≈125 requests) and uploads their photos to
-`posters/people/` (the laptop's test run already uploaded 198 files there on 2026-09-27, so most are skipped);
+`posters/people/` — all of them once (final review M2: the Fold has no `data/people_uploads.json` ledger yet, so
+the ~198 WebPs the laptop's test run put there go up again; same URLs, small files, harmless);
 mirrors ~110 coming-soon posters; starts `data/seatmaps.json`, `data/occupancy.json`, `data/people_cache.json`
-on the Fold; moves the price history (above). `health.json` has `steps.items.<name>.sec` for each step's time.
+on the Fold; and starts the price history in the media bucket. The "move" above no longer happens: phase 1's
+`deploy.sh` (no `state/*` in its KEEP list) already deleted the old public copy on a `--delete` pass, and that copy
+was only the laptop's Task-5 test data — so `health.steps.items.history` shows `"new": true` and no `legacy`
+key. The history is the Fold's `data/price_history.jsonl` unioned with the bucket copy: copy the laptop's file
+over before the first run (§2) or it starts from today. `health.json` has `steps.items.<name>.sec` for each step's time.
 Cinema City has no coming-soon endpoint: `health.steps.items.coming.chains.cinemacity.ok` is false by design.
 
 ## 4. Verify live (after the first phase-2 deploy)
 
 ```bash
 S=https://cinema.elyoxe.com
-for p in / /en/ /coming/ /people/ /arabic/ /events/ /q/ /prices/ /boxoffice/ /kids/ /summer/; do
+for p in / /en/ /coming/ /people/ /arabic/ /events/ /q/ /prices/ /boxoffice/ /kids/ /summer/ /eid/; do
   printf '%s %s\n' "$(curl -s --compressed -o /dev/null -w '%{http_code}' "$S$p")" "$p"; done
-                                     # 200 for each (/people/ has no index page: 404 is expected there)
+                                     # 200 for each (/people/ has no index page: 404 is expected there;
+                                     # /eid/ is 404 outside its 10-day window; /summer/ is 200 but noindex
+                                     # and absent from sitemap.xml outside July–August — final review I2)
 curl -s --compressed -o /dev/null -w '%{http_code}\n' "$S/state/price_history.jsonl"   # 404 (was 200)
 aws s3 ls s3://elyoxe-media-574771023173/cinema-state/                              # price_history.jsonl
 aws s3 ls s3://elyoxe-cinema-574771023173/state/                                     # empty
 ssh root@100.92.45.87 'cd /root/workspace/saas/cinema && python3 -c "import json;h=json.load(open(\"data/health.json\"));print({n:(r[\"ok\"],r.get(\"sec\")) for n,r in h[\"steps\"][\"items\"].items()})"'
-                                     # every step ok (coming ok with cinemacity false inside); history shows "legacy": "moved"
+                                     # every step ok (coming ok with cinemacity false inside); history shows "new": true (M2)
 curl -s --compressed "$S/sitemap.xml" -o /tmp/sm.xml; grep -c "<loc>" /tmp/sm.xml   # ~740 (316 before)
 ```
+
+/boxoffice/ on the first days (final review M4): titled «هالأسبوع» but it covers only the days sampled so far
+(today + a partial tomorrow on day one); its span line says so. Cosmetic until 7 days accrue — not a bug.
 
 Then open a busy film page and a cinema page on a phone: «باقي N مقعد» under a time starting within 3 hours,
 the ticket's hall drawing, the collapsed double-features list.
@@ -121,6 +164,11 @@ cd C:/Users/requi/workspace/saas/cinema
 git checkout main && git pull --ff-only origin main
 git revert -m 1 <the merge commit> --no-edit          # keeps the Fold's later verdict commits
 git push origin main
+# deploy.sh refuses a build under half of the last one (deploy.sh: pages*2 >= data/.last_pages). After phase 2
+# .last_pages is ~744 and a phase-1 build is 316 pages, so the rollback deploy would exit 5 and phase 2 would
+# stay live (final review I1). Reset the floor before the Fold's next run:
+ssh root@100.92.45.87 'rm -f /root/workspace/saas/cinema/data/.last_pages'
+ssh root@100.92.45.87 '/root/workspace/automation/phone/run-job.sh cinema'   # or wait for the next :10
 ```
 
 The Fold's next run deploys the phase-1 build; `deploy.sh`'s `--delete` removes the phase-2 pages. The price history
