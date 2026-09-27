@@ -69,6 +69,11 @@ git status --short                                    # expect only EOL-dirty tr
 git diff --ignore-all-space --quiet && echo EOL-ONLY  # must print EOL-ONLY; if not, STOP
 git checkout -- fixtures/sample_latest.json src/og_make.py   # or: git reset --hard origin/main (EOL-only proven)
 git checkout main && git pull --ff-only origin main
+# Measured at the 2026-09-27 release: neither checkout nor reset --hard clears them on Windows (the CRLF blob
+# vs eol=lf always differs), so `git merge` still refused. What worked -- the same merge, built without
+# touching the working tree, then checked out (phase2's LF blobs leave the tree clean):
+#   T=$(git merge-tree --write-tree main phase2)
+#   C=$(printf 'phase 2: … (merge phase2)\n' | git commit-tree "$T" -p main -p phase2) && git reset --hard "$C"
 git merge --no-ff phase2 -m "phase 2: people, coming, hubs, questions, seats, insights, seasons (merge phase2)"
                                                       # a conflict in verdicts/: take main's side (the Fold wrote it)
 python -m pytest -q -p no:cacheprovider               # echo $? -> 0 on the merge itself
