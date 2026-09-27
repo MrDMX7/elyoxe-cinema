@@ -39,17 +39,28 @@
     <a href="{{hub}}"{{c_films}}>{{s_films}}</a>
     <a href="{{cinemas_href}}"{{c_cinemas}}>{{s_cinemas}}</a>
     <a href="{{thursday_href}}"{{c_thursday}}>{{s_thursday}}</a>
-    <a href="{{cards_href}}"{{c_cards}}>{{s_cards}}</a>{{nav_extra}}
+    <a href="{{cards_href}}"{{c_cards}}>{{s_cards}}</a>
   </nav>
-  <a class="alt" href="{{alt}}" hreflang="{{alt_lang}}" lang="{{alt_lang}}">{{s_alt}}</a>
+  <div class="tools">
+    <button type="button" class="icon srch-b" data-search aria-haspopup="dialog" aria-label="{{s_search}}">{{icon_search}}</button>
+    <a class="pill" id="pill-city" href="{{cinemas_page}}" data-sheet-open="sheet-city"><span data-city-name>{{city_name}}</span></a>
+    <a class="pill" id="pill-card" href="{{cards_href}}" data-sheet-open="sheet-card"><span data-card-name>{{card_name}}</span></a>
+    <a class="alt" href="{{alt}}" hreflang="{{alt_lang}}" lang="{{alt_lang}}">{{s_alt}}</a>
+  </div>
 </div></header>
 <main id="main">
 {{body}}
 </main>
 <footer class="foot"><div class="wrap foot-in">
-  <p>{{s_footer}}</p>
-  <p class="foot-l"><a href="{{halls_href}}">{{s_halls}}</a> <a href="{{cards_href}}">{{s_cards}}</a> <a href="https://elyoxe.com/">{{s_studio}}</a></p>
+  <a class="mark" href="{{hub}}">{{s_mark}}</a>
+  <nav class="foot-l" aria-label="{{s_more}}">
+    {{foot_links}}
+  </nav>
+  <p class="foot-s">{{s_footer}} <a href="https://elyoxe.com/">{{s_studio}}</a></p>
 </div></footer>
+<nav class="tabs" aria-label="{{s_tabs}}">{{tabs}}</nav>
+<div class="sh-scrim" data-sheet-scrim hidden></div>
+{{sheets}}
 <script>window.CT = {{strings}};</script>
 <script id="boot">(function(u,d){function go(){var s=d.createElement("script"),late=d.readyState==="complete";s.src=u;if(late)s.onload=function(){var w=navigator.serviceWorker;if(w)w.register("/sw.js").catch(function(){})};d.body.appendChild(s)}if(d.prerendering)d.addEventListener("prerenderingchange",go,{once:true});else go()})("{{js}}",document)</script>
 </body>

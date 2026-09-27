@@ -157,16 +157,17 @@ def test_search_chunk_loads_on_every_kind(out):
         assert "search" in chunks and re.fullmatch(r"/assets/search\.[0-9a-f]{10}\.js", chunks["search"])
 
 
-def test_header_button_hook_is_missing_and_flagged(out):
-    """docs/PLUGINS.md's NavItem only ever renders an <a> link (site_kit.py's nav_links) -- there is no hook
-    for a header BUTTON that opens a panel, so the page HTML itself must not contain one; src/js/search.js
-    injects it at runtime instead (task-A5-report.md records the gap)."""
+def test_header_and_tab_bar_carry_the_search_triggers(out):
+    """Since the UI redesign's Task 2 the chrome renders the triggers itself (the header's search button and the
+    phone tab bar's «بحث», both [data-search]); the chunk binds them, and injects its own button into .top-in only
+    on a page that has none."""
     home = read(out, "index.html")
-    assert "srch-btn" not in home
+    assert home.count("data-search") == 2 and 'class="icon srch-b" data-search' in home
     chunk_url = ct(home)["chunks"]["search"]
     chunk = read(out, *chunk_url.strip("/").split("/"))
-    assert "srch-btn" in chunk and ".top-in" in chunk
-
+    assert '"[data-search]"' in chunk and "srch-btn" in chunk and ".top-in" in chunk
+    for parts in (("cinemas", "index.html"), ("sources", "index.html"), ("en", "halls", "index.html")):
+        assert "search" in ct(read(out, *parts)).get("chunks", {})   # page_js "*": every page
 
 def test_search_css_partial_bundled(out):
     assert ".srch-btn" in read(out, "assets", "cinema.css")

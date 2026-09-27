@@ -11,7 +11,7 @@ the ~125 KB page target long before 300 rows, so this page uses `site.fit()` (si
 budget-fit mechanism core.py's schedules use) between two render modes: "full" (photo or placeholder, per
 pages/people.py's own row markup) and, only if that does not fit, "compact" (name only, no image markup at
 all — not merely a lazily-loaded image, since the <img>/srcset text itself is most of the byte cost)."""
-from site_kit import CHROME, L, P, PAGE_TARGET, Page, Pages, Plugin, esc
+from site_kit import CHROME, L, NavItem, P, PAGE_TARGET, Page, Pages, Plugin, esc
 from pages.people import People
 
 TITLE = ("الناس", "People")
@@ -68,11 +68,12 @@ class PeopleIndex(Pages):
 
         left = PAGE_TARGET - CHROME - len(head.encode()) - self.ld_size(graph) - 200
         body, _ = self.fit(render, ("full", "compact"), left)
-        return {"title": title, "desc": desc, "body": body, "kind": "people", "nav": "films", "graph": graph}
+        return {"title": title, "desc": desc, "body": body, "kind": "people", "nav": "people", "graph": graph}
 
 
 def register(site):
     idx = PeopleIndex(site)
     if not idx.ppl.p:
         return Plugin()
-    return Plugin(pages=[Page(("people",), lang, (lambda lang=lang: idx.page(lang))) for lang in ("ar", "en")])
+    return Plugin(pages=[Page(("people",), lang, (lambda lang=lang: idx.page(lang))) for lang in ("ar", "en")],
+                  nav=[NavItem("people", href=lambda lang: P(lang, "people"), label=("الناس", "People"))])   # the footer's «الناس»

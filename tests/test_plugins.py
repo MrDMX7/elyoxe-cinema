@@ -54,7 +54,7 @@ def test_example_pages_data_sitemap(hello):
 
 def test_example_nav_and_slot_reach_core_pages(hello):
     home = read(hello, "index.html")
-    nav = re.search(r'<nav class="nav".*?</nav>', home, re.S).group(0)
+    nav = re.search(r'<nav class="foot-l".*?</nav>', home, re.S).group(0)   # a feature's own key: a footer link
     assert '<a href="/hello/">أهلاً</a>' in nav
     assert '<a href="/en/hello/">Hello</a>' in read(hello, "en", "index.html")
     assert '<a href="/hello/" aria-current="page">أهلاً</a>' in read(hello, "hello", "index.html")
@@ -91,7 +91,7 @@ def test_builtin_nav_repointed_and_unknown_slot_refused(tmp_path):
     out = str(tmp_path / "o")
     build.build(DATA, DISC, out, noindex=False, modules=build.discover(only=("core",)) + [coming])
     nav = re.search(r'<nav class="nav".*?</nav>', read(out, "index.html"), re.S).group(0)
-    assert '<a href="/coming/">نازل الخميس</a>' in nav
+    assert '<a href="/coming/">نازل قريب</a>' in nav
     bad = types.SimpleNamespace(__name__="bad", register=lambda site: Plugin(slots={"nowhere": lambda s, lang: "x"}))
     with pytest.raises(ValueError, match="unknown slot"):
         build.build(DATA, DISC, str(tmp_path / "b"), noindex=False, modules=build.discover(only=("core",)) + [bad])

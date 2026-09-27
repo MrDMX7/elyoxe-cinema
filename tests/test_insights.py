@@ -17,6 +17,11 @@ MINE = ("core", "insights", "questions")   # the other phase-2 modules are other
 TODAY = "2026-09-25"
 
 
+def main(h):
+    """The page's own content, without the shared chrome (header, tab bar, sheets)."""
+    return h[h.index('<main id="main">'):h.index("</main>")]
+
+
 def read(out, *parts):
     return open(os.path.join(out, *parts), encoding="utf-8").read()
 
@@ -89,8 +94,9 @@ def test_prices_index_today_both_languages(none):
     assert "25 سبتمبر 2026" in ar and "25 September 2026" in en
     assert "قبل أي خصم" in ar
     # no history: neither the chart nor the cheapest time; the page says how many days it has
+    # (in <main>: the chrome's icons are inline SVG since the UI redesign's Task 2)
     for h in (ar, en):
-        assert "<svg" not in h and 'id="cheapest-time"' not in h
+        assert "<svg" not in main(h) and 'id="cheapest-time"' not in h
 
 
 def test_prices_title_says_the_index_day_and_the_chains_it_has(none):
@@ -110,7 +116,7 @@ def test_day_counts_read_as_arabic(tmp_path_factory):
 
 def test_prices_short_history_shows_cheapest_time_not_chart(short):
     ar = read(short, "prices", "index.html")
-    assert 'id="cheapest-time"' in ar and "<svg" not in ar
+    assert 'id="cheapest-time"' in ar and "<svg" not in main(ar)
     sec = re.search(r'<section[^>]*id="cheapest-time".*?</section>', ar, re.S).group(0)
     assert "الثلاثاء" in sec and "25.00" in sec
     assert "30" in re.search(r'<p class="hint hist-n">(.*?)</p>', ar, re.S).group(1)

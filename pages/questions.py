@@ -16,7 +16,7 @@ import statistics
 
 import price_history as ph
 from price_history import show_price
-from site_kit import CITIES, CITY, L, P, ar_count, Page, Pages, Plugin, esc, human_date, money, num, rule_offer, rule_state, rule_terms
+from site_kit import CITIES, CITY, L, NavItem, P, ar_count, Page, Pages, Plugin, esc, human_date, money, num, rule_offer, rule_state, rule_terms
 
 DIRS = ("q",)
 HUB = ("أسئلة", "Questions")
@@ -42,7 +42,8 @@ def register(site):
     pages = [Page(("q",), lang, lambda lang=lang: qp.hub(lang, qs)) for lang in ("ar", "en")]
     for q in qs:
         pages += [Page(("q", q["slug"]), lang, lambda lang=lang, q=q: qp.page_for(q, lang)) for lang in ("ar", "en")]
-    return Plugin(pages=pages)
+    # the footer's «أسئلة» (UI redesign Task 2: a feature's NavItem is a footer link)
+    return Plugin(pages=pages, nav=[NavItem("q", href=lambda lang: P(lang, "q"), label=("أسئلة", "Questions"))])
 
 
 class Questions(Pages):

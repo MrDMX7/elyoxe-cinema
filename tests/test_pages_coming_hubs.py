@@ -43,7 +43,9 @@ def test_coming_page_english_variant(out):
 def test_thursday_nav_link_repoints_to_coming(out):
     home = read(out, "index.html")
     nav = re.search(r'<nav class="nav".*?</nav>', home, re.S).group(0)
-    assert '<a href="/coming/">نازل الخميس</a>' in nav
+    assert '<a href="/coming/">نازل قريب</a>' in nav                   # UI redesign: «نازل قريب»
+    tabs = re.search(r'<nav class="tabs".*?</nav>', home, re.S).group(0)
+    assert '<a href="/coming/">' in tabs                              # the phone's tab bar follows it
 
 
 def test_coming_data_slice_written(out):
@@ -116,13 +118,15 @@ def test_last_chance_strip_on_home_and_its_city_only(out):
     assert "class=\"tonight wrap last-chance\"" not in dubai   # only the al-ain slice has one
 
 
-def test_phone_bottom_bar_stays_one_row_with_the_feature_links(out):
-    """Seven links in a four-column grid wrapped to a second 58 px row on phones (seen at 375 px, 2026-09-27)."""
-    nav = re.search(r'<nav class="nav".*?</nav>', read(out, "index.html"), re.S).group(0)
-    assert nav.count("<a ") > 4
-    css = read(out, "assets", "cinema.css")
-    assert re.search(r"@media \(max-width:\s*1023px\)\s*\{\s*\.nav\{grid-auto-flow:\s*column", css)
-
+def test_feature_links_go_to_the_footer_and_the_tab_bar_stays_four(out):
+    """Phase 2's links (Arabic, Events, Kids…) wrapped the old phone bar to a second row (2026-09-27); since the UI
+    redesign a feature's NavItem is a footer link and the tab bar is always the same four."""
+    home = read(out, "index.html")
+    tabs = re.search(r'<nav class="tabs".*?</nav>', home, re.S).group(0)
+    assert tabs.count("<a ") == 4
+    foot = re.search(r'<nav class="foot-l".*?</nav>', home, re.S).group(0)
+    assert 'href="/arabic/"' in foot and 'href="/events/"' in foot
+    assert 'href="/arabic/"' not in re.search(r'<nav class="nav".*?</nav>', home, re.S).group(0)
 
 def test_countdown_counts_days_in_arabic_grammar():
     import types

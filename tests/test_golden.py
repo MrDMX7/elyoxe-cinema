@@ -7,6 +7,12 @@ are normalised: every HTML page, every /data JSON, the sitemap, robots, the serv
 The one file allowed to differ is the client bundle (cinema.<hash>.js): it gained the feature registry.
 The full build (every module under pages/) may only ADD files: phase-1 output is always a subset.
 
+UI redesign (2026-09-27, docs/superpowers/plans/2026-09-27-ui-redesign.md) changes every page's markup on
+purpose — Task 2 the chrome (header pills, sheets, tab bar, footer) on every page, and two new core pages,
+/cinemas/ and /sources/ (+ /en/). From then on the pages and the stylesheet are the redesign's, compared by
+their own tests; this file keeps guarding what must NOT move: every /data JSON, robots, the service worker,
+the manifest, and the sitemap (phase 1's entries all still there, byte for byte, the new pages only added).
+
 No git, or a clone without GOLDEN_REF (a shallow CI checkout): skipped."""
 import io, json, os, re, shutil, subprocess, sys, zipfile
 
@@ -37,6 +43,13 @@ SHELL_HTML = [(re.compile(r'<link rel="preload" href="[^"]+" as="script">\n'
               (re.compile(r'<script id="boot">\(function\(u,d\)\{.*?\}\)\("([^"]+)",document\)</script>'),
                r'<script src="\1" defer></script>')]
 SHELL_FILES = re.compile(r"^assets/icons/sc-[a-z]+\.png$")
+# UI redesign: the new core pages, and what the redesign rewrites (compared by their own tests, not to phase 1)
+REDESIGN_ADDED = re.compile(r"^(en/)?(cinemas|sources)/index\.html$")
+REDESIGN_CHANGED = re.compile(r"(\.html|^assets/cinema\.css)$")
+
+
+def sitemap_urls(b):
+    return set(re.findall(r"<url>.*?</url>", b.decode("utf-8"), re.S))
 
 
 def _has_ref():
@@ -104,11 +117,13 @@ def test_core_build_is_byte_identical_to_phase1(phase1, tmp_path, name, data, di
     if not os.path.exists(data): pytest.skip(f"{os.path.relpath(data, ROOT)} not in this checkout")
     before = files(run_build(phase1, data, disc, str(tmp_path / "before")))
     after = files(run_build(ROOT, data, disc, str(tmp_path / "after"), "core"))
-    assert sorted(before) == sorted(after)
+    assert sorted(before) == sorted(p for p in after if not REDESIGN_ADDED.match(p))
     assert len(before) > 50
     bundle = "assets/cinema.HASH.js"
-    diff = [p for p in before if p != bundle and before[p] != after[p]]
+    diff = [p for p in before if p not in (bundle, "sitemap.xml") and not REDESIGN_CHANGED.search(p) and before[p] != after[p]]
     assert not diff, diff[:10]
+    old, new = sitemap_urls(before["sitemap.xml"]), sitemap_urls(after["sitemap.xml"])
+    assert old <= new and all(re.search(r"/(cinemas|sources)/", u) for u in new - old), sorted(new - old)[:4]
     assert sum(p.endswith(".html") for p in before) > 20 and any(p.startswith("data/") and p.endswith(".json") for p in before)
 
 

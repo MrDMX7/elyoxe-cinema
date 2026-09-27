@@ -11,16 +11,17 @@ from site_kit import Emit, Pages, Plugin
 # helpers without globals), comments and indentation stripped. pure.js and disc.js are plain function
 # declarations with no page access: tests/test_js.py and tests/test_parity.py run them in node as they are.
 # main.js (start-up) stays last: a feature's main-bundle modules go in just before it (build.js_files).
-JS = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "ticket", "trailer", "pwa", "main")
+JS = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "ticket", "trailer", "pwa", "sheet", "main")
 CSS = ()            # src/cinema.css is the base sheet; features append src/css/<name>.css
 LAZY_JS = ()
-DIRS = tuple(c for c, _, _ in CITIES) + ("film", "cards", "halls", "data", "assets", "en", "cinema")
+DIRS = tuple(c for c, _, _ in CITIES) + ("film", "cards", "halls", "data", "assets", "en", "cinema", "cinemas", "sources")
 
 
 def register(site):
     c = CorePages(site)
     return Plugin(pages=[Emit(c.home), Emit(c.city_pages), Emit(c.cinema_pages), Emit(c.film_pages), Emit(c.card_pages),
-                         Emit(c.card_stubs), Emit(c.redirect_pages), Emit(c.halls_page), Emit(c.not_found), Emit(c.offline),
+                         Emit(c.card_stubs), Emit(c.redirect_pages), Emit(c.halls_page), Emit(c.cinemas_page), Emit(c.sources_page),
+                         Emit(c.not_found), Emit(c.offline),
                          Emit(c.slices)])
 
 
@@ -59,7 +60,8 @@ class CorePages(Pages):
                      + "".join(f'<li><a href="{P(lang, c)}">{esc(L((a, e), lang))}</a> <span class="n">{num(by_city[c])} {"سينما" if lang == "ar" else ("cinema" if by_city[c] == 1 else "cinemas")}</span></li>' for c, a, e in CITIES)
                      + '</ul></section>')
             hn = self.first_city_show(self.shows, ["dubai"])
-            body += self.cards_strip(lang) + self.sources(lang) + (self.ticket(hn, lang, hidden=True) if hn else self.ticket_shell())
+            # the chains' freshness moved to /sources/ (the footer's «من وين الأسعار», UI redesign Task 2)
+            body += self.cards_strip(lang) + (self.ticket(hn, lang, hidden=True) if hn else self.ticket_shell())
             title = ("سينما الإمارات اليوم — الأفلام والأسعار وخصم فزعة وإسعاد" if lang == "ar"
                      else "UAE cinemas today — films, ticket prices and card discounts")
             desc = ("مواعيد أفلام اليوم في كل سينمات الإمارات، سعر التذكرة لكل قاعة وفئة، والسعر بعد خصم فزعة وإسعاد وعروض البنوك، وهل الفيلم يستاهل."
@@ -91,6 +93,37 @@ class CorePages(Pages):
         return (f'<section class="wrap srcs"><h2>{"من وين الأسعار" if lang == "ar" else "Where the prices come from"}</h2>'
                 f'<p class="hint">{"من نظام الحجز عند كل سينما، ثلاث مرات باليوم. إذا ما حصلنا السعر نكتب «السعر في الشباك»، وما نخمّن." if lang == "ar" else "From each chain’s booking system, three times a day. When we can’t read a price we say «price at the box office» — we never guess."}</p>'
                 f'<ul class="chains">{"".join(rows)}</ul></section>')
+
+    def sources_page(self):
+        """/sources/: where the prices come from, and each chain's last refresh (was the home page's last section)."""
+        for lang in ("ar", "en"):
+            name = L(UI["s_sources"], lang)
+            body = (f'<section class="head wrap">{self.crumbs(lang, (name, None))}<h1 class="pt">{esc(name)}</h1></section>'
+                    + self.sources(lang).replace('<section class="wrap srcs"><h2>', '<section class="wrap srcs"><h2 class="vh">', 1))
+            title = ("من وين أسعار السينما — سينما" if lang == "ar" else "Where the cinema prices come from — Cinema")
+            desc = ("الأسعار من نظام الحجز عند كل سينما، ومتى حدّثنا كل سلسلة آخر مرة." if lang == "ar"
+                    else "Prices come from each chain’s booking system; when each chain was last refreshed.")
+            self.page(lang, ("sources",), title, desc, body, [self.breadcrumb_ld(lang, (name, P(lang, "sources")))], "sources", nav="sources")
+
+    def cinemas_page(self):
+        """/cinemas/: every cinema by city — the header's «السينمات» and the city pill with no script."""
+        for lang in ("ar", "en"):
+            name = L(UI["s_cinemas"], lang)
+            body = f'<section class="head wrap">{self.crumbs(lang, (name, None))}<h1 class="pt">{esc(name)}</h1></section>'
+            for city, a, e in CITIES:
+                cids = sorted((cid for cid, c in self.cinemas.items() if c.get("city") == city), key=lambda cid: self.cname(cid, lang))
+                cn = L((a, e), lang)
+                body += (f'<section class="wrap cities" id="{city}"><h2><a href="{P(lang, city)}">{esc(cn)}</a> '
+                         f'<small>{num(len(cids))} {"سينما" if lang == "ar" else ("cinema" if len(cids) == 1 else "cinemas")}</small></h2>')
+                if cids:
+                    body += ('<ul class="clist">' + "".join(
+                        f'<li><a href="{P(lang, city, cid)}">{self.cname_html(cid, lang)}</a> <span class="n">{esc(self.h.chain_name(self.cinemas[cid]["chain"], lang))}</span></li>'
+                        for cid in cids) + '</ul>')
+                body += '</section>'
+            title = ("كل سينمات الإمارات حسب المدينة — سينما" if lang == "ar" else "Every UAE cinema by city — Cinema")
+            desc = ("كل سينما في الإمارات، مدينة مدينة، ولكل سينما صفحة فيها الأوقات والأسعار وخصم البطاقات." if lang == "ar"
+                    else "Every cinema in the UAE, city by city; each has a page with showtimes, prices and card discounts.")
+            self.page(lang, ("cinemas",), title, desc, body, [self.breadcrumb_ld(lang, (name, P(lang, "cinemas")))], "cinemas", nav="cinemas")
 
     # -------------------------------------------------- city
     def city_pages(self):

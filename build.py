@@ -29,7 +29,7 @@ from site_kit import Emit, Kit, Plugin  # noqa: E402
 from pages import discover  # noqa: E402
 
 # the core bundle's order (pages/core.py JS); kept here for old callers
-JS_MODULES = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "ticket", "trailer", "pwa", "main")
+JS_MODULES = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "ticket", "trailer", "pwa", "sheet", "main")
 
 
 # ---------------------------------------------------------------- the page modules' assets
@@ -163,7 +163,7 @@ class Site(Kit):
         return len(self.urls)
 
 
-GENERATED = [c for c, _, _ in CITIES] + ["film", "cards", "halls", "data", "assets", "en", "cinema"]
+GENERATED = [c for c, _, _ in CITIES] + ["film", "cards", "halls", "data", "assets", "en", "cinema", "cinemas", "sources"]
 
 
 def preview_mode(env=None):

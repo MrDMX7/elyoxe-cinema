@@ -33,9 +33,9 @@ runs once per build, before any page renders, and returns a `Plugin` (from `site
 | `pages` | `Page(parts, lang, build)` — `build()` returns `site.page()`'s keywords: `title`, `desc`, `body`, `kind`, and optionally `graph` (JSON-LD), `attrs`, `nav`, `og_image`, `robots`, `path`, `js` (lazy chunks for this page). Or `Emit(fn)`: a writer that calls `site.page()` itself, many times (the core types do this) |
 | `data` | `{"data/<name>.json": obj or fn() -> obj}` — written compact (the /data slice format) after every page |
 | `sitemap` | extra path-part tuples, for pages written with `path=`. Pages from `site.page()` are in the sitemap already (Arabic + `/en/` pair, hreflang) |
-| `nav` | `NavItem(key, href, label)` — `href` a path or `fn(lang)`, `label` `(ar, en)`. The key `films`, `cinemas`, `thursday` or `cards` re-points that built-in link (Task 2: «نازل الخميس» → `/coming/`); any other key adds a link after «البطاقات». A page passing `nav=key` marks it `aria-current` |
+| `nav` | `NavItem(key, href, label)` — `href` a path or `fn(lang)`, `label` `(ar, en)`. The key `films`, `cinemas`, `thursday` or `cards` re-points that built-in header link (and the phone tab bar's, for `cinemas`/`thursday`; e.g. «نازل قريب» → `/coming/`); any other key adds a link to the **footer's** row (UI redesign Task 2: the header keeps its four; `q` and `people` come first, in the spec's order, then the rest in module order). A page passing `nav=key` marks it `aria-current` |
 | `slots` | `{slot: fn(site, lang, **ctx) -> html}` — the only places a feature writes into a core page (below) |
-| `page_js` | `{page kind: (chunk, …)}` — load a lazy chunk on every page of a kind (`"film"`, `"city"`, `"cinema"`, `"home"` …) |
+| `page_js` | `{page kind: (chunk, …)}` — load a lazy chunk on every page of a kind (`"film"`, `"city"`, `"cinema"`, `"home"` …); the kind `"*"` is every page (the search chunk) |
 
 Order is fixed: core's pages, then each module's pages in module order; then every module's data files; then
 the sitemap and the assets.
@@ -174,3 +174,20 @@ Skipped where git or the commit is missing (a shallow CI checkout).
 
 Arabic at `/` and English under `/en/` for every page; Western digits (enforced in `site.write`); no invented
 numbers, «تقريباً» on every estimate, only confirmed discounts; a page ≤ 150 KB; the main bundle ≤ 45 KB gz.
+
+## The chrome (UI redesign Task 2)
+
+Every page from `site.page()` gets the same chrome from `src/page.html` and `Kit.chrome()`: the header (mark,
+four links, the search button, the city pill `#pill-city`, the card pill `#pill-card`, the other language),
+the phone's tab bar (four links: home, cinemas, coming, search), the footer's links, and two sheets.
+
+- `site.sheet(id, (ar, en) title, body_html, lang)` — a sheet: `<div class="sheet" id=… role="dialog"
+  aria-modal="true" aria-labelledby=… hidden>`. Any element with `data-sheet-open="ID"` opens it
+  (`src/js/sheet.js`: focus kept inside, Esc / × / the scrim / the back button close it, focus returns);
+  `data-sheet-close` inside it closes it. One sheet at a time; ids must be unique on the page.
+- `site.sheet_city(lang, city)` / `site.sheet_card(lang)` — the pills' sheets (on every page already; a module
+  never renders them again). Choosing reuses main.js's `pickCity` / `pickCard` (reprice + persist, pill labels).
+- `[data-search]` anywhere opens the search overlay (`src/js/search.js`).
+- A page whose kind is in `site_kit.HERO_KINDS` (home, film) gets `data-hero` on `<body>`: the header starts as
+  a gradient over its backdrop and turns solid after 40 px.
+

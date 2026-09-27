@@ -70,13 +70,33 @@ FAMILY_RATINGS = {"G", "PG", "PG13", "PG-13", "PG 13"}
 KIDS_RATINGS = {"G", "PG"}
 CONF_WEAK = ("غير مؤكد — تأكد من الشباك", "Unconfirmed — check at the box office")
 UI = {
-    "s_mark": ("سينما", "Cinema"), "s_films": ("الأفلام", "Films"), "s_cinemas": ("السينمات", "Cinemas"),
-    "s_thursday": ("نازل الخميس", "Out Thursday"), "s_cards": ("البطاقات", "Cards"), "s_halls": ("القاعات", "Halls"),
+    "s_mark": ("سينما", "Cinema"), "s_films": ("الرئيسية", "Home"), "s_cinemas": ("السينمات", "Cinemas"),
+    "s_thursday": ("نازل قريب", "Coming soon"), "s_cards": ("البطاقات", "Cards"), "s_halls": ("القاعات", "Halls"),
     "s_alt": ("English", "العربية"), "s_nav": ("الأقسام", "Sections"), "s_skip": ("تخطَّ إلى المحتوى", "Skip to content"),
     "s_footer": ("سينما من Elyoxe. الأسعار من السينمات نفسها، والخصومات متحقَّق منها بتاريخها.",
                  "Cinema by Elyoxe. Prices from the cinemas themselves; discounts checked and dated."),
     "s_studio": ("استوديو Elyoxe", "Elyoxe studio"),
+    # the chrome (UI redesign Task 2): header tools, the phone tab bar, the footer's links
+    "s_search": ("بحث", "Search"), "s_tabs": ("التنقل", "Navigation"), "s_more": ("روابط الموقع", "Site links"),
+    "s_cards_h": ("الأسعار والبطاقات", "Prices and cards"),   # the header's label for the cards link (crumbs keep s_cards)
+    "s_cards_f": ("البطاقات والخصومات", "Cards and discounts"), "s_sources": ("من وين الأسعار", "Where prices come from"),
 }
+# the chrome's own words (not in the template's {{…}} table)
+CHROME_T = {"city": ("المدينة", "City"), "card": ("البطاقة", "Card"), "mycard": ("بطاقتي", "My card"),
+            "close": ("سكّر", "Close"), "near": ("قريب مني", "Near me"), "gov": ("حكومية", "Government"),
+            "bank": ("بنوك", "Banks"), "pick_city": ("وين أنت؟", "Where are you?"), "pick_card": ("وش عندك من بطاقة؟", "Which card do you have?"),
+            "all_cards": ("خصم كل بطاقة في كل سينما", "Every card’s discount at every cinema"),
+            "all_cities": ("كل السينمات حسب المدينة", "Every cinema by city")}
+# inline icons (24 px grid, stroked in currentColor): the phone tab bar and the header's search button
+ICONS = {"home": '<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/>',
+         "pin": '<path d="M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+         "cal": '<rect x="4" y="5" width="16" height="15"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+         "search": '<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>'}
+
+
+def icon(name):
+    return (f'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"'
+            f' aria-hidden="true" focusable="false">{ICONS[name]}</svg>')
 T = {  # strings shared with cinema.js (window.CT)
     "aed": ("درهم", "AED"), "box": ("السعر في الشباك", "Price at the box office"), "nocard": ("بدون بطاقة", "No card"),
     "none_found": ("ما لقينا خصم", "No discount found"), "unchecked": ("ما تحققنا بعد", "Not checked yet"),
@@ -107,7 +127,10 @@ SCHED_BUDGET = 100_000   # bytes of schedule markup per page; with the chrome a 
 # headroom for busier days): each schedule tries its modes in order and the last, «compact», is bounded —
 # times as plain text that cinema.js turns into buttons and prices from the city's /data slice
 PAGE_TARGET = 125_000
-CHROME = 7_000           # the template, window.CT and the page's price lists' wrapper, measured ~6 KB
+# the template, window.CT and the page's price lists' wrapper: ~6 KB measured in phase 1, plus ~3.3 KB of the
+# redesign's chrome (UI redesign Task 2: the header's tools, the tab bar's icons, the footer's links, the two
+# sheets — measured 4.5 KB on a film page against 1.2 KB before)
+CHROME = 10_000
 BCP47 = {"English": "en", "Arabic": "ar", "Hindi": "hi", "Telugu": "te", "Malayalam": "ml", "Tamil": "ta", "Tagalog": "tl",
          "Urdu": "ur", "Bengali": "bn", "Kannada": "kn", "French": "fr", "Spanish": "es", "Japanese": "ja", "Korean": "ko",
          "Chinese": "zh", "Russian": "ru", "Turkish": "tr", "Persian": "fa", "Filipino": "tl", "Punjabi": "pa", "Marathi": "mr"}
@@ -428,6 +451,8 @@ def minify_lite(js):
     return "\n".join(out)
 
 
+# pages whose first section is a full-bleed backdrop: the header starts transparent over it (data-hero)
+HERO_KINDS = ("home", "film")
 NOINDEX = '<meta name="robots" content="noindex,nofollow">'
 OG_DIMS = '<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n'
 
@@ -467,7 +492,7 @@ class Plugin:
     sitemap: list = field(default_factory=list)    # extra path-part tuples (pages written with path=)
     nav: list = field(default_factory=list)        # NavItem
     slots: dict = field(default_factory=dict)      # slot name -> fn(site, lang, **ctx) -> html (Kit.SLOTS)
-    page_js: dict = field(default_factory=dict)    # page kind ("home", "film"…) -> lazy chunk names to load there
+    page_js: dict = field(default_factory=dict)    # page kind ("home", "film"…, "*" = every page) -> lazy chunk names to load there
 
 
 class Pages:
@@ -816,36 +841,54 @@ class Kit:
 
     # -------- page plumbing
     def card_chips(self, lang):
+        """The card sheet's choices (UI redesign Task 2): «بدون بطاقة», then the confirmed cards grouped
+        government / banks, every one a toggle button cinema.js drives (main.js pickCard: reprice + persist).
+        The bank <select> of the old control sentence is gone into this list."""
         gov = [c for c in self.cards if c.get("kind") == "gov"]; bank = [c for c in self.cards if c.get("kind") != "gov"]
         nm = lambda c: c["name_ar"] if lang == "ar" else c["name_en"]
-        chips = [f'<button type="button" class="chip" data-card="" aria-pressed="true">{esc(L(T["nocard"], lang))}</button>']
-        chips += [f'<button type="button" class="chip" data-card="{esc(c["id"])}" aria-pressed="false">{esc(nm(c))}</button>' for c in gov]
-        if bank:
-            opts = "".join(f'<option value="{esc(c["id"])}">{esc(nm(c))}</option>' for c in bank)
-            chips.append(f'<label class="chip sel"><span class="vh">{"بطاقة بنك" if lang == "ar" else "Bank card"}</span>'
-                         f'<select data-card><option value="">{"بطاقة بنك" if lang == "ar" else "Bank card"}</option>{opts}</select></label>')
-        return (f'<div class="chips cards js-only" role="group" aria-label="{"البطاقة" if lang == "ar" else "Card"}">{"".join(chips)}</div>'
-                f'<noscript><p class="nojs"><a href="{P(lang, "cards")}">{"خصم كل بطاقة في كل سينما" if lang == "ar" else "Every card’s discount at every cinema"}</a></p></noscript>')
+        b = lambda cid, label, on=False: (f'<button type="button" class="opt" data-card="{esc(cid)}" aria-pressed="{"true" if on else "false"}">'
+                                          f'{esc(label)}</button>')
+        out = f'<div class="sec"><div class="opts">{b("", L(T["nocard"], lang), True)}</div></div>'
+        for key, cs in (("gov", gov), ("bank", bank)):
+            if cs:
+                out += (f'<div class="sec"><h3 class="l" id="sc-{key}">{esc(L(CHROME_T[key], lang))}</h3>'
+                        f'<div class="opts" role="group" aria-labelledby="sc-{key}">{"".join(b(c["id"], nm(c)) for c in cs)}</div></div>')
+        return out + f'<p class="sheet-more"><a href="{P(lang, "cards")}">{esc(L(CHROME_T["all_cards"], lang))}</a></p>'
+
+    def sheet(self, sid, title, body, lang):
+        """A sheet (src/js/sheet.js): phone = bottom sheet, desktop = side panel; a modal dialog any
+        <button data-sheet-open="ID"> (or a pill link carrying it) opens. Hidden until then — with no
+        script it never shows, and the pill that opens it is a plain link."""
+        t = L(title, lang) if isinstance(title, tuple) else title
+        return (f'<div class="sheet" id="{sid}" role="dialog" aria-modal="true" aria-labelledby="{sid}-t" hidden>'
+                f'<div class="grab" aria-hidden="true"></div><div class="sheet-h"><h2 id="{sid}-t">{esc(t)}</h2>'
+                f'<button type="button" class="sheet-x" data-sheet-close aria-label="{esc(L(CHROME_T["close"], lang))}"></button></div>'
+                f'<div class="sheet-b">{body}</div></div>')
+
+    def sheet_city(self, lang, city="dubai"):
+        """Every city, and «قريب مني» (near.js askNear: the nearest cinema picks the city). Each city is a link
+        to its page; main.js picks it in place where the page follows the city (data-citypick)."""
+        opts = "".join(f'<a class="opt" href="{P(lang, c)}" data-city="{c}"{" aria-current=\"true\"" if c == city else ""}>{esc(L((a, e), lang))}</a>'
+                       for c, a, e in CITIES)
+        body = (f'<div class="sec"><div class="opts" data-citypick>{opts}</div></div>'
+                f'<div class="sec"><button type="button" class="opt near-b" data-near>{icon("pin")}{esc(L(CHROME_T["near"], lang))}</button>'
+                f'<p class="near-m" data-near-msg aria-live="polite"></p></div>'
+                f'<p class="sheet-more"><a href="{P(lang, "cinemas")}">{esc(L(CHROME_T["all_cities"], lang))}</a></p>')
+        return self.sheet("sheet-city", CHROME_T["pick_city"], body, lang)
+
+    def sheet_card(self, lang):
+        return self.sheet("sheet-card", CHROME_T["pick_card"], self.card_chips(lang), lang)
 
     def me(self, lang, city=None, mode="home"):
-        """The control sentence «أنا في [المدينة] وعندي [البطاقة]». The city is a disclosure of links to the
-        city pages (works with no script); the cards are buttons cinema.js drives."""
-        city = city or "dubai"
-        links = "".join(f'<li><a href="{P(lang, c)}" data-city="{c}"{" aria-current=\"true\"" if c == city else ""}>{esc(L((a, e), lang))}</a></li>' for c, a, e in CITIES)
-        pick = (f'<details class="citypick" data-citypick><summary><span data-city-name>{esc(L(CITY[city], lang))}</span></summary>'
-                f'<ul class="pop">{links}</ul></details>')
-        if mode == "cinema":
-            q = f'<p class="me-q">{"وعندي" if lang == "ar" else "I have"}</p>'
-        else:
-            q = f'<div class="me-q">{"أنا في" if lang == "ar" else "I’m in"} {pick} {"وعندي" if lang == "ar" else "with"}</div>'
+        """What is left of the control sentence «أنا في [المدينة] وعندي [البطاقة]» once the header's pills took
+        the city and the card (UI redesign Task 2): the line where «قريب مني» and the network's city say what
+        they did, and on home and city pages the «الحين» slot. The page bodies' calls go in Tasks 3–5."""
         now = ""
         if mode in ("home", "city"):
             now = (f'<a class="now" href="#tonight" data-now hidden><span class="now-tx"><span class="now-l">{esc(L(T["now_label"], lang))}</span>'
                    f'<span class="now-f" data-now-film></span><span class="now-w" data-now-where></span></span>'
                    f'<span class="flip" dir="ltr" data-now-time></span></a>')
-        near = (f'<p class="near js-only"><button type="button" class="lnk" data-near>{"أقرب سينما لي" if lang == "ar" else "Nearest cinema to me"}</button>'
-                f'<span class="near-m" data-near-msg aria-live="polite"></span></p>')
-        return f'<div class="me me-{mode}" data-me>{q}{self.card_chips(lang)}{near}{now}</div>'
+        return f'<div class="me me-{mode}" data-me><p class="near-m" data-near-msg aria-live="polite"></p>{now}</div>'
 
     def filters(self, lang, fids):
         """Genre chips (cinema.js): all, family, kids, and the four genres most films here share."""
@@ -987,12 +1030,13 @@ class Kit:
         strings["v"] = {k: L(v, lang) for k, v in VERDICT.items()}
         strings["cards"] = {c["id"]: (c["name_ar"] if lang == "ar" else c["name_en"]) for c in self.cards}
         strings["base"] = P(lang)
+        strings["mycard"] = L(CHROME_T["mycard"], lang)   # the card pill with no card chosen
         strings["langs"] = {k: L(v, lang) for k, v in LANGS.items()}
         strings["ad"] = {ch: int((c or {}).get("ad_offset_min") or 15) for ch, c in (self.d.get("chains") or {}).items() if isinstance(c, dict)}
         strings["adhan"] = "/assets/" + self.adhan_name
         strings["days"] = sorted({s["date"] for s in self.shows})
         strings["sites"] = CHAIN_SITE   # a time with no booking URL of its own books on its chain's site   # the slice dates that exist (no 404 for a day not built)
-        chunks = {n: self.chunk_urls[n] for n in dict.fromkeys((*js, *self.kind_js.get(pagekind, ()))) if n in self.chunk_urls}
+        chunks = {n: self.chunk_urls[n] for n in dict.fromkeys((*js, *self.kind_js.get(pagekind, ()), *self.kind_js.get("*", ()))) if n in self.chunk_urls}
         if chunks: strings["chunks"] = chunks   # main.js loads each after start-up
         pre = [f'<link rel="preload" href="/assets/fonts/{f}" as="font" type="font/woff2" crossorigin>' for f in FONTS[lang]]
         fp = self._first_poster
@@ -1009,9 +1053,9 @@ class Kit:
             "title": esc(title), "description": esc(desc),
             "url": SITE + P(lang, *parts), "url_ar": SITE + P("ar", *parts), "url_en": SITE + P("en", *parts),
             "alt": P(other, *parts), "alt_lang": other, "hub": P(lang),
-            "cinemas_href": P(lang, city[0]) if city else P(lang) + "#cities", "thursday_href": P(lang),
+            "cinemas_href": P(lang, "cinemas"), "thursday_href": P(lang),
             "cards_href": P(lang, "cards"), "halls_href": P(lang, "halls"),
-            "c_films": ' aria-current="page"' if nav == "films" else "", "c_cinemas": ' aria-current="page"' if nav == "cinemas" else "",
+            "c_films": ' aria-current="page"' if nav == "films" and pagekind == "home" else "",   # «الرئيسية» is the home page only "c_cinemas": ' aria-current="page"' if nav == "cinemas" else "",
             "c_cards": ' aria-current="page"' if nav == "cards" else "",
             "v": self.v, "js": "/assets/" + self.js_name, "page": pagekind, "attrs": attrs, "preload": "\n".join(pre), "robots": robots,
             "og_image": esc(self.og_override.get((lang, tuple(parts))) or og_image or f"{SITE}/assets/og-{lang}.png"),
@@ -1020,9 +1064,12 @@ class Kit:
             "og_dims": (OG_DIMS if (lang, tuple(parts)) in self.og_override or not og_image else ""),
             "jsonld": json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False).replace("</", "<\\/"),
             "strings": json.dumps(strings, ensure_ascii=False).replace("</", "<\\/"),
-            "body": body + pdata, "c_thursday": "", "nav_extra": "",
+            "body": body + pdata, "c_thursday": "",
         })
-        self.nav_links(vals, lang, nav)
+        vals["s_cards"] = esc(L(UI["s_cards_h"], lang))   # the header says «الأسعار والبطاقات»; crumbs keep «البطاقات»
+        if pagekind in HERO_KINDS: vals["attrs"] += " data-hero"
+        extra = self.nav_links(vals, lang, nav)
+        self.chrome(vals, lang, nav, pagekind, city[0] if city else None, extra)
         self.hashes[P(lang, *parts)] = hashlib.sha1((title + desc + body).encode()).hexdigest()[:12]
         out = re.sub(r"\{\{(\w+)\}\}", lambda m: str(vals.get(m.group(1), m.group(0))), self.tpl)
         dest = path or os.path.join(self.out, *(["en"] if lang == "en" else []), *parts, "index.html")
@@ -1031,9 +1078,13 @@ class Kit:
         self._P, self._Pi, self._first_poster = [], {}, None
 
     NAV = {"films": "hub", "cinemas": "cinemas_href", "thursday": "thursday_href", "cards": "cards_href"}
+    # the footer's own order (the spec's): these feature keys come first, right after «من وين الأسعار»
+    FOOT_FIRST = ("q", "people")
 
     def nav_links(self, vals, lang, nav):
-        """The modules' NavItems into the header: a built-in key re-points that link, any other adds one."""
+        """The modules' NavItems: a built-in key re-points that header link (and the tab bar's); any other key
+        is a link in the footer's row (the header keeps its four). Returns [(key, html)] for the footer."""
+        extra = []
         for it in self.nav_items:
             href = it.href(lang) if callable(it.href) else it.href
             cur = ' aria-current="page"' if nav == it.key else ""
@@ -1042,7 +1093,33 @@ class Kit:
                 if it.label: vals["s_" + it.key] = esc(L(it.label, lang))
                 vals["c_" + it.key] = cur
             else:
-                vals["nav_extra"] += f'\n    <a href="{esc(href)}"{cur}>{esc(L(it.label or (it.key, it.key), lang))}</a>'
+                extra.append((it.key, f'<a href="{esc(href)}"{cur}>{esc(L(it.label or (it.key, it.key), lang))}</a>'))
+        return extra
+
+    def chrome(self, vals, lang, nav, pagekind, page_city, extra):
+        """The header's tools (search, the city and card pills), the phone's tab bar, the footer's links and
+        the two sheets the pills open. No script: the pills are links (the cinemas index, the cards page)."""
+        city = page_city or "dubai"
+        vals["city_name"] = esc(L(CITY[city], lang))
+        vals["card_name"] = esc(L(CHROME_T["mycard"], lang))
+        vals["cinemas_page"], vals["icon_search"] = P(lang, "cinemas"), icon("search")
+        cur = lambda on: ' aria-current="page"' if on else ""
+        tabs = [(vals["hub"], "home", vals["s_films"], cur(pagekind == "home"), ""),
+                (vals["cinemas_page"], "pin", vals["s_cinemas"], cur(nav == "cinemas"), ""),
+                (vals["thursday_href"], "cal", vals["s_thursday"], cur(nav == "thursday"), ""),
+                # no script: the film list on the home page; with it, the search overlay (src/js/search.js)
+                (P(lang) + "#tonight", "search", vals["s_search"], "", ' data-search aria-haspopup="dialog"')]
+        vals["tabs"] = "".join(f'<a href="{h}"{c}{x}>{icon(i)}<span>{t}</span></a>' for h, i, t, c, x in tabs)
+        first = [h for k in self.FOOT_FIRST for kk, h in extra if kk == k]
+        rest = [h for k, h in extra if k not in self.FOOT_FIRST]
+        links = [f'<a href="{vals["cinemas_page"]}"{cur(nav == "cinemas" and pagekind == "cinemas")}>{vals["s_cinemas"]}</a>',
+                 f'<a href="{P(lang, "cards")}"{cur(nav == "cards")}>{esc(L(UI["s_cards_f"], lang))}</a>',
+                 f'<a href="{P(lang, "sources")}"{cur(pagekind == "sources")}>{esc(L(UI["s_sources"], lang))}</a>',
+                 *first, *rest,
+                 f'<a href="{vals["halls_href"]}"{cur(pagekind == "halls")}>{vals["s_halls"]}</a>',
+                 f'<a href="{vals["alt"]}" hreflang="{vals["alt_lang"]}" lang="{vals["alt_lang"]}">{vals["s_alt"]}</a>']
+        vals["foot_links"] = "\n    ".join(links)
+        vals["sheets"] = self.sheet_city(lang, city) + self.sheet_card(lang)
 
     def write(self, path, text):
         os.makedirs(os.path.dirname(path), exist_ok=True)

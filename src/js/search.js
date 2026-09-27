@@ -1,8 +1,8 @@
 /* search.js — phase 3, task A5: bilingual fuzzy search over /data/search.json (pages/search.py). A lazy
-   chunk (docs/PLUGINS.md), loaded on every page kind pages/search.py lists, so this file runs once per
-   page and owns its own DOM: a button it injects into the header's existing .top-in container (there is
-   no PLUGINS.md header-button hook yet -- task-A5-report.md), a "/" shortcut, and a panel with an
-   ARIA combobox. K is window.CINEMA: q, qa, esc, getJSON, lang, AR, C, get/set, now(), city(), card(). */
+   chunk (docs/PLUGINS.md), loaded on every page (page_js "*"), so this file runs once per page and owns its
+   panel: the page's own [data-search] triggers open it (the header's search button and the phone tab bar's
+   «بحث», UI redesign Task 2; a page without one gets a button injected into .top-in as before), a "/"
+   shortcut, and a panel with an ARIA combobox. Focus goes back to whichever trigger opened it. K is window.CINEMA: q, qa, esc, getJSON, lang, AR, C, get/set, now(), city(), card(). */
 var AR = K.AR, esc = K.esc, q = K.q, qa = K.qa;
 var STR = AR ? {
     ph: "دور على فيلم، سينما أو أحد الطاقم…", open: "بحث", close: "سكّر",
@@ -92,7 +92,7 @@ var STR = AR ? {
   ];
   function groupOf(t) { return t === "c" || t === "m" ? "cm" : t; }
 
-  var panel, input, list, empty, btn, activeId = -1, items = [];
+  var panel, input, list, empty, btn, opener = null, activeId = -1, items = [];
 
   function render(matches) {
     items = matches;
@@ -161,7 +161,9 @@ var STR = AR ? {
     if (p) location.href = href(p);
   }
 
-  function open() {
+  function open(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    opener = (e && e.currentTarget) || btn;
     panel.hidden = false;
     document.documentElement.classList.add("srch-open");
     input.value = "";
@@ -173,20 +175,25 @@ var STR = AR ? {
   function close() {
     panel.hidden = true;
     document.documentElement.classList.remove("srch-open");
-    btn.focus();
+    (opener || btn).focus();
   }
 
   function build() {
-    var host = q(".top-in");
-    if (!host) return;
-    btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "srch-btn";
-    btn.setAttribute("aria-haspopup", "dialog");
-    btn.setAttribute("aria-controls", "srch");
-    btn.setAttribute("aria-label", STR.open);
-    var alt = q(".alt", host);
-    host.insertBefore(btn, alt || null);
+    var triggers = qa("[data-search]");
+    if (!triggers.length) {
+      var host = q(".top-in");
+      if (!host) return;
+      btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "srch-btn";
+      btn.setAttribute("aria-haspopup", "dialog");
+      btn.setAttribute("aria-label", STR.open);
+      var alt = q(".alt", host);
+      host.insertBefore(btn, alt || null);
+      triggers = [btn];
+    }
+    btn = btn || triggers[0];
+    triggers.forEach(function (t) { t.setAttribute("aria-controls", "srch"); });
 
     panel = document.createElement("div");
     panel.id = "srch";
@@ -207,7 +214,7 @@ var STR = AR ? {
     list = q("#srch-list", panel);
     empty = q("#srch-empty", panel);
 
-    btn.addEventListener("click", open);
+    triggers.forEach(function (t) { t.addEventListener("click", open); });
     q("#srch-close", panel).addEventListener("click", close);
     panel.addEventListener("click", function (e) { if (e.target === panel) close(); });
     input.addEventListener("input", function () { search(input.value); });

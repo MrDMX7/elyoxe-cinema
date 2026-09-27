@@ -23,8 +23,7 @@ function geoApply(j) {
 function geoChange(e) {
   var b = e.target.closest && e.target.closest("[data-geo-change]");
   if (!b) return;
-  var d = q("details[data-citypick]");
-  if (d) { d.open = true; var s = q("summary", d); if (s) s.focus(); }
+  sheetOpen("sheet-city", b);
 }
 feature(function () {
   document.addEventListener("click", geoChange);

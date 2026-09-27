@@ -1,4 +1,4 @@
-/* main: the control sentence «أنا في [المدينة] وعندي [البطاقة]», showtime marks, the minute clock, start-up. */
+/* main: the visitor's city and card (the header's pills and their sheets, src/js/sheet.js), showtime marks, the minute clock, start-up. */
 
 /* times already started are struck; those starting within 45 minutes (the «الحين» window) glow */
 function marks() {
@@ -38,10 +38,7 @@ function pickCity(c) {
 }
 function markCard() {
   qa("button[data-card]").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-card") === card ? "true" : "false"); });
-  qa("select[data-card]").forEach(function (s) {
-    var has = !!card && [].some.call(s.options, function (o) { return o.value === card; });
-    s.value = has ? card : ""; s.parentNode.classList.toggle("on", has);
-  });
+  qa("[data-card-name]").forEach(function (el) { el.textContent = (card && C.cards && C.cards[card]) || C.mycard || el.textContent; });
 }
 /* the signature moment: a new card reprices every price on the page at once, digits turning over */
 function pickCard(c) {
@@ -95,15 +92,20 @@ function lazyRow() {
 }
 
 (function init() {
+  /* a city from the sheet: picked in place, except on a page that IS a city (its city page, a cinema's page),
+     where the link goes on to the chosen city's page */
   qa("[data-citypick] a[data-city]").forEach(function (a) {
     a.addEventListener("click", function (e) {
       var c = a.getAttribute("data-city");
       set("city", c);
-      if (page === "home" || page === "film") { e.preventDefault(); a.closest("details").open = false; pickCity(c); }
+      if (page === "city" || page === "cinema") return;
+      e.preventDefault(); pickCity(c);
+      if (a.closest("[role=dialog]")) sheetClose();
     });
   });
-  qa("button[data-card]").forEach(function (b) { b.addEventListener("click", function () { pickCard(b.getAttribute("data-card")); }); });
-  qa("select[data-card]").forEach(function (s) { s.addEventListener("change", function () { pickCard(s.value); }); });
+  qa("button[data-card]").forEach(function (b) {
+    b.addEventListener("click", function () { pickCard(b.getAttribute("data-card")); if (b.closest("[role=dialog]")) sheetClose(); });
+  });
   qa("[data-city-name]").forEach(function (el) { if (C.cities && C.cities[city]) el.textContent = C.cities[city]; });
   qa("[data-near]").forEach(function (b) { b.addEventListener("click", askNear); });
   qa("[data-day]").forEach(function (b) {
@@ -123,7 +125,7 @@ function lazyRow() {
   upgradeTimes(); posterFallback();
   markCard(); marks(); ages(); renderPrices(false);
   if (page === "film") renderFilm();
-  bindFilters(); bindTicket(); bindTrailer(); bindPWA(); lazyRow();
+  bindSheets(); bindFilters(); bindTicket(); bindTrailer(); bindPWA(); lazyRow();
   startFeatures();
   applyFilters();
   if (ST.prayer) applyPrayer();

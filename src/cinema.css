@@ -22,7 +22,7 @@
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{margin:0;background:var(--night);color:var(--screen);font-family:var(--body);font-weight:400;font-size:15px;line-height:1.6;
-  min-block-size:100vh;overflow-x:clip;position:relative;padding-block-end:calc(58px + env(safe-area-inset-bottom))}
+  min-block-size:100vh;overflow-x:clip;position:relative;padding-block-end:calc(60px + env(safe-area-inset-bottom))}
 /* the velvet glow: drawn inside the page's width (an overhanging box would widen a phone's layout viewport) */
 body::before{content:"";position:absolute;inset-block-start:0;inset-inline:0;block-size:320px;
   background:radial-gradient(280px 220px at var(--gx) 100px,rgba(122,22,38,.6),rgba(15,11,12,0));pointer-events:none;z-index:0}
@@ -30,7 +30,7 @@ body::before{content:"";position:absolute;inset-block-start:0;inset-inline:0;blo
 :root[dir=ltr]{--gx:calc(100% - 200px)}
 body[data-page=film]::before{display:none}
 /* no stacking contexts here: the backdrop (z -1) sits under the header, the open ticket (z 40) over the tab bar */
-main,.top,.foot{position:relative}
+main,.foot{position:relative}
 img{max-inline-size:100%}
 a{color:inherit;text-decoration-color:var(--seat);text-decoration-thickness:1px;text-underline-offset:.2em}
 a:hover{text-decoration-color:var(--screen)}
@@ -49,15 +49,68 @@ span.num[dir=ltr],bdi.num{unicode-bidi:isolate}
 .wrap{max-inline-size:var(--max);margin-inline:auto;padding-inline:var(--gut)}
 [lang=en] .pst-t,[lang=en] .feat-t,[lang=en] .ft{letter-spacing:-.01em}
 
-/* ------------------------------------------------ header + nav (phone: a tab bar at the bottom) */
-.top-in{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block-start:14px;min-block-size:var(--head)}
-.mark{font-family:var(--display);font-weight:700;font-size:34px;line-height:1;color:var(--gold);text-decoration:none}
-[lang=en] .mark{font-family:var(--display);font-weight:600;font-size:26px;letter-spacing:-.02em}
-.alt{min-block-size:44px;min-inline-size:44px;display:inline-flex;align-items:center;justify-content:center;padding-inline:12px;border:1px solid var(--line-2);font-size:13px;text-decoration:none}
-.nav{position:fixed;inset-inline:0;inset-block-end:0;z-index:20;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
-  background:var(--night);border-block-start:1px solid rgba(241,234,224,.1);padding-block-end:env(safe-area-inset-bottom)}
-.nav a{min-block-size:58px;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--seat);text-decoration:none;font-size:13px;line-height:1.3;padding-inline:4px}
-.nav a[aria-current]{color:var(--screen);font-weight:500}
+/* ------------------------------------------------ the chrome (UI redesign Task 2): one header line, a phone tab bar,
+   the footer, and the sheets the header's pills open */
+/* the header: solid night with a rule; over a hero (data-hero) it starts as a gradient and turns solid once the
+   page has moved 40 px (src/js/sheet.js, an IntersectionObserver sentinel). No script: always solid. */
+.top{position:sticky;inset-block-start:0;z-index:30;background:var(--night);border-block-end:1px solid var(--line)}
+.js body[data-hero] .top:not(.solid){background:linear-gradient(rgba(15,11,12,.85),rgba(15,11,12,0)) border-box;border-block-end-color:transparent}
+.top-in{display:flex;align-items:center;gap:12px;block-size:var(--head)}
+.top-sent{position:absolute;inset-block-start:0;inset-inline-start:0;inline-size:1px;block-size:40px;visibility:hidden;pointer-events:none}
+.mark{font-family:var(--display);font-weight:700;font-size:32px;line-height:1;color:var(--gold);text-decoration:none;flex:0 0 auto}
+[lang=en] .mark{font-family:var(--display);font-weight:600;font-size:24px;letter-spacing:-.02em}
+.nav{display:none}
+.tools{margin-inline-start:auto;display:flex;align-items:center;gap:8px;min-inline-size:0}
+.icon{inline-size:40px;block-size:40px;display:inline-grid;place-items:center;flex:0 0 auto;background:none;border:0;padding:0;color:var(--screen);cursor:pointer}
+.icon svg{inline-size:20px;block-size:20px}
+.srch-b{display:none}
+.js .srch-b{display:inline-grid}
+.pill{display:inline-flex;align-items:center;gap:6px;min-block-size:36px;min-inline-size:0;padding-inline:12px;border:1px solid var(--line-2);
+  background:rgba(15,11,12,.4);color:var(--screen);font-size:13px;line-height:1.2;text-decoration:none;white-space:nowrap}
+.pill span{overflow:hidden;text-overflow:ellipsis;max-inline-size:8.5em;line-height:1.7}
+.pill::after{content:"";flex:0 0 auto;inline-size:6px;block-size:6px;border-inline-end:1.5px solid currentColor;border-block-end:1.5px solid currentColor;
+  transform:translateY(-2px) rotate(45deg);opacity:.7}
+.pill[aria-expanded=true]{border-color:var(--screen)}
+.alt{display:none;font-size:13px;color:var(--seat);text-decoration:none}
+.alt:hover{color:var(--screen)}
+/* the phone's tab bar: four places, icon over label */
+.tabs{position:fixed;inset-block-end:0;inset-inline:0;z-index:30;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  background:rgba(15,11,12,.96);border-block-start:1px solid var(--line);padding-block-end:env(safe-area-inset-bottom)}
+.tabs a{min-block-size:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;line-height:1.3;
+  color:var(--seat);text-decoration:none}
+.tabs svg{inline-size:20px;block-size:20px}
+.tabs a[aria-current]{color:var(--screen);font-weight:500}
+.tabs a:focus-visible{outline-offset:-3px}
+/* sheets: phone = from the bottom, desktop = a panel at the inline end; the scrim under them */
+html.sheet-open{overflow:hidden}
+.sh-scrim{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6)}
+.sh-scrim[hidden],.sheet[hidden]{display:none}
+.sheet{position:fixed;z-index:41;inset-inline:0;inset-block-end:0;max-block-size:86vh;overflow-y:auto;overscroll-behavior:contain;
+  background:#17100F;border-block-start:1px solid var(--line-2);padding:10px var(--gut) calc(20px + env(safe-area-inset-bottom));animation:sheet-up .28s var(--ease)}
+@keyframes sheet-up{from{transform:translateY(24px);opacity:0}}
+.grab{inline-size:40px;block-size:4px;background:var(--line-2);margin:0 auto 14px}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.sheet-h h2{font-size:24px}
+.sheet-x{position:relative;inline-size:44px;block-size:44px;flex:0 0 auto;border:0;background:transparent;color:var(--screen);cursor:pointer;margin-inline-end:-12px}
+.sheet-x::before,.sheet-x::after{content:"";position:absolute;inset-inline-start:13px;inset-block-start:21px;inline-size:18px;block-size:2px;background:currentColor;transform:rotate(45deg)}
+.sheet-x::after{transform:rotate(-45deg)}
+.sheet .sec{padding-block:14px;border-block-end:1px solid var(--line)}
+.sheet .sec:last-of-type{border:0}
+.sheet .l{font-family:var(--body);font-weight:400;font-size:13px;color:var(--seat);margin-block-end:10px}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{min-block-size:40px;padding-inline:14px;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);background:transparent;
+  color:var(--screen);font:inherit;font-size:14px;text-decoration:none;cursor:pointer}
+.opt[aria-pressed=true],.opt[aria-current]{background:var(--screen);color:var(--night);border-color:var(--screen);font-weight:600}
+.opt svg{inline-size:18px;block-size:18px}
+.sheet .near-m{margin-block-start:10px;font-size:13px;color:var(--dim)}
+.sheet-more{padding-block-start:6px;font-size:13px}
+.sheet-more a{color:var(--dim)}
+@media (min-width:1024px){
+  .sheet{inset-block:0;inset-inline:auto 0;inline-size:420px;max-block-size:none;border:0;border-inline-start:1px solid var(--line-2);
+    padding-block:24px;animation-name:sheet-in}
+  .grab{display:none}
+}
+@keyframes sheet-in{from{opacity:0}}
 
 /* ------------------------------------------------ buttons and chips */
 .btn{min-block-size:52px;padding-inline:22px;display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-size:16px;border:0}
@@ -70,29 +123,13 @@ span.num[dir=ltr],bdi.num{unicode-bidi:isolate}
 .chip{flex:0 0 auto;min-block-size:40px;padding-inline:12px;display:inline-flex;align-items:center;background:transparent;color:var(--screen);
   border:1px solid var(--line-2);font-family:inherit;font-size:13px;white-space:nowrap;cursor:pointer}
 .chip[aria-pressed=true]{background:var(--screen);color:var(--night);border-color:var(--screen);font-weight:600}
-.chip.sel{position:relative;padding:0}
-.chip.sel select{appearance:none;-webkit-appearance:none;background:transparent;border:0;color:inherit;font:inherit;min-block-size:38px;padding-inline:12px 26px;cursor:pointer}
-.chip.sel::after{content:"";position:absolute;inset-inline-end:10px;inset-block-start:50%;border-inline:4px solid transparent;border-block-start:5px solid currentColor;transform:translateY(-25%);pointer-events:none}
-.chip.sel.on{background:var(--screen);color:var(--night);font-weight:600}
-.chip.sel option{background:var(--screen);color:var(--ink)}
 .filters .chip{border:0;padding-inline:0;min-block-size:36px;color:var(--seat);background:none}
 .filters .chip[aria-pressed=true]{color:var(--screen);font-weight:400;background:none}
 .filters{gap:14px}
 
-/* ------------------------------------------------ «أنا في [المدينة] وعندي [البطاقة]» */
+/* ------------------------------------------------ what is left of «أنا في … وعندي» (Kit.me): the near line and «الحين» */
 .me{position:relative;display:flex;flex-direction:column;gap:8px;padding-block-start:10px}
-.me-q{font-family:var(--display);font-weight:var(--dw);font-size:34px;line-height:1.2}
-.citypick{display:inline-block;position:relative}
-.citypick summary{list-style:none;cursor:pointer;color:var(--gold);border-block-end:2px solid var(--gold);display:inline}
-.citypick summary::-webkit-details-marker{display:none}
-.citypick[open] summary{color:var(--gold-hi)}
-.pop{position:absolute;z-index:30;inset-block-start:calc(100% + 6px);inset-inline-start:0;min-inline-size:12rem;margin:0;padding:6px 0;list-style:none;
-  background:var(--night);border:1px solid var(--line-2);font-family:var(--body);font-weight:400;font-size:16px;line-height:1.4}
-.pop a{display:block;padding:10px 16px;text-decoration:none;color:var(--screen)}
-.pop a:hover{background:var(--tint)}
-.pop a[aria-current]{color:var(--gold)}
-.me-cinema .me-q{font-size:26px}
-.me-film .me-q{font-size:24px}
+.me .near-m{font-size:13px;color:var(--seat)}
 
 /* «الحين»: the nearest show starting soon, its time on flip tiles */
 .now{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;margin-block-start:6px;background:var(--tint);text-decoration:none;color:var(--screen)}
@@ -394,11 +431,17 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
 .similar .film{inline-size:auto}
 .nf{padding-block:60px}
 
-/* footer */
-.foot{margin-block-start:56px;border-block-start:1px solid var(--line);padding-block:20px 24px;color:var(--seat);font-size:12px}
-.foot-in{display:flex;flex-direction:column;gap:8px}
-.foot-l{display:flex;flex-wrap:wrap;gap:6px 18px}
+/* footer: the mark, then the site's links; the credit line under them */
+.foot{margin-block-start:60px;border-block-start:1px solid var(--line);padding-block:28px 40px;color:var(--seat);font-size:13px}
+.foot-in{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px}
+.foot .mark{font-size:24px;margin-inline-end:auto;color:var(--gold)}
+[lang=en] .foot .mark{font-size:20px}
+.foot-l{display:flex;flex-wrap:wrap;gap:4px 22px}
+.foot-l a{min-block-size:32px;display:inline-flex;align-items:center}
+.foot-l a[aria-current]{color:var(--screen)}
+.foot-s{flex-basis:100%;font-size:12px}
 .foot a{color:var(--dim);text-decoration:none}
+.foot a:hover{color:var(--screen)}
 
 /* ------------------------------------------------ desktop (E-Desk-*) */
 @media (min-width:1024px){
@@ -407,14 +450,15 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
   body::before{block-size:400px;background:radial-gradient(400px 260px at var(--gx) 120px,rgba(122,22,38,.55),rgba(15,11,12,0))}
   :root[dir=rtl]{--gx:calc(100% - 300px)}
   :root[dir=ltr]{--gx:300px}
-  .top-in{padding-block-start:26px;justify-content:flex-start;gap:44px}
-  .mark{font-size:44px}
-  [lang=en] .mark{font-size:34px}
-  .nav{position:static;display:flex;gap:28px;background:none;border:0;padding:0}
-  .nav a{min-block-size:44px;font-size:15px;padding:0;color:var(--seat)}
-  .nav a[aria-current]{color:var(--screen);font-weight:400}
-  .alt{margin-inline-start:auto;border:0;color:var(--seat);font-size:14px;padding:0}
-  .alt:hover{color:var(--screen)}
+  .top-in{gap:28px}
+  .mark{font-size:36px}
+  [lang=en] .mark{font-size:28px}
+  .nav{display:flex;gap:22px}
+  .nav a{min-block-size:44px;display:inline-flex;align-items:center;font-size:14px;color:var(--seat);text-decoration:none}
+  .nav a:hover{color:var(--screen)}
+  .nav a[aria-current]{color:var(--screen);font-weight:500}
+  .alt{display:inline-flex;align-items:center;min-block-size:40px;margin-inline-start:4px}
+  .tabs{display:none}
 
   /* home hero: 600 px of the featured film, the control panel at the end side */
   .hero{min-block-size:530px}
@@ -439,19 +483,12 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
   .feat-a{display:flex;gap:12px;margin-block-start:8px}
   .feat-a .btn{min-block-size:56px;padding-inline:28px}
   .feat-a .btn.ghost{padding-inline:22px}
-  .me-home{margin-block-start:100px;padding:22px;gap:14px;background:rgba(15,11,12,.78);border-block-start:2px solid var(--gold)}
-  .me-home .me-q{font-size:32px;line-height:1.15}
-  .me-home .chips,.me-city .chips{flex-wrap:wrap;overflow:visible;gap:8px}
-  .me .chip{min-block-size:42px;padding-inline:14px;font-size:14px}
-  .me .chip.sel{padding:0}
-  .me-home .now{background:none;padding:12px 0 0;border-block-start:1px solid var(--line);margin-block-start:0}
+  .me-home{margin-block-start:100px;gap:14px}
   .now-f{font-size:14px;font-weight:400}
   .flip .d{min-inline-size:24px;block-size:38px;font-size:21px}
   .flip .c{font-size:21px}
-  .me-city{flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px 20px;padding-block:14px;border-block:1px solid var(--line)}
-  .me-city .me-q{font-size:34px}
+  .me-city{flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px 20px}
   .me-city .now{margin:0;margin-inline-start:auto}
-  .me-cinema{flex-direction:row;align-items:center;gap:16px}
 
   .sec-h{padding-block:0 0}
   .tonight .sec-h h2{font-size:36px}
@@ -554,7 +591,7 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
 :root[dir=rtl]{--to-end:left;--gx-end:20%}
 :root[dir=ltr]{--to-end:right;--gx-end:80%}
 @media (prefers-reduced-motion:reduce){
-  .flip .d.go,.fd{animation:none}
+  .flip .d.go,.fd,.sheet{animation:none}
   .js .ticket,.js .ticket.open{transition:none}
 }
 
