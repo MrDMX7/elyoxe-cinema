@@ -92,8 +92,20 @@ function showDay(b) {
   if (chip && chip.getAttribute("aria-pressed") !== "true") chip.click();
 }
 function scrollNear(el) {
-  var top = el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - Math.round(window.innerHeight * 0.22);
-  window.scrollTo(0, Math.max(0, top));
+  var go = function () {
+    var top = el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - Math.round(window.innerHeight * 0.22);
+    window.scrollTo(0, Math.max(0, top));
+  };
+  go();
+  /* on a cold landing the web fonts swap in after this scroll and push a long schedule's block down, below the
+     fold: once they are in, scroll to it again, unless the visitor has moved the page meanwhile */
+  var f = document.fonts; if (!f || !f.ready) return;
+  var moved = false, evs = ["wheel", "touchstart", "keydown", "mousedown"], mark = function () { moved = true; };
+  evs.forEach(function (e) { window.addEventListener(e, mark, { passive: true, once: true }); });
+  f.ready.then(function () {
+    evs.forEach(function (e) { window.removeEventListener(e, mark); });
+    if (!moved && el.isConnected) go();
+  });
 }
 /* a tap the ticket should treat as the visitor's own (the hash, or a finger), else the page picking for them */
 var tkUser = false, tkAuto = null, tkPicking = false;
@@ -120,6 +132,7 @@ function showFromHash() {
     var s = q(".cgs"); if (!s) return false;
     s.insertAdjacentElement("afterbegin", p); scrollNear(p);
   }
+  rollTicket();   /* desktop: the column leaves the build's show too if it has started (#27), as without the link */
   return true;
 }
 /* desktop: the column is never a show that has started. Until the visitor picks a time it follows the next

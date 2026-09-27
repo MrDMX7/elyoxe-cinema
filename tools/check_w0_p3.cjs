@@ -8,9 +8,11 @@
 
    Needs a build of real data whose shows include 2026-09-27 evening in Dubai (the Fold's latest.json of 26–27
    September). Playwright: PLAYWRIGHT (a path to the package), else the elyoxe site's copy on the laptop.
-   Scenarios: now (#24 pick, #23 link and landing), gone (#23 a started show), sort (#25), late (#26 late line
-   and VALARM), desk (#27), box (#28), seats (#29), hall (#30), fit (no sideways scroll, no page error at
-   360/390/375/320). */
+   Scenarios: now (#24 pick, #23 link and landing), gone (#23 a started show, on screen after a cold landing), sort
+   (#25), late (#26 late line and VALARM), desk (#27), deskgone (#23 + #27, a started show's link on desktop), box
+   (#28), seats (#29), gonedeep (#23, a started show far down the page, cold), hall (#30), oracle (#30, every block judged after the clock runs), focus (#26, the minute
+   keeps a focused link), fit (no sideways scroll, no page error at 360/390/375/320). "now" feeds "gone" and
+   "deskgone". */
 "use strict";
 const fs = require("fs"), path = require("path"), http = require("http"), net = require("net"), cp = require("child_process");
 
@@ -146,9 +148,117 @@ async function scenarioGone(vp, link) {
   let msg = null;
   try { await p.waitForSelector("[data-gone]", { timeout: 6000 }); msg = await p.locator("[data-gone]").textContent(); } catch (e) {}
   const open = await p.evaluate(() => { const t = document.querySelector("[data-ticket]"); return !!(t && t.classList.contains("open")); });
-  if (msg) await p.locator("[data-gone]").scrollIntoViewIfNeeded();
+  /* a fresh context is a cold landing (no cached fonts): the line must be on screen after the web fonts swap in,
+     without the check scrolling to it (review M1) */
+  await p.evaluate(() => document.fonts.ready); await wait(500);
+  const pos = await p.evaluate(() => { const e = document.querySelector("[data-gone]"); if (!e) return null; const r = e.getBoundingClientRect();
+    return { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, fonts: document.fonts.status }; });
   await shot(p, "gone-" + vp);
   check(vp + " a started show's link says «هالعرض بدأ، هذي الأوقات الجاية» and opens no ticket", msg === "هالعرض بدأ، هذي الأوقات الجاية" && !open, msg);
+  check(vp + " on a cold landing the line is on screen once the fonts are in (not scrolled to by the check)",
+    pos && pos.top >= 0 && pos.bottom <= pos.vh, JSON.stringify(pos));
+  await c.close();
+}
+
+/* the show key, as ticket.js computes it (FNV-1a 32 over the UTF-8 of «cinema|date|time|hall key», base36, pad 6) */
+function showKey(cin, d, t, hk) {
+  let h = 0x811c9dc5;
+  for (const b of Buffer.from([cin, d, t, hk || "Standard"].join("|"), "utf8")) { h ^= b; h = Math.imul(h, 0x01000193) >>> 0; }
+  const k = h.toString(36);
+  return k.length < 6 ? ("00000" + k).slice(-6) : k;
+}
+/* #23, review M1: a started show far down the heaviest film page (a cinema block thousands of pixels below the top,
+   where the font swap moves it most), on a cold landing: the line is on screen once the fonts are in */
+async function scenarioGoneDeep(vp) {
+  const fid = "heart-of-the-beast", list = shows("dubai", DAY).filter((s) => s.f === fid);
+  const by = {}; list.forEach((s) => { (by[s.c] = by[s.c] || []).push(s); });
+  const cands = Object.keys(by).map((c) => by[c].sort((a, b) => (a.t < b.t ? -1 : 1))).filter((xs) => xs.length > 1 && xs[0].t >= "10:00");
+  const pickC = cands.find((xs) => xs[0].c === "vox-city-centre-mirdif") || cands[cands.length - 1];
+  if (!pickC) { check(vp + " deep started-show link (no case)", false); return; }
+  const s = pickC[0], when = new Date(at(s.t).getTime() + 10 * 60e3);
+  const { c, p } = await ctxAt(vp, when);
+  await p.goto(BASE + "/film/" + fid + "/#s-" + showKey(s.c, s.d, s.t, s.k));
+  await p.waitForSelector("[data-gone]", { timeout: 6000 }).catch(() => {});
+  await p.evaluate(() => document.fonts.ready); await wait(600);
+  const pos = await p.evaluate(() => { const e = document.querySelector("[data-gone]"); if (!e) return null; const r = e.getBoundingClientRect();
+    return { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, sy: Math.round(scrollY), sh: document.documentElement.scrollHeight }; });
+  await shot(p, "gone-deep-" + vp);
+  check(vp + " cold landing on a started show deep in the page (" + s.c + " " + s.t + " " + s.k + "): the line is on screen once the fonts are in",
+    pos && pos.top >= 0 && pos.bottom <= pos.vh, JSON.stringify(pos));
+  await c.close();
+}
+
+/* #23 + #27 on desktop: a started show's link leaves the column on an upcoming show from the start (review M2) */
+async function scenarioDeskGone(link) {
+  if (!link || !link.exp) { check("desktop started-show link (no link to test)", false); return; }
+  const when = new Date(at(link.exp.t).getTime() + 7 * 60e3);
+  const { c, p } = await ctxAt("desk", when);
+  await p.goto(BASE + link.href);
+  await p.waitForSelector("[data-gone]", { timeout: 6000 }).catch(() => {});
+  await wait(800);
+  const got = await p.evaluate(() => {
+    const t = document.querySelector("[data-ticket]"), on = document.querySelector(".cgs .tm.on"), pick = t && t.querySelector("[data-tk-pick]");
+    const d = on && on.closest("[data-d]") && on.closest("[data-d]").getAttribute("data-d");
+    return { gone: !!document.querySelector("[data-gone]"), pick: pick ? pick.textContent : null, time: t && (t.querySelector("[data-tk-time]") || {}).textContent,
+      d: d, t: on && on.getAttribute("data-start"), city: on && on.closest(".fcity") && on.closest(".fcity").getAttribute("data-city") };
+  });
+  const up = got.d && got.t && new Date(got.d + "T" + got.t + ":00+04:00").getTime() >= when.getTime();
+  check("desktop, a started show's link: the line shows and the column is an upcoming show in the visitor's city at once (or «اختار وقت»)",
+    got.gone && (got.pick === "اختار وقت" || (up && got.city === "dubai" && got.time === got.t)), JSON.stringify(got));
+  await c.close();
+}
+
+/* #26 (review I1): the minute rewrites the leave-by line, never the links, so a focused «أضف للتقويم» keeps its focus,
+   on desktop and inside the phone sheet, with and without a place */
+async function scenarioFocus() {
+  for (const vp of ["desk", 390]) {
+    for (const withLoc of [false, true]) {
+      const ls = withLoc ? { "cinema.loc": "25.2,55.3,{NOW}" } : {};
+      const { c, p } = await ctxAt(vp, at("12:40"), { ls });
+      await p.goto(BASE + "/film/heart-of-the-beast/");
+      await wait(1200);
+      if (vp !== "desk") {
+        const tm = p.locator(".cgs .tm[data-start]:not(.past):not(.x)").first();
+        await tm.scrollIntoViewIfNeeded(); await tm.tap();
+        await p.waitForSelector(".ticket.open .plan-add a[download]", { timeout: 8000 }).catch(() => {});
+        await wait(600);
+      }
+      const st = () => p.evaluate(() => { const a = document.activeElement, l = document.querySelector(".ticket .plan-leave");
+        return { cal: !!a && a.matches('.ticket .plan-add a[download]'), inTicket: !!a && !!a.closest(".ticket"), tag: a && a.tagName, line: l ? l.textContent : null }; });
+      const ok = await p.evaluate(() => { const a = document.querySelector(".ticket .plan-add a[download]"); if (!a) return false; a.focus(); return document.activeElement === a; });
+      const a0 = await st();
+      await c.clock.runFor(61e3); await wait(300);
+      const a1 = await st();
+      const lineOk = !withLoc || (a0.line && a1.line && (a0.line.indexOf("لو طلعت") !== 0 || a0.line !== a1.line));
+      check((vp === "desk" ? "desktop" : vp + " phone sheet") + (withLoc ? ", place known" : ", no place") + ": «أضف للتقويم» keeps the focus across the minute",
+        ok && a0.cal && a1.cal && a1.inTicket && lineOk, JSON.stringify({ before: a0, after: a1 }));
+      await c.close();
+    }
+  }
+}
+
+/* #30 in the page: after the clock has run, every block with times and none to come is hidden, and no other block is
+   hidden for the clock's sake (the filters' own xf aside) */
+async function scenarioOracle(vp) {
+  const { c, p } = await ctxAt(vp, new Date(DAY + "T21:58:30+04:00"));
+  await p.goto(BASE + "/film/heart-of-the-beast/");
+  await p.waitForSelector(".cgs .tm[data-start]", { timeout: 10000 });
+  const past0 = await p.evaluate(() => document.querySelectorAll(".cgs .tm.past").length);
+  await c.clock.runFor(180e3); await wait(300);
+  const got = await p.evaluate(() => {
+    const GONE = ".hl, .tl, .scin, .cg, .cf, .srow, .fcity, .day[data-d]", bad = [];
+    let n = 0, ran = 0;
+    document.querySelectorAll(GONE).forEach((el) => {
+      if (el.closest(".similar, [data-ticket]")) return;
+      const ts = [...el.querySelectorAll(".tm[data-start]")];
+      const r = ts.length > 0 && !ts.some((a) => !a.classList.contains("past") && !a.closest(".times[hidden]"));
+      n++; if (r) ran++;
+      if (el.classList.contains("x") !== (el.classList.contains("xf") || r)) bad.push(el.className + " " + (el.getAttribute("data-cin") || el.getAttribute("data-hk") || ""));
+    });
+    return { n, ran, bad: bad.slice(0, 4), past: document.querySelectorAll(".cgs .tm.past").length, empty: [...document.querySelectorAll("[data-empty]")].some((e) => !e.hidden) };
+  });
+  check(vp + " film page, 3 minutes of the clock (" + (got.past - past0) + " times struck): the hidden blocks are exactly those with no time to come, and no «ما في شي يطابق»",
+    got.bad.length === 0 && got.past > past0 && got.ran > 0 && !got.empty, JSON.stringify(got));
   await c.close();
 }
 
@@ -351,15 +461,20 @@ async function scenarioFit() {
   const on = (n) => !ONLY.length || ONLY.includes(n);
   try {
     await headerCheck();
+    let lastLink = null;
     for (const vp of [360, 390]) {
       let link = null;
-      if (on("now")) { try { link = await scenarioNow(vp); } catch (e) { check(vp + " now: " + e.message.split("\n")[0], false); } }
+      if (on("now")) { try { link = lastLink = await scenarioNow(vp); } catch (e) { check(vp + " now: " + e.message.split("\n")[0], false); } }
       if (on("gone")) { try { await scenarioGone(vp, link); } catch (e) { check(vp + " gone: " + e.message.split("\n")[0], false); } }
+      if (on("gonedeep")) { try { await scenarioGoneDeep(vp); } catch (e) { check(vp + " gonedeep: " + e.message.split("\n")[0], false); } }
       if (on("sort")) { try { await scenarioSort(vp); } catch (e) { check(vp + " sort: " + e.message.split("\n")[0], false); } }
       if (on("late")) { try { await scenarioLate(vp); } catch (e) { check(vp + " late: " + e.message.split("\n")[0], false); } }
       if (on("box")) { try { await scenarioBox(vp); } catch (e) { check(vp + " box: " + e.message.split("\n")[0], false); } }
     }
     if (on("desk")) { try { await scenarioDesk(); } catch (e) { check("desk: " + e.message.split("\n")[0], false); } }
+    if (on("deskgone")) { try { await scenarioDeskGone(lastLink); } catch (e) { check("deskgone: " + e.message.split("\n")[0], false); } }
+    if (on("focus")) { try { await scenarioFocus(); } catch (e) { check("focus: " + e.message.split("\n")[0], false); } }
+    if (on("oracle")) { try { await scenarioOracle(390); } catch (e) { check("oracle: " + e.message.split("\n")[0], false); } }
     if (on("seats")) { try { await scenarioSeats(360); } catch (e) { check("seats: " + e.message.split("\n")[0], false); } }
     if (on("hall")) { try { await scenarioHall(390); } catch (e) { check("hall: " + e.message.split("\n")[0], false); } }
     if (on("fit")) { try { await scenarioFit(); } catch (e) { check("fit: " + e.message.split("\n")[0], false); } }

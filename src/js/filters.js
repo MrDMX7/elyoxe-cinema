@@ -56,17 +56,27 @@ function markControls() {
    leaves such a hall out, and this hides one whose last time passes while the page is open. A block with no
    time at all is not judged. The filters mark what they hide with xf; x (display:none) is xf or gone. */
 var GONE = ".hl, .tl, .scin, .cg, .cf, .srow, .fcity, .day[data-d]";
-function tmLive(a) { return !a.classList.contains("past") && !a.closest(".times[hidden]"); }
 function hideBy(el, v) { el.classList.toggle(el.matches(GONE) ? "xf" : "x", v); }
-/* one pass over the times (hundreds on a busy film page): each marks the blocks above it as having a time, and a live one
-   as having a time to come; a block with times and none to come is gone */
+/* one pass over the times (hundreds on a busy film page), grouped by their parent (a hall's run holds several):
+   each parent marks the blocks above it as having a time, and as having a time to come when one of its times has
+   not started on the day showing; a block with times and none to come is gone. A walk up stops at a block that
+   already knows as much, because the walk that raised it raised every block above it too. */
 function hidePassed() {
-  var els = qa(GONE).filter(function (el) { return !el.closest(".similar, [data-ticket]"); }), st = new Map();
+  var els = qa(GONE).filter(function (el) { return !el.closest(".similar, [data-ticket]"); }), st = new Map(), par = new Map();
   if (!els.length) return st;
   els.forEach(function (el) { st.set(el, 0); });   /* 0 no time, 1 times all passed, 2 a time to come */
   qa(".tm[data-start]").forEach(function (a) {
-    var v = tmLive(a) ? 2 : 1;
-    for (var n = a.parentElement; n && n !== body; n = n.parentElement) { var s = st.get(n); if (s !== undefined && s < v) st.set(n, v); }
+    var p = a.parentElement, v = a.classList.contains("past") ? 1 : 2;
+    if (p && !(par.get(p) >= v)) par.set(p, v);
+  });
+  par.forEach(function (v, p) {
+    if (v === 2 && p.closest(".times[hidden]")) v = 1;   /* a day not showing has nothing to come on the day showing */
+    for (var n = p; n && n !== body; n = n.parentElement) {
+      var s = st.get(n);
+      if (s === undefined) continue;
+      if (s >= v) break;
+      st.set(n, v);
+    }
   });
   els.forEach(function (el) { el.classList.toggle("x", el.classList.contains("xf") || st.get(el) === 1); });
   return st;

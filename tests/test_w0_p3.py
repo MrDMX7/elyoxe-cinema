@@ -42,9 +42,10 @@ var NOW = new Date(), TODAY = "2026-09-27";
 """
 
 
-def node(tmp_path, files, expr):
+def node(tmp_path, files, expr, pre=""):
+    """Run the modules after the stub, then `pre` (statements), and print `expr` as JSON."""
     src = STUB + "\n".join((JS / f).read_text(encoding="utf-8") for f in files)
-    (tmp_path / "t.js").write_text(src + "\nprocess.stdout.write(JSON.stringify(" + expr + "));\n", encoding="utf-8")
+    (tmp_path / "t.js").write_text(src + "\n" + pre + "\nprocess.stdout.write(JSON.stringify(" + expr + "));\n", encoding="utf-8")
     r = subprocess.run([NODE, str(tmp_path / "t.js")], capture_output=True, text=True, encoding="utf-8", timeout=60)
     assert r.returncode == 0, r.stderr
     return json.loads(r.stdout)
@@ -107,13 +108,14 @@ def test_show_key_matches_its_python_twin_on_every_show(tmp_path, site):
 
 
 def test_now_links_to_the_show_never_a_query():
+    # the link and its landing are driven in Chrome (tools/check_w0_p3.cjs); here only the rule: the «الحين» href
+    # ends in a #s- fragment made by showKey, the film page reads the hash, and no string builds a ?s= link
     home = (JS / "home.js").read_text(encoding="utf-8")
-    assert 'box.href = C.base + "film/" + s.f + "/#s-" + showKey(s.c, s.d, s.t, s.k);' in home
+    assert re.search(r'"/#s-"\s*\+\s*showKey\(', home)
     for f in ("home.js", "ticket.js", "main.js"):     # no string that builds a ?s= link (comments may name it)
         assert not re.search(r"""["'][^"'\n]*\?s=""", (JS / f).read_text(encoding="utf-8")), f
     t = (JS / "ticket.js").read_text(encoding="utf-8")
-    assert "هالعرض بدأ، هذي الأوقات الجاية" in t and 'window.addEventListener("hashchange", showFromHash)' in t
-    assert "if (!showFromHash()) rollTicket();" in (JS / "main.js").read_text(encoding="utf-8")
+    assert "هالعرض بدأ، هذي الأوقات الجاية" in t and re.search(r'addEventListener\("hashchange",\s*showFromHash\b', t)
 
 
 # ---------------------------------------------------------------- #24 «الحين»
@@ -145,10 +147,7 @@ def test_best_reviewed_puts_scored_films_first_by_critics_plus_audience(tmp_path
     assert got == ["coyote", "tie-yes", "tie-mixed", "heart", "sacrifice",      # both scores, by the sum; the verdict breaks the tie
                    "hanuman", "the-paradise",                                    # one score
                    "resident-evil", "avengers-encore", "pradhama", "runner"]     # none: last, by verdict, then the page's order
-    js = (JS / "filters.js").read_text(encoding="utf-8")
-    assert 'if (ST.sort === "verdict")' in js and "scoreRank(scoresOf(fid)" in js
-    # a re-sorted sideways row starts at its first film (it used to stay where the old first tile went)
-    assert "if (box.scrollWidth > box.clientWidth) box.scrollLeft = 0;" in js
+    # the sorted row starting at its first film (in view) is checked in Chrome: tools/check_w0_p3.cjs, scenario sort
 
 
 def test_scores_island_on_the_pages_with_the_sort(site):
@@ -199,16 +198,46 @@ def test_valarm_rings_at_the_leave_by(tmp_path):
     mins, leave, leave2, trig, trig0 = got
     assert leave == leave2 and trig == f"-PT{mins}M"          # the alarm is the leave-by, not a fixed hour
     assert trig0 == "-PT60M"                                  # no place known: an hour before, as before
-    js = (JS / "plan.js").read_text(encoding="utf-8")
-    assert "x.alarm = trip ? trip.mins : 0;" in js and "planLeaveLine(trip, NOW.getTime(), AR)" in js
+
+
+# a plan box as a plain object: innerHTML writes are counted, and the leave-by line is read back from what was written
+PLAN_BOX = r"""
+function planBox() {
+  var b = { writes: 0, html: "", line: { textContent: "" }, contains: function () { return false; },
+    querySelector: function (s) { return s === ".plan-leave" && b.html.indexOf("plan-leave") >= 0 ? b.line : null; } };
+  Object.defineProperty(b, "innerHTML", { get: function () { return b.html; }, set: function (v) {
+    b.writes++; b.html = v; b.line.textContent = (/<p class="plan-leave">([^<]*)<\/p>/.exec(v) || [])[1] || ""; } });
+  return b;
+}
+function show(t) { return {film: "a", cin: "b", date: "2026-09-27", time: t, endHm: "00:10", lat: 25.2, lng: 55.3, uid: "u"}; }
+function trig(b) { return /TRIGGER:(\S+)/.exec(decodeURIComponent(b.html.split('href="')[1].split('"')[0]))[1]; }
+"""
+
+
+@needs_node
+def test_the_minute_rewrites_the_leave_line_not_the_links(tmp_path):
+    # review I1: the minute tick re-rendered the whole plan box, so a focused «أضف للتقويم» fell to <body> (and out of
+    # the phone sheet's modal dialog). Now the links are written once per show and trip; the tick changes the line only.
+    got = node(tmp_path, ["pure.js", "plan.js"], pre=PLAN_BOX, expr="""(function () {
+      var b = planBox(), loc = {lat: 25.25, lng: 55.3}, out = [];                 // 18 min away: leave-by 21:59 for 22:17
+      NOW = uae("2026-09-27T21:50"); planRender(b, show("22:17"), loc); out.push([b.writes, b.line.textContent, trig(b)]);
+      NOW = uae("2026-09-27T22:10"); planRender(b, show("22:17"), loc); out.push([b.writes, b.line.textContent]);
+      NOW = uae("2026-09-27T22:11"); planRender(b, show("22:17"), loc); out.push([b.writes, b.line.textContent]);
+      planRender(b, show("22:40"), loc); out.push([b.writes, b.line.textContent]);  // another show: the links again
+      var n = planBox(); planRender(n, show("22:17"), null); planRender(n, show("22:17"), null);    // no place known
+      out.push([n.writes, n.html.indexOf("data-plan-loc") >= 0, trig(n)]);
+      return out; })()""")
+    assert got[0] == [1, "اطلع من البيت الساعة 21:59 تقريباً", "-PT18M"]
+    assert got[1] == [1, "لو طلعت الحين توصل 22:28، بعد ما يبدأ بـ11 دقيقة"]      # the line moved, the links did not
+    assert got[2] == [1, "لو طلعت الحين توصل 22:29، بعد ما يبدأ بـ12 دقيقة"]
+    assert got[3] == [2, "اطلع من البيت الساعة 22:22 تقريباً"]
+    assert got[4] == [1, True, "-PT60M"]
 
 
 # ---------------------------------------------------------------- #28 box office only
 def test_box_office_only_card_leads_with_the_box_office():
-    t = (JS / "ticket.js").read_text(encoding="utf-8")
+    t = (JS / "ticket.js").read_text(encoding="utf-8")     # the voice table's words (plan §1.7), in both languages
     assert 'box: "الخصم من الشباك بس"' in t and 'box: "Discount at the box office only."' in t
-    assert "r.box_office_only && after(100, chain" in t and "a.href = mapsTo(cin)" in t
-    assert "renderBook(chain);" in t and "renderBook(x.chain);" in t
 
 
 @needs_node
@@ -293,9 +322,76 @@ def test_bundle_carries_the_new_client_and_parses(tmp_path):
 
 
 def test_the_minute_moves_the_ticket_and_hides_passed_halls():
+    # what the page does each minute is driven in Chrome (check_w0_p3.cjs: hall, desk, late, focus); here only that
+    # the minute names them
     main = (JS / "main.js").read_text(encoding="utf-8")
-    assert "marks(); hidePassed(); ages(); renderNow(); rollTicket();" in main
-    f = (JS / "filters.js").read_text(encoding="utf-8")
-    assert 'var GONE = ".hl, .tl, .scin, .cg, .cf, .srow, .fcity, .day[data-d]";' in f
-    # «ما في شي يطابق» is never blamed on the clock: the empty list is judged without the blocks whose times ran out
-    assert ".filter(function (el) { return gone.get(el) !== 1; })" in f and "var gone = hidePassed();" in f
+    tick = re.search(r"setInterval\(function \(\) \{(.*?)\}, 60e3\);", main, re.S)
+    assert tick, "the minute clock"
+    for fn in ("marks()", "hidePassed()", "renderNow()", "rollTicket()", "planRefresh()"):
+        assert fn in tick.group(1), fn
+
+
+# a page as plain objects: enough of the DOM for hidePassed (classes, attributes, parents, closest, matches)
+FAKE_DOM = r"""
+var ALL = [];
+function El(cls, attrs, parent) {
+  var e = { cls: {}, attrs: attrs || {}, parentElement: parent || null };
+  cls.split(" ").filter(Boolean).forEach(function (c) { e.cls[c] = 1; });
+  e.classList = { contains: function (c) { return !!e.cls[c]; },
+    toggle: function (c, v) { if (v === undefined) v = !e.cls[c]; if (v) e.cls[c] = 1; else delete e.cls[c]; return v; } };
+  e.getAttribute = function (k) { return k in e.attrs ? e.attrs[k] : null; };
+  e.hasAttribute = function (k) { return k in e.attrs; };
+  e.matches = function (sel) { return sel.split(",").some(function (s) {
+    var m = /^\s*(?:\.([\w-]+))?(?:\[([\w-]+)\])?\s*$/.exec(s);
+    return !!m && (!m[1] || !!e.cls[m[1]]) && (!m[2] || m[2] in e.attrs); }); };
+  e.closest = function (sel) { for (var n = e; n; n = n.parentElement) if (n.matches(sel)) return n; return null; };
+  ALL.push(e);
+  return e;
+}
+body = El("", {});
+qa = function (s, r) { return ALL.filter(function (n) { if (n === body || !n.matches(s)) return false;
+  if (!r) return true; for (var p = n.parentElement; p; p = p.parentElement) if (p === r) return true; return false; }); };
+"""
+
+
+@needs_node
+def test_passed_halls_hide_and_only_they(tmp_path):
+    # random pages of days, cities, cinemas, halls and time runs (some days not showing, some blocks filtered out,
+    # a «similar» strip and the ticket holding times too): hidePassed hides exactly the blocks with times and none to
+    # come, keeps the filters' own hiding, and names the blocks that ran out (the «nothing matches» line skips them)
+    got = node(tmp_path, ["pure.js", "filters.js"], pre=FAKE_DOM, expr="""(function () {
+      var seed = 7, rnd = function () { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+      var bad = [], blocks = 0, gone = 0;
+      for (var round = 0; round < 40; round++) {
+        ALL.length = 0; body = El("", {});
+        var main = El("cgs", {}, body);
+        ["2026-09-27", "2026-09-28"].forEach(function (d, di) {
+          var day = El("day", {"data-d": d}, main);
+          for (var c = 0; c < 2; c++) {
+            var city = El("fcity", {}, day);
+            for (var g = 0; g < 2 + Math.floor(rnd() * 3); g++) {
+              var cg = El("cg", {}, city);
+              for (var h = 0; h < 1 + Math.floor(rnd() * 3); h++) {
+                var hl = El("hl", {}, cg), ta = {"data-d": d}; if (di === 1 && rnd() < 0.5) ta.hidden = "";
+                var times = El("times", ta, hl), tl = rnd() < 0.5 ? El("tl", {}, times) : times;
+                for (var t = 0; t < Math.floor(rnd() * 4); t++) El("tm" + (rnd() < 0.6 ? " past" : ""), {"data-start": "22:00"}, tl);
+              }
+            }
+          }
+        });
+        var sim = El("similar", {}, body), sc = El("cg", {}, sim); El("tm past", {"data-start": "20:00"}, El("times", {"data-d": "x"}, El("hl", {}, sc)));
+        var tk = El("ticket", {"data-ticket": ""}, body); El("tm", {"data-start": "23:00"}, El("tl", {}, tk));
+        qa(GONE).forEach(function (el) { if (rnd() < 0.1) el.classList.toggle("xf", true); });
+        var st = hidePassed();
+        qa(GONE).forEach(function (el) {
+          if (el.closest(".similar, [data-ticket]")) { if (el.classList.contains("x")) bad.push("outside judged"); return; }
+          var ts = qa(".tm[data-start]", el), live = ts.some(function (a) { return !a.classList.contains("past") && !a.closest(".times[hidden]"); });
+          var ran = ts.length > 0 && !live;
+          blocks++; if (ran) gone++;
+          if (el.classList.contains("x") !== (el.classList.contains("xf") || ran)) bad.push(round + " x");
+          if ((st.get(el) === 1) !== ran) bad.push(round + " state");
+        });
+      }
+      return [bad.slice(0, 5), blocks, gone]; })()""")
+    bad, blocks, gone = got
+    assert bad == [] and blocks > 500 and 0 < gone < blocks

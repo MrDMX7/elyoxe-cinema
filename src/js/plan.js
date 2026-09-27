@@ -102,19 +102,33 @@ function planLeaveLine(tr, now, ar) {
   return "لو طلعت الحين توصل " + at + "، بعد ما يبدأ " + (late === 1 ? "بدقيقة" : late === 2 ? "بدقيقتين" : "بـ" + arCount(late, ["دقيقة", "دقيقتين", "دقايق", "دقيقة"]));
 }
 
+/* The links restate the show, so they are rebuilt only when the show or the trip changes. The minute tick
+   (main.js) then rewrites the leave-by line's text alone: a rebuilt link would drop a keyboard focus to <body>,
+   out of the phone sheet's modal dialog. When a rebuild does happen under a focused control, the focus goes to
+   the control in the same place, else the last one. */
 function planRender(box, x, loc) {
   var trip = planTrip(x, loc);
   x.alarm = trip ? trip.mins : 0;
+  var line = trip ? planLeaveLine(trip, NOW.getTime(), AR) : null;
+  var sig = [AR, x.film, x.cin, x.date, x.time, x.endHm, x.lat, x.lng, x.alarm].join("|");
+  if (box.planSig === sig) {
+    var p = q(".plan-leave", box);
+    if (p && line != null && p.textContent !== line) p.textContent = line;
+    return;
+  }
   var ics = "data:text/calendar;charset=utf-8," + encodeURIComponent(planIcs(x));
   var cal = AR ? "أضف للتقويم" : "Add to calendar", gcal = AR ? "تقويم Google" : "Google Calendar";
   var html = '<a class="lnk" download="cinema.ics" href="' + ics + '">' + esc(cal) + '</a>' +
     ' <a class="lnk" href="' + esc(planGCalUrl(x)) + '" rel="noopener" target="_blank">' + esc(gcal) + '</a>';
   if (trip) {
-    html += '<p class="plan-leave">' + esc(planLeaveLine(trip, NOW.getTime(), AR)) + '</p>';
+    html += '<p class="plan-leave">' + esc(line) + '</p>';
   } else if (x.lat != null) {
     html += '<button type="button" class="lnk" data-plan-loc>' + esc(AR ? "متى أطلع من البيت؟" : "When should I leave home?") + '</button>';
   }
+  var ctl = function () { return qa("a, button", box); }, was = box.contains(document.activeElement) ? ctl().indexOf(document.activeElement) : -1;
   box.innerHTML = html;
+  box.planSig = sig;
+  if (was >= 0) { var f = ctl(); if (f.length) (f[was] || f[f.length - 1]).focus(); }
 }
 
 function planFromTicket() {
