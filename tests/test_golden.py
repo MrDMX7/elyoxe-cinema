@@ -29,10 +29,11 @@ TEXT = (".html", ".json", ".xml", ".txt", ".js", ".css", ".webmanifest", ".svg")
 # a no-op on phase 1): Task A4 (roadmap 203, 204, 138) — the bundle preload, the speculation rules and their
 # data-saver/«back» script in every page's head; the bundle loaded by the «boot» loader that holds it while the
 # page is prerendering (phase 1: a plain deferred <script>); the manifest's shortcuts and their three icons
-# (tests/test_feel.py covers them).
+# (tests/test_feel.py covers them); the final review's I2 og:image:width/height pair (tests/test_og.py).
 SHELL_HTML = [(re.compile(r'<link rel="preload" href="[^"]+" as="script">\n'
                           r'<script type="speculationrules" id="spec">.*?</script>\n'
                           r'<script>\(function\(\)\{var c=navigator\.connection.*?</script>\n', re.S), ""),
+              (re.compile(r'<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n'), ""),
               (re.compile(r'<script id="boot">\(function\(u,d\)\{.*?\}\)\("([^"]+)",document\)</script>'),
                r'<script src="\1" defer></script>')]
 SHELL_FILES = re.compile(r"^assets/icons/sc-[a-z]+\.png$")

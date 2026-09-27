@@ -428,6 +428,7 @@ def minify_lite(js):
 
 
 NOINDEX = '<meta name="robots" content="noindex,nofollow">'
+OG_DIMS = '<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n'
 
 
 # ---------------------------------------------------------------- plug-in types (docs/PLUGINS.md)
@@ -984,6 +985,9 @@ class Kit:
             "c_cards": ' aria-current="page"' if nav == "cards" else "",
             "v": self.v, "js": "/assets/" + self.js_name, "page": pagekind, "attrs": attrs, "preload": "\n".join(pre), "robots": robots,
             "og_image": esc(self.og_override.get((lang, tuple(parts))) or og_image or f"{SITE}/assets/og-{lang}.png"),
+            # 1200x630 is declared only for images known to be that size (final review I2): a rendered card
+            # (og_override) or the site-wide default -- never a page's own og_image (a portrait poster, a photo)
+            "og_dims": (OG_DIMS if (lang, tuple(parts)) in self.og_override or not og_image else ""),
             "jsonld": json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False).replace("</", "<\\/"),
             "strings": json.dumps(strings, ensure_ascii=False).replace("</", "<\\/"),
             "body": body + pdata, "c_thursday": "", "nav_extra": "",
