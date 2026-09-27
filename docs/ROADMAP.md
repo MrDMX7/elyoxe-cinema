@@ -52,3 +52,7 @@ People pages · «نازل الخميس» · «آخر فرصة» · Arabic hub �
 ## Future plan (not scheduled)
 153 live national counter · 171 «سينما الخليج» · 172 optional Elyoxe account.
 Open for the owner: 58–74, 162–170, 173/174/176, 178/179/183/184, 186/189/190/192, 193/194/197/198, 205/207/208, 209–216.
+
+## Added 2026-09-27 (list 16)
+Phase 3: 219 nearest entrance & parking level · 220 voice reviews in Emirati (transcribed, moderated) · 221 spoiler-gated discussion · 222 franchise hubs · 224 ending explained links (spoiler-gated).
+Open: 217, 218, 223; list 17 = 225–231.
