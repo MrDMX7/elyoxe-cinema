@@ -214,7 +214,7 @@ def test_cinema_page_double_features_are_grouped_and_bounded():
     html = venue.double_feature_html(site, "ar", pairs, show_cinema=False)
     assert html.startswith('<details class="dfeat">')
     assert html.count("<li") == min(len(venue.group_pairs(pairs)), venue.MAX_LINES) and len(html.encode()) < 6_000
-    assert html.count('class="more"') and "</details>" in html
+    assert '<bdi dir="ltr" class="num">12:00 → ' in html and " +" in html and "</details>" in html
 
 
 # ---------------------------------------------------------------- a real build: the slots actually fill

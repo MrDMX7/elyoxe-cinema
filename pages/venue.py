@@ -199,7 +199,8 @@ def snacks_section(site, lang, chain):
     return f'<section class="snacks"><h2>{esc(head0)}</h2>{body}</section>'
 
 
-PER_CITY = 3     # film page: this many pairings per city (earliest first)
+PER_CITY = 2     # film page: this many pairings per city (earliest first), FILM_TIMES start times each
+FILM_TIMES = 2
 MAX_LINES = 30   # cinema page: the day's first 30 pairings of two films…
 MAX_TIMES = 3    # …each with its first three start times (a busy multiplex has ~250 such lines: ~35 KB)
 
@@ -217,17 +218,21 @@ def group_pairs(pairs):
     return [v for _, v in sorted(out, key=lambda kv: (kv[0], kv[1][:3]))]
 
 
-def _times(ts, lang):
-    more = f' <span class="more">+{num(len(ts) - MAX_TIMES)}</span>' if len(ts) > MAX_TIMES else ""
-    return ("، " if lang == "ar" else ", ").join(f"{esc(x)} ← {esc(y)}" for x, y in ts[:MAX_TIMES]) + more
+def _times(ts, lang, cap=MAX_TIMES):
+    """The start times, isolated left-to-right (so an RTL line cannot reorder them): 11:45 → 14:00, …"""
+    more = f" +{len(ts) - cap}" if len(ts) > cap else ""
+    return f'<bdi dir="ltr" class="num">{", ".join(f"{esc(x)} → {esc(y)}" for x, y in ts[:cap])}{more}</bdi>'
 
 
-def _pair_li(site, lang, cid, fa, fb, ts, cinema=True):
+def _pair_li(site, lang, cid, fa, fb, ts, cinema=True, cap=MAX_TIMES):
     cin = ""
     if cinema:
         c = site.cinemas.get(cid) or {}
-        cin = f' — <a href="{P(lang, c.get("city"), cid)}">{esc(site.cname(cid, lang))}</a>' if c.get("city") else f" — {esc(site.cname(cid, lang))}"
-    return f'<li><b>{esc(site.ftitle(fa, lang))}</b> ← <b>{esc(site.ftitle(fb, lang))}</b> <small>{_times(ts, lang)}</small>{cin}</li>'
+        name = f"<bdi>{esc(site.cname(cid, lang))}</bdi>"
+        cin = f' — <a href="{P(lang, c.get("city"), cid)}">{name}</a>' if c.get("city") else f" — {name}"
+    arrow = " ← " if lang == "ar" else " → "
+    return (f'<li><b><bdi>{esc(site.ftitle(fa, lang))}</bdi></b>{arrow}<b><bdi>{esc(site.ftitle(fb, lang))}</bdi></b> '
+            f'<small>{_times(ts, lang, cap)}</small>{cin}</li>')
 
 
 def _details(lang, n, items, more=""):
@@ -263,7 +268,7 @@ def film_double_feature_html(site, lang, pairs):
     more = ""
     if len(keep) < len(groups):
         more = (f'<p class="hint">{"والباقي في صفحة كل سينما" if lang == "ar" else "More on each cinema’s page"}</p>')
-    return _details(lang, len(groups), [_pair_li(site, lang, *g) for g in keep], more)
+    return _details(lang, len(groups), [_pair_li(site, lang, *g, cap=FILM_TIMES) for g in keep], more)
 
 
 def register(site):
