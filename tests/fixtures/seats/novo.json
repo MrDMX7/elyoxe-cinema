@@ -1,0 +1,385 @@
+{
+"_note": "GET seat-layout/cinemas/9/sessions/343625 (Buhairah 2026-09-27 19:50), rows A B F K; EDITED: F5 status 1 (sold) and F6 status 3 to exercise taken/blocked",
+"success": true,
+"data": {
+"areas": [
+{
+"name": "COOL",
+"number": 1,
+"areaCategoryCode": "0000000001",
+"row": [
+{
+"name": "A",
+"rowIndex": 10,
+"seats": [
+{},
+{},
+{
+"id": "9",
+"name": "8",
+"colIndex": 8,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "8",
+"name": "7",
+"colIndex": 7,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "7",
+"name": "6",
+"colIndex": 6,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "6",
+"name": "5",
+"colIndex": 5,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "5",
+"name": "4",
+"colIndex": 4,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "4",
+"name": "3",
+"colIndex": 3,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "3",
+"name": "2",
+"colIndex": 2,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "2",
+"name": "1",
+"colIndex": 1,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "1",
+"name": "0",
+"colIndex": 0,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+}
+]
+},
+{
+"name": "B",
+"rowIndex": 9,
+"seats": [
+{
+"id": "11",
+"name": "10",
+"colIndex": 10,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "10",
+"name": "9",
+"colIndex": 9,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "9",
+"name": "8",
+"colIndex": 8,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "8",
+"name": "7",
+"colIndex": 7,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "7",
+"name": "6",
+"colIndex": 6,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "6",
+"name": "5",
+"colIndex": 5,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "5",
+"name": "4",
+"colIndex": 4,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "4",
+"name": "3",
+"colIndex": 3,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "3",
+"name": "2",
+"colIndex": 2,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "2",
+"name": "1",
+"colIndex": 1,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "1",
+"name": "0",
+"colIndex": 0,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+}
+]
+},
+{
+"name": "F",
+"rowIndex": 5,
+"seats": [
+{
+"id": "11",
+"name": "10",
+"colIndex": 10,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "10",
+"name": "9",
+"colIndex": 9,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "9",
+"name": "8",
+"colIndex": 8,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "8",
+"name": "7",
+"colIndex": 7,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "7",
+"name": "6",
+"colIndex": 6,
+"status": 3,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "6",
+"name": "5",
+"colIndex": 5,
+"status": 1,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "5",
+"name": "4",
+"colIndex": 4,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "4",
+"name": "3",
+"colIndex": 3,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "3",
+"name": "2",
+"colIndex": 2,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "2",
+"name": "1",
+"colIndex": 1,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "1",
+"name": "0",
+"colIndex": 0,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+}
+]
+},
+{
+"name": "K",
+"rowIndex": 0,
+"seats": [
+{
+"id": "11",
+"name": "10",
+"colIndex": 10,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "10",
+"name": "9",
+"colIndex": 9,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "9",
+"name": "8",
+"colIndex": 8,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "8",
+"name": "7",
+"colIndex": 7,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "7",
+"name": "6",
+"colIndex": 6,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "6",
+"name": "5",
+"colIndex": 5,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "5",
+"name": "4",
+"colIndex": 4,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "4",
+"name": "3",
+"colIndex": 3,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "3",
+"name": "2",
+"colIndex": 2,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "2",
+"name": "1",
+"colIndex": 1,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+},
+{
+"id": "1",
+"name": "0",
+"colIndex": 0,
+"status": 0,
+"seatStyle": 0,
+"priority": 1
+}
+]
+}
+],
+"priceInCents": 3675,
+"ticketTypeCode": "0767",
+"taxInCents": 525,
+"ticketDescription": "COOL 2D",
+"ticketDescriptionAlt": "",
+"ticketCode": "VH",
+"DiscountsAvailable": []
+}
+],
+"screenName": "6"
+}
+}

@@ -42,7 +42,7 @@ from cryptography.hazmat.primitives.asymmetric import padding
 from curl_cffi import requests as cr
 
 from readers.common import (CACHE_MISS, CITIES, HALLS, Polite, arabic_title, cache_get, cache_set,
-                            city_of, lang_key, slug, subs_keys, youtube_id, fmt3d as _fmt3d)
+                            city_of, keep_layout, lang_key, slug, subs_keys, youtube_id, fmt3d as _fmt3d)
 
 BASE = "https://storage.googleapis.com/eeg-prod-reelcinema-sb/web/vista/json"
 # the site's own poster path (bundle: e4(id) = `${$3}/vista/movie_images/${id}.jpg`, 300x450)
@@ -122,6 +122,7 @@ class _PriceClient:
         self.h = {"Origin": SITE, "Referer": SITE + "/", "Accept": "application/json, text/plain, */*"}
         self._last = 0.0
         self.ok = False
+        self.on_layout = None   # seats.py: called with each getSeatLayout body read
 
     def _call(self, method: str, path: str, **kw):
         wait = 1.1 - (self._time.monotonic() - self._last)
@@ -165,6 +166,8 @@ class _PriceClient:
                 user_session = json.loads(src.get("BInfo") or "{}").get("UserSessionId") or ""
             except (TypeError, ValueError):
                 user_session = ""
+            if self.on_layout:
+                self.on_layout(body)
             return self._parse(src)
         finally:
             # abandon the guest order through the site's own cancel call, every time (ruling
@@ -331,6 +334,9 @@ def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict
             "hall_label": hall_label,
             "prices": key,  # resolved below
             "book": f"{SITE}/en-ae/movie-details/{film_id}/{_slugify(film['Title'])}",
+            # the session, for seats.py's occupancy sample (stripped before publishing)
+            "_sid": "|".join((s["CinemaId"], str(s["SessionId"]), "STANDARD" if code.startswith("OTHER:") else code,
+                              (s.get("ScreenName") or "").strip())),
             **film_extras(film, genre_names),
         })
 
@@ -362,6 +368,7 @@ def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict
             errors = []
             for key, (cid, sid, code, screen) in sample_for.items():
                 health["attempted"] += 1
+                pc.on_layout = lambda raw, c=cinema_id_of[cid], h=screen or code, d=key[3]: keep_layout(CHAIN, c, h, d, raw)
                 try:
                     price_of[key] = pc.sample(cid, sid, code, screen)
                 except _SampleError as e:

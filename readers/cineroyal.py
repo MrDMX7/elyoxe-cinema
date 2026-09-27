@@ -21,7 +21,8 @@ import json
 import re
 from zoneinfo import ZoneInfo
 
-from readers.common import CACHE_MISS, CITIES, HALLS, Polite, cache_get, cache_set, city_of, lang_key, slug, youtube_id
+from readers.common import (CACHE_MISS, CITIES, HALLS, Polite, cache_get, cache_set, city_of, keep_layout, lang_key,
+                             slug, youtube_id)
 
 BASE = "https://cineroyal.ae"
 CHAIN = "cineroyal"
@@ -168,7 +169,7 @@ def _get_showtimes(s: Polite, pretty_url: str, film_name: str, showdate: str) ->
 
 
 def _get_seat_prices(s: Polite, screen_ref, cinema_ref, show_date: str, show_time: str,
-                      pretty_url: str) -> list[dict] | None:
+                      pretty_url: str, on_layout=None) -> list[dict] | None:
     """One read-only call to the seat-map endpoint for a given hall/day. It
     returns the full seat grid with a per-seat `unitPrice`/`tierName` BEFORE
     any seat is picked (every seat comes back `"selected": false`) — no seat
@@ -191,6 +192,8 @@ def _get_seat_prices(s: Polite, screen_ref, cinema_ref, show_date: str, show_tim
     row_seats = data.get("rowSeats") if isinstance(data, dict) else None
     if not row_seats:
         return None
+    if on_layout:
+        on_layout(data)
     tiers: dict[str, float] = {}
     for row in row_seats.values():
         for seat in row.get("seats", []):
@@ -274,7 +277,8 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                         else:
                             health["attempted"] += 1
                             price_cache[price_key] = _get_seat_prices(
-                                s, screen_ref, cinema_ref, show_date_iso, formatted_time, pretty_url
+                                s, screen_ref, cinema_ref, show_date_iso, formatted_time, pretty_url,
+                                on_layout=lambda raw, c=cinema_id, h=hall_label, d=show_date_iso: keep_layout(CHAIN, c, h, d, raw),
                             )
                             cache_set(cache, price_key, price_cache[price_key])
                     prices = price_cache[price_key]
@@ -297,6 +301,8 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                         "hall_label": hall_label,
                         "prices": prices,
                         "book": f"{BASE}/home/chooseScreen?prettyUrl={pretty_url}",
+                        # the session, for seats.py's occupancy sample (stripped before publishing)
+                        "_sid": f"{cinema_ref}|{screen_ref}|{show_date_iso}|{formatted_time}|{pretty_url}",
                         **extras,
                     })
 

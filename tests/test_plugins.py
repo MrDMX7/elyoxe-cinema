@@ -70,7 +70,7 @@ def test_example_css_partial_and_lazy_chunk(hello):
     assert re.fullmatch(r"/assets/hello\.[0-9a-f]{10}\.js", url)
     chunk = read(hello, *url.strip("/").split("/"))
     assert chunk.startswith("(function (K) {") and "window.CINEMA" in chunk and "example lazy chunk" not in chunk
-    assert "chunks" not in ct(read(hello, "index.html"))       # only the pages that ask for it
+    assert "hello" not in ct(read(hello, "index.html")).get("chunks", {})   # only the pages that ask for it
     if NODE:
         r = subprocess.run([NODE, "--check", os.path.join(hello, *url.strip("/").split("/"))], capture_output=True, text=True)
         assert r.returncode == 0, r.stderr

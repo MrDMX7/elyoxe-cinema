@@ -1,0 +1,17 @@
+/* seatmap (pages/seats.py): the hall on the ticket's paper, «باقي N مقعد» under a time. Squares, no radius,
+   no shadow; ink on paper. The best seat is velvet (the ticket's accent), gold stays for prices. */
+.tm small.lf{font-size:10px;font-weight:400;color:var(--seat);white-space:nowrap}
+.tk-hall{margin:12px 16px 0;padding-block-start:10px;border-block-start:2px dashed var(--rule-t)}
+.tk-hall-d{direction:ltr}
+.tk-hall svg{display:block;inline-size:100%;max-block-size:220px}
+.tk-hall .scr{fill:none;stroke:var(--ink-2);stroke-width:1.5}
+.tk-hall .scr-t,.tk-hall .rn{font:400 6px var(--body);fill:var(--ink-3)}
+.tk-hall .s{stroke-width:1}
+.tk-hall .s.o{fill:none;stroke:var(--ink-3)}
+.tk-hall .s.n{fill:var(--paper-2);stroke:var(--paper-2)}
+.tk-hall .s.x{fill:var(--ink-2);stroke:var(--ink-2)}
+.tk-hall .s.b{fill:var(--rule-p);stroke:var(--rule-p)}
+.tk-hall .s.w{fill:none;stroke:var(--ink-2);stroke-dasharray:2 1}
+.tk-hall .s.best{fill:var(--velvet);stroke:var(--velvet)}
+.tk-hall figcaption{font-size:13px;color:var(--ink);margin-block-start:8px;line-height:1.5}
+.tk-hall figcaption .ago{display:block;font-size:11px;color:var(--ink-2)}
