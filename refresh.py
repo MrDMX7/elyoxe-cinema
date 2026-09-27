@@ -76,9 +76,8 @@ CHAIN_READERS = {
 }
 ALL_CHAINS = list(CHAIN_READERS)
 # chains whose reader accepts a `cache=` kwarg (readers/common.py cache_get/cache_set) to reuse a
-# same-day seat-map/price sample across runs instead of re-requesting it every hour. Roxy never
-# samples (login-gated: see readers/roxy.py) so it's not in this set.
-PRICE_CACHE_CHAINS = {"vox", "star", "cineroyal", "novo", "cinemacity", "reel"}
+# same-day seat-map/price sample across runs instead of re-requesting it every hour.
+PRICE_CACHE_CHAINS = {"vox", "star", "cineroyal", "novo", "cinemacity", "reel", "roxy"}
 # owner's ruling (final review, 2026-09-27): archive only after the film has been confirmed absent from
 # every chain that listed it for >= 5 days of successful runs -- time, not run counts (hourly runs).
 ARCHIVE_AFTER_ABSENT = timedelta(days=5)
@@ -88,7 +87,8 @@ DEFAULT_TIMEOUT = 8 * 60.0
 # Prices are sampled once per cinema x hall x show DATE (weekday/weekend prices differ), so the
 # chains that sample doubled their request count on 2026-09-26. Measured on the Fold before that:
 # VOX ~490 s (one showtimes page per cinema per day + ~80 seat-map samples, now ~160), Star ~185 s.
-# cineroyal already sampled per day; roxy samples nothing (login-gated).
+# cineroyal already sampled per day. Roxy started sampling (seat-selection page, no login needed)
+# on 2026-09-27 -- one extra request per cinema x hall x date on top of its existing ajax calls.
 CHAIN_TIMEOUTS = {"vox": 30 * 60.0, "star": 15 * 60.0, "reel": 15 * 60.0, "novo": 12 * 60.0, "cinemacity": 12 * 60.0}
 # a killed run is resumed from its own raw files only if it started this recently (else start over)
 RESUME_WINDOW = timedelta(hours=2)
@@ -508,8 +508,8 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             # absent (older readers/fixtures): falls back to counting shows[].prices directly.
             # Never copied into `raw` itself past this point, so it can't leak into latest.json
             # (normalize.merge only ever reads raw["cinemas"]/raw["shows"]).
-            # A reader that reports price_health with attempted == 0 (Roxy: its prices come from
-            # prices.yaml by design, it never samples) is not degraded — nothing was tried.
+            # A reader that reports price_health with attempted == 0 (e.g. called with
+            # prices=False, or every key already cache-hit) is not degraded — nothing was tried.
             reader_price_health = raw.get("price_health") or {}
             if "attempted" in reader_price_health:
                 attempted = reader_price_health.get("attempted") or 0

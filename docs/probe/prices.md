@@ -1,5 +1,12 @@
 # Probe: prices
 
+> **Addendum (2026-09-27):** every "Roxy is login-gated" line below (task 1b/1c, 2026-09-26)
+> was wrong — see `docs/probe/roxy.md`, corrected section "Prices — live, from the
+> seat-selection page, no login". A plain `GET` on Roxy's seat-selection page returns the
+> seat-class legend with no login and no hold; `readers/roxy.py` now samples it live (98.5%
+> priced on a real 2026-09-27 run). Left the rest of this file as the historical record of
+> what task 1b/1c actually did and concluded at the time.
+
 ## Task 1c (2026-09-26): live prices for VOX, Novo, Reel, Cinema City — no seat hold
 
 Every one of the four "needs a seat hold" chains turned out to expose seat-class prices *before*
