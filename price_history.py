@@ -10,8 +10,8 @@ A line is what the chains' schedules said about that date, at the run that saw t
 A show's price is its cheapest seat, read live from the chain (a fallback-table price, prices.yaml, is not an
 observation and never enters the history). `hall` is the halls.yaml key the site shows (site_kit.Halls).
 
-Idempotent per date: a date is replaced only by a snapshot that saw more of its shows (the first full read of
-a day is kept against the thinner hourly runs that follow once its early shows are gone), so the same data
+Idempotent per date: a date is replaced only by a better read of it — more live prices, then more shows (the
+first full read of a day is kept against the thinner hourly runs that follow once its early shows are gone), so the same data
 twice changes nothing. The file lives on the runner and in the bucket (state/price_history.jsonl), never in git.
 Read by pages/insights.py and pages/questions.py; written by steps/history.py."""
 from __future__ import annotations
@@ -26,6 +26,11 @@ PATH = os.path.join(ROOT, "data", "price_history.jsonl")
 BUCKET = "elyoxe-cinema-574771023173"
 KEY = "state/price_history.jsonl"
 PARTS = ("morning", "afternoon", "evening", "night")
+
+
+def history_path() -> str:
+    """Where the pages read the history: CINEMA_PRICE_HISTORY (tests, previews) else data/price_history.jsonl."""
+    return os.environ.get("CINEMA_PRICE_HISTORY") or PATH
 
 
 def part_of_day(hhmm: str) -> str:
@@ -105,11 +110,13 @@ def load(path: str = PATH) -> dict:
 
 
 def merge(old: dict, new: dict) -> tuple[dict, list]:
-    """(merged, dates changed): a date is added, or replaced only by a line that saw more of its shows."""
+    """(merged, dates changed): a date is added, or replaced only by a better read of it — more live prices
+    first, then more shows (a run whose chain fell back to the price table sees shows but no prices)."""
     merged, changed = dict(old), []
+    q = lambda x: (int(x.get("priced") or 0), int(x.get("n") or 0))
     for d, line in sorted(new.items()):
         cur = merged.get(d)
-        if cur is None or int(line.get("n") or 0) > int(cur.get("n") or 0):
+        if cur is None or q(line) > q(cur):
             merged[d] = line
             changed.append(d)
     return merged, changed

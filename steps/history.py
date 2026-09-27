@@ -1,11 +1,11 @@
 """Step: today's prices into the price history (price_history.py), kept on the runner and in the bucket.
 
-  local data/price_history.jsonl missing -> fetch s3://elyoxe-cinema-574771023173/state/price_history.jsonl
-  snapshot this run's data, merge (a date is replaced only by a fuller read of it), write, upload when changed
+  fetch s3://elyoxe-cinema-574771023173/state/price_history.jsonl (every run), union it with the local file and
+  this run's snapshot (per date the better read wins), write locally, upload when the bucket lacks anything
 
---offline (fixtures) writes nothing: fixture prices must never enter the real history. A failed download starts
-a new file only when the bucket has none; any other download failure leaves the history alone this run (a
-fresh local file would later overwrite the bucket's longer one). The bucket is used for the runner's own data/ only (use_bucket)."""
+--offline (fixtures) writes nothing: fixture prices must never enter the real history. A failed download skips
+the upload (the step reports the failure; today waits in the local file for the next run's union). An absent
+object with local history is flagged in health and re-uploaded; deploy.sh never deletes state/. The bucket is used for the runner's own data/ only (use_bucket)."""
 import os
 import shutil
 import subprocess
@@ -58,22 +58,38 @@ def use_bucket(path):
 
 
 def run(data, ctx):
+    """Every non-offline run: fetch the bucket copy, union it with the local file and this run's snapshot (per
+    date the better read wins, price_history.merge), write locally, upload when the bucket lacks anything.
+    So a lost runner file comes back from the bucket and a stale local file can never shrink the bucket's."""
     if ctx.get("offline"):
         return {"skipped": "offline"}
     path = os.path.join(ctx.get("data_dir") or os.path.join(ROOT, "data"), "price_history.jsonl")
     bucket = use_bucket(path)
-    pulled = None
-    if bucket and not os.path.exists(path):
-        pulled = s3_get(path)
-        if pulled.startswith("failed"):
-            raise RuntimeError(f"price history download {pulled} — not writing a fresh file over the bucket's")
-    lines = ph.load(path)
-    merged, changed = ph.merge(lines, ph.snapshot(data, _halls()))
-    out = {"days": len(ph.days(merged)), "changed": changed, "pulled": pulled}
-    if changed:
+    local = ph.load(path)
+    remote, got = {}, None
+    if bucket:
+        tmp = f"{path}.bucket.{os.getpid()}"
+        try:
+            got = s3_get(tmp)
+            if got == "ok": remote = ph.load(tmp)
+        finally:
+            if os.path.exists(tmp): os.remove(tmp)
+    merged, _ = ph.merge(local, remote)
+    merged, changed = ph.merge(merged, ph.snapshot(data, _halls()))
+    out = {"days": len(ph.days(merged)), "changed": changed}
+    if bucket: out["bucket"] = got
+    if merged != local:
         ph.dump(merged, path)
-        if bucket:
-            out["pushed"] = s3_put(path)
-            if out["pushed"] != "ok":
-                raise RuntimeError(f"price history upload {out['pushed']}")
+    if not bucket:
+        return out
+    if got.startswith("failed"):   # today stays in the local file; the next run merges it with the bucket's
+        print(f"history: bucket download {got} — upload skipped this run", file=sys.stderr)
+        raise RuntimeError(f"price history download {got}: kept locally, upload skipped")
+    if got == "absent":
+        if local: out["warning"] = f"bucket had no history but the local file had {len(local)} days — re-uploaded"
+        else: out["new"] = True
+    if merged != remote:
+        out["pushed"] = s3_put(path)
+        if out["pushed"] != "ok":
+            raise RuntimeError(f"price history upload {out['pushed']}")
     return out

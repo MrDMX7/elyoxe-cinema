@@ -93,6 +93,21 @@ def test_prices_index_today_both_languages(none):
         assert "<svg" not in h and 'id="cheapest-time"' not in h
 
 
+def test_prices_title_says_the_index_day_and_the_chains_it_has(none):
+    ar, en = read(none, "prices", "index.html"), read(none, "en", "prices", "index.html")
+    t = re.search(r"<title>(.*?)</title>", ar).group(1)
+    assert "25 سبتمبر 2026" in t and "25 September 2026" in re.search(r"<title>(.*?)</title>", en).group(1)
+    desc = re.search(r'<meta name="description" content="([^"]*)"', ar).group(1)
+    assert "فوكس" in desc and "سينما سيتي" in desc
+
+
+def test_day_counts_read_as_arabic(tmp_path_factory):
+    out = build_with(tmp_path_factory, "ins2", 1)                # one recorded day + the index day = two
+    say = re.search(r'<p class="hint hist-n">(.*?)</p>', read(out, "prices", "index.html"), re.S).group(1)
+    assert "يومين" in say and "2 أيام" not in say and "كل يوم" not in say
+    assert "2 أيام" not in read(out, "boxoffice", "index.html")
+
+
 def test_prices_short_history_shows_cheapest_time_not_chart(short):
     ar = read(short, "prices", "index.html")
     assert 'id="cheapest-time"' in ar and "<svg" not in ar
@@ -138,11 +153,13 @@ def test_compare_data_and_chunk(none):
     assert base > 0 and all(v < base for v in cards.values())
     assert all(len(x) == 3 for x in j["n"]["crawlers"]["dubai"]) and len(j["n"]["crawlers"]["dubai"]) <= 6
     film = read(none, "film", "crawlers", "index.html")
-    assert 'data-cmp="crawlers"' in film and "compare" in ct(film)["chunks"]
-    url = ct(film)["chunks"]["compare"]
+    # the chunk is fetched only where a compare box is: the box names it, a few bytes of the main bundle load it
+    url = re.search(r'<section class="wrap cmp" data-cmp="crawlers" data-cmp-src="(/assets/compare\.[0-9a-f]{10}\.js)" hidden>', film).group(1)
     assert read(none, *url.strip("/").split("/")).startswith("(function (K) {")
-    assert "compare" in ct(read(none, "boxoffice", "index.html"))["chunks"]
-    assert "chunks" not in ct(read(none, "index.html")) or "compare" not in ct(read(none, "index.html"))["chunks"]
+    assert f'data-cmp-src="{url}"' in read(none, "boxoffice", "index.html")
+    archived = read(none, "film", "weapons", "index.html")
+    assert "data-cmp" not in archived and "compare" not in json.dumps(ct(archived).get("chunks") or {})
+    assert "data-cmp-src" in read(none, "assets", re.search(r'src="/assets/(cinema\.[0-9a-f]{10}\.js)"', film).group(1))
 
 
 def test_similar_on_showing_film_pages_only(none):
@@ -173,8 +190,12 @@ def people_build(tmp_path_factory):
     d = json.load(open(DATA, encoding="utf-8"))
     d["films"]["crawlers"]["cast"] = ["Q1", "Q2"]
     d["films"]["resident-evil"]["cast"] = ["Q1", "Q2"]
+    d["films"]["crawlers"]["directors"] = ["Q3", "Q4"]
+    d["films"]["resident-evil"]["directors"] = ["Q3", "Q4"]
     d["people"] = {"Q2": {"qid": "Q2", "slug": "milla-j", "name_en": "Milla J", "name_ar": "ميلا ج", "photo": None,
-                          "bio": {}, "notable": []}}
+                          "bio": {}, "notable": []},
+                   "Q3": {"qid": "Q3", "slug": "q3", "name_en": "Q3", "name_ar": None},        # a label that is only an id
+                   "Q4": {"qid": "Q4", "name_en": "No Slug", "name_ar": "بلا رابط"}}            # no slug: a name, never a link
     out = str(tmp_path_factory.mktemp("insp"))
     path = out + "-data.json"
     json.dump(d, open(path, "w", encoding="utf-8"))
@@ -187,7 +208,7 @@ def test_similar_names_people_never_ids(people_build):
     out, has_people = people_build
     for parts, name in ((("film", "crawlers"), "ميلا ج"), (("en", "film", "crawlers"), "Milla J")):
         sec = re.search(r'<section class="sim">.*?</section>', read(out, *parts, "index.html"), re.S).group(0)
-        assert name in sec and "Q1" not in sec and "Q2" not in sec
+        assert name in sec and not re.search(r"(?<![A-Za-z0-9])Q[0-9]+(?![0-9])", sec)
         if has_people:
             assert f'href="{"/en" if parts[0] == "en" else ""}/people/milla-j/"' in sec
 

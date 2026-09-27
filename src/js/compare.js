@@ -2,12 +2,17 @@
    cheapest ticket in the visitor's city after their card, and the nearest times still to come. A lazy chunk:
    K is window.CINEMA. The box is [data-cmp] (its value the film already chosen, on a film page), hidden
    until this runs: with no script there is nothing half-drawn. */
-var boxes = K.qa("[data-cmp]");
+var boxes = K.qa("[data-cmp]"), draws = [];
 if (boxes.length) {
   K.getJSON("/data/compare.json").then(function (J) {
     if (!J || !J.f) return;
     boxes.forEach(function (el) { setup(el, J); });
   });
+  /* the card changes in the page's own controls: redraw every box once the core has taken the choice (one pair
+     of listeners for the page, not one per box) */
+  var redraw = function () { setTimeout(function () { draws.forEach(function (d) { d(); }); }, 0); };
+  document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-card]")) redraw(); });
+  document.addEventListener("change", function (e) { if (e.target.matches && e.target.matches("select[data-card]")) redraw(); });
 }
 var W = K.AR ? {
   a: "الفيلم الأول", b: "الفيلم الثاني", pick: "اختار فيلم", verdict: "الحكم", critics: "النقاد", aud: "الجمهور", imdb: "IMDb",
@@ -39,9 +44,7 @@ function setup(el, J) {
     out.innerHTML = a && b && a !== b ? table(J, [a, b]) : "";
   }
   sels.forEach(function (s) { s.addEventListener("change", draw); });
-  /* the card or the city changes in the page's own controls: redraw once the core has taken the choice */
-  document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-card]")) setTimeout(draw, 0); });
-  document.addEventListener("change", function (e) { if (e.target.matches && e.target.matches("select[data-card]")) setTimeout(draw, 0); });
+  draws.push(draw);
   el.hidden = false;
   draw();
 }

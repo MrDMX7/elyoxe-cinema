@@ -65,6 +65,10 @@ def test_merge_is_idempotent_and_keeps_the_fuller_read():
     fuller = ph.snapshot(data(SHOWS + [show("v1", "a", "2026-09-28", "20:00", 45)]))
     m2, ch2 = ph.merge(m, fuller)
     assert ch2 == ["2026-09-28"] and m2["2026-09-28"]["n"] == 2 and m2["2026-09-27"] is m["2026-09-27"]
+    # more shows but fewer live prices (a chain on the fallback table) does not replace the better-priced read
+    more_unpriced = ph.snapshot(data(SHOWS + [show("v2", "b", "2026-09-27", h, None) for h in ("11:00", "12:00", "14:00")]))
+    assert more_unpriced["2026-09-27"]["n"] > m["2026-09-27"]["n"]
+    assert ph.merge(m, {"2026-09-27": dict(more_unpriced["2026-09-27"], priced=1)})[1] == []
 
 
 def test_dump_load_roundtrip_skips_torn_lines(tmp_path):
@@ -102,39 +106,87 @@ def test_series_cheapest_time_and_week():
 
 # ---------------------------------------------------------------- the step
 @pytest.fixture
-def step(monkeypatch):
+def step(monkeypatch, tmp_path):
+    """The step with a fake bucket: tmp_path/bucket.jsonl is the object (absent until written)."""
     m = load_step()
-    calls = []
-    m.s3_get = lambda path: calls.append(("get", path)) or m._next_get
-    m.s3_put = lambda path: calls.append(("put", path)) or "ok"
-    m._next_get = "absent"
-    m.calls = calls
+    obj = tmp_path / "bucket.jsonl"
+    m.calls, m.fail_get, m.fail_put = [], False, False
+
+    def get(path):
+        m.calls.append("get")
+        if m.fail_get: return "failed: AccessDenied"
+        if not obj.exists(): return "absent"
+        open(path, "wb").write(obj.read_bytes()); return "ok"
+
+    def put(path):
+        m.calls.append("put")
+        if m.fail_put: return "failed: timeout"
+        obj.write_bytes(open(path, "rb").read()); return "ok"
+
+    m.s3_get, m.s3_put, m.obj = get, put, obj
     monkeypatch.setenv("CINEMA_HISTORY_S3", "1")      # tmp dirs are sandboxes: force the (faked) bucket
+    (tmp_path / "d").mkdir()
+    m.ctx = {"data_dir": str(tmp_path / "d")}
+    m.local = str(tmp_path / "d" / "price_history.jsonl")
     return m
 
 
-def test_step_first_run_pulls_then_writes_and_pushes(step, tmp_path):
-    out = step.run(data(SHOWS), {"data_dir": str(tmp_path), "now": None})
-    p = str(tmp_path / "price_history.jsonl")
-    assert [c[0] for c in step.calls] == ["get", "put"] and out["pulled"] == "absent" and out["pushed"] == "ok"
-    assert out["changed"] == ["2026-09-27", "2026-09-28"] and out["days"] == 2 and len(ph.load(p)) == 2
+def lines_of(d0, n):
+    return {x["date"]: x for x in (line(f"2026-09-{d0 + i:02d}", 40 + i) for i in range(n))}
+
+
+def test_step_first_run_starts_the_history_and_pushes_it(step):
+    out = step.run(data(SHOWS), step.ctx)
+    assert step.calls == ["get", "put"] and out["bucket"] == "absent" and out["pushed"] == "ok" and out["new"] is True
+    assert sorted(ph.load(str(step.obj))) == ["2026-09-27", "2026-09-28"] == sorted(ph.load(step.local))
+
+
+def test_step_merges_the_bucket_every_run_and_never_shrinks_it(step):
+    ph.dump(lines_of(1, 20), str(step.obj))              # the bucket: 20 days
+    ph.dump(lines_of(1, 2), step.local)                  # a stale local file (another machine, an old copy)
+    out = step.run(data(SHOWS), step.ctx)
+    assert out["bucket"] == "ok" and out["days"] == 22
+    assert len(ph.load(str(step.obj))) == 22 and len(ph.load(step.local)) == 22
     step.calls.clear()
-    again = step.run(data(SHOWS), {"data_dir": str(tmp_path)})                # local file now: no pull; same data: no push
-    assert step.calls == [] and again["changed"] == []
+    assert step.run(data(SHOWS), step.ctx)["changed"] == [] and step.calls == ["get"]   # nothing new: no upload
 
 
-def test_step_download_failure_never_starts_a_fresh_file(step, tmp_path):
-    step._next_get = "failed: AccessDenied"
-    with pytest.raises(RuntimeError):
-        step.run(data(SHOWS), {"data_dir": str(tmp_path)})
-    assert not os.path.exists(tmp_path / "price_history.jsonl")
+def test_step_lost_local_file_comes_back_from_the_bucket(step):
+    ph.dump(lines_of(1, 20), str(step.obj))
+    out = step.run(data(SHOWS), step.ctx)
+    assert out["days"] == 22 and "new" not in out
 
 
-def test_step_offline_and_bucket_off(step, tmp_path, monkeypatch):
-    assert step.run(data(SHOWS), {"data_dir": str(tmp_path), "offline": True}) == {"skipped": "offline"}
-    assert not os.listdir(tmp_path)
+def test_step_bucket_missing_with_local_history_is_flagged_and_restored(step):
+    ph.dump(lines_of(1, 20), step.local)
+    out = step.run(data(SHOWS), step.ctx)
+    assert out["bucket"] == "absent" and "warning" in out and out["pushed"] == "ok"
+    assert len(ph.load(str(step.obj))) == 22
+
+
+def test_step_failed_download_keeps_local_and_skips_the_upload(step):
+    ph.dump(lines_of(1, 20), str(step.obj))
+    step.fail_get = True
+    with pytest.raises(RuntimeError, match="download"):
+        step.run(data(SHOWS), step.ctx)
+    assert step.calls == ["get"] and len(ph.load(str(step.obj))) == 20      # the bucket untouched
+    assert len(ph.load(step.local)) == 2                                     # today kept locally; merged next run
+    step.fail_get = False
+    assert step.run(data(SHOWS), step.ctx)["days"] == 22
+
+
+def test_step_failed_upload_raises(step):
+    step.fail_put = True
+    with pytest.raises(RuntimeError, match="upload"):
+        step.run(data(SHOWS), step.ctx)
+    assert len(ph.load(step.local)) == 2
+
+
+def test_step_offline_and_bucket_off(step, monkeypatch):
+    assert step.run(data(SHOWS), dict(step.ctx, offline=True)) == {"skipped": "offline"}
+    assert not os.path.exists(step.local)
     monkeypatch.setenv("CINEMA_HISTORY_S3", "0")
-    out = step.run(data(SHOWS), {"data_dir": str(tmp_path)})
+    out = step.run(data(SHOWS), step.ctx)
     assert step.calls == [] and out["changed"] and "pushed" not in out
 
 

@@ -17,6 +17,7 @@ from site_kit import (SITE, L, P, Page, Pages, Plugin, after, ar_count, esc, gen
 
 CSS = ("insights",)
 LAZY_JS = ("compare",)
+JS = ("cmpload",)          # a few bytes: loads compare.js where a [data-cmp] box is (never on archived film pages)
 DIRS = ("prices", "boxoffice")
 PRICES = ("أسعار التذاكر", "Ticket prices")
 BOX = ("الأكثر عرضاً", "Most shown")
@@ -27,10 +28,10 @@ PART = {"morning": ("الصبح (قبل 12)", "morning (before 12)"), "afternoon
         "evening": ("المسا (5 إلى 9)", "evening (5 to 9)"), "night": ("الليل (بعد 9)", "night (after 9)")}
 AED = ("درهم", "AED")
 QID = re.compile(r"^Q[0-9]+$")
+DAYS = ("يوم واحد", "يومين", "أيام", "يوم")
 
 
-def history_path():
-    return os.environ.get("CINEMA_PRICE_HISTORY") or ph.PATH
+history_path = ph.history_path
 
 
 def register(site):
@@ -38,8 +39,7 @@ def register(site):
     pages = [Page(("prices",), lang, lambda lang=lang: ins.prices(lang)) for lang in ("ar", "en")]
     pages += [Page(("boxoffice",), lang, lambda lang=lang: ins.boxoffice(lang)) for lang in ("ar", "en")]
     return Plugin(pages=pages, data={"data/compare.json": ins.compare_data},
-                  slots={"film.info": ins.film_slot, "home.after_tonight": ins.home_links},
-                  page_js={"film": ("compare",)})
+                  slots={"film.info": ins.film_slot, "home.after_tonight": ins.home_links})
 
 
 class Insights(Pages):
@@ -95,9 +95,14 @@ class Insights(Pages):
         body += self.index_section(lang)
         body += self.history_section(lang)
         body += self.time_section(lang)
-        title = ("أسعار تذاكر السينما في الإمارات اليوم — لكل سلسلة وقاعة" if ar else "UAE cinema ticket prices today — per chain and hall")
-        desc = ("وسيط سعر التذكرة اليوم في فوكس ونوفو وستار وريل وروكسي وسيني رويال وسينما سيتي، لكل قاعة، وكيف تغيّر مع الأيام." if ar
-                else "Today's median ticket price at VOX, Novo, Star, Reel, Roxy, Cine Royal and Cinema City, per hall, and how it changed.")
+        # from the data: the index's own day (a late-night build reads tomorrow's) and the chains it has
+        day = human_date(self.idx_date, lang) if self.idx_date else None
+        names = sorted({self.chain(r[0], lang) for r in (self.now_snap[self.idx_date]["prices"] if self.idx_date else [])})
+        names = ("، ".join(names[:-1]) + " و" + names[-1] if len(names) > 1 else "".join(names)) if ar else                 (", ".join(names[:-1]) + " and " + names[-1] if len(names) > 1 else "".join(names))
+        title = ((f"أسعار تذاكر السينما في الإمارات، {day} — لكل سلسلة وقاعة" if day else "أسعار تذاكر السينما في الإمارات — لكل سلسلة وقاعة") if ar
+                 else (f"UAE cinema ticket prices, {day} — per chain and hall" if day else "UAE cinema ticket prices — per chain and hall"))
+        desc = ((f"وسيط سعر التذكرة يوم {day} في {names}، لكل قاعة، من أنظمة الحجز نفسها." if day else "أسعار تذاكر السينما في الإمارات من أنظمة الحجز نفسها.") if ar
+                else (f"The median ticket price on {day} at {names}, per hall, from their own booking systems." if day else "UAE cinema ticket prices from the chains' own booking systems."))
         return {"title": title, "desc": desc, "body": body, "kind": "prices", "nav": "prices",
                 "graph": [self.breadcrumb_ld(lang, (L(PRICES, lang), P(lang, "prices")))]}
 
@@ -135,8 +140,8 @@ class Insights(Pages):
         if n < CHART_DAYS:
             if not n: return ""
             first = human_date(ph.days(self.all, self.idx_date or self.today)[0], lang)
-            say = (f"نسجّل الأسعار كل يوم من {first}، وعندنا الحين {n} {'يوم' if n > 10 or n == 1 else 'أيام'}. الرسم وتغيّر السعر يطلعون هني لما يكتمل {CHART_DAYS} يوم."
-                   if ar else f"We have recorded prices every day since {first}: {n} day{'s' if n != 1 else ''} so far. The chart and the 30-day change appear here once there are {CHART_DAYS}.")
+            say = (f"نسجّل الأسعار من {first}، وعندنا الحين أسعار {ar_count(n, DAYS)}. الرسم وتغيّر السعر يطلعون هني لما يصير عندنا {CHART_DAYS} يوم."
+                   if ar else f"We have recorded prices since {first}: {n} day{'s' if n != 1 else ''} so far. The chart and the 30-day change appear here once there are {CHART_DAYS}.")
             return f'<section class="wrap"><p class="hint hist-n">{esc(say)}</p></section>'
         ser = {ch: s for ch, s in self.std_series().items() if len(s) >= 2}
         if not ser: return ""
@@ -243,7 +248,7 @@ class Insights(Pages):
                          esc("ترتيب الأفلام بعدد عروضها في جداول السينمات وبعدد السينمات اللي تعرضها. هذا عدد عروض، مب عدد تذاكر: ما نعرف كم تذكرة انباعت." if ar
                              else "Films ranked by how many shows the cinemas scheduled and how many cinemas show them. These are shows, not tickets sold: we do not know how many tickets were sold."))
         if ranked:
-            span = (f'من {human_date(used[0], lang)} إلى {human_date(used[-1], lang)}، {len(used)} {"يوم" if len(used) > 10 or len(used) == 1 else "أيام"}' if ar
+            span = (f'من {human_date(used[0], lang)} إلى {human_date(used[-1], lang)}، {ar_count(len(used), DAYS)}' if ar
                     else f'{human_date(used[0], lang)} to {human_date(used[-1], lang)}, {len(used)} day{"s" if len(used) != 1 else ""}')
             items = ""
             for fid, (n, c) in ranked:
@@ -264,11 +269,12 @@ class Insights(Pages):
                   "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": SITE + P(lang, "film", f), "name": self.ftitle(f, lang)}
                                       for i, (f, _) in enumerate(ranked)]},
                  self.breadcrumb_ld(lang, (L(BOX, lang), P(lang, "boxoffice")))]
-        return {"title": title, "desc": desc, "body": body, "graph": graph, "kind": "boxoffice", "nav": "boxoffice", "js": ("compare",)}
+        return {"title": title, "desc": desc, "body": body, "graph": graph, "kind": "boxoffice", "nav": "boxoffice"}
 
     # -------------------------------------------------- compare
     def compare_box(self, lang, fid):
-        return (f'<section class="wrap cmp" data-cmp="{esc(fid)}" hidden><h2>{"قارن بين فيلمين" if lang == "ar" else "Compare two films"}</h2>'
+        src = self.chunk_urls.get("compare", "")   # cmpload.js (main bundle) fetches the chunk only where a box is
+        return (f'<section class="wrap cmp" data-cmp="{esc(fid)}" data-cmp-src="{esc(src)}" hidden><h2>{"قارن بين فيلمين" if lang == "ar" else "Compare two films"}</h2>'
                 f'<div data-cmp-ui></div><div data-cmp-out></div></section>')
 
     def compare_data(self):
@@ -318,8 +324,9 @@ class Insights(Pages):
             n = (p.get("name_ar") if lang == "ar" else p.get("name_en")) or p.get("name_en") or p.get("name_ar")
         else:
             n = None if QID.match(pid) else pid
-        if not n: return None
-        return n, (P(lang, "people", p["slug"]) if pid in self.person_pages() else None)
+        if not n or QID.match(str(n)): return None          # a Wikidata label that is only the id is no name
+        slug = p.get("slug") if isinstance(p, dict) else None
+        return n, (P(lang, "people", slug) if slug and pid in self.person_pages() else None)
 
     def person_pages(self):
         if self._pages is None:

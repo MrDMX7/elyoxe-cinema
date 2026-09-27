@@ -73,7 +73,7 @@ def test_posters_are_never_deleted_by_a_sync():
     does not exclude it would wipe every poster. The exclusion must come AFTER any --include (the
     last matching filter wins in `aws s3 sync`)."""
     code = _code_lines()
-    assert any('KEEP=(--exclude "posters/*")' in l for l in code)
+    assert any(l.startswith("KEEP=(") and '--exclude "posters/*"' in l for l in code)
     syncs = [l for l in code if "aws s3 sync" in l]
     assert syncs
     for l in syncs:
@@ -92,3 +92,14 @@ def test_run_uploads_new_posters_before_it_deploys():
     code = "\n".join(l for l in src.splitlines() if not l.strip().startswith("#"))
     up, dep = code.find("posters.py --upload"), code.find("./deploy.sh")
     assert up != -1 and dep != -1 and up < dep
+
+
+def test_state_is_never_deleted_by_a_sync():
+    """state/price_history.jsonl is written by the refresh step (steps/history.py), never built into out/:
+    every `--delete` pass must keep it, or each deploy erases the price history's bucket copy."""
+    code = _code_lines()
+    keep = next(l for l in code if l.startswith("KEEP=("))
+    assert '--exclude "state/*"' in keep and '--exclude "posters/*"' in keep
+    for l in code:
+        if "aws s3 sync" in l and "--delete" in l:
+            assert '"${KEEP[@]}"' in l, l

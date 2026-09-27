@@ -56,8 +56,9 @@ DIST=$(out_of DistributionId)
 [[ "$DIST" =~ ^E[A-Z0-9]+$ ]] || { echo "deploy: no distribution id from stack $STACK" >&2; exit 4; }
 DEST="s3://$BUCKET/"
 NEVER=(--exclude "tools/*")                   # the --preview dir, never uploaded (nor deleted: not ours to own)
-KEEP=(--exclude "posters/*")                  # uploaded by `posters.py --upload`, never built into out/: every
-                                              # --delete pass must leave them alone (placed last: last filter wins)
+KEEP=(--exclude "posters/*" --exclude "state/*")   # posters/: `posters.py --upload`; state/: the price history
+                                              # (steps/history.py). Never built into out/, so every --delete pass
+                                              # must leave them alone (placed last: last filter wins)
 SHORT=(--include "*.html" --include "*.xml" --include "*.txt" --include "sw.js")
 
 # 1) assets (immutable) — also the --delete pass for everything that is neither short-lived nor data
