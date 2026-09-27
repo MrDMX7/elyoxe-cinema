@@ -20,3 +20,15 @@ cast & directors (films showing) · 4 crowd meter · 6 cheapest time of week · 
 27 kids trip · 30 «على طريقي» · 31 «سينما اليوم» · 32 «سنتك في السينما» · 33 UAE audience rating · 34 badges · 39 weekly short ·
 49 «اسأل سينما» (Claude, capped) · 50 WhatsApp number · 51 embeddable widget · 52 daily auto posts · 53 «رايح الليلة» ·
 57 home-screen widget.
+
+## Added 2026-09-27 (owner: «سوهم كلهم»)
+Phase 3: 75 Emirati «مواطن» discount card · 76 student / senior cards · 77 loyalty programs compared · 78 nearest prayer room ·
+79 «ليش 15+؟» content advice (sourced) · 80 ladies' screenings hub · 81 smart bilingual search · 82 share link keeps city+card ·
+83 voice search · 84 dim in-hall mode · 87 WhatsApp Channel · 88 privacy-first analytics dashboard · 89 weekly owner report ·
+90 Fazaa/Esaad partner page · 91 cinema vs online rental price · 92 real ad-length reports.
+
+## Future plan (not scheduled)
+85 Google Play app (TWA) · 86 Wallet pass (Google/Apple) · App Store app.
+
+## Open for the owner's pick
+58–74 (second list) · 93–108 (third list).
