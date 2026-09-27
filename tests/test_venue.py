@@ -165,6 +165,58 @@ def test_double_feature_across_midnight():
     assert a["film"] == "a" and b["film"] == "b" and gap == 15
 
 
+class _PairSite:
+    """ftitle / cname / cinemas for double_feature_html — the slot's rendering alone, at real volume."""
+    def __init__(self, n_cin):
+        cities = ["dubai", "abu-dhabi", "sharjah", "al-ain"]
+        self.cinemas = {f"c{i}": {"city": cities[i % len(cities)], "chain": "vox"} for i in range(n_cin)}
+
+    def ftitle(self, fid, lang): return f"Film {fid}"
+    def cname(self, cid, lang): return f"Cinema {cid}"
+
+
+def _busy_day(n_cin=60, films="abcdefgh"):
+    """Every cinema shows every film every 20 minutes from 12:00: thousands of 15-45 minute pairs."""
+    ss = []
+    for i in range(n_cin):
+        for j, f in enumerate(films):
+            for k in range(12):
+                m = 12 * 60 + j * 7 + k * 50
+                e = m + 120
+                ss.append(show(cin=f"c{i}", film=f, time=f"{m // 60 % 24:02d}:{m % 60:02d}", ends=f"{e // 60 % 24:02d}:{e % 60:02d}"))
+    return ss
+
+
+def test_group_pairs_folds_times_of_the_same_films_at_the_same_cinema():
+    ss = [show(cin="c1", film="a", time="18:00", ends="20:00"), show(cin="c1", film="b", time="20:20", ends="22:00"),
+          show(cin="c1", film="a", time="21:00", ends="23:00"), show(cin="c1", film="b", time="23:30", ends="01:00")]
+    groups = venue.group_pairs(venue.double_features(ss))
+    assert groups == [("c1", "a", "b", [("18:00", "20:20"), ("21:00", "23:30")])]
+
+
+def test_film_page_double_features_stay_small_at_real_volume():
+    """A busy film pairs with hundreds of shows across the country: the film page carries a collapsed,
+    capped list (a few per city, each linked to its cinema page, which lists every pair) — never all of them."""
+    site = _PairSite(60)
+    pairs = [p for p in venue.double_features(_busy_day()) if "a" in (p[0]["film"], p[1]["film"])]
+    assert len(pairs) > 500
+    html = venue.film_double_feature_html(site, "ar", pairs)
+    assert html.startswith('<details class="dfeat">') and "<summary>" in html
+    assert len(html.encode()) < 6_000
+    assert html.count("<li") <= venue.PER_CITY * 4
+    en = venue.film_double_feature_html(site, "en", pairs)
+    assert "Cinema c0" in en and len(en.encode()) < 6_000
+
+
+def test_cinema_page_double_features_are_grouped_and_bounded():
+    site = _PairSite(1)
+    pairs = venue.double_features(_busy_day(1))
+    html = venue.double_feature_html(site, "ar", pairs, show_cinema=False)
+    assert html.startswith('<details class="dfeat">')
+    assert html.count("<li") == min(len(venue.group_pairs(pairs)), venue.MAX_LINES) and len(html.encode()) < 6_000
+    assert html.count('class="more"') and "</details>" in html
+
+
 # ---------------------------------------------------------------- a real build: the slots actually fill
 @pytest.fixture(scope="module")
 def out(tmp_path_factory):

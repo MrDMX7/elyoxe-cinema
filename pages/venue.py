@@ -17,7 +17,7 @@ import os
 
 import yaml
 
-from site_kit import L, Plugin, ROOT, dates, esc, human_date, money, num
+from site_kit import CITIES, L, P, Plugin, ROOT, dates, esc, human_date, money, num
 
 CSS = ("venue",)
 JS = ("plan",)
@@ -199,16 +199,71 @@ def snacks_section(site, lang, chain):
     return f'<section class="snacks"><h2>{esc(head0)}</h2>{body}</section>'
 
 
+PER_CITY = 3     # film page: this many pairings per city (earliest first)
+MAX_LINES = 30   # cinema page: the day's first 30 pairings of two films…
+MAX_TIMES = 3    # …each with its first three start times (a busy multiplex has ~250 such lines: ~35 KB)
+
+
+def group_pairs(pairs):
+    """[(cinema, film A, film B, [(A's time, B's time), …])] — every pairing of the same two films at the same
+    cinema on one line, times in order; lines ordered by their first pair's start."""
+    g = {}
+    for a, b, _gap in pairs:
+        g.setdefault((a["cinema"], a["film"], b["film"]), []).append((a["time"], b["time"], a["date"]))
+    out = []
+    for (cid, fa, fb), ts in g.items():
+        ts.sort(key=lambda t: (t[2], t[0]))
+        out.append(((ts[0][2], ts[0][0]), (cid, fa, fb, [(x, y) for x, y, _ in ts])))
+    return [v for _, v in sorted(out, key=lambda kv: (kv[0], kv[1][:3]))]
+
+
+def _times(ts, lang):
+    more = f' <span class="more">+{num(len(ts) - MAX_TIMES)}</span>' if len(ts) > MAX_TIMES else ""
+    return " · ".join(f"{esc(x)} ← {esc(y)}" for x, y in ts[:MAX_TIMES]) + more
+
+
+def _pair_li(site, lang, cid, fa, fb, ts, cinema=True):
+    cin = ""
+    if cinema:
+        c = site.cinemas.get(cid) or {}
+        cin = f' — <a href="{P(lang, c.get("city"), cid)}">{esc(site.cname(cid, lang))}</a>' if c.get("city") else f" — {esc(site.cname(cid, lang))}"
+    return f'<li><b>{esc(site.ftitle(fa, lang))}</b> ← <b>{esc(site.ftitle(fb, lang))}</b> <small>{_times(ts, lang)}</small>{cin}</li>'
+
+
+def _details(lang, n, items, more=""):
+    head = "فيلمين ورا بعض" if lang == "ar" else "Back-to-back double feature"
+    return (f'<details class="dfeat"><summary>{esc(head)} <small>({num(n)})</small></summary>'
+            f'<ul>{"".join(items)}</ul>{more}</details>')
+
+
 def double_feature_html(site, lang, pairs, show_cinema=True):
+    """A cinema page: the day's pairings, one line per two films (earliest first, capped), collapsed — the slot
+    counts against the page budget, and the schedule must never shrink for it."""
     if not pairs:
         return ""
-    items = []
-    for a, b, gap in pairs:
-        fa, fb = site.ftitle(a["film"], lang), site.ftitle(b["film"], lang)
-        cin = f' — {esc(site.cname(a["cinema"], lang))}' if show_cinema else ""
-        items.append(f'<li><b>{esc(fa)}</b> {esc(a["time"])} ← <b>{esc(fb)}</b> {esc(b["time"])}{cin}</li>')
-    head = "فيلمين ورا بعض" if lang == "ar" else "Back-to-back double feature"
-    return f'<section class="dfeat"><h2>{esc(head)}</h2><ul>{"".join(items)}</ul></section>'
+    groups = group_pairs(pairs)
+    more = ""
+    if len(groups) > MAX_LINES:
+        more = (f'<p class="hint">{"وفيه" if lang == "ar" else "and"} {num(len(groups) - MAX_LINES)} '
+                f'{"غيرها بعد" if lang == "ar" else "more later in the day"}</p>')
+    return _details(lang, len(groups), [_pair_li(site, lang, *g, cinema=show_cinema) for g in groups[:MAX_LINES]], more)
+
+
+def film_double_feature_html(site, lang, pairs):
+    """A film page: pairings anywhere in the country — a few per city (earliest first), each naming its
+    cinema, whose own page lists that cinema's day. Collapsed, so the day's schedule stays the page."""
+    if not pairs:
+        return ""
+    groups = group_pairs(pairs)
+    by_city, order = {}, [c[0] for c in CITIES]
+    for g in groups:
+        by_city.setdefault((site.cinemas.get(g[0]) or {}).get("city"), []).append(g)
+    keep = [g for city in sorted(by_city, key=lambda c: order.index(c) if c in order else len(order))
+            for g in by_city[city][:PER_CITY]]
+    more = ""
+    if len(keep) < len(groups):
+        more = (f'<p class="hint">{"والباقي في صفحة كل سينما" if lang == "ar" else "More on each cinema’s page"}</p>')
+    return _details(lang, len(groups), [_pair_li(site, lang, *g) for g in keep], more)
 
 
 def register(site):
@@ -223,7 +278,8 @@ def register(site):
 
     def film_info(kit, lang, fid):
         todays = [s for s in kit.shows if s["date"] == kit.today]
-        pairs = [p for p in double_features(todays) if p[0]["film"] == fid or p[1]["film"] == fid]
-        return double_feature_html(kit, lang, pairs, show_cinema=True)
+        pairs = [p for p in double_features([s for s in todays if s["film"] == fid] + [s for s in todays if s["film"] != fid])
+                 if p[0]["film"] == fid or p[1]["film"] == fid]
+        return film_double_feature_html(kit, lang, pairs)
 
     return Plugin(slots={"cinema.after_halls": after_halls, "film.info": film_info})
