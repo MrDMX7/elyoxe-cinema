@@ -1,6 +1,6 @@
 """Python <-> JS discount parity: discounts.compute() and cinema.js discAfter() must give the same answer
 for every (price, chain, hall, hall key, cinema, card, date) — the pages are built by one and rewritten in
-the browser by the other. The JS side is the block between `disc:begin` and `disc:end` in src/cinema.js,
+the browser by the other. The JS side is the block between `disc:begin` and `disc:end` in src/js/disc.js (bundled into cinema.<hash>.js),
 run as-is in node (installed on both machines and on the CI runner)."""
 import itertools
 import json
@@ -60,9 +60,9 @@ def _cases(rules):
 
 
 def _js_block():
-    src = open(os.path.join(ROOT, "src", "cinema.js"), encoding="utf-8").read()
+    src = open(os.path.join(ROOT, "src", "js", "disc.js"), encoding="utf-8").read()
     m = re.search(r"/\* disc:begin.*?\*/(.*?)/\* disc:end \*/", src, re.S)
-    assert m, "cinema.js lost its disc:begin/disc:end block"
+    assert m, "src/js/disc.js lost its disc:begin/disc:end block"
     return m.group(1)
 
 

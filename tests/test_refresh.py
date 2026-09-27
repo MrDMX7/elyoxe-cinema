@@ -33,6 +33,11 @@ def sandbox(tmp_path, monkeypatch):
     monkeypatch.setattr(refresh, "LATEST_PATH", data_dir / "latest.json")
     monkeypatch.setattr(refresh, "HEALTH_PATH", data_dir / "health.json")
     monkeypatch.setattr(refresh, "FILMS_CACHE_PATH", data_dir / "films_cache.json")
+    monkeypatch.setattr(refresh, "FILM_HISTORY_PATH", data_dir / "film_history.json")
+    monkeypatch.setattr(refresh, "FILM_HISTORY_BACKUP_PATH", data_dir / "film_history.prev.json")
+    monkeypatch.setattr(refresh, "PRICE_CACHE_PATH", data_dir / "price_cache.json")
+    monkeypatch.setattr(refresh, "PRICE_CACHE_BACKUP_PATH", data_dir / "price_cache.prev.json")
+    monkeypatch.setattr(refresh, "NEW_FILMS_PATH", data_dir / "new_films.json")
     monkeypatch.setattr(refresh, "FIXTURES_DIR", REAL_FIXTURES_DIR)
 
     verdicts_dir = tmp_path / "verdicts"
@@ -86,7 +91,7 @@ def _fake_readers(monkeypatch, fail=(), hang=(), calls=None):
     calls = calls if calls is not None else {}
 
     def make(chain):
-        def fn(days=2):
+        def fn(days=2, **kw):  # readers/common.py's `cache=` kwarg (Task 6) is ignored here
             calls[chain] = calls.get(chain, 0) + 1
             if chain in fail:
                 raise RuntimeError(f"{chain} boom")
@@ -160,22 +165,25 @@ def test_all_chains_failed_exits_1(sandbox, monkeypatch):
     assert code == 1
 
 
-def test_fresh_raw_file_is_reused_without_refetching(sandbox, monkeypatch):
+def test_unfinished_runs_raw_file_is_reused_without_refetching(sandbox, monkeypatch):
+    """A killed run is resumed from its own raw files (final review C1: only those -- see
+    test_hourly_safe.py for the never-across-completed-runs side)."""
     data_dir, _ = sandbox
     monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
     calls = _fake_readers(monkeypatch)
 
     raw_dir = data_dir / "raw"
     raw_dir.mkdir(parents=True)
+    (raw_dir / ".run.json").write_text(json.dumps({"id": "r1", "started": "2026-09-25T11:40:00+04:00"}), encoding="utf-8")
     fixture = json.loads((REAL_FIXTURES_DIR / "vox.json").read_text(encoding="utf-8"))
-    (raw_dir / "vox.json").write_text(json.dumps(fixture), encoding="utf-8")
+    (raw_dir / "vox.json").write_text(json.dumps({**fixture, "_run_id": "r1"}), encoding="utf-8")
 
     code = refresh.refresh(chains=["vox"], offline=False, no_verdicts=True)
 
     assert code == 0
-    assert calls.get("vox", 0) == 0  # never called — the fresh raw file was reused
+    assert calls.get("vox", 0) == 0  # never called — the unfinished run's raw file was reused
     health = json.loads((data_dir / "health.json").read_text(encoding="utf-8"))
-    assert health["vox"]["ok"] is True
+    assert health["vox"]["ok"] is True and health["vox"]["reused"] is True
 
 
 def test_price_health_passthrough_and_degraded_flag(sandbox, monkeypatch):
@@ -184,7 +192,7 @@ def test_price_health_passthrough_and_degraded_flag(sandbox, monkeypatch):
     data_dir, _ = sandbox
     monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
 
-    def vox_with_price_health(days=2):
+    def vox_with_price_health(days=2, **kw):
         data = json.loads((REAL_FIXTURES_DIR / "vox.json").read_text(encoding="utf-8"))
         data["price_health"] = {"attempted": 10, "priced": 3, "error": None}  # < 50% -> degraded
         return data
@@ -196,7 +204,7 @@ def test_price_health_passthrough_and_degraded_flag(sandbox, monkeypatch):
 
     assert code == 0
     health = json.loads((data_dir / "health.json").read_text(encoding="utf-8"))
-    assert health["vox"]["price_health"] == {"attempted": 10, "priced": 3, "error": None}
+    assert health["vox"]["price_health"] == {"attempted": 10, "priced": 3, "cached": 0, "error": None}
     assert health["vox"]["prices_degraded"] is True
 
     latest = json.loads((data_dir / "latest.json").read_text(encoding="utf-8"))
@@ -226,8 +234,9 @@ def test_force_ignores_fresh_raw_file(sandbox, monkeypatch):
 
     raw_dir = data_dir / "raw"
     raw_dir.mkdir(parents=True)
+    (raw_dir / ".run.json").write_text(json.dumps({"id": "r1", "started": "2026-09-25T11:40:00+04:00"}), encoding="utf-8")
     fixture = json.loads((REAL_FIXTURES_DIR / "vox.json").read_text(encoding="utf-8"))
-    (raw_dir / "vox.json").write_text(json.dumps(fixture), encoding="utf-8")
+    (raw_dir / "vox.json").write_text(json.dumps({**fixture, "_run_id": "r1"}), encoding="utf-8")
 
     code = refresh.refresh(chains=["vox"], offline=False, no_verdicts=True, force=True)
 

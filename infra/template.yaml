@@ -1,0 +1,124 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  «سينما» — static UAE cinema guide at https://cinema.elyoxe.com (ar at /, en at /en/).
+  Its own private bucket + distribution, so no other site's `s3 sync --delete` can reach it
+  and its own `--delete` can reach nothing else. Deployed by infra/setup_domain.py (stack
+  elyoxe-cinema, ap-south-1); the ACM certificate lives in us-east-1 and comes in as a parameter.
+
+Parameters:
+  Domain:
+    Type: String
+    Default: cinema.elyoxe.com
+  CertificateArn:
+    Type: String
+    Description: ISSUED ACM certificate for Domain, in us-east-1
+
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub elyoxe-cinema-${AWS::AccountId}
+      PublicAccessBlockConfiguration: { BlockPublicAcls: true, BlockPublicPolicy: true, IgnorePublicAcls: true, RestrictPublicBuckets: true }
+      OwnershipControls: { Rules: [{ ObjectOwnership: BucketOwnerEnforced }] }
+
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Bucket
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal: { Service: cloudfront.amazonaws.com }
+            Action: s3:GetObject
+            Resource: !Sub "${Bucket.Arn}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${Distribution}"
+
+  Oac:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: elyoxe-cinema-oac
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  # Copy of the shared `static-rewrite` function on E2QY4WECG1P5WO (the /tools* behavior):
+  # www.<host> → https://<host>; "/dir/" and extension-less paths → "/dir/index.html"
+  # (S3 through OAC has no directory index; DefaultRootObject covers only "/").
+  RewriteFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: elyoxe-cinema-rewrite
+      AutoPublish: true
+      FunctionConfig: { Comment: www redirect + directory index, Runtime: cloudfront-js-2.0 }
+      FunctionCode: |
+        function handler(event) {
+            var request = event.request;
+            var host = request.headers.host ? request.headers.host.value : '';
+            if (host.indexOf('www.') === 0) {
+                var qs = '';
+                var keys = Object.keys(request.querystring);
+                if (keys.length > 0) {
+                    var parts = [];
+                    for (var i = 0; i < keys.length; i++) {
+                        parts.push(keys[i] + '=' + request.querystring[keys[i]].value);
+                    }
+                    qs = '?' + parts.join('&');
+                }
+                return {
+                    statusCode: 301,
+                    statusDescription: 'Moved Permanently',
+                    headers: { location: { value: 'https://' + host.slice(4) + request.uri + qs } }
+                };
+            }
+            var uri = request.uri;
+            if (uri.endsWith('/')) {
+                request.uri = uri + 'index.html';
+            } else if (uri.split('/').pop().indexOf('.') === -1) {
+                request.uri = uri + '/index.html';
+            }
+            return request;
+        }
+
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: cinema.elyoxe.com
+        Aliases: [!Ref Domain]
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        # PriceClass_200 includes the Middle East edges (Dubai, Fujairah); PriceClass_100 does not.
+        PriceClass: PriceClass_200
+        DefaultRootObject: index.html
+        ViewerCertificate:
+          AcmCertificateArn: !Ref CertificateArn
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        Origins:
+          - Id: site
+            DomainName: !GetAtt Bucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt Oac.Id
+            S3OriginConfig: { OriginAccessIdentity: "" }
+        DefaultCacheBehavior:
+          TargetOriginId: site
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          AllowedMethods: [GET, HEAD]
+          CachedMethods: [GET, HEAD]
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6          # Managed-CachingOptimized (honours Cache-Control)
+          FunctionAssociations:
+            - EventType: viewer-request
+              FunctionARN: !GetAtt RewriteFunction.FunctionMetadata.FunctionARN
+        # Missing key through OAC without s3:ListBucket is a 403 — both become the 404 page.
+        CustomErrorResponses:
+          - { ErrorCode: 403, ResponseCode: 404, ResponsePagePath: /404.html, ErrorCachingMinTTL: 60 }
+          - { ErrorCode: 404, ResponseCode: 404, ResponsePagePath: /404.html, ErrorCachingMinTTL: 60 }
+
+Outputs:
+  Bucket: { Value: !Ref Bucket }
+  DistributionId: { Value: !Ref Distribution }
+  DistributionDomain: { Value: !GetAtt Distribution.DomainName }

@@ -11,9 +11,16 @@ import os
 import re
 from datetime import datetime, timedelta, timezone
 
-from readers.common import slug
+from genres import genre_keys, merge_keys
+from readers.common import slug, youtube_id
 
-ALIASES_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "aliases.yaml")
+_HERE = os.path.dirname(os.path.abspath(__file__))
+ALIASES_PATH = os.path.join(_HERE, "aliases.yaml")
+CHAINS_PATH = os.path.join(_HERE, "chains.yaml")
+CINEMAS_PATH = os.path.join(_HERE, "cinemas.yaml")
+DEFAULT_AD_OFFSET = 15
+# carried from the previous latest.json when this run finds nothing better for a film
+_PREV_FILM_EXTRAS = ("poster", "poster_2x", "poster_color", "trailer")
 
 # All reader-supplied show date/time strings are Asia/Dubai local time (no reader emits an
 # offset), and Dubai has stayed at a fixed UTC+4 with no DST, so a fixed-offset tzinfo is exact.
@@ -108,17 +115,29 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
                 "rating": None,
                 "runtime": None,
                 "poster": None,
+                "poster_src": [],
+                "trailer": None,
+                "genres": [],
                 "title_ar": None,
                 "chains": set(),
             },
         )
+        if show.get("film_poster") and show["film_poster"] not in acc["poster_src"]:
+            acc["poster_src"].append(show["film_poster"])
+        if not acc["trailer"]:
+            acc["trailer"] = youtube_id(show.get("film_trailer"))
+        if show.get("film_genres"):
+            acc["genres"] = merge_keys(acc["genres"], genre_keys(show["film_genres"]))
         if show.get("film_title_ar") and not acc["title_ar"]:
             acc["title_ar"] = show["film_title_ar"]
         if _better_title(cleaned, acc["title"]):
             acc["title"] = cleaned
         if show.get("film_lang") and not acc["lang"]:
             acc["lang"] = show["film_lang"]
-        if show.get("film_rating") and not acc["rating"]:
+        # a real class beats a placeholder ("TBA"/"TBC") whichever chain comes first
+        if uae_rating(show.get("film_rating")) and not uae_rating(acc["rating"]):
+            acc["rating"] = show["film_rating"]
+        elif show.get("film_rating") and not acc["rating"]:
             acc["rating"] = show["film_rating"]
         runtime = show.get("runtime")
         if runtime is not None:
@@ -138,6 +157,9 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
                 "rating": (pf or {}).get("rating"),
                 "runtime": (pf or {}).get("runtime"),
                 "poster": (pf or {}).get("poster"),
+                "poster_src": [],
+                "trailer": (pf or {}).get("trailer"),
+                "genres": list((pf or {}).get("genres") or []) if isinstance((pf or {}).get("genres"), list) else [],
                 "title_ar": (pf or {}).get("title_ar_chain"),
                 "chains": set(),
             },
@@ -155,6 +177,8 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
                 if show.get("film"):
                     add_prev_film(chain, show["film"])
 
+    chains_cfg = load_chains()
+
     for chain, result in results.items():
         prev_chain_info = prev_chains.get(chain, {})
         ok = isinstance(result, dict)
@@ -166,7 +190,14 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
             for show in result.get("shows", []):
                 fid = add_film(chain, show)
                 s = {k: v for k, v in show.items()
-                     if k not in ("film_title", "film_title_ar", "film_lang", "film_rating", "runtime", "poster")}
+                     if not k.startswith("film_") and k not in ("runtime", "poster")}
+                if not s.get("lang"):
+                    s.pop("lang", None)
+                if not s.get("subs"):
+                    s.pop("subs", None)
+                ends = end_time(show["date"], show["time"], show.get("runtime"), ad_offset(chains_cfg, chain))
+                if ends:
+                    s["ends"] = ends
                 s["film"] = fid
                 shows_out.append(s)
         else:
@@ -205,6 +236,17 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
     for s in shows_out:
         s["film"] = mapping.get(s["film"], s["film"])
 
+    # a show whose chain gave no runtime of its own ends on the film's chain runtime (the longest
+    # any chain lists) — computed here, before enrich, so an end time never rests on Wikidata alone
+    for s in shows_out:
+        if s.get("ends"):
+            continue
+        chain = (cinemas_out.get(s.get("cinema")) or {}).get("chain")
+        ends = end_time(s["date"], s["time"], (films_acc.get(s["film"]) or {}).get("runtime"),
+                        ad_offset(chains_cfg, chain))
+        if ends:
+            s["ends"] = ends
+
     films_out = {}
     for fid, acc in films_acc.items():
         f = {
@@ -213,8 +255,16 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
             "rating": acc["rating"],
             "runtime": acc["runtime"],
             "poster": acc["poster"],
+            "trailer": acc.get("trailer"),
+            "genres": list(acc.get("genres") or []),
             "chains": sorted(acc["chains"]),
         }
+        if acc.get("poster_src"):
+            f["poster_src"] = list(acc["poster_src"])
+        pf = prev_films.get(fid) or {}
+        for k in _PREV_FILM_EXTRAS:
+            if not f.get(k) and pf.get(k):
+                f[k] = pf[k]
         if acc.get("title_ar"):
             f["title_ar_chain"] = acc["title_ar"]
         films_out[fid] = f
@@ -385,9 +435,11 @@ def merge_duplicates(films: dict, aliases: dict | None = None, counts: dict | No
         for m in order:
             fm = films[m]
             acc["chains"] |= set(fm.get("chains") or ())
-            for k in ("lang", "rating", "runtime", "poster", "title_ar"):
+            for k in ("lang", "rating", "runtime", "poster", "title_ar", "trailer"):
                 if not acc.get(k) and fm.get(k):
                     acc[k] = fm[k]
+            acc["genres"] = merge_keys(acc.get("genres"), fm.get("genres"))
+            acc["poster_src"] = list(dict.fromkeys((acc.get("poster_src") or []) + (fm.get("poster_src") or [])))
             if _better_title(fm["title"], acc["title"]):
                 acc["title"] = fm["title"]
         if titles.get(canon):
@@ -397,6 +449,127 @@ def merge_duplicates(films: dict, aliases: dict | None = None, counts: dict | No
             if m != canon:
                 mapping[m] = canon
     return out, mapping
+
+
+# ---------------------------------------------------------------- phase 1 derived fields
+
+# 21+ is its own UAE class (since 2021); no chain lists it today, but it is kept distinct rather
+# than folded into 18+ — it counts as neither family nor kids either way.
+_RATINGS = ("G", "PG", "PG13", "PG15", "15+", "18+", "21+")
+
+
+def uae_rating(raw) -> str | None:
+    """A chain's certificate -> one of G, PG, PG13, PG15, 15+, 18+, 21+ (UAE classes); None if unknown.
+    "PG-13"/"PG 13" -> PG13, "15" -> 15+, "18TC" -> 18+, Reel's "TBA-PG15" -> PG15, "TBA" -> None."""
+    if not raw or not isinstance(raw, str):
+        return None
+    t = re.sub(r"[\s\-_]", "", raw.upper())
+    if t.startswith("TBA"):
+        t = t[3:]
+    if t in _RATINGS:
+        return t
+    if re.match(r"^15(\+|PLUS)?$", t):
+        return "15+"
+    if re.match(r"^18(\+|PLUS)?(TC)?$", t):
+        return "18+"
+    if re.match(r"^21(\+|PLUS)?$", t):
+        return "21+"
+    return None
+
+
+def derive_flags(rating, genres) -> dict:
+    """family: G/PG/PG13. kids: G/PG and the film is animation or family."""
+    g = set(genres or [])
+    return {"family": rating in ("G", "PG", "PG13"),
+            "kids": rating in ("G", "PG") and bool(g & {"animation", "family"})}
+
+
+def end_time(date: str, time: str, runtime, offset) -> str | None:
+    """HH:MM the film lets out: start + ad offset + runtime (wraps past midnight). None without runtime."""
+    try:
+        runtime = int(runtime or 0)
+    except (TypeError, ValueError):
+        return None
+    if runtime <= 0:
+        return None
+    try:
+        start = datetime.fromisoformat(f"{date}T{time}")
+    except (TypeError, ValueError):
+        return None
+    return (start + timedelta(minutes=runtime + int(offset or 0))).strftime("%H:%M")
+
+
+def _load_yaml(path):
+    try:
+        import yaml
+
+        with open(path, encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
+    except (OSError, ImportError):
+        return {}
+
+
+def load_chains(path: str = CHAINS_PATH) -> dict:
+    """chains.yaml -> {"default_ad_offset_min": int, "chains": {chain: {"ad_offset_min": int}}}."""
+    y = _load_yaml(path)
+    return {"default_ad_offset_min": y.get("default_ad_offset_min", DEFAULT_AD_OFFSET),
+            "chains": dict(y.get("chains") or {})}
+
+
+def ad_offset(cfg: dict | None, chain: str | None) -> int:
+    cfg = cfg or {}
+    default = cfg.get("default_ad_offset_min", DEFAULT_AD_OFFSET)
+    return int(((cfg.get("chains") or {}).get(chain) or {}).get("ad_offset_min", default))
+
+
+def load_cinema_meta(path: str = CINEMAS_PATH) -> dict:
+    """cinemas.yaml `cinemas:` -> {cid: {ar, en, lat, lng, coord_source}}."""
+    return dict(_load_yaml(path).get("cinemas") or {})
+
+
+def in_uae(lat, lng) -> bool:
+    try:
+        return 22.0 < float(lat) < 26.5 and 51.0 < float(lng) < 56.6
+    except (TypeError, ValueError):
+        return False
+
+
+def maps_url(lat, lng) -> str:
+    return f"https://www.google.com/maps/search/?api=1&query={lat},{lng}"
+
+
+def finalize(data: dict, chains_cfg: dict | None = None, cinema_meta: dict | None = None) -> dict:
+    """The fields derived after merge + enrich (so Wikidata's runtime/genres count):
+    chains[*].ad_offset_min · films: rating normalised, genres as GENRES keys, family/kids ·
+    cinemas: lat/lng/coord_source from cinemas.yaml (else the reader's own, when inside the UAE —
+    never Star's 21.12345 placeholder), maps = a Google Maps link to those coordinates.
+    Show ends are set in merge() only (chain runtimes), never from an enriched runtime."""
+    chains_cfg = chains_cfg if chains_cfg is not None else load_chains()
+    meta = cinema_meta if cinema_meta is not None else load_cinema_meta()
+
+    for chain, info in (data.get("chains") or {}).items():
+        info["ad_offset_min"] = ad_offset(chains_cfg, chain)
+
+    films = data.get("films") or {}
+    for f in films.values():
+        f["rating"] = uae_rating(f.get("rating"))
+        g = f.get("genres")
+        if isinstance(g, dict):  # an older enrich shape {"ar": [...], "en": [...]}
+            g = g.get("en")
+        f["genres"] = merge_keys(genre_keys(g) if g else [])
+        f.update(derive_flags(f["rating"], f["genres"]))
+
+    cinemas = data.get("cinemas") or {}
+    for cid, c in cinemas.items():
+        m = meta.get(cid) or {}
+        if m.get("lat") is not None and m.get("lng") is not None:
+            c["lat"], c["lng"] = float(m["lat"]), float(m["lng"])
+            c["coord_source"] = m.get("coord_source")
+        elif not in_uae(c.get("lat"), c.get("lng")):
+            c["lat"] = c["lng"] = None
+        if c.get("lat") is not None and c.get("lng") is not None:
+            c["maps"] = maps_url(c["lat"], c["lng"])
+    return data
 
 
 def city_slices(data: dict) -> dict:

@@ -41,9 +41,12 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from curl_cffi import requests as cr
 
-from readers.common import CITIES, HALLS, Polite, arabic_title, city_of, slug, fmt3d as _fmt3d
+from readers.common import (CACHE_MISS, CITIES, HALLS, Polite, arabic_title, cache_get, cache_set,
+                            city_of, lang_key, slug, subs_keys, youtube_id, fmt3d as _fmt3d)
 
 BASE = "https://storage.googleapis.com/eeg-prod-reelcinema-sb/web/vista/json"
+# the site's own poster path (bundle: e4(id) = `${$3}/vista/movie_images/${id}.jpg`, 300x450)
+POSTER = "https://storage.googleapis.com/eeg-prod-reelcinema-sb/web/vista/movie_images/{}.jpg"
 API = "https://apiuae.reelcinemas.com/webapi/api"
 SITE = "https://www.reelcinemas.com"
 CHAIN = "reel"
@@ -225,7 +228,26 @@ def _num(v) -> float | None:
         return None
 
 
-def fetch(days: int = 2, prices: bool = True) -> dict:
+def film_extras(film: dict, genre_names: dict) -> dict:
+    """Poster, trailer, genres, language and subtitles one Films.json record states."""
+    out: dict = {"film_poster": POSTER.format(film["ID"])} if film.get("ID") else {}
+    yt = youtube_id(film.get("TrailerUrl"))
+    if yt:
+        out["film_trailer"] = yt
+    genres = [genre_names[g] for g in (film.get("GenreId"), film.get("GenreId2"), film.get("GenreId3"))
+              if g and genre_names.get(g)]
+    if genres:
+        out["film_genres"] = genres
+    lang = lang_key(_clean(film.get("Language")))
+    if lang:
+        out["lang"] = lang
+    subs = subs_keys(_clean(film.get("SubTitle")))
+    if subs:
+        out["subs"] = subs
+    return out
+
+
+def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict:
     http = Polite(gap=1.0)
 
     cinemas_raw = http.get(f"{BASE}/Cinemas.json").json()["value"]
@@ -233,6 +255,11 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
     sessions_raw = http.get(f"{BASE}/Sessions.json").json()["value"]
 
     films_by_id = {f["ID"]: f for f in films_raw}
+    try:  # genre names: a failure only costs the genres
+        genre_names = {g["ID"]: (g.get("Name") or "").strip()
+                       for g in http.get(f"{BASE}/FilmGenres.json").json()["value"]}
+    except Exception:
+        genre_names = {}
 
     now = datetime.now(DUBAI)
     today = now.date()
@@ -304,6 +331,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
             "hall_label": hall_label,
             "prices": key,  # resolved below
             "book": f"{SITE}/en-ae/movie-details/{film_id}/{_slugify(film['Title'])}",
+            **film_extras(film, genre_names),
         })
 
     if not shows:
@@ -311,6 +339,16 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
 
     price_of: dict = {}
     health = {"attempted": 0, "priced": 0, "error": None}
+    if prices and sample_for:
+        fresh_sample_for = {}
+        for key, v in sample_for.items():
+            hit = cache_get(cache, key)
+            if hit is not CACHE_MISS:  # already sampled today -- reuse instead of another call
+                price_of[key] = hit
+                health["cached"] = health.get("cached", 0) + 1
+            else:
+                fresh_sample_for[key] = v
+        sample_for = fresh_sample_for
     if prices and sample_for:
         try:  # constructing the curl_cffi session is part of the price path: it must not fail the chain
             pc = _PriceClient()
@@ -334,6 +372,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
                     errors.append(f"{cid}/{sid}: {e!r}")
                 if price_of.get(key):
                     health["priced"] += 1
+                cache_set(cache, key, price_of.get(key))
             for e in errors:
                 print(f"[readers.reel] price sample failed: {e}", file=sys.stderr)
             if health["attempted"] and not health["priced"]:

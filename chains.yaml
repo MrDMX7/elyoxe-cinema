@@ -1,0 +1,18 @@
+# chains.yaml — per-chain constants the refresh applies to every show (normalize.finalize).
+#
+# ad_offset_min: minutes between the listed showtime and the film's first frame (adverts +
+#   trailers). show.ends = start + ad_offset_min + the chain's own runtime (the UAE cut), shown
+#   on the site as «يخلص تقريباً HH:MM» — always "approximately".
+#   No chain publishes this figure (searched 2026-09-26: VOX's FAQ https://uae.voxcinemas.com/faq,
+#   and Star's API field ads_time_in_mins is 0 on every session — a scheduling placeholder, not a
+#   statement). So every chain carries the default 15 until one of them states its own number;
+#   change a line here, with its source, when that happens.
+default_ad_offset_min: 15
+chains:
+  vox:        {ad_offset_min: 15}
+  star:       {ad_offset_min: 15}
+  reel:       {ad_offset_min: 15}
+  novo:       {ad_offset_min: 15}
+  roxy:       {ad_offset_min: 15}
+  cineroyal:  {ad_offset_min: 15}
+  cinemacity: {ad_offset_min: 15}

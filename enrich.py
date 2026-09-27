@@ -14,7 +14,9 @@ No TMDB/OMDb keys exist for this project and none are created (controller ruling
 enrich(data, cache_path="data/films_cache.json", offline=False) -> dict mutates
 data["films"][fid] in place, adding: title_ar, year, genres{ar,en}, director, cast,
 runtime (only if missing), synopsis_en, wikidata{qid}, imdb{id}, imdb_score(None),
-rt{critics, critics_count, audience, consensus, url}. `poster` is left untouched.
+rt{critics, critics_count, audience, consensus, url}, trailer (the chain's own, else Wikidata
+P1651), genres (GENRES keys: the chains' first, then Wikidata's labels folded onto them —
+genres.py). `poster` is left untouched.
 
 Cache (data/films_cache.json, gitignored): per-fid {"ids": {...}, "ids_status":
 "found"|"not_found"|"error", "ids_checked_at": ISO, "ratings": {...}, "ratings_at": ISO}.
@@ -57,10 +59,14 @@ movie_title_ar), else none. Never machine-translated.
 import json
 import os
 import re
+import sys
 import time
 from datetime import datetime, timedelta, timezone
 
 import requests
+
+from genres import genre_keys, merge_keys
+from readers.common import youtube_id
 
 UA = "elyoxe-cinema/1.0 (+https://elyoxe.com/cinema; contact hello@elyoxe.com)"
 GAP_SECONDS = 2.0
@@ -363,6 +369,7 @@ def _ids_for_qid(qid):
             runtime = None
 
     imdb_ids = _claim_values(ent, "P345")
+    trailer = next((t for t in map(youtube_id, _claim_values(ent, "P1651")) if t), None)
     rt_ids = _claim_values(ent, "P1258")
 
     enwiki = ((ent.get("sitelinks") or {}).get("enwiki") or {}).get("title")
@@ -380,10 +387,18 @@ def _ids_for_qid(qid):
                            if _label(side_entities, d, "en")), None),
         "cast": [_label(side_entities, c, "en") for c in cast_ids if _label(side_entities, c, "en")],
         "imdb_id": imdb_ids[0] if imdb_ids else None,
+        "trailer": trailer,  # P1651 YouTube video ID — the fallback when no chain publishes one
         # Wikidata's P1258 value is sometimes bare ("heart_of_the_beast") and sometimes
         # already prefixed with the RT URL segment ("m/heart_of_the_beast") — normalise to bare.
         "rt_id": re.sub(r"^m/", "", rt_ids[0]) if rt_ids else None,
     }
+
+
+def _wikidata_trailer(qid):
+    """P1651 (YouTube video ID) of one item — for cache entries written before ids carried it.
+    Returns the id or None; raises LookupFailed on a network/HTTP failure."""
+    ent = _wikidata_entities([qid], props="claims").get(qid) or {}
+    return next((t for t in map(youtube_id, _claim_values(ent, "P1651")) if t), None)
 
 
 # ---------- Rotten Tomatoes ----------
@@ -472,7 +487,8 @@ def _wikipedia_summary(title):
 def _blank_film_fields(film):
     film.setdefault("title_ar", None)
     film.setdefault("year", None)
-    film.setdefault("genres", {"ar": [], "en": []})
+    film.setdefault("genres", [])
+    film.setdefault("trailer", None)
     film.setdefault("director", None)
     film.setdefault("cast", [])
     film.setdefault("synopsis_en", None)
@@ -578,8 +594,27 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
             film["year"] = ids["year"]
         if ids.get("runtime") and not film.get("runtime"):
             film["runtime"] = ids["runtime"]
-        if ids.get("genres"):
-            film["genres"] = ids["genres"]
+        # genres: the chains' keys first, then Wikidata's labels folded onto the same key set
+        chain_genres = film.get("genres")
+        if isinstance(chain_genres, dict):
+            chain_genres = genre_keys(chain_genres.get("en"))
+        wd = ids.get("genres") or {}
+        film["genres"] = merge_keys(chain_genres, genre_keys(wd.get("en") if isinstance(wd, dict) else wd))
+        # trailer: the chain's own first; else Wikidata P1651 (from ids, or looked up once for an
+        # older cache entry, re-checked after RATINGS_TTL when Wikidata had none)
+        if not film.get("trailer") and ids.get("qid"):
+            if "trailer" in ids:
+                film["trailer"] = ids.get("trailer")
+            else:
+                if not offline and not _fresh(entry.get("wd_trailer_at"), RATINGS_TTL):
+                    try:
+                        entry["wd_trailer"] = _wikidata_trailer(ids["qid"])
+                        entry["wd_trailer_at"] = datetime.now(timezone.utc).isoformat()
+                        dirty = True
+                    except Exception as e:  # noqa: BLE001 - retried next run; say so, don't hide it
+                        print(f"enrich: Wikidata trailer lookup for {fid} ({ids['qid']}) failed: {e}",
+                              file=sys.stderr)
+                film["trailer"] = youtube_id(entry.get("wd_trailer"))
         if ids.get("director"):
             film["director"] = ids["director"]
         if ids.get("cast"):

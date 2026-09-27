@@ -21,7 +21,7 @@ import json
 import re
 from zoneinfo import ZoneInfo
 
-from readers.common import CITIES, HALLS, Polite, city_of, slug
+from readers.common import CACHE_MISS, CITIES, HALLS, Polite, cache_get, cache_set, city_of, lang_key, slug, youtube_id
 
 BASE = "https://cineroyal.ae"
 CHAIN = "cineroyal"
@@ -105,6 +105,26 @@ def _film_lang(film_name: str, api_language) -> str | None:
     return None
 
 
+def film_extras(film_meta: dict, film_lang: str | None) -> dict:
+    """Poster (poster5, 400x630 — poster1/3 are squares, poster4 a banner), trailer
+    (youTubevideoId), genres ("genere") and the language the film record or its title states."""
+    out: dict = {}
+    for k in ("poster5", "poster2"):
+        if (film_meta.get(k) or "").startswith("http"):
+            out["film_poster"] = film_meta[k]
+            break
+    yt = youtube_id(film_meta.get("youTubevideoId"))
+    if yt:
+        out["film_trailer"] = yt
+    genres = [g.strip() for g in (film_meta.get("genere") or "").split(",") if g.strip()]
+    if genres:
+        out["film_genres"] = genres
+    lang = lang_key(film_lang)
+    if lang:
+        out["lang"] = lang
+    return out
+
+
 def _runtime_minutes(length) -> int | None:
     if not isinstance(length, str):
         return None
@@ -182,7 +202,7 @@ def _get_seat_prices(s: Polite, screen_ref, cinema_ref, show_date: str, show_tim
     return [{"seat": tier, "aed": aed} for tier, aed in sorted(tiers.items())]
 
 
-def fetch(days: int = 2) -> dict:
+def fetch(days: int = 2, cache: dict | None = None) -> dict:
     s = Polite(gap=1.0, headers={"Accept": "application/json, text/html;q=0.9, */*;q=0.8"})
     # one same-origin GET establishes the session cookie every POST below needs
     s.get(BASE + "/home/nowShowing")
@@ -214,6 +234,7 @@ def fetch(days: int = 2) -> dict:
             film_rating = film_meta.get("rating") or None
             runtime = _runtime_minutes(film_meta.get("length"))
             film_lang = _film_lang(film_name, film_meta.get("language"))
+            extras = film_extras(film_meta, film_lang)
 
             for cinema_block in data.get("shows", []):
                 cinema_ref = cinema_block.get("cinemaRefId")
@@ -246,10 +267,16 @@ def fetch(days: int = 2) -> dict:
                     # cinema must not each cost their own call).
                     price_key = (cinema_ref, hall, show_date_iso)
                     if price_key not in price_cache:
-                        health["attempted"] += 1
-                        price_cache[price_key] = _get_seat_prices(
-                            s, screen_ref, cinema_ref, show_date_iso, formatted_time, pretty_url
-                        )
+                        hit = cache_get(cache, price_key)
+                        if hit is not CACHE_MISS:  # already sampled today -- reuse, no new call
+                            price_cache[price_key] = hit
+                            health["cached"] = health.get("cached", 0) + 1
+                        else:
+                            health["attempted"] += 1
+                            price_cache[price_key] = _get_seat_prices(
+                                s, screen_ref, cinema_ref, show_date_iso, formatted_time, pretty_url
+                            )
+                            cache_set(cache, price_key, price_cache[price_key])
                     prices = price_cache[price_key]
 
                     film_title = film_name.title() if film_name.isupper() else film_name
@@ -270,6 +297,7 @@ def fetch(days: int = 2) -> dict:
                         "hall_label": hall_label,
                         "prices": prices,
                         "book": f"{BASE}/home/chooseScreen?prettyUrl={pretty_url}",
+                        **extras,
                     })
 
     if not all(sh["hall"] in HALLS for sh in shows):

@@ -28,6 +28,7 @@ always None here (booking needs login -> seat hold).
 from __future__ import annotations
 
 import datetime
+import json
 import re
 import time
 from typing import Any
@@ -35,7 +36,7 @@ from zoneinfo import ZoneInfo
 
 from curl_cffi import requests as cr
 
-from readers.common import CITIES, HALLS, city_of, slug
+from readers.common import CITIES, HALLS, city_of, lang_key, slug, subs_keys, youtube_id
 
 BASE = "https://www.theroxycinemas.com"
 UA_IMPERSONATE = "chrome"
@@ -211,6 +212,43 @@ def _now_showing_slugs(client: _Client) -> list[str]:
     return slugs
 
 
+_LD_RE = re.compile(r'<script type="application/ld\+json">(.*?)</script>', re.S)
+_SUBS_RE = re.compile(r"Subtitles?:\s*([^<]+)<")
+_TRAILER_RE = re.compile(r'trailer-btn[^>]*data-link="([^"]+)"|data-link="([^"]*youtu[^"]+)"')
+
+
+def movie_extras(html: str) -> dict:
+    """What a Roxy film page states: its schema.org Movie block (image = the portrait
+    thumbnail, genre), the trailer button's YouTube link, Language and Subtitles."""
+    cut = html.split("other-movies-sec")[0]
+    out: dict = {}
+    for m in _LD_RE.finditer(cut):
+        try:
+            ld = json.loads(m.group(1))
+        except ValueError:
+            continue
+        if isinstance(ld, dict) and ld.get("@type") == "Movie":
+            if (ld.get("image") or "").startswith("http"):
+                out["film_poster"] = ld["image"]
+            genres = [g.strip() for g in str(ld.get("genre") or "").split(",") if g.strip()]
+            if genres:
+                out["film_genres"] = genres
+            break
+    t = _TRAILER_RE.search(cut)
+    yt = youtube_id((t.group(1) or t.group(2)) if t else None)
+    if yt:
+        out["film_trailer"] = yt
+    lm = LANG_RE.search(cut)
+    lang = lang_key(lm.group(1)) if lm else None
+    if lang:
+        out["lang"] = lang
+    sm = _SUBS_RE.search(cut)
+    subs = subs_keys(sm.group(1).strip()) if sm else []
+    if subs:
+        out["subs"] = subs
+    return out
+
+
 def _movie_meta(client: _Client, movie_slug: str) -> tuple[str | None, dict[str, Any]]:
     """Return (nid, {title, runtime, lang, rating}) for one movie page."""
     r = client.get(f"{BASE}/en/movie/{movie_slug}")
@@ -236,6 +274,7 @@ def _movie_meta(client: _Client, movie_slug: str) -> tuple[str | None, dict[str,
         "runtime": runtime,
         "lang": lang_m.group(1) if lang_m else None,
         "rating": (rating_m.group(1).strip().replace(" ", "") if rating_m else None) or None,
+        "extras": movie_extras(html),
     }
     return nid, meta
 
@@ -318,6 +357,7 @@ def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
                 "hall_label": screen,
                 "prices": None,
                 "book": f"{BASE}/en/movie/{movie_slug}#movie-schedule-block",
+                **meta.get("extras", {}),
             })
 
     if ajax_calls and ajax_failed / ajax_calls > 0.5:

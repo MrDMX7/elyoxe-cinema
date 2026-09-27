@@ -18,7 +18,8 @@ import re
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from readers.common import CITIES, HALLS, Polite, arabic_title, city_of, slug
+from readers.common import (CACHE_MISS, CITIES, HALLS, Polite, arabic_title, cache_get, cache_set,
+                             city_of, lang_key, slug, subs_keys, youtube_id)
 
 API = "https://uae-api.novocinemas.com/api/home"
 BOOKING_API = "https://uae-api.novocinemas.com/api/booking"
@@ -88,6 +89,28 @@ def _film_lang(movie: dict) -> str | None:
     return m.group(1) if m and m.group(1).strip().lower() in _LANGS else None
 
 
+def movie_extras(movie: dict) -> dict:
+    """Poster (movie_image_url, portrait — movie_banner_url is the landscape banner), trailer,
+    genres, and the language/subtitles the movie record (or its title's "(Tamil)") states."""
+    out: dict = {}
+    if (movie.get("movie_image_url") or "").startswith("http"):
+        out["film_poster"] = movie["movie_image_url"]
+    yt = youtube_id(movie.get("movie_trailer_link"))
+    if yt:
+        out["film_trailer"] = yt
+    genres = [g.get("genre_name") for g in movie.get("movie_genre") or [] if g.get("genre_name")]
+    if genres:
+        out["film_genres"] = genres
+    lang = lang_key(_film_lang(movie))
+    if lang:
+        out["lang"] = lang
+    sub = movie.get("subtitle_language")
+    subs = subs_keys(sub.get("lang_name") if isinstance(sub, dict) else sub)
+    if subs:
+        out["subs"] = subs
+    return out
+
+
 def _sample_prices(s: Polite, cinema_num, session_id) -> list[dict] | None:
     """Seat-area prices for one session, from the seat-selection page's load call. None on failure."""
     try:
@@ -108,7 +131,7 @@ def _sample_prices(s: Polite, cinema_num, session_id) -> list[dict] | None:
         return None
 
 
-def fetch(days: int = 2, prices: bool = True) -> dict:
+def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict:
     s = Polite(gap=1.0)
 
     r = s.get(f"{API}/cinemas", params={"country_id": 2, "channel": "web"})
@@ -163,6 +186,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
         rating = movie.get("movie_rating") or None
         runtime = movie.get("movie_duration") or None
         book = _book_url(mid, title)
+        extras = movie_extras(movie)
 
         for d in query_dates:
             r = s.get(f"{API}/sessions/{mid}/date/{d}", params={
@@ -202,11 +226,18 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
                         continue
                     # one sample per cinema x hall x show date: weekday and weekend prices differ
                     key = (cinema_id, hall_label, cal_date)
+                    if key not in price_cache:
+                        hit = cache_get(cache, key)
+                        if hit is not CACHE_MISS:  # already sampled today -- reuse, don't retry it
+                            price_cache[key] = hit
+                            price_tries[key] = 2
+                            health["cached"] = health.get("cached", 0) + 1
                     if (prices and price_cache.get(key) is None and price_tries.get(key, 0) < 2
                             and start > now + timedelta(hours=1) and sess.get("session_id")):
                         price_tries[key] = price_tries.get(key, 0) + 1
                         price_cache[key] = _sample_prices(s, sess.get("cinemaId"), sess["session_id"])
                         health["attempted"] += 1
+                        cache_set(cache, key, price_cache[key])
                     shows.append({
                         "cinema": cinema_id,
                         "film_title": title,
@@ -220,6 +251,7 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
                         "hall_label": hall_label,
                         "prices": key,  # resolved after the loop, once each hall is sampled
                         "book": book,
+                        **extras,
                     })
 
     if calls and failed * 2 > calls:

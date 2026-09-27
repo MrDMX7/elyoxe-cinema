@@ -24,3 +24,14 @@ Every decision taken on the owner's behalf while building «سينما». Each l
 - Ruling: Fold run.sh commits+pushes new verdicts so the laptop can pull and hand-edit; notify only on failure — cost if wrong: a rare pull conflict on one verdict file.
 - Ruling: add a GitHub Actions test workflow to the repo — it gives CI and makes wsync treat the repo as pull-only (no auto-commits of half-finished work); run.sh runs pytest before deploy and skips deploy on failure — cost if wrong: laptop commits need an explicit push.
 - Ruling: sample prices per cinema×hall×date for every chain (weekday/weekend differ), VOX timeout raised accordingly — cost if wrong: ~2× price requests, longer Fold run.
+
+## Phase 1 (2026-09-26/27)
+
+- Ruling: owner approved the design and said start — spec review gate satisfied by the approval — cost if wrong: small spec edits.
+- Ruling: Tasks 1, 2, 3 run in parallel on disjoint files (T1 infra/deploy, T2 readers/data, T3 build.py/src templates); T4 after T3 — cost if wrong: a merge on build.py field names, contract is in the spec.
+- Ruling: all phase-1 work on branch phase1 (pushed); main stays live on the Fold until Task 5 cutover merges — cost if wrong: a merge at the end.
+- Ruling: hourly refresh = showtimes hourly, prices sampled once per cinema×hall×date per day (cached) — politeness to chains; run.sh lock skips overlapping runs — cost if wrong: a same-day price change shows up next day.
+- Ruling: reverted the master crontab cinema line to 06,12,18,23 until cutover (hourly only with phase1's daily price cache) — cost if wrong: none.
+- Ruling: Task 5 split — QA/perf/fixes now; the cutover (301 + Fold switch + hourly cron + indexable build) waits for the owner's go after he sees the finished preview — it changes the live production site — cost if wrong: a short wait.
+- Ruling: archive a film only after it has been absent from every chain for ≥ 5 days of successful runs (time-based, not run-count) — weekend-only films never flap; longer is harmless because an absent film shows nowhere but its own page — cost if wrong: an ended film's page says «انتهى» a few days late. Owner can change.
+- Parked — an already-alerted ongoing failure exits 0 so run-job state reads ok — Ruling: fine for the 4-runs/day cutover (the owner gets the first alert); before flipping to hourly, make an ongoing failure record status=degraded and send one reminder per day while it lasts — cost if wrong: a stuck site noticed a day late.

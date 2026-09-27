@@ -34,7 +34,8 @@ from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 from curl_cffi import requests as cr
 
-from readers.common import CITIES, HALLS, city_of, slug as _slug, fmt3d as _fmt3d
+from readers.common import (CACHE_MISS, CITIES, HALLS, cache_get, cache_set, city_of, lang_key,
+                             slug as _slug, subs_keys, youtube_id, fmt3d as _fmt3d)
 
 BASE = "https://uae.voxcinemas.com"
 UA_IMPERSONATE = "chrome"
@@ -140,6 +141,7 @@ def _parse_showtimes(html: str, cinema_name: str, date_str: str) -> list[dict]:
     soup = BeautifulSoup(html, "lxml")
     shows = []
     for art in soup.select("article.movie-compare"):
+        movie_slug = art.get("data-slug") or ""
         h2 = art.select_one("aside.movie-hero h2")
         film_title = h2.get_text(strip=True) if h2 else None
         if not film_title:
@@ -183,8 +185,42 @@ def _parse_showtimes(html: str, cinema_name: str, date_str: str) -> list[dict]:
                         "hall_label": hall_label,
                         "prices": None,
                         "book": href,
+                        "_movie": movie_slug,
                     })
     return shows
+
+
+def movie_extras(html: str) -> dict:
+    """What a VOX film page (/movies/<slug>) states about the film: the portrait poster
+    (img.poster, 480x686 — the showtimes page only has a 940x328 hero), the YouTube trailer it
+    embeds, and its aside facts: Genre, Language, Subtitle(s). Only what is there."""
+    soup = BeautifulSoup(html, "lxml")
+    out: dict = {}
+    img = soup.select_one("img.poster")
+    if img and (img.get("src") or "").startswith("http"):
+        out["film_poster"] = img["src"]
+    for iframe in soup.select("div.trailer iframe, iframe"):
+        yt = youtube_id(iframe.get("src") or "")
+        if yt:
+            out["film_trailer"] = yt
+            break
+    facts = {}
+    for p in soup.select("aside p"):
+        strong = p.select_one("strong")
+        if not strong:
+            continue
+        label = strong.get_text(strip=True).rstrip(":").strip().lower()
+        facts[label] = p.get_text(" ", strip=True)[len(strong.get_text(strip=True)):].strip()
+    genres = [g.strip() for g in (facts.get("genre") or "").split(",") if g.strip()]
+    if genres:
+        out["film_genres"] = genres
+    lang = lang_key(facts.get("language"))
+    if lang:
+        out["lang"] = lang
+    subs = subs_keys(facts.get("subtitle(s)") or facts.get("subtitles"))
+    if subs:
+        out["subs"] = subs
+    return out
 
 
 def _legend_prices(html: str) -> list[dict] | None:
@@ -235,7 +271,7 @@ def _sample_prices(client: _Client, book_url: str) -> list[dict] | None:
             pass
 
 
-def fetch(days: int = 2, prices: bool = True) -> dict:
+def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict:
     client = _Client()
     cinemas_raw = _fetch_cinema_list(client)
 
@@ -282,6 +318,17 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
 
     if calls and failed * 2 > calls:
         raise RuntimeError(f"vox: {failed}/{calls} showtime pages failed -- Akamai block or site change")
+
+    # one film page per film: poster, trailer, genres, language + subtitles (never fails the chain)
+    extras: dict[str, dict] = {}
+    for movie_slug in sorted({sh.get("_movie") for sh in shows if sh.get("_movie")}):
+        try:
+            r = client.get(f"{BASE}/movies/{movie_slug}")
+            extras[movie_slug] = movie_extras(r.text) if r is not None and r.status_code == 200 else {}
+        except Exception:
+            extras[movie_slug] = {}
+    for sh in shows:
+        sh.update(extras.get(sh.pop("_movie", None) or "", {}))
     if not shows:
         raise RuntimeError("vox: zero shows parsed -- showtime markup changed")
 
@@ -295,6 +342,12 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
         tries: dict[tuple, int] = {}
         for sh in sorted(shows, key=lambda x: (x["date"], x["time"])):
             key = pkey(sh)
+            if key not in price_of:
+                hit = cache_get(cache, key)
+                if hit is not CACHE_MISS:  # already sampled today (this run or an earlier one) -- reuse
+                    price_of[key] = hit
+                    tries[key] = 2
+                    health["cached"] = health.get("cached", 0) + 1
             if price_of.get(key) or tries.get(key, 0) >= 2:
                 continue
             start = datetime.strptime(f"{sh['date']} {sh['time']}", "%Y-%m-%d %H:%M").replace(tzinfo=DUBAI)
@@ -304,12 +357,14 @@ def fetch(days: int = 2, prices: bool = True) -> dict:
             health["attempted"] += 1
             try:
                 price_of[key] = _sample_prices(client, sh["book"])
+                cache_set(cache, key, price_of[key])
             except _Blocked as e:
                 health["error"] = f"price sampling stopped on a block: {e}"
                 print(f"[readers.vox] {health['error']}", file=sys.stderr)
                 break
             except Exception:
                 price_of[key] = None
+                cache_set(cache, key, None)
     for sh in shows:
         sh["prices"] = price_of.get(pkey(sh))
     health["priced"] = sum(1 for v in price_of.values() if v)
