@@ -7,7 +7,11 @@ function filt() { return effectiveFilter(ST.filt, qa("[data-filter]").map(functi
 /* the language in force: the remembered one where this page offers its chip (home's filter sheet), else any */
 function flang() { return ST.flang && q('[data-flang="' + ST.flang.replace(/"/g, "") + '"]') ? ST.flang : ""; }
 /* how many things are filtering (the «تصفية» chip's badge): genre, company, end time, language, prayer clashes */
-function nActive() { return (filt() !== "all") + !!ST.who + !!ST.before + !!flang() + !!(ST.prayer && ST.hide); }
+function nActive() {
+  /* a companion is one choice, even though it presets the genre and the end time: only a change on top counts */
+  var p = whoPreset(ST.who), f = filt();
+  return (f !== "all" && !(ST.who && f === p.filt)) + !!ST.who + !!(ST.before && !(ST.who && ST.before === p.before)) + !!flang() + !!(ST.prayer && ST.hide);
+}
 function tmOn(a) { return !a.classList.contains("x") && !a.classList.contains("past") && !a.closest(".times[hidden]"); }
 function anyTm(el) { return qa(".tm[data-start]", el).some(tmOn); }
 function firstStart(el) {
@@ -60,7 +64,8 @@ function applyFilters() {
   qa(".film[data-fid], .srow[data-fid], .cf[data-fid]").forEach(function (el) {
     if (el.closest(".similar")) return;
     var src = el.hasAttribute("data-genres") ? el : q('.film[data-fid="' + el.getAttribute("data-fid") + '"]') || el;
-    var f = { genres: (src.getAttribute("data-genres") || "").split(" "), family: src.getAttribute("data-family") === "1", kids: src.getAttribute("data-kids") === "1" };
+    var f = { genres: (src.getAttribute("data-genres") || "").split(" "), family: src.getAttribute("data-family") === "1", kids: src.getAttribute("data-kids") === "1",
+      v: src.getAttribute("data-v") };
     var ok = filmOk(f, filt()) && langOk(src.getAttribute("data-lang") || "", flang());
     if (ok && timeOn) ok = el.classList.contains("film") ? !S || el.getAttribute("data-fit") !== "0" : anyTm(el);
     el.classList.toggle("x", !ok);
@@ -93,7 +98,17 @@ function active() {
   if (ST.prayer && ST.hide) out.push(TX.no_clash);
   return out.join(TX.sep);
 }
-function resetFilters() { save("filt", "all"); save("before", ""); save("who", ""); save("sort", ""); save("hide", false); save("flang", ""); applyPrayer(); }
+/* «مسح» / «شيل التصفية»: everything back, the prayer switch too, and a row's preset (?f= ?sort= ?fl=) out of the
+   address so a reload does not bring it back */
+function resetFilters() {
+  save("filt", "all"); save("before", ""); save("who", ""); save("sort", ""); save("hide", false); save("flang", ""); save("prayer", false);
+  try {
+    var u = new URL(location.href);
+    ["f", "sort", "fl"].forEach(function (k) { u.searchParams.delete(k); });
+    if (u.href !== location.href) history.replaceState(history.state, "", u.pathname + u.search + u.hash);
+  } catch (e) {}
+  applyPrayer();
+}
 function bindFilters() {
   qa(".film[data-fid], .srow, .cf").forEach(function (el, i) { el.setAttribute("data-o", i); });   /* the server's order */
   qa("[data-strip]").forEach(function (r) { qa(".tile[data-fid]", r).forEach(function (el, i) { el.setAttribute("data-o", i); }); });

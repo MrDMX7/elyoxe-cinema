@@ -58,7 +58,7 @@ var TX = AR ? {
   ticket: "التذكرة: {film}، {cin}، {t}", close: "سكّر", trailer: "العرض الترويجي",
   install: "ثبّت سينما على شاشتك", install_yes: "ثبّت", install_no: "لا، شكراً", share_t: "{film} في {cin}، {day} {t}",
   top: "الأكثر عرضاً الليلة", top_in: "الأكثر عرضاً في {city} الليلة", from: "من", next: "أقرب عرض {t}، {cin}", near_sub: "{city}، الحين {t}",
-  sort0: "الأكثر عرضاً", show: "اعرض {n}", n_live: "{n} بعد التصفية"
+  sort0: "الأكثر عرضاً", times: "الأوقات والأسعار", bill_tr: "الإعلان", show: "اعرض {n}", n_live: "{n} بعد التصفية"
 } : {
   starts: "The film starts around {s} and ends around {e}", at: "Starts at {s}", subs: "{s} subtitles", sep: ", ",
   near_ask: "Finding the nearest cinema…", near_no: "We couldn’t get your location. No problem, pick your city above.",
@@ -70,7 +70,7 @@ var TX = AR ? {
   ticket: "Ticket: {film}, {cin}, {t}", close: "Close", trailer: "Trailer",
   install: "Add Cinema to your home screen", install_yes: "Add", install_no: "No, thanks", share_t: "{film} at {cin}, {day} {t}",
   top: "Most shown tonight", top_in: "Most shown in {city} tonight", from: "from", next: "Next {t}, {cin}", near_sub: "{city}, now {t}",
-  sort0: "Most shown", show: "Show {n}", n_live: "{n} after filtering"
+  sort0: "Most shown", times: "Times and prices", bill_tr: "Trailer", show: "Show {n}", n_live: "{n} after filtering"
 };
 
 /* features (docs/PLUGINS.md): a module in this bundle (pages/<feature>.py JS) calls feature(fn), and fn runs at

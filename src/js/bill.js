@@ -1,93 +1,102 @@
-/* the home billboard (UI redesign Task 3): the city's five most-shown films tonight, one at a time, over a frame of
-   each one's trailer. The server wrote the first for Dubai and a JSON island (#bill-data) of every city's five:
-   {f: {fid: {t, e?, h, v, w, s?, x: [facts], tr?, b?: [640, 1280] | p?: poster, c}}, c: {city|"*": [[fid, price inputs]]}}.
+/* the home billboard (UI redesign Task 3): the city's most-shown film tonight, then four more of its top films
+   (those with a trailer frame first), one at a time. The server wrote the first for Dubai and a JSON island
+   (#bill-data) of every city's five:
+   {f: {fid: {t, e?, h, v, w, s?, x: [facts], tr?, b?: [640, 1280] | p?: [342, 684], c}}, c: {city|"*": [[fid, price inputs]]}}.
    The slide follows the city (pickCity), turns every 6 s — never under reduced motion, and not while a pointer
-   is over it, focus is in it or the tab is hidden — and its indicators are buttons. The CTA's «من X» is a price
-   cell like any other: renderPrices() and renderHome() give it the visitor's card and city. */
-var BILL = null, billI = 0, billT = null, billHold = { hover: false, focus: false, hidden: false };
+   is over it, focus is in it, the tab is hidden or the visitor pressed pause — and its indicators are buttons.
+   The CTA's «من X» is a price cell like any other: renderPrices() and renderHome() give it the visitor's card
+   and city; until the city's shows are in, it says «…» (never the previous city's price). */
+var BILL = null, billI = 0, billT = null, billHold = { hover: false, focus: false, hidden: false, user: false };
+var BILL_BD = "(min-width:1024px) 100vw, 320px";   /* as Kit's BILL_BD_SIZES: a phone takes the 640w frame */
 function billList() {
   var c = BILL && (BILL.c[city] && BILL.c[city].length ? BILL.c[city] : BILL.c["*"]);
   return c || [];
 }
 function billFrame(o) {
-  if (o.b) return '<div class="bd" style="--pc:' + esc(o.c) + '" aria-hidden="true"><img src="' + esc(o.b[1]) + '" srcset="' + esc(o.b[0]) + " 640w, " + esc(o.b[1]) +
-    ' 1280w" sizes="100vw" alt="" decoding="async" class="fr"></div>';
+  var pc = ' style="--pc:' + esc(o.c) + '" aria-hidden="true"';
+  if (o.b) return '<div class="bd"' + pc + '><img src="' + esc(o.b[1]) + '" srcset="' + esc(o.b[0]) + " 640w, " + esc(o.b[1]) +
+    ' 1280w" sizes="' + BILL_BD + '" alt="" decoding="async" class="fr"></div>';
   if (o.p) {
-    /* no frame yet: the poster (Kit's bill_frame): full-bleed on a phone, a sharp copy over its blur on a desktop */
-    var ss = 'src="' + esc(o.p[0]) + '" srcset="' + esc(o.p[0]) + " 342w, " + esc(o.p[1]) + ' 684w" sizes="(min-width:1024px) 300px, 100vw" alt="" width="342" height="513" decoding="async"';
-    return '<div class="bd pf" style="--pc:' + esc(o.c) + '" aria-hidden="true"><img class="pb" ' + ss + '><img class="ps" ' + ss + "></div>";
+    /* no frame yet (Kit's bill_frame): the 342w poster blurred full-bleed, and on a desktop a sharp copy with the glow */
+    return '<div class="bd pf"' + pc + '><img src="' + esc(o.p[0]) + '" class="pb" alt="" width="342" height="513" decoding="async">' +
+      '<img src="' + esc(o.p[0]) + '" srcset="' + esc(o.p[0]) + " 342w, " + esc(o.p[1]) + ' 684w" sizes="(min-width:1024px) 300px, 1px" class="ps" alt="" width="342" height="513" decoding="async"></div>';
   }
-  return '<div class="bd noimg" style="--pc:' + esc(o.c) + '" aria-hidden="true"></div>';
+  /* nothing to show: the film's typographic tile over the velvet glow, never a flat field */
+  return '<div class="bd noimg"' + pc + '><span class="pst bd-t"><span class="pst-t"' + (o.e ? ' lang="en" dir="ltr"' : "") + ">" + esc(o.t) + "</span></span></div>";
 }
-/* a frame is fetched before its slide comes up, so the turn never shows a half-loaded picture */
+/* the next slide's picture, fetched ahead — only once the page has loaded and gone idle (it must never compete
+   with the first picture, the page's LCP) */
+var billWarmOK = false;
 function billWarm(o) {
-  if (!o || !(o.b || o.p)) return;
+  if (!billWarmOK || !o || !(o.b || o.p)) return;
   var im = new Image();
-  if (o.b) { im.sizes = "100vw"; im.srcset = o.b[0] + " 640w, " + o.b[1] + " 1280w"; im.src = o.b[1]; }
-  else { im.sizes = "(min-width:1024px) 300px, 100vw"; im.srcset = o.p[0] + " 342w, " + o.p[1] + " 684w"; im.src = o.p[0]; }
+  if (o.b) { im.sizes = BILL_BD; im.srcset = o.b[0] + " 640w, " + o.b[1] + " 1280w"; im.src = o.b[1]; }
+  else im.src = o.p[0];
 }
+function billNext() { var list = billList(), nx = list[(billI + 1) % list.length]; billWarm(nx && BILL.f[nx[0]]); }
+/* the slide's price cell: priced from the city's own shows (renderFrom) once they are in, «…» until then */
+function billPrice(p) {
+  return esc(TX.from) + ' <span class="p" data-aed="' + esc(p[0]) + '" data-chain="' + esc(p[1]) + '" data-hall="' + esc(p[2]) + '" data-hk="' + esc(p[3]) + '" data-cin="' + esc(p[4]) + '"' +
+    (p[5] ? ' data-asof="' + esc(p[5]) + '"' : "") + ' data-wait><span class="num">…</span></span>';
+}
+var PLAY = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';
 function billShow(i, go) {
   var box = q("[data-bill]"), list = billList();
   if (!box || !list.length) return;
   billI = (i + list.length) % list.length;
   var row = list[billI], fid = row[0], o = BILL.f[fid], p = row[1];
   if (!o) return;
-  var cn = C.cities[city] || city;
-  q("[data-bill-eye]", box).textContent = BILL.c[city] && BILL.c[city].length ? sub(TX.top_in, { city: cn }) : TX.top;
-  var a = q("[data-bill-a]", box);
-  a.textContent = o.t; a.href = o.h;
-  if (o.e) { a.setAttribute("lang", "en"); a.setAttribute("dir", "ltr"); } else { a.removeAttribute("lang"); a.removeAttribute("dir"); }
-  q("[data-bill-v]", box).innerHTML = '<b class="v-' + esc(o.v) + '">' + esc(o.w) + (AR || o.s ? "." : "") + "</b>" + (o.s ? " " + o.s : "");
-  q("[data-bill-f]", box).innerHTML = o.x.map(function (x) { return "<span>" + x + "</span>"; }).join("");
-  q("[data-bill-go]", box).href = o.h;
-  var fr = q("[data-from]", box);
-  fr.setAttribute("data-from", fid);
-  fr.hidden = !p;
-  if (p) {
-    fr.innerHTML = esc(TX.from) + ' <span class="p" data-aed="' + esc(p[0]) + '" data-chain="' + esc(p[1]) + '" data-hall="' + esc(p[2]) + '" data-hk="' + esc(p[3]) + '" data-cin="' + esc(p[4]) + '"' +
-      (p[5] ? ' data-asof="' + esc(p[5]) + '"' : "") + "></span>";
-    var cell = q(".p", fr); cell.innerHTML = priceHTML(cell, false);
-    if (S) renderFrom(false);
-  }
-  var tr = q("[data-bill-tr]", box);
-  tr.hidden = !o.tr;
-  if (o.tr) { tr.setAttribute("data-trailer", o.tr); tr.href = "https://www.youtube-nocookie.com/embed/" + encodeURIComponent(o.tr); } else tr.removeAttribute("data-trailer");
-  var bd = q("[data-bill-bd]", box), old = bd.firstElementChild;
+  var slide = q("[data-bill-slide]", box), cn = C.cities[city] || city;
+  /* said once, politely, only when the visitor picked it (set before the words change, never during rotation) */
+  slide.setAttribute("aria-live", go ? "polite" : "off");
+  /* the slide is written anew, into a box of a fixed height (cinema.css): new nodes and a box that keeps its
+     size, so a turn never counts as a layout shift */
+  var eye = BILL.c[city] && BILL.c[city].length ? sub(TX.top_in, { city: cn }) : TX.top, en = o.e ? ' lang="en" dir="ltr"' : "";
+  slide.innerHTML = '<p class="eyebrow" data-bill-eye>' + esc(eye) + "</p>" +
+    '<h2 class="bill-t"><a href="' + esc(o.h) + '" data-bill-a' + en + ">" + esc(o.t) + "</a></h2>" +
+    '<p class="bill-v" data-bill-v><b class="v-' + esc(o.v) + '">' + esc(o.w) + (AR || o.s ? "." : "") + "</b>" + (o.s ? " " + o.s : "") + "</p>" +
+    '<p class="bill-f" data-bill-f>' + o.x.map(function (x) { return "<span>" + x + "</span>"; }).join("") + "</p>" +
+    '<p class="cta"><a class="btn main" href="' + esc(o.h) + '" data-bill-go>' + esc(TX.times) +
+    '<span class="from" data-from="' + esc(fid) + '"' + (p ? ">" + billPrice(p) : " hidden>") + "</span></a>" +
+    (o.tr ? '<a class="btn ghost" data-bill-tr href="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(o.tr) + '" data-trailer="' + esc(o.tr) + '" rel="noopener" target="_blank">' + PLAY + esc(TX.bill_tr) + "</a>" : "") + "</p>";
+  if (p && S && S.city === city) renderFrom(false);
+  var bd = q("[data-bill-bd]", box);
   bd.insertAdjacentHTML("beforeend", billFrame(o));
   var nu = bd.lastElementChild, im = q("img", nu);
-  if (old && old !== nu) {
-    /* the new frame fades in over the old one once it has loaded (at once under reduced motion) */
-    nu.classList.add("in");
-    var done = function () { nu.classList.remove("in"); setTimeout(function () { if (old.parentNode) old.remove(); }, RM ? 0 : 700); };
-    if (!im || im.complete) requestAnimationFrame(done); else { im.addEventListener("load", done); im.addEventListener("error", done); }
-  }
-  if (im) im.addEventListener("error", function () { var p2 = im.parentNode; if (p2) p2.classList.add("noimg"); im.remove(); });
+  /* the new picture fades in over the old once loaded (at once under reduced motion); then every older layer
+     goes — however fast the indicators were pressed, one layer stays */
+  nu.classList.add("in");
+  var done = function () {
+    nu.classList.remove("in");
+    setTimeout(function () { [].slice.call(bd.children).forEach(function (c) { if (c !== nu && bd.lastElementChild === nu) c.remove(); }); }, RM ? 0 : 700);
+  };
+  if (!im || im.complete) requestAnimationFrame(done); else { im.addEventListener("load", done); im.addEventListener("error", done); }
+  qa("img", nu).forEach(function (x) { x.addEventListener("error", function () { x.remove(); }); });
   qa("[data-bill-dots] button", box).forEach(function (b, k) { b.setAttribute("aria-pressed", k === billI ? "true" : "false"); });
-  q("[data-bill-slide]", box).setAttribute("aria-live", go ? "polite" : "off");
-  var nx = list[(billI + 1) % list.length]; billWarm(nx && BILL.f[nx[0]]);
+  billNext();
 }
 function billDots() {
-  var d = q("[data-bill-dots]"), list = billList();
+  var d = q("[data-bill-dots]"), list = billList(), pp = q("[data-bill-pp]");
   if (!d) return;
   d.innerHTML = list.length > 1 ? list.map(function (r, k) {
     var o = BILL.f[r[0]] || {};
     return '<button type="button" aria-label="' + esc(o.t) + '" aria-pressed="' + (k === billI ? "true" : "false") + '"><i></i></button>';
   }).join("") : "";
+  if (pp) pp.hidden = RM || list.length < 2;
 }
 /* the city changed: its own five, from the first */
 function billCity() {
   if (!BILL) return;
   billDots(); billShow(0, false);
 }
-function billPaused() { return RM || billHold.hover || billHold.focus || billHold.hidden || billList().length < 2; }
+function billPaused() { return RM || billHold.user || billHold.hover || billHold.focus || billHold.hidden || billList().length < 2; }
 function billTick() { if (!billPaused()) billShow(billI + 1, false); }
 function bindBill() {
   var box = q("[data-bill]"), j = q("#bill-data");
   if (!box || !j) return;
   try { BILL = JSON.parse(j.textContent); } catch (e) { return; }
-  var list = billList();
   /* the server drew Dubai's first film; a visitor whose city is another gets theirs before anything else moves */
-  if (city !== "dubai") billCity(); else { billDots(); var n = list[1]; billWarm(n && BILL.f[n[0]]); }
+  if (city !== "dubai") billCity(); else billDots();
   box.addEventListener("mouseenter", function () { billHold.hover = true; });
   box.addEventListener("mouseleave", function () { billHold.hover = false; });
   box.addEventListener("focusin", function () { billHold.focus = true; });
@@ -98,5 +107,11 @@ function bindBill() {
     if (!b) return;
     billShow(qa("[data-bill-dots] button", box).indexOf(b), true);
   });
+  /* pause / play: the rotation stops for as long as the visitor wants (WCAG 2.2.2), a touch screen included */
+  var pp = q("[data-bill-pp]", box);
+  if (pp) pp.addEventListener("click", function () { billHold.user = !billHold.user; pp.setAttribute("aria-pressed", billHold.user ? "true" : "false"); });
+  var idle = function () { billWarmOK = true; billNext(); };
+  var afterLoad = function () { if (window.requestIdleCallback) requestIdleCallback(idle, { timeout: 3000 }); else setTimeout(idle, 1500); };
+  if (document.readyState === "complete") afterLoad(); else window.addEventListener("load", afterLoad);
   if (!RM) billT = setInterval(billTick, 6000);
 }

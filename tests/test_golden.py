@@ -14,7 +14,7 @@ their own tests; this file keeps guarding what must NOT move: every /data JSON, 
 the manifest, and the sitemap (phase 1's entries all still there, byte for byte, the new pages only added).
 
 No git, or a clone without GOLDEN_REF (a shallow CI checkout): skipped."""
-import io, json, os, re, shutil, subprocess, sys, zipfile
+import collections, io, json, os, re, shutil, subprocess, sys, zipfile
 
 import pytest
 
@@ -52,6 +52,16 @@ def sitemap_urls(b):
     return set(re.findall(r"<url>.*?</url>", b.decode("utf-8"), re.S))
 
 
+def films20(ld):
+    """The home's JSON-LD ItemList «Films» lists the 20 most shown since UI redesign Task 3's fix round 1 (the list of
+    every film was ~9 KB of a page with a 150 KB budget): compared on its first 20 on both sides; all else as is."""
+    try: j = json.loads(ld)
+    except ValueError: return ld
+    for g in j.get("@graph") or []:
+        if g.get("@type") == "ItemList" and g.get("name") == "Films": g["itemListElement"] = g["itemListElement"][:20]
+    return json.dumps(j, ensure_ascii=False, sort_keys=True)
+
+
 def inv(b):
     """What a page is, whatever its chrome looks like (fix round 1 of the redesign's Task 2): its canonical and
     hreflang links, title, description, robots, JSON-LD, and — inside <main> — the multisets of price cells
@@ -66,8 +76,24 @@ def inv(b):
     cells = lambda attr: sorted(re.findall(r'\sdata-' + attr + r'="([^"]*)"', m))
     return {"links": one(r'<link rel="(?:canonical|alternate)"[^>]*>'), "title": one(r"<title>(.*?)</title>"),
             "desc": one(r'<meta name="description"[^>]*>'), "robots": one(r'<meta name="robots"[^>]*>'),
-            "ld": one(r'<script type="application/ld\+json">(.*?)</script>'),
+            "ld": [films20(x) for x in one(r'<script type="application/ld\+json">(.*?)</script>')],
             "aed": cells("aed"), "chain": cells("chain"), "hall": cells("hall"), "show": cells("show")}
+
+
+CITY_PAGE = re.compile(r"^(en/)?[a-z-]+/index\.html$")
+
+
+def same_page(path, x, y):
+    """inv() equal — except that a city page's schedule may come out RICHER: its mode (time links, plain, compact
+    text, digest) is chosen by the bytes left after everything above it (Kit.fit), and the redesign's lighter tiles
+    (UI redesign Task 3 fix round 1: the hover panel left the markup) leave more, so a busy city that phase 1 drew
+    compact may now draw every time as a button. Then its showtimes and chains may only be added to, never lost;
+    everything else stays equal."""
+    if x == y: return True
+    if not CITY_PAGE.match(path): return False
+    rich = ("show", "chain")
+    sub = lambda a, b: not (collections.Counter(a) - collections.Counter(b))
+    return all(x[k] == y[k] for k in x if k not in rich) and all(sub(x[k], y[k]) for k in rich)
 
 
 def ct_keys(b):
@@ -148,7 +174,7 @@ def test_core_build_is_byte_identical_to_phase1(phase1, tmp_path, name, data, di
     # the pages' markup is the redesign's, but what each page IS must not move: links, title, description, robots,
     # JSON-LD, its price cells and showtimes; window.CT only gains keys; no template placeholder is ever left
     html = [p for p in before if p.endswith(".html")]
-    moved = [p for p in html if inv(before[p]) != inv(after[p])]
+    moved = [p for p in html if not same_page(p, inv(before[p]), inv(after[p]))]
     assert not moved, moved[:10]
     lost = [p for p in html if not ct_keys(before[p]) <= ct_keys(after[p])]
     assert not lost, lost[:10]

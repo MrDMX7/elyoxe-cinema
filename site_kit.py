@@ -99,7 +99,7 @@ HOME_T = {"top": ("الأكثر عرضاً الليلة", "Most shown tonight"),
           "times": ("الأوقات والأسعار", "Times and prices"), "trailer": ("الإعلان", "Trailer"), "from": ("من", "from"),
           "tag_thu": ("الخميس", "Thursday"), "tag_last": ("آخر أسبوع", "Last week"),
           "prev": ("السابق", "Previous"), "next": ("التالي", "Next"), "slides": ("الأفلام الأبرز", "Featured films"),
-          "min": ("دقيقة", "min")}
+          "min": ("دقيقة", "min"), "pause": ("أوقف التقليب", "Pause the slides")}
 # inline icons (24 px grid, stroked in currentColor): the phone tab bar and the header's search button
 ICONS = {"home": '<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/>',
          "pin": '<path d="M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>',
@@ -584,7 +584,7 @@ class Kit:
             self._by_film.setdefault(s["film"], []).append(s); self._by_cin.setdefault(s["cinema"], []).append(s)
         self.today_count = {fid: sum(1 for s in ss if s["date"] == self.today) for fid, ss in self._by_film.items()}
         self._P, self._Pi, self._first_poster = [], {}, None
-        self._sheets, self._preload = [], ""   # a page's own sheets (after the header's), its hero image preload
+        self._sheets, self._preload, self._grid = [], "", False   # a page's own sheets (after the header's), its hero image preload
         # {old fid: canonical fid} (refresh.update_film_history): a film whose canonical fid changed keeps
         # its old URL as a noindex redirect page. Only to a film that has a page, never over a real film.
         self.redirects = {o: n for o, n in (data.get("redirects") or {}).items()
@@ -810,7 +810,7 @@ class Kit:
                     f'{esc(self.ftitle(fid, lang))}</span>' if label else "") + f'{img}</span>')
         return (f'<span class="{cls}" style="--pc:{pc}"><span class="pst-t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span></span>')
 
-    def backdrop(self, fid, hero=False):
+    def backdrop(self, fid, hero=False, sizes="100vw", lang="ar"):
         """A real frame from the film's trailer (steps/backdrops.py) when one was scored clean, at 640/1280
         widths, `sizes="100vw"` (it is drawn full-bleed, never at a fixed column like the poster): eager +
         `fetchpriority="high"` for the hero (the page's largest paint), lazy otherwise. Falls back to the
@@ -837,7 +837,7 @@ class Kit:
             except (TypeError, ValueError):
                 h = 720
             attrs = (' fetchpriority="high"' if hero else "") + ("" if hero else ' loading="lazy"')
-            img = (f'<img src="{w1280}" srcset="{w640} 640w, {w1280} 1280w" sizes="100vw" width="{w}" height="{h}"'
+            img = (f'<img src="{w1280}" srcset="{w640} 640w, {w1280} 1280w" sizes="{sizes}" width="{w}" height="{h}"'
                    f' alt="" decoding="async"{attrs} onerror="this.remove()" class="fr">')
             return f'<div class="bd" style="--pc:{pc}" aria-hidden="true">{img}</div>'
         if f.get("poster"):
@@ -848,7 +848,7 @@ class Kit:
             return f'<div class="bd" style="--pc:{pc}" aria-hidden="true">{img}</div>'
         # no poster: never a flat colour field — night, the velvet glow, and the film's typographic tile
         return (f'<div class="bd noimg" style="--pc:{pc}" aria-hidden="true"><span class="pst bd-t">'
-                f'<span class="pst-t">{esc(self.ftitle(fid, "ar"))}</span></span></div>')
+                f'<span class="pst-t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span></span></div>')
 
     def score(self, f, lang):
         rt = f.get("rt") or {}
@@ -972,8 +972,7 @@ class Kit:
         sizes = POSTER_SIZES["tile row"] if row else POSTER_SIZES["tile"]
         return (f'<a class="{"tile" if row else "film tile"} v-{v}" href="{P(lang, "film", fid)}"{attrs}>'
                 + f'<span class="tp">{self.poster(fid, lang, eager=not row, lazy=row or i >= 1, sizes=sizes, srcset=not row, label=False)}'
-                + (f'<span class="tag">{esc(tag)}</span>' if tag else "")
-                + f'<span class="hv" aria-hidden="true"><span class="vw">{esc(vw)}</span><span class="nx" data-next></span></span></span>'
+                + (f'<span class="tag">{esc(tag)}</span>' if tag else "") + '</span>'
                 + f'<span class="t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>'
                 + f'<span class="m" data-cheap>{price}</span></a>')
 
@@ -1125,7 +1124,7 @@ class Kit:
         self.write(dest, out)
         if lang == "ar" and path is None: self.urls.append(parts)
         self._P, self._Pi, self._first_poster = [], {}, None
-        self._sheets, self._preload = [], ""
+        self._sheets, self._preload, self._grid = [], "", False
 
     NAV = {"films": "hub", "cinemas": "cinemas_href", "thursday": "thursday_href", "cards": "cards_href"}
     # the footer's own order (the spec's): these feature keys come first, right after «من وين الأسعار»
@@ -1177,27 +1176,32 @@ class Kit:
         text = text.translate({0x0660 + i: 0x30 + i for i in range(10)} | {0x06F0 + i: 0x30 + i for i in range(10)})
         open(path, "w", encoding="utf-8", newline="\n").write(text)
 
-    def posters_row(self, lang, fids, shows, heading, city_label="", prayer=True, tags=None):
+    def posters_row(self, lang, fids, shows, heading, city_label="", prayer=False, tags=None, yes=False):
         """«كل الأفلام» (UI redesign Task 3; the home and city pages): every film's tile in a grid (3 columns on
         a phone, 7 on a desktop) under two chips — «تصفية» (the filter sheet; its badge counts what is filtering)
         and the sort. The controls that sat in rows over the list (genre, «مع منو رايح؟», «يخلص قبل», the sort,
         the prayer switch) are in the sheet now, with the language; src/js/filters.js drives them as before.
-        The two sheets go after the footer with the header's (self._sheets, emptied by page())."""
+        The two sheets go after the footer with the header's (self._sheets, emptied by page()) — once per page,
+        like the section's ids: /summer/ draws one grid per city (fix round 1, I2); the later grids share them."""
         ar = lang == "ar"
+        first = not self._grid
         tiles = "".join(self.film_tile(fid, lang, shows, i=i, live=True, tag=(tags or {}).get(fid)) for i, fid in enumerate(fids))
-        head = (f'<div class="all-h"><h2 id="all-h">{esc(heading)}<span class="h-city" data-city-label>{esc(city_label)}</span> '
+        hid = ' id="all-h"' if first else ""
+        head = (f'<div class="all-h"><h2{hid}>{esc(heading)}<span class="h-city" data-city-label>{esc(city_label)}</span> '
                 f'<span class="all-n num" data-all-n>{len(fids)}</span></h2>'
                 f'<button type="button" class="chip fchip js-only" data-sheet-open="sheet-filter">{icon("filter")}{esc(L(HOME_T["filter"], lang))}'
                 f'<b class="fbadge num" data-fcount hidden>0</b></button>'
                 f'<button type="button" class="chip js-only" data-sheet-open="sheet-sort">{esc(L(HOME_T["sort"], lang))}:&nbsp;'
                 f'<span data-sort-name>{esc(L(HOME_T["sort_default"], lang))}</span></button></div>')
-        self._sheets.append(self.filter_sheet(lang, fids, prayer) + self.sort_sheet(lang))
-        return (f'<section class="all wrap" id="all" aria-labelledby="all-h">{head}<div class="grid" data-films>{tiles}</div>'
+        if first: self._sheets.append(self.filter_sheet(lang, fids, prayer, yes) + self.sort_sheet(lang))
+        self._grid = True
+        sec = ' id="all" aria-labelledby="all-h"' if first else ""
+        return (f'<section class="all wrap"{sec}>{head}<div class="grid" data-films>{tiles}</div>'
                 f'<p class="empty" data-empty hidden></p></section>')
 
     SORTS = (("time", "الأقرب وقتاً", "Soonest"), ("price", "الأرخص لك", "Cheapest for you"), ("verdict", "الأعلى تقييماً", "Best reviewed"))
 
-    def filter_sheet(self, lang, fids, prayer=True):
+    def filter_sheet(self, lang, fids, prayer=False, yes=False):
         """Every control of the old rows over the film list, in one sheet: genre (all, family, kids and the six
         genres most of these films share), «مع منو رايح؟», «لازم يخلص قبل», language, sort, the prayer switch;
         then «مسح» and «اعرض N فيلم» (the count follows the filters as they change, and is read out politely)."""
@@ -1213,7 +1217,9 @@ class Kit:
             if lg: langs[lg] = langs.get(lg, 0) + 1
         top = [k for k, _ in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:6]]
         genre = (b('data-filter="all"', "الكل" if ar else "All", True) + b('data-filter="family"', "عائلي" if ar else "Family")
-                 + b('data-filter="kids"', "للأطفال" if ar else "Kids") + "".join(b(f'data-filter="genre:{esc(k)}"', genre_label(k, lang)) for k in top))
+                 + b('data-filter="kids"', "للأطفال" if ar else "Kids")
+                 # «يستاهل» (the verdict), where a home row's «الكل» lands (fix round 1, M4)
+                 + (b('data-filter="yes"', L(HOME_T["yes"], lang)) if yes else "") + "".join(b(f'data-filter="genre:{esc(k)}"', genre_label(k, lang)) for k in top))
         ws = [("solo", "بروحي", "Just me"), ("friends", "ربعي", "Friends"), ("family", "العائلة", "Family"), ("kids", "العيال", "The kids")]
         who = "".join(b(f'data-who="{k}"', a if ar else e) for k, a, e in ws)
         ends = [("", "ما يهم", "Any time"), ("21:00", "9 بالليل", "9 pm"), ("22:00", "10 بالليل", "10 pm"), ("23:00", "11 بالليل", "11 pm"), ("24:00", "12 بالليل", "Midnight")]

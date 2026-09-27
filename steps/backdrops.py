@@ -120,9 +120,16 @@ def _small(img: Image.Image) -> Image.Image:
     return rgb.resize((SCORE_WIDTH, h))
 
 
+def _pixels(img: Image.Image) -> list:
+    """The image's pixels in row order. Pillow 12 deprecates getdata() for get_flattened_data(); an older Pillow
+    (the Fold's Debian one) only has getdata()."""
+    fn = getattr(img, "get_flattened_data", None)
+    return list(fn() if fn else img.getdata())
+
+
 def _colourfulness(rgb_small: Image.Image) -> float:
     """Hasler-Süsstrunk colourfulness metric on the already-downsized image."""
-    data = list(rgb_small.getdata())
+    data = _pixels(rgb_small)
     n = len(data)
     if not n:
         return 0.0
@@ -185,7 +192,7 @@ def crop_letterbox(img: Image.Image) -> Image.Image:
     if h < 3:
         return img
     col = img.convert("L").resize((1, h), Image.BOX)   # each output pixel = that row's mean luma
-    row_means = list(col.getdata())
+    row_means = _pixels(col)
     top = 0
     while top < h and row_means[top] < 12:
         top += 1

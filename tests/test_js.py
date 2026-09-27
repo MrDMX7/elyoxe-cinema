@@ -111,3 +111,8 @@ def test_language_filter_and_film_count(tmp_path):
     got = run(tmp_path, '[1, 2, 5, 23].map(function (n) { return filmsN(n, "ar"); }).concat([filmsN(1, "en"), filmsN(23, "en")])')
     assert got == [build.Site.films_n(1, "ar"), build.Site.films_n(2, "ar"), build.Site.films_n(5, "ar"), build.Site.films_n(23, "ar"), "1 film", "23 films"]
     assert got[:4] == ["فيلم واحد", "فيلمين", "5 أفلام", "23 فيلم"]
+
+
+def test_verdict_filter(tmp_path):
+    """«يستاهل» in home's filter sheet (fix round 1, M4): only films whose verdict is yes."""
+    assert run(tmp_path, '[filmOk({v: "yes"}, "yes"), filmOk({v: "mixed"}, "yes"), filmOk({v: "mixed"}, "all")]') == [True, False, True]

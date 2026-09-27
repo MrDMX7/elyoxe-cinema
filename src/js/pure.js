@@ -43,11 +43,12 @@ function lateOk(span, late) { return !late || !span || span[0] >= 21 * 60 || spa
    `win` minutes (the time it takes to pray in congregation) */
 function overlaps(span, p, win) { return !!span && p != null && span[0] < p + (win || 0) && span[1] > p; }
 
-/* film filters: all · family · kids · genre:<key> */
+/* film filters: all · family · kids · yes (the verdict) · genre:<key> */
 function filmOk(f, filt) {
   if (!filt || filt === "all") return true;
   if (filt === "family") return !!f.family;
   if (filt === "kids") return !!f.kids;
+  if (filt === "yes") return f.v === "yes";   /* «يستاهل» (home's filter sheet) */
   if (filt.indexOf("genre:") === 0) return (f.genres || []).indexOf(filt.slice(6)) >= 0;
   return true;
 }

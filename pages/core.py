@@ -40,8 +40,8 @@ class CorePages(Pages):
             cnt = {}
             for s in today:
                 if self.cinemas[s["cinema"]].get("city") == c: cnt[s["film"]] = cnt.get(s["film"], 0) + 1
-            tops[c] = sorted(cnt, key=lambda f: (-cnt[f], f))[:5]
-        tops["*"] = films[:5]   # a city with nothing tonight: the country's
+            tops[c] = self.bill_pick(sorted(cnt, key=lambda f: (-cnt[f], f)))
+        tops["*"] = self.bill_pick(films)   # a city with nothing tonight: the country's
         for lang in ("ar", "en"):
             self.site._first_poster = {}   # no tile claims the page's image priority: the billboard's frame is the LCP
             body = self.billboard(lang, tops, today) if films else ""
@@ -53,7 +53,7 @@ class CorePages(Pages):
             body += self.slot("home.after_tonight", lang)
             # a film in its last days is tagged in the grid too (the «آخر فرصة» row needs 4 films to be drawn)
             last = {f: L(HOME_T["tag_last"], lang) for fs in (self.d.get("last_chance") or {}).values() for f in fs}
-            body += self.posters_row(lang, films, self.shows, L(HOME_T["all_films"], lang), tags=last)
+            body += self.posters_row(lang, films, self.shows, L(HOME_T["all_films"], lang), tags=last, prayer=True, yes=True)
             hn = self.first_city_show(self.shows, ["dubai"])
             body += self.ticket(hn, lang, hidden=True) if hn else self.ticket_shell()
             title = ("سينما الإمارات اليوم — الأفلام والأسعار وخصم فزعة وإسعاد" if lang == "ar"
@@ -62,7 +62,8 @@ class CorePages(Pages):
                     if lang == "ar" else "Today’s showtimes at every UAE cinema, the ticket price per hall and seat class, the price after Fazaa, Esaad and bank offers, and whether the film is worth it.")
             graph = [{"@type": "WebSite", "name": L(UI["s_mark"], lang), "url": SITE + P(lang), "inLanguage": lang},
                      {"@type": "ItemList", "name": "Films", "itemListElement": [
-                         {"@type": "ListItem", "position": i + 1, "url": SITE + P(lang, "film", fid), "name": self.ftitle(fid, lang)} for i, fid in enumerate(films)]},
+                         # the 20 most shown: the list of every film cost ~9 KB of a 150 KB page (fix round 1, I3)
+                         {"@type": "ListItem", "position": i + 1, "url": SITE + P(lang, "film", fid), "name": self.ftitle(fid, lang)} for i, fid in enumerate(films[:20])]},
                      self.breadcrumb_ld(lang)]
             self.page(lang, (), title, desc, body, graph, "home")
 
@@ -93,19 +94,29 @@ class CorePages(Pages):
         elif f.get("poster"): o["p"] = [rel(f["poster"]), rel(f.get("poster_2x") or f["poster"])]
         return o
 
-    BILL_SIZES = "(min-width:1024px) 300px, 100vw"
+    # a phone draws the frame darkened under the text: 640w is plenty (at 390 px, 2x, `100vw` took the 1280w file)
+    BILL_BD_SIZES = "(min-width:1024px) 100vw, 320px"
 
-    def bill_frame(self, fid, o):
-        """The billboard's picture: the trailer frame (Kit.backdrop); with none yet, the poster itself — full-bleed
-        and darkened on a phone (a portrait screen fits a poster), blurred behind a sharp copy at the inline end
-        with the velvet glow on a desktop (both from one srcset and one `sizes`: one download); with no poster,
-        Kit.backdrop's typographic fallback. src/js/bill.js draws the same for the next films."""
-        if o.get("b") or not o.get("p"): return self.backdrop(fid, hero=True)
-        ss = f'src="{esc(o["p"][0])}" srcset="{esc(o["p"][0])} 342w, {esc(o["p"][1])} 684w" sizes="{self.BILL_SIZES}"'
-        self.site._preload = (f'<link rel="preload" as="image" href="{esc(o["p"][0])}" imagesrcset="{esc(o["p"][0])} 342w, {esc(o["p"][1])} 684w"'
-                              f' imagesizes="{self.BILL_SIZES}" fetchpriority="high">')
-        return (f'<div class="bd pf" style="--pc:{esc(o["c"])}" aria-hidden="true"><img {ss} class="pb" alt="" width="342" height="513" decoding="async" fetchpriority="high">'
-                f'<img {ss} class="ps" alt="" width="342" height="513" decoding="async"></div>')
+    def bill_pick(self, ranked):
+        """A city's five slides (fix round 1, I1): the first is its real most-shown film tonight, whatever it looks
+        like (the eyebrow says so); the other four prefer the films of its top 10 that have a trailer frame, then
+        the rest in order."""
+        if not ranked: return []
+        has = lambda f: isinstance(self.films[f].get("backdrop"), dict)
+        rest = ranked[1:10]
+        return (ranked[:1] + [f for f in rest if has(f)] + [f for f in ranked[1:] if not (f in rest and has(f))])[:5]
+
+    def bill_frame(self, fid, o, lang):
+        """The billboard's picture: the trailer frame (Kit.backdrop, 640w on a phone); with none yet, the poster — a
+        heavily blurred, darkened full-bleed layer (the 342w file: blurred, its size does not show) and, on a
+        desktop, a sharp copy at the inline end with the velvet glow (`sizes` 1px on a phone, so there it resolves
+        to the same 342w file: one download); with no poster either, the film's typographic tile over the velvet
+        glow (Kit.backdrop's fallback, shown). src/js/bill.js draws the same for the next films (fix round 1, I1)."""
+        if o.get("b") or not o.get("p"): return self.backdrop(fid, hero=True, sizes=self.BILL_BD_SIZES, lang=lang)
+        p342, p684 = esc(o["p"][0]), esc(o["p"][1])
+        self.site._preload = f'<link rel="preload" as="image" href="{p342}" fetchpriority="high">'
+        return (f'<div class="bd pf" style="--pc:{esc(o["c"])}" aria-hidden="true"><img src="{p342}" class="pb" alt="" width="342" height="513" decoding="async" fetchpriority="high">'
+                f'<img src="{p342}" srcset="{p342} 342w, {p684} 684w" sizes="(min-width:1024px) 300px, 1px" class="ps" alt="" width="342" height="513" decoding="async"></div>')
 
     def bill_price(self, fid, shows):
         """[aed, chain, hall, hall key, cinema, table date]: the film's cheapest ticket among `shows`, the price
@@ -126,7 +137,7 @@ class CorePages(Pages):
         in_city = [s for s in today if self.cinemas[s["cinema"]].get("city") == "dubai"] if city != "*" else today
         if o.get("b"):
             self.site._preload = (f'<link rel="preload" as="image" href="{esc(o["b"][1])}" imagesrcset="{esc(o["b"][0])} 640w, {esc(o["b"][1])} 1280w"'
-                             f' imagesizes="100vw" fetchpriority="high">')
+                                  f' imagesizes="{self.BILL_BD_SIZES}" fetchpriority="high">')
         mc = self.min_cell(in_city and [s for s in in_city if s["film"] == fid] or self._by_film.get(fid, []), lang)
         frm = (f'<span class="from" data-from="{esc(fid)}">{esc(L(HOME_T["from"], lang))} {mc[0]}</span>' if mc
                else f'<span class="from" data-from="{esc(fid)}" hidden></span>')
@@ -151,9 +162,11 @@ class CorePages(Pages):
         ffs = {x: self.bill_film(x, lang) for ids in tops.values() for x in ids}
         island = json.dumps({"f": ffs, "c": by_city}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
         return (f'<section class="bill" data-bill aria-roledescription="{"عرض" if lang == "ar" else "carousel"}" aria-label="{esc(L(HOME_T["slides"], lang))}">'
-                f'<div class="bill-bd" data-bill-bd>{self.bill_frame(fid, o)}</div>'
+                f'<div class="bill-bd" data-bill-bd>{self.bill_frame(fid, o, lang)}</div>'
                 f'<div class="wrap bill-w"><div class="bill-in" data-bill-slide>{slide}</div>'
-                f'<div class="dots js-only" data-bill-dots role="group" aria-label="{esc(L(HOME_T["slides"], lang))}">{dots if len(fids) > 1 else ""}</div></div>'
+                f'<div class="bill-nav js-only"><button type="button" class="bill-pp" data-bill-pp aria-pressed="false"{"" if len(fids) > 1 else " hidden"}>'
+                f'<span class="vh">{esc(L(HOME_T["pause"], lang))}</span></button>'
+                f'<div class="dots" data-bill-dots role="group" aria-label="{esc(L(HOME_T["slides"], lang))}">{dots if len(fids) > 1 else ""}</div></div></div>'
                 f'<script type="application/json" id="bill-data">{island}</script></section>')
 
     # -------------------------------------------------- home: the rows
@@ -176,7 +189,7 @@ class CorePages(Pages):
         # «الأكثر عرضاً الليلة»: by tonight's shows (cinema.js re-sorts it by the visitor's city)
         row("top", HOME_T["top"], films, home + "#all", attrs=' data-rail-sort="count"')
         row("yes", HOME_T["yes"], [f for f in films if (self.films[f].get("verdict") or {}).get("verdict") == "yes"],
-            home + "?sort=verdict#all", sub=esc(L(HOME_T["yes_sub"], lang)))
+            home + "?f=yes#all", sub=esc(L(HOME_T["yes_sub"], lang)))
         # «أرخص لك الليلة»: the cheapest ticket before any card here; after the visitor's card and in their city there
         priced = [(self.min_price([s for s in self._by_film.get(f, []) if s["date"] == self.today]), f) for f in films]
         cheap = [f for b, f in sorted(((b, f) for b, f in priced if b), key=lambda x: (x[0][0], x[1]))]

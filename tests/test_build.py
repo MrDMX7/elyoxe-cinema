@@ -489,24 +489,31 @@ def test_dates_are_human_and_english_runs_marked(site):
 
 
 def test_no_poster_hero_is_not_a_colour_field(site):
-    """The home billboard (UI redesign Task 3) with no trailer frame: the poster itself (full-bleed on a phone, sharp
-    over its blur on a desktop), preloaded; with no poster either, Kit.backdrop's typographic fallback."""
+    """The home billboard (UI redesign Task 3, fix round 1 I1) with no trailer frame: the 342w poster as a blurred,
+    darkened full-bleed layer (preloaded, the LCP) and a sharp copy for the desktop's side card that resolves to
+    the same file on a phone; with no poster either, the typographic tile — shown, not hidden by the stylesheet."""
     out, _ = site
     home = read(out)                                   # the fixture's Dubai top tonight (The Paradise) has no poster
     bill = home[home.index('<section class="bill"'):home.index("</section>", home.index('<section class="bill"'))]
-    assert '<div class="bd noimg"' in bill and '<span class="pst bd-t">' in bill
+    assert '<div class="bd noimg"' in bill and '<span class="pst bd-t"><span class="pst-t" lang="en" dir="ltr">The Paradise</span>' in bill
+    css = open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
+    assert not re.search(r"\.bill \.bd-t\{display:none", css)
+    rule = re.search(r"\.bill \.bd-t\{([^}]*)\}", css).group(1)
+    assert "position:absolute" in rule and "aspect-ratio:2/3" in rule and "opacity:0" not in rule
+    assert re.search(r"\.bill \.bd\.noimg\{background:radial-gradient", css)   # the velvet glow, not the flat --pc
 
     def m(d):
         d["films"]["the-paradise"].update(poster="https://cinema.elyoxe.com/posters/the-paradise-342.webp",
                                           poster_2x="https://cinema.elyoxe.com/posters/the-paradise-684.webp")
     import tempfile
     h = read(_built(__import__("pathlib").Path(tempfile.mkdtemp()), m))
-    assert re.search(r'<div class="bd pf" style="--pc:#[0-9A-Fa-f]{6}" aria-hidden="true"><img src="/posters/the-paradise-342\.webp"[^>]* class="pb"[^>]*fetchpriority="high">'
-                     r'<img [^>]*class="ps"', h)
-    pre = re.search(r'<link rel="preload" as="image" href="([^"]+)" imagesrcset="([^"]+)" imagesizes="([^"]+)"', h)
-    first = re.search(r'<img src="([^"]+)" srcset="([^"]+)" sizes="([^"]+)"[^>]*fetchpriority="high"', h)
-    assert pre and first and pre.groups() == first.groups()
+    assert re.search(r'<div class="bd pf" style="--pc:#[0-9A-Fa-f]{6}" aria-hidden="true"><img src="/posters/the-paradise-342\.webp" class="pb"[^>]*fetchpriority="high">'
+                     r'<img src="/posters/the-paradise-342\.webp" srcset="[^"]+342w, [^"]+684w" sizes="\(min-width:1024px\) 300px, 1px" class="ps"', h)
+    assert '<link rel="preload" as="image" href="/posters/the-paradise-342.webp" fetchpriority="high">' in h
     assert h.count('fetchpriority="high"') == 2      # the preload link and the billboard's poster: no tile claims it
+    # blurred beyond reading on every screen (the poster's printed title never fights the headline)
+    blur = re.search(r"\.bill \.bd\.pf img\.pb\{[^}]*filter:blur\((\d+)px\)", css)
+    assert blur and int(blur.group(1)) >= 24
 
 
 def test_ends_only_when_known(site):

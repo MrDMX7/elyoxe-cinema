@@ -26,7 +26,7 @@ function loadCity() {
   var want = city;
   return Promise.all([daySlice(city, TODAY), daySlice(city, TOMORROW)]).then(function (ds) {
     if (want !== city) return;
-    var o = { cinemas: {}, films: {}, shows: [] };
+    var o = { cinemas: {}, films: {}, shows: [], city: want };   /* whose shows these are (bill.js asks) */
     ds.forEach(function (x) {
       Object.keys(x.cinemas).forEach(function (k) { o.cinemas[k] = x.cinemas[k]; });
       Object.keys(x.films).forEach(function (k) { o.films[k] = x.films[k]; });
@@ -133,7 +133,7 @@ function renderNear() {
   var list = Object.keys(pick).map(function (k) { return pick[k]; });
   list.sort(function (a, b) { return a.at - b.at; });
   list = list.slice(0, 10);
-  row.hidden = !list.length;
+  row.hidden = !list.length; row.classList.toggle("gone", !list.length);
   var cn = C.cities[city] || city, sb = q("[data-near-sub]", row);
   if (sb) sb.textContent = sub(TX.near_sub, { city: cn, t: hhmm(n) });
   qa("[data-near]", row).forEach(function (b) { b.hidden = !!LOC; });
@@ -142,25 +142,43 @@ function renderNear() {
     var s = o.s, b = best([s]), mins = Math.max(0, Math.round((o.at - n) / 60000)), po = posterOf(s.f);
     return '<a class="nr" href="' + esc(C.base + "film/" + s.f + "/") + '"><span class="nr-p">' + (po ? '<img src="' + esc(po) + '" alt="" width="56" height="84" loading="lazy" onerror="this.remove()">' : "") + "</span>" +
       '<span class="nr-b"><span class="nr-tm"><b class="num">' + esc(s.t) + "</b><small>" + esc(inMinutes(mins, lang)) + "</small></span>" +
-      '<span class="nr-t">' + esc(nm(S.films[s.f])) + "</span>" +
-      '<span class="nr-c">' + esc(nm(S.cinemas[s.c])) + (o.km != null ? ' <span class="num">' + esc(kmText(o.km, lang)) + "</span>" : "") + "</span>" +
+      '<span class="nr-t" dir="auto">' + esc(nm(S.films[s.f])) + "</span>" +
+      '<span class="nr-c"><bdi>' + esc(nm(S.cinemas[s.c])) + "</bdi>" + (o.km != null ? ' <span class="num">' + esc(kmText(o.km, lang)) + "</span>" : "") + "</span>" +
       (b ? '<span class="nr-pr"><span class="num">' + fmt(b.pay) + "</span> " + esc(C.aed) + ppNote(b.r) + "</span>" : "") + "</span></a>";
   }).join("");
 }
 
-/* the billboard's «من X درهم»: its film's cheapest ticket for this visitor in this city tonight */
+/* the billboard's «من X درهم»: its film's cheapest ticket for this visitor in this city tonight — only from this
+   city's shows; with none still to come (or the city's data never arrived) the cell keeps the island's price for
+   this city, the last one known to be right */
 function renderFrom(go) {
-  if (!S) return;
+  if (!S || (S.city && S.city !== city)) return;
   var n = NOW.getTime();
   qa("[data-from]").forEach(function (f) {
     var fid = f.getAttribute("data-from"), b = best(S.shows.filter(function (s) { return s.f === fid && s.d === TODAY && start(s) >= n; }));
     var pe = q(".p", f);
-    if (b && pe) {
+    if (!pe) return;
+    if (b) {
       var was = pe.getAttribute("data-shown");
-      pe.removeAttribute("data-aed"); pe.setAttribute("data-shown", fmt(b.pay));
+      pe.removeAttribute("data-aed"); pe.removeAttribute("data-wait"); pe.setAttribute("data-shown", fmt(b.pay));
       pe.innerHTML = "<b>" + payHTML(b, go, was) + "</b>" + (b.off ? '<s class="num">' + fmt(b.aed) + "</s>" : "") + ppNote(b.r);
-    }
+    } else if (pe.hasAttribute("data-wait")) { pe.removeAttribute("data-wait"); pe.innerHTML = priceHTML(pe, go); }
   });
+}
+/* the desktop hover panel (verdict word + next time): drawn here, on a pointer that hovers, not shipped in every
+   tile's markup (fix round 1, I3: 13 KB of a 150 KB page) */
+var HOVER = !!(window.matchMedia && window.matchMedia("(hover: hover) and (min-width: 1024px)").matches);
+function hoverPanel(el, next) {
+  if (!HOVER || el.classList.contains("soon")) return;
+  var tp = q(".tp", el), hv = tp && q(".hv", tp);
+  if (!tp) return;
+  if (!hv) {
+    hv = document.createElement("span"); hv.className = "hv"; hv.setAttribute("aria-hidden", "true");
+    hv.innerHTML = '<span class="vw"></span><span class="nx"></span>';
+    tp.appendChild(hv);
+    q(".vw", hv).textContent = (C.v && C.v[el.getAttribute("data-v")]) || "";
+  }
+  q(".nx", hv).textContent = next || "";
 }
 
 /* a home row that follows the visitor: «الأكثر عرضاً الليلة» by the city's shows, «أرخص لك الليلة» by the price
@@ -195,12 +213,12 @@ function renderHome(go) {
     var mine = up.filter(function (s) { return s.f === fid; });
     var tonight = mine.filter(function (s) { return s.d === TODAY; }), tmr = mine.filter(function (s) { return s.d === TOMORROW; });
     var pool = tonight.length ? tonight : tmr, fit = pool.filter(function (s) { return showOk(s, rt); });
-    var b = best(fit), box = q("[data-cheap]", el), nx = q("[data-next]", el);
+    var b = best(fit), box = q("[data-cheap]", el);
     el.classList.toggle("off", !pool.length);
     el.setAttribute("data-pay", b ? b.pay : 1e9);
     el.setAttribute("data-first", fit.length ? start(fit[0]) : 9e15);
     el.setAttribute("data-fit", fit.length);
-    if (nx) nx.textContent = fit.length ? sub(TX.next, { t: fit[0].t, cin: nm(S.cinemas[fit[0].c]) }) : "";
+    hoverPanel(el, fit.length ? sub(TX.next, { t: fit[0].t, cin: nm(S.cinemas[fit[0].c]) }) : "");
     if (!box) return;
     if (!pool.length) { box.innerHTML = '<span class="fw">' + esc(sub(C.not_in_city, { city: cn })) + "</span>"; return; }
     if (!b) { box.innerHTML = '<span class="na">' + esc(C.box) + "</span>"; return; }
