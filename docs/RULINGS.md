@@ -37,3 +37,14 @@ Every decision taken on the owner's behalf while building «سينما». Each l
 - Parked — an already-alerted ongoing failure exits 0 so run-job state reads ok — Ruling: fine for the 4-runs/day cutover (the owner gets the first alert); before flipping to hourly, make an ongoing failure record status=degraded and send one reminder per day while it lasts — cost if wrong: a stuck site noticed a day late.
 
 - Correction 2026-09-27: Roxy is NOT login-gated — the seat-selection page is public and carries seat-class prices (price-in-aed, VAT-inclusive); live since the roxy-prices merge (98.5% priced; private screens have no legend). Found by the owner.
+
+## Phase 2 (2026-09-27)
+
+- Ruling: owner said «كمل» to phase 2 after the list — approval of scope; items 58-74 not picked yet, excluded — cost if wrong: add later.
+- Ruling: Task 0 first (plug-in pages) so Tasks 1-6 can run in parallel on disjoint files — cost if wrong: one refactor task of delay.
+- Ruling: phase 2 works in a separate git worktree C:/Users/requi/cinema-phase2 (branch phase2), outside the wsync-scanned workspace, so parallel agents never share a checkout with the Roxy fix — cost if wrong: none. (Controller briefly switched the shared checkout; restored roxy-prices with its uncommitted work intact.)
+- Task 0: complete (73fbabf, review clean). Controller added refresh.run_steps + steps/ (d-commit) so Tasks 1-6 add data steps as files. Ruling: sort discounts.json chain order in Task 5 (one-line determinism fix).
+- Task 1: complete (5989110, own files clean). Cross-task: Critical "with Q1" in similar.py (Task 5 file) — Ruling: fixed inside Task 5 (its owner, still running), contract sent — cost if wrong: none if Task 5 review verifies.
+- Task 3: review — Needs fixes (Roxy omitted on false premise; caps miss curl_cffi redirects — VOX ~84 req; shapes per hall label show another screen's count; force-added report). Fix round 1/5 dispatched incl. merging origin/main into phase2. Ruling: Reel anonymous guest token OK (phase-1 precedent).
+- Task 3: fix round 1/5 implementer done 18bed30 (+55c47ed merge of origin/main, b4371c4/c7ac817 report removal). Ruling: 18bed30 also contains Task 2's staged round-2 files — accepted, no history rewrite — cost if wrong: commit attribution only.
+- Ruling: the 60-request cap covers the occupancy sampler; price sampling stays under its own once-per-cinema×hall×date daily cache — cost if wrong: none (separately bounded).
