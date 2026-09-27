@@ -26,6 +26,8 @@
 {{preload}}
 <link rel="stylesheet" href="/assets/cinema.css?v={{v}}">
 <script>document.documentElement.classList.add("js")</script>
+<script type="speculationrules" id="spec">{"prerender":[{"where":{"and":[{"href_matches":["/film/*","/en/film/*"]},{"not":{"selector_matches":["[href*='?']","[target]","[download]","[data-nospec]"]}}]},"eagerness":"moderate"}],"prefetch":[{"where":{"and":[{"href_matches":"/*"},{"not":{"href_matches":["/film/*","/en/film/*","/data/*","/assets/*","/posters/*","/*.*"]}},{"not":{"selector_matches":["[target]","[download]","[data-nospec]"]}}]},"eagerness":"moderate"}]}</script>
+<script>(function(){var c=navigator.connection,m=window.matchMedia;if(c&&c.saveData||m&&m("(prefers-reduced-data: reduce)").matches){var s=document.getElementById("spec");if(s)s.remove()}addEventListener("pagereveal",function(e){var t=e.viewTransition,a=window.navigation&&navigation.activation;if(t&&t.types&&a&&a.from&&a.entry&&a.navigationType==="traverse"&&a.entry.index<a.from.index)t.types.add("back")})})()</script>
 <script type="application/ld+json">{{jsonld}}</script>
 </head>
 <body data-page="{{page}}"{{attrs}}>

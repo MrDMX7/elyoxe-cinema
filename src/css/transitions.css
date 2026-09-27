@@ -1,0 +1,24 @@
+/* Cross-document view transitions (roadmap 204): moving between pages is one short slide, and a tapped
+   poster grows into the film page's hero poster. Only for visitors who have not asked for less motion: under
+   prefers-reduced-motion the browser navigates plainly (no @view-transition at all).
+   The poster: the film page's hero is always named «poster»; on the page being left, src/js/feel.js names
+   only the tile that was tapped (on pageswap), so a name is never on two elements at once.
+   Direction follows the reading direction: going forward, the new page comes in from the inline end (the
+   left in Arabic, the right in English); going back (the «back» type, set on pagereveal in src/page.html)
+   it comes from the inline start. */
+@media (prefers-reduced-motion:no-preference){
+  @view-transition{navigation:auto}
+  :root{--vt-x:-14px}
+  :root[dir=rtl]{--vt-x:14px}
+  :root:active-view-transition-type(back){--vt-x:14px}
+  :root[dir=rtl]:active-view-transition-type(back){--vt-x:-14px}
+  body[data-page=film] .fposter .pst.hero{view-transition-name:poster}
+  .top{view-transition-name:top}
+  ::view-transition-group(*){animation-duration:.24s;animation-timing-function:var(--ease)}
+  ::view-transition-old(root){animation:vt-out .18s var(--ease) both}
+  ::view-transition-new(root){animation:vt-in .24s var(--ease) both}
+  ::view-transition-old(poster),::view-transition-new(poster){animation-duration:.24s;block-size:100%;object-fit:cover}
+  ::view-transition-group(poster){z-index:2}
+}
+@keyframes vt-out{to{opacity:0;transform:translateX(var(--vt-x))}}
+@keyframes vt-in{from{opacity:0;transform:translateX(calc(-1 * var(--vt-x)))}}

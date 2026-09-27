@@ -25,6 +25,12 @@ HASHES = [(re.compile(r"\b(cinema|adhan)\.[0-9a-f]{10}\.js\b"), r"\1.HASH.js"),
           (re.compile(r"\?v=[0-9a-f]{10}\b"), "?v=HASH"),
           (re.compile(r'^var V = "[0-9a-f]{10}"', re.M), 'var V = "HASH"')]
 TEXT = (".html", ".json", ".xml", ".txt", ".js", ".css", ".webmanifest", ".svg")
+# Deliberate changes to the shared shell since phase 1, each named and removed before comparing (both sides,
+# a no-op on phase 1): Task A4 (roadmap 203, 204, 138) — the speculation rules and their data-saver/«back»
+# script in every page's head, the manifest's shortcuts and their three icons (tests/test_feel.py covers them).
+SHELL_HTML = [re.compile(r'<script type="speculationrules" id="spec">.*?</script>\n'
+                         r'<script>\(function\(\)\{var c=navigator\.connection.*?</script>\n', re.S)]
+SHELL_FILES = re.compile(r"^assets/icons/sc-[a-z]+\.png$")
 
 
 def _has_ref():
@@ -67,6 +73,7 @@ def files(out):
         for f in fs:
             p = os.path.join(dp, f)
             rel = os.path.relpath(p, out).replace(os.sep, "/")
+            if SHELL_FILES.match(rel): continue
             b = open(p, "rb").read()
             if rel.endswith(TEXT):
                 t = b.decode("utf-8")
@@ -74,6 +81,10 @@ def files(out):
                     v = re.search(r'^var V = "([0-9a-f]{10})"', t, re.M)
                     if v: t = t.replace(v.group(1), "HASH")
                 for rx, to in HASHES: t = rx.sub(to, t)
+                if rel.endswith(".html"):
+                    for rx in SHELL_HTML: t = rx.sub("", t)
+                if rel == "manifest.webmanifest":
+                    m = json.loads(t); m.pop("shortcuts", None); t = json.dumps(m, ensure_ascii=False, sort_keys=True)
                 if rel == "data/discounts.json":   # the same content; phase 1 ordered the chains by set iteration
                     t = json.dumps(json.loads(t), ensure_ascii=False, sort_keys=True)
                 b = t.encode("utf-8")
