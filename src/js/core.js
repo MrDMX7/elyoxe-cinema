@@ -67,3 +67,18 @@ var TX = AR ? {
   ticket: "Ticket: {film}, {cin}, {t}", close: "Close", trailer: "Trailer",
   install: "Add Cinema to your home screen", install_yes: "Add", install_no: "No, thanks", share_t: "{film} at {cin}, {day} {t}"
 };
+
+/* features (docs/PLUGINS.md): a module in this bundle (pages/<feature>.py JS) calls feature(fn), and fn runs at
+   start-up after the core has bound the page; one that throws never stops the others. A lazy chunk
+   (LAZY_JS, /assets/<feature>.<hash>.js, listed in CT.chunks on the pages that ask for it) runs in its own
+   scope with the helpers below as K = window.CINEMA. */
+var FEAT = [];
+function feature(fn) { FEAT.push(fn); }
+function startFeatures() {
+  FEAT.forEach(function (fn) { try { fn(); } catch (e) { if (window.console) console.error(e); } });
+  window.CINEMA = { C: C, lang: lang, AR: AR, page: page, q: q, qa: qa, esc: esc, fmt: fmt, sub: sub, uae: uae, getJSON: getJSON,
+    get: get, set: set, now: function () { return NOW; }, city: function () { return city; }, card: function () { return card; } };
+  Object.keys(C.chunks || {}).forEach(function (n) {
+    var s = document.createElement("script"); s.src = C.chunks[n]; s.async = true; document.head.appendChild(s);
+  });
+}

@@ -120,6 +120,7 @@ function lazyRow() {
   markCard(); marks(); ages(); renderPrices(false);
   if (page === "film") renderFilm();
   bindFilters(); bindTicket(); bindTrailer(); bindPWA(); lazyRow();
+  startFeatures();
   applyFilters();
   if (ST.prayer) applyPrayer();
   if (LOC) applyNear(false);
