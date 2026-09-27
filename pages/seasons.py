@@ -24,7 +24,7 @@ from __future__ import annotations
 import math
 from datetime import date, timedelta
 
-from site_kit import CITIES, L, NavItem, P, Page, Plugin, esc, film_flags, num
+from site_kit import CITIES, NOINDEX, L, NavItem, P, Page, Plugin, esc, film_flags, num
 
 ASSET_DIR = None
 CSS = ("seasons",)
@@ -150,15 +150,23 @@ def taraweeh_note(city: str, d: date, lang: str) -> str | None:
 
 
 # --------------------------------------------------------------------------------- kids/summer
-def kids_shows(site, before_hour: int = 14):
-    """{city: [(fid, [shows today before `before_hour`])]} for kids-flagged films (film_flags'
-    second element — G/PG + animation/family), today only, non-empty groups only."""
+def kids_shows(site, before_hour: int | None = 14, flag_index: int = 1):
+    """{city: [(fid, [shows today, optionally before `before_hour`])]} for films matching
+    `film_flags(f)[flag_index]` (0 = family, 1 = kids — G/PG + animation/family), today only,
+    non-empty groups only.
+
+    `before_hour=None` drops the time cutoff entirely — the design brief (section E) states the
+    "before 14:00" rule for the *kids* preset only ("a kids preset (G/PG + animation/family,
+    starting before 14:00) and a summer page in July–August"), not for /summer/, so build_summer
+    calls this with `before_hour=None, flag_index=0` rather than duplicating this loop."""
     out: dict = {}
     for s in site.shows:
-        if s["date"] != site.today or s["time"] >= f"{before_hour:02d}:00":
+        if s["date"] != site.today:
+            continue
+        if before_hour is not None and s["time"] >= f"{before_hour:02d}:00":
             continue
         f = site.films.get(s["film"])
-        if not f or not film_flags(f)[1]:
+        if not f or not film_flags(f)[flag_index]:
             continue
         city = (site.cinemas.get(s["cinema"]) or {}).get("city")
         if not city:
@@ -222,11 +230,13 @@ class SeasonsPages:
     def build_eid(self, lang, eid):
         which, start = eid
         name = {"fitr": ("عيد الفطر", "Eid al-Fitr"), "adha": ("عيد الأضحى", "Eid al-Adha")}[which]
-        coming = self.d.get("coming")  # Task A's «نازل الخميس» feed, when it exists
+        # Task A's «نازل الخميس» feed, when it exists: a dict keyed by fid (steps/coming.py
+        # `data["coming"][fid] = {...}`; pages/coming.py reads it the same way), never a list.
+        coming = self.d.get("coming")
         if coming:
-            fids = [c["fid"] for c in coming
+            fids = [fid for fid, c in coming.items()
                     if c.get("release_date") and start <= date.fromisoformat(c["release_date"]) <= start + timedelta(days=10)
-                    and c["fid"] in self.films]
+                    and fid in self.films]
         else:
             fids = list(self.showing)
         title = L(TITLES["eid"], lang)
@@ -267,26 +277,21 @@ class SeasonsPages:
         body = f'<section class="head wrap">{self.crumbs(lang, (title, None))}<h1 class="pt">{esc(title)}</h1>'
         if not in_summer:
             body += (f'<p class="lead">{"صفحة الصيف تفتح يوليو وأغسطس. رجعوا وقتها." if lang == "ar" else "The summer page opens in July and August. Come back then."}</p></section>')
-            return {"title": title, "desc": title, "body": body, "kind": "summer", "robots": "noindex,nofollow"}
-        groups: dict = {}
-        for s in self.shows:
-            if s["date"] != self.today or s["time"] >= "14:00":
-                continue
-            f = self.films.get(s["film"])
-            if not f or not film_flags(f)[0]:
-                continue
-            city = (self.cinemas.get(s["cinema"]) or {}).get("city")
-            if city:
-                groups.setdefault(city, set()).add(s["film"])
-        body += (f'<p class="lead">{"أفلام عائلية قبل الظهر، فترة الصيف." if lang == "ar" else "Family films before the afternoon, summer break."}</p></section>')
+            return {"title": title, "desc": title, "body": body, "kind": "summer", "robots": NOINDEX}
+        # family films (film_flags index 0), any time of day -- no "before 14:00" cutoff: the
+        # brief states that restriction for the kids preset only, not for /summer/ (kids_shows()
+        # docstring). Reuses kids_shows() rather than repeating its filter/group loop here.
+        groups = kids_shows(self.site, before_hour=None, flag_index=0)
+        body += (f'<p class="lead">{"أفلام عائلية، فترة الصيف." if lang == "ar" else "Family films, summer break."}</p></section>')
         if not groups:
-            body += f'<p class="wrap empty">{"ما فيه عروض صيفية اليوم" if lang == "ar" else "No summer-hours shows today"}</p>'
+            body += f'<p class="wrap empty">{"ما فيه عروض عائلية اليوم" if lang == "ar" else "No family-hours shows today"}</p>'
         else:
             for city, ar, en in CITIES:
                 if city not in groups:
                     continue
+                fids = [fid for fid, _shows in groups[city]]
                 body += f'<section class="wrap"><h2>{esc(L((ar, en), lang))}</h2>'
-                body += self.posters_row(lang, sorted(groups[city]), self.shows, "")
+                body += self.posters_row(lang, fids, self.shows, "")
                 body += '</section>'
         return {"title": title, "desc": title, "body": body, "kind": "summer", "nav": "summer",
                 "graph": [self.breadcrumb_ld(lang, (title, P(lang, "summer")))]}

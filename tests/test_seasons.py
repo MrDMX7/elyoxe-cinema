@@ -39,9 +39,10 @@ def test_taraweeh_is_isha_plus_sixty_minutes():
     assert seasons.taraweeh_minutes(lat, lng, d) == (isha + 60) % (24 * 60)
 
 
-def test_taraweeh_minutes_wraps_past_midnight():
+def test_taraweeh_minutes_wraps_past_midnight(monkeypatch):
     # isha at 23:45 -> taraweeh at 00:45 the same clock, never a negative or >1440 minute count
-    assert (23 * 60 + 45 + 60) % (24 * 60) == 45
+    monkeypatch.setattr(seasons, "prayer_minutes", lambda lat, lng, d: {"maghrib": 0, "isha": 23 * 60 + 45})
+    assert seasons.taraweeh_minutes(0, 0, date(2026, 3, 5)) == 45
 
 
 def test_iftar_and_taraweeh_lines_labelled_approx():
@@ -150,6 +151,98 @@ def test_imax_no_basis_writes_nothing_and_clears_a_stale_one(tmp_path, monkeypat
     results = verdicts.write_imax(data, {"quiet-one": {"Standard"}})
     assert results == {"quiet-one": None}
     assert "imax" not in json.loads((tmp_path / "quiet-one.json").read_text(encoding="utf-8"))
+
+
+# ---------------------------------------------------------------------------- page-level builds
+def _build(tmp_path, mutate=None):
+    """Full build (core + seasons only) from a mutated copy of fixtures/sample_latest.json."""
+    data = json.load(open(os.path.join(ROOT, "fixtures", "sample_latest.json"), encoding="utf-8"))
+    if mutate:
+        mutate(data)
+    data_path = tmp_path / "data.json"
+    data_path.write_text(json.dumps(data), encoding="utf-8")
+    out = str(tmp_path / "out")
+    build.build(str(data_path), os.path.join(ROOT, "fixtures", "sample_discounts.yaml"), out,
+                noindex=False, modules=build.discover(only=("core", "seasons")))
+    return out
+
+
+def _read(out, *parts):
+    return open(os.path.join(out, *parts), encoding="utf-8").read()
+
+
+def test_build_eid_page_in_window_uses_the_coming_dict_not_a_list(tmp_path):
+    # 2026-03-10 is 9 days before Eid al-Fitr's first day (2026-03-19) -- within the 10-day window.
+    # data["coming"] is a dict keyed by fid (steps/coming.py's real contract), not a list of
+    # records: this is the exact shape that crashed build_eid before the fix.
+    def m(d):
+        d["generated"] = "2026-03-10T09:00:00+04:00"
+        d["coming"] = {"heart-of-the-beast": {"title": "Heart of the Beast", "title_ar": None,
+                                                "release_date": "2026-03-19", "poster": None,
+                                                "trailer": None, "genres": [], "chains": ["vox"]},
+                       "not-a-real-film": {"title": "Nope", "title_ar": None, "release_date": "2026-03-19",
+                                            "poster": None, "trailer": None, "genres": [], "chains": ["vox"]}}
+    out = _build(tmp_path, m)
+    eid = _read(out, "eid", "index.html")
+    assert 'href="/film/heart-of-the-beast/"' in eid       # in data["coming"] and in data["films"]
+    assert "not-a-real-film" not in eid                        # coming entry with no matching film: dropped
+    home = _read(out, "index.html")
+    assert '<a href="/eid/">' in home                          # nav link present while Eid is within 10 days
+
+
+def test_build_eid_page_in_window_without_coming_feed_falls_back_to_showing(tmp_path):
+    def m(d):
+        d["generated"] = "2026-03-10T09:00:00+04:00"
+        d.pop("coming", None)
+    out = _build(tmp_path, m)
+    eid = _read(out, "eid", "index.html")
+    assert 'href="/film/heart-of-the-beast/"' in eid       # a showing film, no coming feed to restrict it
+
+
+def test_build_eid_page_absent_outside_the_ten_day_window(tmp_path):
+    def m(d):
+        d["generated"] = "2026-04-01T09:00:00+04:00"           # neither Eid is within 10 days here
+    out = _build(tmp_path, m)
+    assert not os.path.exists(os.path.join(out, "eid"))
+    home = _read(out, "index.html")
+    assert '/eid/' not in home
+
+
+def test_build_kids_page_lists_only_kids_flagged_films_before_1400(tmp_path):
+    def m(d):
+        # the fixture already sets explicit "family"/"kids" (False) on this film, so film_flags()
+        # never falls back to deriving from rating/genre -- set the explicit flag itself.
+        d["films"]["heart-of-the-beast"].update(rating="G", genres=["animation"], family=True, kids=True)
+    out = _build(tmp_path, m)
+    kids = _read(out, "kids", "index.html")
+    assert 'href="/film/heart-of-the-beast/"' in kids       # 10:30 show, G + animation
+    assert 'href="/film/resident-evil/"' not in kids        # not kids-flagged
+
+
+def test_build_summer_page_in_season_has_no_time_cutoff_and_no_noindex(tmp_path):
+    def m(d):
+        d["generated"] = "2026-07-15T09:00:00+04:00"
+        d["films"]["heart-of-the-beast"].update(family=True, kids=False)
+        # a show after 14:00, on the summer-mutated "today" -- must still appear (no morning cutoff)
+        d["shows"].append({"cinema": "cinemacity-zero6-mall", "film": "heart-of-the-beast",
+                            "date": "2026-07-15", "time": "20:00", "hall": "Standard",
+                            "hall_label": "Screen 3", "prices": [{"seat": "Regular", "aed": 35}], "book": None})
+    out = _build(tmp_path, m)
+    summer = _read(out, "summer", "index.html")
+    assert "noindex" not in summer
+    assert 'href="/film/heart-of-the-beast/"' in summer     # the 20:00 show counted, not just a morning one
+    home = _read(out, "index.html")
+    assert '<a href="/summer/">' in home
+
+
+def test_build_summer_page_out_of_season_is_noindex_and_unlinked(tmp_path):
+    def m(d):
+        d["generated"] = "2026-01-15T09:00:00+04:00"
+    out = _build(tmp_path, m)
+    summer = _read(out, "summer", "index.html")
+    assert 'name="robots" content="noindex,nofollow"' in summer
+    home = _read(out, "index.html")
+    assert '<a href="/summer/">' not in home
 
 
 # --------------------------------------------------------------------------------- post-credits
