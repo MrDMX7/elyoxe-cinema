@@ -4,8 +4,7 @@
 # Runner: the Fold (residential IP; the chains' booking APIs are read from there). cron calls it through the
 # workspace's job wrapper, which adds the wake lock, the memory wait and a notification on success/failure:
 #   10 * * * *  /data/local/debian-boot.sh -c "/root/workspace/automation/phone/run-job.sh cinema"
-# Hourly at :10 is the owner's ruling (Task 6), switched on only after the cutover (docs/CUTOVER.md
-# step 6); until then four times a day. Prices sample at most once per cinema x hall x date per day
+# Hourly at :10 is the owner's ruling (Task 6), on since 2026-09-27. Prices sample at most once per cinema x hall x date per day
 # (data/price_cache.json), so the extra runs cost showtime/listing calls only.
 # By hand, in the foreground:  bash run.sh [--force]   (arguments go to refresh.py)
 #
@@ -27,6 +26,9 @@ set -uo pipefail
 # DEGRADED_RC must match run-job.sh's own constant of the same name -- see that file's comment
 # for why 78 and not 2 (docs/RULINGS.md:37).
 DEGRADED_RC=78
+# The whole body is one brace group ending in exit: bash parses it completely before running, so a
+# `git pull` that rewrites this file mid-run cannot make bash read the new bytes at the old offset.
+{
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$HERE"
 # Test seams (final review C2): CINEMA_LOG_DIR / CINEMA_ENV_SH point the log and the notify mechanism
@@ -225,3 +227,5 @@ if [ -n "$new_line" ]; then
   note "سينما 🎬" "نزل: $new_line" "elyoxe-cinema-new"
 fi
 echo "== cinema run done"
+exit 0
+}
