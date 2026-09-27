@@ -100,6 +100,19 @@ HOME_T = {"top": ("الأكثر عرضاً الليلة", "Most shown tonight"),
           "tag_thu": ("الخميس", "Thursday"), "tag_last": ("آخر أسبوع", "Last week"),
           "prev": ("السابق", "Previous"), "next": ("التالي", "Next"), "slides": ("الأفلام الأبرز", "Featured films"),
           "min": ("دقيقة", "min"), "pause": ("أوقف التقليب", "Pause the slides")}
+# the film page's words (UI redesign Task 4)
+FILM_T = {"about": ("عن الفيلم", "About"), "cast": ("الطاقم", "Cast"), "similar": ("شي يشبه", "More like it"),
+          "double": ("فيلمين ورا بعض", "Double feature"), "compare": ("قارن", "Compare"), "tabs": ("عن الفيلم وأكثر", "About the film and more"),
+          "more": ("المزيد", "More"), "less": ("أقل", "Less"), "share": ("شارك", "Share"), "trailer": ("الإعلان", "Trailer"),
+          "opts": ("خيارات العرض", "Showtime options"), "days": ("الأيام", "Days"),
+          "times": ("المواعيد والأسعار", "Showtimes and prices"),
+          "pick": ("اختر وقت", "Pick a time"),
+          "pick_s": ("اختر وقت من المواعيد، وتطلع لك تذكرته هني: سعر كل مقعد بعد خصم بطاقتك، والحجز والاتجاهات.",
+                     "Pick a showtime and its ticket shows here: every seat’s price after your card, booking and directions."),
+          "details": ("التفاصيل والحجز", "Details and booking"), "chosen": ("الوقت المختار", "Chosen time"),
+          "n_cin": (("سينما وحدة", "سينمتين", "سينمات", "سينما"), ("cinema", "cinemas")),
+          "none": ("ما لقينا عروض لهذا الفيلم في اليومين الجايين.", "No shows for this film in the next two days.")}
+WEEKDAYS = (("الاثنين", "Mon"), ("الثلاثاء", "Tue"), ("الأربعاء", "Wed"), ("الخميس", "Thu"), ("الجمعة", "Fri"), ("السبت", "Sat"), ("الأحد", "Sun"))
 # inline icons (24 px grid, stroked in currentColor): the phone tab bar and the header's search button
 ICONS = {"home": '<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/>',
          "pin": '<path d="M12 21s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>',
@@ -108,7 +121,10 @@ ICONS = {"home": '<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/>',
          # the home page (UI redesign Task 3): the «تصفية» chip, a row's arrows (drawn pointing to the inline end:
          # CSS turns them in RTL), the trailer's play mark
          "filter": '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
-         "next": '<path d="m9 5 7 7-7 7"/>', "prev": '<path d="m15 5-7 7 7 7"/>'}
+         "next": '<path d="m9 5 7 7-7 7"/>', "prev": '<path d="m15 5-7 7 7 7"/>',
+         # the film page (Task 4): «شارك», the day bar's «⋯»
+         "share": '<path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"/>',
+         "dots": '<circle cx="5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="19" cy="12" r="1.3" fill="currentColor"/>'}
 
 
 def icon(name):
@@ -533,7 +549,13 @@ class Kit:
     SLOTS = {"home.after_tonight": "home, after its rows, before «كل الأفلام»",
              "city.after_tonight": "city page, under its «الليلة» (ctx: city)",
              "cinema.after_halls": "cinema page, after «القاعات والأسعار» (ctx: cid)",
-             "film.info": "film page, after the facts and trailer, before the controls (ctx: fid)"}
+             "film.info": "film page, «عن الفيلم» tab, after the synopsis and facts (ctx: fid)",
+             # the film page's other places (UI redesign Task 4): each fills its own tab, or the hero's actions
+             "film.share": "film page, the hero's actions: a share link (ctx: fid)",
+             "film.cast": "film page, «الطاقم» tab (ctx: fid)",
+             "film.similar": "film page, «شي يشبه» tab (ctx: fid)",
+             "film.double": "film page, «فيلمين ورا بعض» tab (ctx: fid)",
+             "film.compare": "film page, «قارن» tab (ctx: fid); the hero's «قارن» links to it"}
 
     def slot(self, name, lang, **ctx):
         return "".join(fn(self, lang, **ctx) or "" for fn in self.slots.get(name, ()))

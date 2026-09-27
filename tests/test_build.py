@@ -299,8 +299,9 @@ def test_a_percentage_inside_a_verdict_is_isolated(tmp_path):
     out = _built(tmp_path, m)
     ar = read(out, "film", "crawlers")
     assert 'بتقييم نقاد <span class="num" dir="ltr">88%</span>' in ar
-    # the ratings under the verdict: two plain items in reading order, never the mixed-language «basis»
-    assert '<p class="basis rates"><span>النقاد <span class="num" dir="ltr">22%</span></span><span>الجمهور <span class="num" dir="ltr">35%</span></span></p>' in ar
+    # the ratings under the verdict: two plain items in reading order, never the mixed-language «basis» (UI redesign
+    # Task 4: the first item of the hero's facts line, a span there)
+    assert '<span class="basis rates"><span>النقاد <span class="num" dir="ltr">22%</span></span><span>الجمهور <span class="num" dir="ltr">35%</span></span></span>' in ar
     assert "RT 88%" not in ar
 
 
@@ -479,7 +480,7 @@ def test_dates_are_human_and_english_runs_marked(site):
     cin = read(out, "al-ain", "star-bawadi-mall")
     assert "<small>25 سبتمبر 2026</small>" in cin and "25 September 2026" in read(out, "en", "al-ain", "star-bawadi-mall")
     assert 'lang="en">Google Maps</a>' in cin and 'lang="en">Waze</a>' in cin
-    assert '<p class="basis rates">' in read(out, "film", "crawlers") and '<bdi dir="ltr" lang="en">' not in read(out, "film", "crawlers")
+    assert '<span class="basis rates">' in read(out, "film", "crawlers") and '<bdi dir="ltr" lang="en">' not in read(out, "film", "crawlers")
     assert "E0816F" not in open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
     # font preloads: the Arabic display + body faces (en: the latin body face); the digits' latin subset comes via the stylesheet
     assert 'href="/assets/fonts/readex-arabic.woff2"' in read(out) and 'href="/assets/fonts/markazi-700-arabic.woff2"' in read(out)

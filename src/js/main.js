@@ -22,12 +22,12 @@ function ago(at) {
 }
 function ages() { qa("[data-at]").forEach(function (el) { el.textContent = C.updated + " " + ago(el.getAttribute("data-at")); }); }
 
-/* film page: the visitor's city first */
+/* film page: the visitor's city first and open, the others folded (film.js); a chosen time that left the view goes */
 function renderFilm() {
   var secs = qa(".fcity[data-city]"); if (!secs.length) return;
   var mine = secs.filter(function (s) { return s.getAttribute("data-city") === city; });
-  secs.forEach(function (s) { s.classList.toggle("here", s.getAttribute("data-city") === city); });
   if (mine.length) secs[0].parentNode.insertBefore(mine[0], secs[0]);
+  fsCities(); fsCheck();
 }
 function pickCity(c) {
   city = c; set("city", c);
@@ -44,6 +44,7 @@ function markCard() {
 function pickCard(c) {
   card = c; set("card", c); markCard();
   renderPrices(true);
+  if (page === "film") fsDock(false);
   if (S) renderHome(true); else applyFilters();
   if (tk) renderTerms(tk.getAttribute("data-chain"));
 }
@@ -60,7 +61,15 @@ function humanDay(d) {
 }
 function dayName(d) { return d === TODAY ? C.today : d === TOMORROW ? C.tomorrow : humanDay(d); }
 function relabelDays() {
-  qa("[data-day]").forEach(function (b) { b.textContent = dayName(b.getAttribute("data-day")); });
+  /* the film page's day bar: «اليوم»/«بكرة» over the weekday and date; a day that is neither says its weekday */
+  qa("[data-day]").forEach(function (b) {
+    var d = b.getAttribute("data-day"), t = q("b", b), n = q("span", b), named = d === TODAY || d === TOMORROW;
+    if (!t) { b.textContent = dayName(d); return; }
+    t.textContent = named ? dayName(d) : b.getAttribute("data-wd") || dayName(d);
+    if (n && !named) n.textContent = humanDay(d);
+    /* a day already over (the page was built the night before) has nothing left to book: its button goes */
+    b.hidden = d < TODAY && qa("[data-day]").some(function (o) { return o.getAttribute("data-day") >= TODAY; });
+  });
   qa(".times[data-d] > .dl").forEach(function (l) { l.textContent = dayName(l.parentNode.getAttribute("data-d")); });
   /* a day heading already carries the human date in its <small>: a day that is neither today nor
      tomorrow keeps only that, never the ISO date twice */
@@ -123,18 +132,20 @@ function bindRails() {
       qa("[data-day]").forEach(function (o) { o.setAttribute("aria-pressed", o === b ? "true" : "false"); });
       qa(".cgs .times[data-d]").forEach(function (t) { t.hidden = t.getAttribute("data-d") !== d; });
       applyFilters();
+      if (page === "film") { fsMore(); fsSoon(); fsCheck(); }
     });
   });
+  upgradeTimes(); bindFilm();
   relabelDays();
   var days = qa("[data-day]"), cur = days.filter(function (b) { return b.getAttribute("data-day") === TODAY; })[0] ||
     days.filter(function (b) { return b.getAttribute("data-day") > TODAY; })[0] || days[0];
   if (cur) cur.click();
   document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-forget]")) forgetLoc(); });
   var note = get("nearnote"); if (note) { set("nearnote", ""); nearMsg(note); }
-  upgradeTimes(); posterFallback();
+  posterFallback();
   markCard(); marks(); ages(); renderPrices(false);
-  if (page === "film") renderFilm();
-  bindSheets(); bindFilters(); bindBill(); bindRails(); bindTicket(); bindTrailer(); bindPWA(); lazyRow();
+  if (page === "film") { renderFilm(); fsSoon(); }
+  bindSheets(); bindFilters(); bindBill(); bindRails(); bindTicket(); bindTabs(); bindTrailer(); bindPWA(); lazyRow();
   startFeatures();
   applyFilters();
   if (ST.prayer) applyPrayer();
@@ -146,5 +157,14 @@ function bindRails() {
   });
   if (page === "home" || page === "city") loadCity();
   /* the clock: every minute «الحين», the struck times and the ages move on */
-  setInterval(function () { var d = TODAY; tick(); if (d !== TODAY) relabelDays(); marks(); ages(); renderNow(); renderNear(); }, 60e3);
+  setInterval(function () {
+    var d = TODAY; tick();
+    if (d !== TODAY) {
+      relabelDays();
+      var gone = q('[data-day][aria-pressed="true"][hidden]'), nx = qa("[data-day]").filter(function (b) { return !b.hidden; })[0];
+      if (gone && nx) nx.click();
+    }
+    marks(); ages(); renderNow(); renderNear();
+    if (page === "film") { fsSoon(); fsCheck(); }
+  }, 60e3);
 })();

@@ -163,7 +163,6 @@ html.sheet-open{overflow:hidden}
   linear-gradient(to var(--to-end),var(--night) 0%,rgba(15,11,12,0) 45%),
   linear-gradient(180deg,rgba(15,11,12,.1) 0%,rgba(15,11,12,.5) 60%,var(--night) 100%)}
 .bd.noimg::after{background:linear-gradient(180deg,rgba(15,11,12,.15) 0%,rgba(15,11,12,.55) 60%,var(--night) 100%)}
-.fhero .bd-t{display:none}
 
 /* ------------------------------------------------ section heads, poster rows */
 .sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-block:18px 10px}
@@ -218,57 +217,171 @@ html.sheet-open{overflow:hidden}
 .head .meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--seat);margin-block-start:10px}
 .go a{color:var(--screen)}
 .hint{color:var(--seat);font-size:13px;margin-block-start:10px}
-main > section:not(.bill):not(.rail):not(.all):not(.head):not(.fhero),main > .wrap > section,.split .main > section{margin-block-start:36px}
-main > section > h2,.main > section > h2,.cities > h2,.srcs > h2{font-size:26px;padding-block-end:10px;margin-block-end:4px;border-block-end:1px solid var(--line)}
+main > section:not(.bill):not(.rail):not(.all):not(.head):not(.fhero):not(.fsched),main > .wrap > section,.split .main > section{margin-block-start:36px}
+main > section:not(.fsched) > h2,.main > section > h2,.cities > h2,.srcs > h2{font-size:26px;padding-block-end:10px;margin-block-end:4px;border-block-end:1px solid var(--line)}
 h2 small{font-family:var(--body);font-weight:400;font-size:13px;color:var(--seat)}
 
-/* ------------------------------------------------ film page */
-.fhero{position:relative}
-.fhero .bd{block-size:calc(440px + var(--head))}
-.fgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
-.fposter{display:flex;justify-content:center;padding-block:10px 0}
-.pst.hero{inline-size:min(62vw,260px);box-shadow:0 30px 70px rgba(122,22,38,.45)}
+/* ------------------------------------------------ film page (UI redesign Task 4; the mock's .fhero, .bar, .lay, .cin,
+   .tb, .ticket, .dock, .tabsx, .about): the hero, the sticky day bar, the schedule with the ticket beside it (desktop)
+   or the dock under it (phone), then the tabs */
+/* the hero: the trailer frame under the header, night rising from the foot and from the text's side */
+.fhero{position:relative;min-block-size:70vh;display:flex;align-items:flex-end;overflow:hidden;margin-block-start:calc(-1 * var(--head))}
+.fh-bd{position:absolute;inset:0}
+.fhero .bd{inset:0;block-size:auto;z-index:0}
+.fhero .bd img.fr{inset:0;inline-size:100%;block-size:100%;filter:none;object-fit:cover;object-position:50% 30%}
+/* no frame yet: the poster blurred beyond reading and darkened, full-bleed (as the home billboard) */
+.fhero .bd.pf img.pb{inset:-12%;inline-size:124%;block-size:124%;object-fit:cover;filter:blur(28px) brightness(.42) saturate(1.15)}
+/* no poster either: the film's colour as a velvet-dark glow (the typographic tile stands in the poster's place) */
+.fhero .bd.noimg{background:radial-gradient(70% 55% at 50% 30%,color-mix(in srgb,var(--pc) 70%,var(--night)),var(--night) 75%)}
+.fhero .bd-t{position:absolute;inset-block-start:calc(var(--head) + 24px);inset-inline-start:50%;translate:-50% 0;inline-size:min(44vw,190px);
+  block-size:auto;aspect-ratio:2/3;opacity:.7;box-shadow:0 30px 80px -20px rgba(122,22,38,.9)}
+:root[dir=rtl] .fhero .bd-t{translate:50% 0}
+.fhero .bd-t .pst-t{font-size:30px}
+.fhero .bd::after{background:linear-gradient(0deg,var(--night) 3%,rgba(15,11,12,.4) 50%,rgba(15,11,12,.15) 100%),
+  linear-gradient(to var(--to-end),rgba(15,11,12,.8),rgba(15,11,12,0) 65%)}
+.fhero-in{position:relative;z-index:1;display:flex;gap:32px;align-items:flex-end;inline-size:100%;padding-block:calc(var(--head) + 40px) 26px}
+.fh-t{min-inline-size:0;flex:1 1 auto}
+.fposter{display:none}
+.pst.hero{inline-size:220px;aspect-ratio:2/3;box-shadow:0 30px 80px -20px rgba(122,22,38,.9)}
 .pst.hero .pst-t{font-size:34px}
-.fhero .fhead .crumbs{display:none}
-.fhead{display:flex;flex-direction:column;justify-content:flex-end;padding-block:14px 12px}
-.fhead .crumbs{margin-block-end:auto;padding-block-start:6px}
-.ft{font-size:48px;line-height:1}
-[lang=en] .ft{font-size:40px;letter-spacing:-.02em}
-.fte{font-size:14px;color:var(--seat);margin-block-start:2px}
-p.rr{font-size:13px;color:var(--dim);margin-block-start:4px}
-.verdict{display:flex;align-items:flex-start;gap:12px;padding-block-start:4px}
-.verdict .word{font-family:var(--display);font-weight:var(--dw);font-size:28px;line-height:1.1;color:var(--seat);flex:0 0 auto}
-.verdict.v-yes .word{color:var(--gold)}
-.verdict .say{font-size:12px;line-height:1.6;color:var(--dim);padding-block-start:4px}
-.basis{font-size:11px;color:var(--seat);margin-block-start:4px}
-.basis.rates{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:13px;color:var(--dim)}
-.basis.rates .num{color:var(--screen);font-weight:600}
-.syn{font-size:13px;line-height:1.7;color:var(--dim);margin-block-start:8px;max-inline-size:60ch}
-.facts{margin:10px 0 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding-block:8px;border-block:1px solid var(--line)}
-.facts div{display:flex;flex-direction:column;gap:2px;min-inline-size:0}
-.facts dt{font-size:11px;color:var(--seat)}
-.facts dd{margin:0;font-weight:600;font-size:14px;overflow-wrap:anywhere}
-.trl{margin-block-start:12px}
-.trl .btn{min-block-size:44px;font-size:14px;padding-inline:16px}
-.finfo .me{margin-block-start:12px}
-.bar{justify-content:space-between;align-items:center;gap:12px;padding-block-start:10px;flex-wrap:wrap}
-.days .chip{min-block-size:40px;padding-inline:16px}
+.ft{font-size:56px;line-height:1.02;margin-block-end:8px;overflow-wrap:anywhere}
+[lang=en] .ft{font-size:44px;letter-spacing:-.02em}
+:root[dir=rtl] .ft[dir=ltr]{text-align:right}
+.fte{font-size:15px;color:var(--seat);margin-block-end:12px}
+.fte bdi + .num{margin-inline-start:6px}
+p.rr{font-size:13px;color:var(--dim);margin-block:-6px 12px}
+/* the verdict: three lines with script («المزيد» opens the rest); all of it without */
+.fv{font-size:15px;line-height:1.6;max-inline-size:60ch;color:var(--screen)}
+.js .fv:not(.open){display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.fv .word{font-weight:500;color:var(--screen)}
+.fv.v-yes .word{color:var(--gold)}
+/* «المزيد» sits over the end of the third line (never below it: showing it must not move the hero, CLS) */
+.fv-w{position:relative;max-inline-size:60ch}
+.fv-m{position:absolute;inset-block-end:0;inset-inline-end:0;font-size:inherit;line-height:1.6;color:var(--screen);padding-inline-start:48px;
+  background:linear-gradient(to var(--to-end),rgba(15,11,12,0),rgba(15,11,12,.9) 40px);text-decoration:none;font-weight:500}
+.fv.open + .fv-m{position:static;background:none;padding:0;font-size:13px;color:var(--seat);text-decoration:underline;min-block-size:32px}
+.fv-m[hidden]{display:none}
+.ff{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--seat);margin-block-start:12px}
+.ff .num{color:inherit}
+.basis{font-size:12px;color:var(--seat);margin-block-start:8px}
+.basis.rates{display:inline-flex;flex-wrap:wrap;gap:4px 12px;margin:0;font-size:inherit;color:var(--screen)}
+.basis.rates .num{color:var(--screen);font-weight:500}
+.fg{font-size:13px;color:var(--seat);margin-block-start:4px}
+.fh-t .cta{margin-block-start:20px}
+.fhero .btn.ghost{background:rgba(241,234,224,.14);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.fhero .btn svg{inline-size:16px;block-size:16px}
+.syn{font-size:15px;line-height:1.7;color:var(--screen);max-inline-size:62ch}
 .prayer{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--seat);margin-inline-start:auto}
 .switch{inline-size:50px;block-size:28px;padding:3px;border:0;display:flex;justify-content:flex-start;background:rgba(241,234,224,.2);cursor:pointer}
 .switch i{display:block;inline-size:22px;block-size:22px;background:var(--night)}
 .switch[aria-checked=true]{background:var(--live);justify-content:flex-end}
-.cgs{margin-block-start:6px}
-.fcity > h2{font-size:15px;font-family:var(--body);font-weight:500;color:var(--seat);padding-block:18px 4px}
-.fcity > h2 a{text-decoration:none}
-.fcity.here > h2{color:var(--screen)}
-.cg{padding-block:10px 12px;border-block-end:1px solid rgba(241,234,224,.1)}
-.cg-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
-.cg-h h3{font-size:22px}
+/* the day bar: sticks right under the header while the schedule is in view; the chosen day gold */
+.dbar{position:sticky;inset-block-start:var(--head);z-index:25;background:var(--night);border-block-end:1px solid var(--line)}
+.js .dbar.js-only{display:block!important}
+.dbar-in{display:flex;align-items:center;gap:8px;padding-block:10px}
+.days{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;min-inline-size:0}
+.days::-webkit-scrollbar{display:none}
+.dy[hidden]{display:none}
+.dy{flex:0 0 auto;min-block-size:44px;padding-inline:14px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:0;
+  font:inherit;font-size:13px;line-height:1.25;color:var(--seat);background:none;border:0;border-block-end:2px solid transparent;cursor:pointer;text-align:start}
+.dy b{font-weight:500;color:var(--screen);font-size:14px}
+.dy[aria-pressed=true]{border-block-end-color:var(--gold)}
+.dy[aria-pressed=true] b{color:var(--gold)}
+.dmore{margin-inline-start:auto;position:relative;border:1px solid var(--line-2)}
+.dmore .fbadge{position:absolute;inset-block-start:-6px;inset-inline-end:-6px}
+/* the schedule: per city a disclosure (the visitor's open and first), per cinema its name, distance and «الخريطة»,
+   then its times */
+.fsched{position:relative}
+.lay{display:grid;grid-template-columns:minmax(0,1fr);gap:0 48px}
+.cgs{min-inline-size:0}
+.nc{padding-block:16px 0;color:var(--dim);font-size:14px}
+.nc[hidden]{display:none}
+.fcity{border-block-end:1px solid var(--line)}
+.fcity > summary{display:flex;align-items:baseline;gap:10px;min-block-size:52px;padding-block:14px;cursor:pointer;list-style:none}
+.fcity > summary::-webkit-details-marker{display:none}
+.fcity > summary::after{content:"";margin-inline-start:auto;align-self:center;inline-size:7px;block-size:7px;border-right:1.5px solid var(--seat);border-bottom:1.5px solid var(--seat);transform:rotate(45deg)}
+.fcity[open] > summary::after{transform:rotate(-135deg)}
+.fcity > summary h2{font-family:var(--body);font-size:16px;font-weight:500}
+.fc-n{font-size:13px;color:var(--seat)}
+.fcity.here{border:0}
+.fcity.here > summary{cursor:default;min-block-size:0;padding-block:18px 0}
+.fcity.here > summary::after{display:none}
+.cg{padding-block:20px;border-block-end:1px solid var(--line)}
+.cg.more-h{display:none}
+.cg-h{display:flex;align-items:baseline;gap:4px 10px;margin-block-end:12px;flex-wrap:wrap}
+.cg-h h3{font-family:var(--body);font-size:16px;font-weight:500}
 .cg-h h3 a{text-decoration:none}
-.cg-m{font-size:12px;color:var(--seat);display:flex;flex-wrap:wrap;gap:4px 10px}
+.cg-m{display:contents;font-size:13px;color:var(--seat)}
+.cg-m [data-dist]{font-size:13px;color:var(--seat)}
+.cg-m .age{font-size:12px;color:var(--seat)}
+.cg-h .map{font-size:13px;color:var(--seat);margin-inline-start:auto;text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:4px;min-block-size:24px;display:inline-flex;align-items:center}
+.more-c{display:flex;min-block-size:44px;align-items:center;font-size:14px;color:var(--dim);margin-block:8px}
+/* no script: each hall's name and «من» price over its times (the rows the server writes) */
 .hl{margin-block-start:8px}
 .hl-n{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:12px;color:var(--seat)}
 .hl-n .hn{color:var(--dim)}
+/* with script (film.js): one row per day in time order; each button its time, its hall, its price after the card */
+.tx{gap:8px;margin:0}
+.tx .tm{min-inline-size:92px;min-block-size:0;padding:8px 12px;align-items:stretch;justify-content:flex-start;text-align:start;font-weight:400;line-height:1.3}
+.tx .tm .tt{font-size:17px;font-weight:500}
+.tx .tm .hn{font-size:11px;color:var(--seat);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-inline-size:10em}
+.tx .tm .p{font-size:12px;display:block}
+.tx .tm .p .num,.tx .tm .p b{font-size:12px;font-weight:400;color:var(--gold)}
+.tx .tm .p s,.tx .tm .p small{display:none}
+.tx .tm .sn{font-size:11px;color:var(--live);font-weight:400;margin-inline-start:6px;white-space:nowrap}
+.tx .tm.past{text-decoration:none;opacity:.35;color:var(--screen);border-color:var(--line-2)}
+.tx .tm.old{display:none}
+.tx .tm.nowish{border-color:var(--line-2)}
+.tx .tm.on,.tx .tm[aria-current]{background:rgba(226,182,89,.1);border-color:var(--gold);color:var(--screen)}
+.tx .tm.on small.hn,.tx .tm[aria-current] small.hn{color:var(--seat)}
+.tx .tm .lf,.tx .tm .pz{font-size:10px;color:var(--seat);text-align:start;max-inline-size:none}
+/* the ticket's column: a desktop thing (a phone opens the ticket as a sheet from the dock); «اختر وقت» when none */
+.tkcol{min-inline-size:0}
+.tk-empty{display:none}
+/* the dock: the chosen time on paper, over the tab bar; «التفاصيل والحجز» opens the ticket sheet */
+.dock{position:fixed;inset-inline:0;inset-block-end:calc(60px + env(safe-area-inset-bottom));z-index:31;background:var(--screen);color:var(--ink);
+  padding:12px var(--gut);display:flex;align-items:center;gap:12px}
+.dock[hidden]{display:none}
+.dk-t{min-inline-size:0;flex:1 1 auto}
+.dk-p{font-size:22px;font-weight:600;line-height:1.1}
+.dk-p .num{font-size:22px}
+.dk-p .per,.dk-p .na{font-size:12px;font-weight:400;color:var(--ink-2)}
+.dk-s{font-size:12px;color:var(--ink-2);line-height:1.5}
+.dk-b{margin-inline-start:auto;flex:0 0 auto;white-space:nowrap;background:var(--velvet);color:var(--screen);min-block-size:44px;padding-inline:18px;font-size:15px;font-weight:500;cursor:pointer}
+.dk-b:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+body.docked{padding-block-end:calc(140px + env(safe-area-inset-bottom))}
+/* the tabs: a line of words under the schedule; with script one panel at a time (tabs.js) */
+.ftabs{border-block-end:1px solid var(--line);margin-block-start:40px}
+.tabsx{display:flex;gap:26px;overflow-x:auto;scrollbar-width:none;scroll-margin-block-start:calc(var(--head) + 8px)}
+.tabsx::-webkit-scrollbar{display:none}
+.tabsx a{flex:0 0 auto;min-block-size:48px;display:inline-flex;align-items:center;font-size:15px;color:var(--seat);text-decoration:none;border-block-end:2px solid transparent}
+.tabsx a:hover{color:var(--screen)}
+.tabsx a[aria-selected=true]{color:var(--screen);border-block-end-color:var(--screen)}
+.tpns{padding-block:22px 0}
+.tpn{scroll-margin-block-start:calc(var(--head) + 8px)}
+.tpns > .tpn{margin-block-start:0}
+.tpn + .tpn{margin-block-start:40px}
+.js .tpn[role=tabpanel] + .tpn{margin:0}
+.tpn[hidden]{display:none}
+.tpn:focus-visible{outline-offset:6px}
+.tp-h{font-size:26px;margin-block-end:12px}
+/* inside a tab the tab says what it is: the sections' own headings stay for a reader, out of sight */
+.js .tpn[role=tabpanel] > .tp-h,.js .tpn[role=tabpanel] > section > h2:first-child,.js .tpn[role=tabpanel] .sec-h h2{position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.js .tpn[role=tabpanel] .dfeat > summary{display:none}
+.tpn#about{display:grid;gap:22px;max-inline-size:900px}
+.tpn#about[hidden]{display:none}
+.tpn .facts{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px 16px;font-size:14px;margin:0}
+.tpn .facts div{display:contents}
+.tpn .facts dt{color:var(--seat)}
+.tpn .facts dd{margin:0;overflow-wrap:anywhere}
+.tpn .crumbs{margin:0}
+.tpn .similar{margin:0;padding:0}
+.tpn .cmp,.tpn .sim,.tpn .cast{margin:0}
+.tpn .wrap{padding-inline:0;max-inline-size:none}
+/* an archived film: when it showed, and the way back to what is on */
+.fhero .archived{margin-block-start:20px;padding-block:14px 0;border-block-start:1px solid var(--line);display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+.arch-s{font-family:var(--display);font-weight:var(--dw);font-size:26px;line-height:1.25}
+.cg-m{font-size:12px;color:var(--seat);display:flex;flex-wrap:wrap;gap:4px 10px}
 .hl-n .pr,.times .pr{font-size:12px}
 .hl-n .p .num,.times .pr .p .num{font-size:14px}
 .times{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-block-start:6px}
@@ -310,6 +423,10 @@ p.rr{font-size:13px;color:var(--dim);margin-block-start:4px}
 .tk-seats .p small,.tk-seats .na,.ticket .per,.ticket .asof{color:var(--ink-2)}
 .tk-terms{padding:8px 16px 0;font-size:12px;color:var(--ink-2)}
 .tk-terms[hidden]{display:none}
+/* the calendar and «when to leave» links (plan.js) on ticket paper: ink, not the night's screen light */
+.ticket .plan-add{padding:8px 16px 0;font-size:13px}
+.ticket .plan-add .lnk{color:var(--ink);text-decoration-color:var(--ink-3)}
+.ticket .plan-leave{color:var(--ink-2)}
 .tk-act{display:flex;margin-block-start:10px}
 .tk-act .book{flex:1 1 auto;min-block-size:52px;display:flex;align-items:center;justify-content:center;background:var(--ink);color:var(--gold);text-decoration:none;font-weight:600;padding-inline:12px;text-align:center}
 .tk-act .book.off{color:var(--dim);font-weight:400}
@@ -421,8 +538,6 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
 .faq details p{color:var(--dim);font-size:14px;margin-block-start:6px}
 
 /* archived film page */
-.archived{margin-block-start:18px;padding-block:14px;border-block:1px solid var(--line);display:flex;flex-direction:column;gap:14px;align-items:flex-start}
-.arch-s{font-family:var(--display);font-weight:var(--dw);font-size:26px;line-height:1.25}
 .similar .posters.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px;overflow:visible;margin-inline:0;padding-inline:0}
 .similar .film{inline-size:auto}
 .nf{padding-block:60px}
@@ -478,53 +593,16 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
   [lang=en] .pt{font-size:52px}
   .head{padding-block:34px 10px}
   .lead{font-size:16px}
-  main > section > h2,.main > section > h2,.cities > h2,.srcs > h2,.day > h2{font-size:34px}
+  main > section:not(.fsched) > h2,.main > section > h2,.cities > h2,.srcs > h2,.day > h2{font-size:34px}
   .clist a{font-size:26px}
   .srow{grid-template-columns:minmax(12rem,20rem) minmax(0,1fr);gap:8px 40px}
   .sf{flex-direction:column;justify-content:flex-start}
   .sf .t{font-size:26px}
   .row .nm{font-size:26px}
 
-  /* film page: poster | information and cinemas | ticket panel */
-  body[data-page=film]::before{display:none}
-  .fhero .bd{block-size:760px;background:var(--night)}
-  .fhero .bd img{inset:auto;inset-block-start:-120px;inset-inline-start:-80px;inline-size:900px;block-size:780px;filter:blur(40px) saturate(1.1) brightness(.38);
-    -webkit-mask-image:radial-gradient(closest-side,#000 40%,transparent 100%);mask-image:radial-gradient(closest-side,#000 40%,transparent 100%)}
-  .fhero .bd::before{content:"";position:absolute;inset-block-start:-200px;inset-inline-start:-160px;inline-size:1000px;block-size:700px;
-    background:radial-gradient(closest-side,rgba(122,22,38,.55),rgba(15,11,12,0))}
-  .fhero .bd.noimg::before{background:radial-gradient(closest-side,color-mix(in srgb,var(--pc) 80%,transparent),rgba(15,11,12,0))}
-  .fhero .bd::after{background:linear-gradient(to var(--to-end),var(--night) 0%,rgba(15,11,12,0) 30%),linear-gradient(180deg,transparent 55%,var(--night) 100%)}
   .fn{font-size:22px}
   .film.big .fn{font-size:22px}
-  .fgrid{grid-template-columns:minmax(0,1fr) 340px;gap:48px;padding-block-start:44px;align-items:start}
-  .fposter{display:none;padding:0}
-  .fhead{min-block-size:0;padding:0;gap:16px}
-  .fhero .fhead .crumbs{display:block;margin:0}
-  .ft{font-size:88px;line-height:.9}
-  [lang=en] .ft{font-size:68px;line-height:.95}
-  .fte{font-size:18px;margin:0}
-  .finfo{display:flex;flex-direction:column;gap:16px;min-inline-size:0}
-  .finfo > *{max-inline-size:640px}
-  .finfo .cgs{max-inline-size:none}
-  .verdict{align-items:baseline;gap:20px;padding:0}
-  .verdict .word{font-size:38px}
-  .verdict .say{font-size:15px;max-inline-size:420px;padding:0}
-  .syn{font-size:15px;margin:0}
-  .basis{margin-block-start:-8px}
-  .facts{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;padding-block:14px;margin:0}
-  .facts dt{font-size:12px}
-  .facts dd{font-size:18px}
-  .trl{margin:0}
-  .finfo .me{margin:0}
-  .bar{padding-block-start:6px}
-  .days .chip{min-block-size:44px;font-size:15px}
   .prayer{font-size:14px}
-  .cg{display:grid;grid-template-columns:minmax(200px,1fr) auto;gap:6px 16px;align-items:center;padding-block:14px}
-  .cg-h{flex-direction:column;gap:2px}
-  .cg-h h3{font-size:26px;line-height:1.1}
-  .cg .hl{grid-column:2;margin:0;display:flex;align-items:center;gap:12px;justify-content:flex-end;flex-wrap:wrap}
-  .cg .hl-n{justify-content:flex-end}
-  .cg .times{margin:0;justify-content:flex-end}
   .tm{min-inline-size:70px}
   .ticket{position:sticky;inset-block-start:24px;margin:0}
   .tk-main{padding:16px 18px 12px;gap:3px}
@@ -544,21 +622,38 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
   .cf{grid-template-columns:96px minmax(0,1fr);gap:20px}
   .cf-b h3{font-size:28px}
   .similar .posters.grid{grid-template-columns:repeat(6,minmax(0,1fr))}
-  .archived{flex-direction:row;align-items:center;justify-content:space-between;max-inline-size:640px}
 }
-/* 1024-1279: no room for three columns; the poster heads the information column (as on a phone, start-aligned)
-   and the ticket panel spans both rows at the end side */
-@media (min-width:1024px) and (max-width:1279px){
-  .fposter{display:block;grid-column:1;justify-self:start}
-  .fgrid > .finfo{grid-column:1}
-  .fgrid > .ticket{grid-column:2;grid-row:1 / span 2}
-  .pst.hero{inline-size:220px;block-size:330px;aspect-ratio:auto;box-shadow:0 30px 70px rgba(122,22,38,.35),0 30px 70px rgba(0,0,0,.5)}
-}
-@media (min-width:1280px){
-  .fgrid{grid-template-columns:300px minmax(0,1fr) 360px;gap:56px}
-  .fposter{display:block}
-  .pst.hero{inline-size:300px;block-size:450px;aspect-ratio:auto;box-shadow:0 40px 90px rgba(122,22,38,.35),0 40px 90px rgba(0,0,0,.6)}
+/* film page, desktop (UI redesign Task 4): the poster card beside the words in the velvet glow, the bar in the
+   page's measure, the schedule with the ticket as a sticky column at the end, no dock */
+@media (min-width:1024px){
+  .fhero{min-block-size:min(80vh,760px)}
+  .fhero-in{padding-block:calc(var(--head) + 60px) 40px;gap:40px}
+  .fposter{display:block;flex:0 0 auto}
+  .fhero .bd-t{display:none}
+  .pst.hero{inline-size:240px;block-size:360px;aspect-ratio:auto}
   .pst.hero .pst-t{font-size:44px}
+  .fhero .bd.pf img.pb{inset:-60px;inline-size:calc(100% + 120px);block-size:calc(100% + 120px);filter:blur(40px) saturate(1.1) brightness(.38)}
+  .ft{font-size:88px;line-height:.95;margin-block-end:12px}
+  [lang=en] .ft{font-size:68px}
+  .fte{font-size:18px}
+  .fv{font-size:16px}
+  .ff,.fg{font-size:14px}
+  .dy{font-size:13px}
+  .lay{grid-template-columns:minmax(0,1fr) 360px}
+  .cg{padding-block:20px}
+  .cg-h h3{font-size:18px}
+  .tx .tm{min-inline-size:92px}
+  .tkcol{position:sticky;inset-block-start:calc(var(--head) + 80px);align-self:start;margin-block-start:20px}
+  .tkcol .ticket{position:static;margin:0}
+  .tk-empty{display:flex;flex-direction:column;gap:8px;background:var(--tint);border:1px dashed var(--line-2);padding:22px}
+  .tk-empty[hidden]{display:none}
+  .tk-empty .k{font-family:var(--display);font-weight:var(--dw);font-size:30px;line-height:1.1}
+  .tk-empty p:not(.k){font-size:14px;color:var(--dim)}
+  .dock,body.docked .dock{display:none}
+  body.docked{padding-block-end:0}
+  .ftabs{margin-block-start:56px}
+  .tabsx{gap:30px}
+  .tp-h{font-size:30px}
 }
 :root[dir=rtl]{--to-end:left;--gx-end:20%}
 :root[dir=ltr]{--to-end:right;--gx-end:80%}

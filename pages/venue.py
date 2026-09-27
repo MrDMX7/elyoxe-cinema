@@ -6,7 +6,7 @@ C «Planning» + B.46 «Snacks»). Fills two of site_kit.Kit.SLOTS (docs/PLUGINS
                       chain's snack combos (snacks.yaml) and any OFFICIAL card F&B discount already in
                       discounts.yaml (site.rules — never a new number), and today's double-feature pairs
                       at this cinema.
-  film.info           today's double-feature pairs this film is in, at any cinema.
+  film.double         today's double-feature pairs this film is in, at any cinema (the «فيلمين ورا بعض» tab).
 
 The calendar/leave-by/ics side of Task 4 is client-side: src/js/plan.js (in the ticket, main bundle).
 
@@ -235,9 +235,9 @@ def _pair_li(site, lang, cid, fa, fb, ts, cinema=True, cap=MAX_TIMES):
             f'<small>{_times(ts, lang, cap)}</small>{cin}</li>')
 
 
-def _details(lang, n, items, more=""):
+def _details(lang, n, items, more="", open_=False):
     head = "فيلمين ورا بعض" if lang == "ar" else "Back-to-back double feature"
-    return (f'<details class="dfeat"><summary>{esc(head)} <small>({num(n)})</small></summary>'
+    return (f'<details class="dfeat"{" open" if open_ else ""}><summary>{esc(head)} <small>({num(n)})</small></summary>'
             f'<ul>{"".join(items)}</ul>{more}</details>')
 
 
@@ -256,7 +256,7 @@ def double_feature_html(site, lang, pairs, show_cinema=True):
 
 def film_double_feature_html(site, lang, pairs):
     """A film page: pairings anywhere in the country — a few per city (earliest first), each naming its
-    cinema, whose own page lists that cinema's day. Collapsed, so the day's schedule stays the page."""
+    cinema, whose own page lists that cinema's day. Open: it is the page's «فيلمين ورا بعض» tab."""
     if not pairs:
         return ""
     groups = group_pairs(pairs)
@@ -268,7 +268,8 @@ def film_double_feature_html(site, lang, pairs):
     more = ""
     if len(keep) < len(groups):
         more = (f'<p class="hint">{"والباقي في صفحة كل سينما" if lang == "ar" else "More on each cinema’s page"}</p>')
-    return _details(lang, len(groups), [_pair_li(site, lang, *g, cap=FILM_TIMES) for g in keep], more)
+    # open: on the film page it is its own tab now (UI redesign Task 4), no longer a fold under the schedule
+    return _details(lang, len(groups), [_pair_li(site, lang, *g, cap=FILM_TIMES) for g in keep], more, open_=True)
 
 
 def register(site):
@@ -287,4 +288,4 @@ def register(site):
                  if p[0]["film"] == fid or p[1]["film"] == fid]
         return film_double_feature_html(kit, lang, pairs)
 
-    return Plugin(slots={"cinema.after_halls": after_halls, "film.info": film_info})
+    return Plugin(slots={"cinema.after_halls": after_halls, "film.double": film_info})

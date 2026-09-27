@@ -47,7 +47,15 @@ the sitemap and the assets.
 | `home.after_tonight` | home, after its rows, before «كل الأفلام» (UI redesign Task 3) | — |
 | `city.after_tonight` | a city page, under its «الليلة» | `city` |
 | `cinema.after_halls` | a cinema page, after «القاعات والأسعار» | `cid` |
-| `film.info` | a film page (showing or archived), after the facts and the trailer | `fid` |
+| `film.info` | a film page (showing or archived): the «عن الفيلم» tab, after the synopsis and the facts (UI redesign Task 4) | `fid` |
+| `film.share` | a film page: the hero's actions, after «الإعلان» (a ghost button; pages/og.py's «شارك») | `fid` |
+| `film.cast` | a film page: the «الطاقم» tab (pages/people.py) | `fid` |
+| `film.similar` | a film page: the «شي يشبه» tab (pages/insights.py; an archived film gets core's tiles) | `fid` |
+| `film.double` | a film page: the «فيلمين ورا بعض» tab (pages/venue.py) | `fid` |
+| `film.compare` | a film page: the «قارن» tab (pages/insights.py); the hero's «قارن» links to it | `fid` |
+
+On the film page a tab is drawn only when its slot (or core's own part) has something to show; with no script
+the tabs are links to the sections, stacked in the tabs' order.
 
 A slot's markup counts against the page's budget (the schedules shrink to fit what is left). An unknown slot
 name fails the build. Need another place? Add it to `Kit.SLOTS` and one `self.slot(...)` line in core —

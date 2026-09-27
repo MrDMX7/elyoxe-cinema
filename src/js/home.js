@@ -73,7 +73,7 @@ function renderSched() {
 /* elsewhere, a compact schedule's text times become buttons; their ticket comes from the slice */
 function upgradeTimes() {
   qa(".tl").forEach(function (tl) {
-    if (q(".tm", tl)) return;
+    if (q(".tm", tl) || tl.closest(".cgs")) return;   /* a film page's: film.js lays them out itself */
     var sm = q("small", tl), ts = tl.textContent.replace(sm ? sm.textContent : "", "").trim().split(/\s+/).filter(function (t) { return /^\d\d:\d\d$/.test(t); });
     tl.innerHTML = (sm ? sm.outerHTML + " " : "") + ts.map(function (t) { return tmButton({ t: t }); }).join("");
   });

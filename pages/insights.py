@@ -39,7 +39,7 @@ def register(site):
     pages = [Page(("prices",), lang, lambda lang=lang: ins.prices(lang)) for lang in ("ar", "en")]
     pages += [Page(("boxoffice",), lang, lambda lang=lang: ins.boxoffice(lang)) for lang in ("ar", "en")]
     return Plugin(pages=pages, data={"data/compare.json": ins.compare_data},
-                  slots={"film.info": ins.film_slot, "home.after_tonight": ins.home_links})
+                  slots={"film.similar": ins.film_similar, "film.compare": ins.film_compare, "home.after_tonight": ins.home_links})
 
 
 class Insights(Pages):
@@ -310,9 +310,14 @@ class Insights(Pages):
         return {"t": self.today, "f": f_, "p": p_, "n": n_}
 
     # -------------------------------------------------- slots
-    def film_slot(self, site, lang, fid):
+    # the film page's «شي يشبه» and «قارن» tabs (UI redesign Task 4; one film.info slot before)
+    def film_similar(self, site, lang, fid):
+        if self.films[fid].get("status") == "archived": return ""   # core draws its own tiles there
+        return self.similar_html(fid, lang)
+
+    def film_compare(self, site, lang, fid):
         if self.films[fid].get("status") == "archived": return ""
-        return self.similar_html(fid, lang) + self.compare_box(lang, fid)
+        return self.compare_box(lang, fid)
 
     def person(self, pid, lang):
         """(name, href|None) from data["people"] — name_ar on Arabic pages, name_en on English, the other as a

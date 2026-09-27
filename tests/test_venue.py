@@ -195,13 +195,13 @@ def test_group_pairs_folds_times_of_the_same_films_at_the_same_cinema():
 
 
 def test_film_page_double_features_stay_small_at_real_volume():
-    """A busy film pairs with hundreds of shows across the country: the film page carries a collapsed,
-    capped list (a few per city, each linked to its cinema page, which lists every pair) — never all of them."""
+    """A busy film pairs with hundreds of shows across the country: the film page carries a capped list (open: it is
+    its own «فيلمين ورا بعض» tab since UI redesign Task 4) (a few per city, each linked to its cinema page, which lists every pair) — never all of them."""
     site = _PairSite(60)
     pairs = [p for p in venue.double_features(_busy_day()) if "a" in (p[0]["film"], p[1]["film"])]
     assert len(pairs) > 500
     html = venue.film_double_feature_html(site, "ar", pairs)
-    assert html.startswith('<details class="dfeat">') and "<summary>" in html
+    assert html.startswith('<details class="dfeat" open>') and "<summary>" in html
     assert len(html.encode()) < 6_000
     assert html.count("<li") <= venue.PER_CITY * 4
     en = venue.film_double_feature_html(site, "en", pairs)

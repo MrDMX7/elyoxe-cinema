@@ -12,6 +12,7 @@ visitor's own city/card (never the sharer's) to a share link's base URL.
 """
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -221,7 +222,8 @@ def test_film_page_og_image_points_at_the_rendered_file(tmp_path, cache):
     html = open(os.path.join(out, "film", "test-film", "index.html"), encoding="utf-8").read()
     assert f'og:image" content="{site_kit.SITE}/og/{name_ar}"' in html
     assert os.path.isfile(os.path.join(out, "og", name_ar))
-    assert '<p class="pshare">' in html and 'data-share-url="' in html
+    # the film page's share link is the hero's «شارك» (UI redesign Task 4: slot film.share)
+    assert re.search(r'<a class="btn ghost" href="https://wa\.me/\?text=[^"]+"[^>]*data-share data-share-msg="[^"]+" data-share-url="', html)
     # I2: the rendered card is 1200x630, so the page says so
     assert '<meta property="og:image:width" content="1200">' in html
     assert '<meta property="og:image:height" content="630">' in html

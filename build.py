@@ -29,7 +29,7 @@ from site_kit import Emit, Kit, Plugin  # noqa: E402
 from pages import discover  # noqa: E402
 
 # the core bundle's order (pages/core.py JS); kept here for old callers
-JS_MODULES = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "ticket", "trailer", "pwa", "sheet", "main")
+JS_MODULES = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "bill", "ticket", "film", "tabs", "trailer", "pwa", "sheet", "main")
 
 
 # ---------------------------------------------------------------- the page modules' assets

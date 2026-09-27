@@ -5,7 +5,7 @@ and the film/cinema share buttons whose links keep the visitor's city+card (road
   each film page's og:image (Twitter falls back to it: src/page.html carries no separate
   twitter:image) at its own file via `site.og_override` (site_kit.py's one hook for this, kept to a
   single additive line — this module owns that hook, per the batch's file split).
-- `slots` add a plain share link to the film page (`film.info`) and the cinema page
+- `slots` add a share link to the film page (`film.share`: the hero's «شارك», UI redesign Task 4) and the cinema page
   (`cinema.after_halls`): static markup, same shape as the ticket's own `[data-tk-share]` link
   (site_kit.py's `ticket()`); src/js/share.js (this module's `JS`) rewrites every `[data-share]`
   link's href with the visitor's own `?city=&card=` just before it is used, exactly like
@@ -15,7 +15,7 @@ import os
 import shutil
 from urllib.parse import quote
 
-from site_kit import ROOT, SITE, P, Plugin, esc
+from site_kit import ROOT, SITE, P, Plugin, esc, icon
 
 CSS = ("og",)
 JS = ("share",)
@@ -32,11 +32,15 @@ def _share_link(site, lang, url, msg):
 
 
 def _film_slot(site, lang, fid):
+    """The film hero's «شارك» (UI redesign Task 4): a ghost button of the hero's actions, the same link and
+    attributes as `_share_link` (share.js appends the visitor's city and card, and uses the phone's share sheet)."""
     f = site.films.get(fid) or {}
     if f.get("status") == "archived":
         return ""  # nothing left to share a live price for
-    t = site.ftitle(fid, lang)
-    return _share_link(site, lang, SITE + P(lang, "film", fid), t)
+    t, url = site.ftitle(fid, lang), SITE + P(lang, "film", fid)
+    wa = "https://wa.me/?text=" + quote(t + "\n" + url, safe="")
+    return (f'<a class="btn ghost" href="{esc(wa)}" rel="noopener" target="_blank" data-share data-share-msg="{esc(t)}" '
+            f'data-share-url="{esc(url)}">{icon("share")}{esc("شارك" if lang == "ar" else "Share")}</a>')
 
 
 def _cinema_slot(site, lang, cid):
@@ -63,6 +67,6 @@ def register(site):
             site.og_override[(lang, ("film", fid))] = f"{SITE}/og/{name}"
 
     return Plugin(slots={
-        "film.info": lambda site, lang, fid: _film_slot(site, lang, fid),
+        "film.share": lambda site, lang, fid: _film_slot(site, lang, fid),
         "cinema.after_halls": lambda site, lang, cid: _cinema_slot(site, lang, cid),
     })

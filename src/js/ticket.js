@@ -1,6 +1,8 @@
 /* the ticket: a tapped time fills the page's one ticket. Phone (< 1024 px): a bottom sheet — a modal
    dialog with its focus kept inside, closed by ×, Esc, the scrim or the back button, focus going back to
-   the time. Desktop: the side panel changes in place and a live region says so. */
+   the time (on a film page the time first shows the dock, src/js/film.js, whose «التفاصيل والحجز» opens the
+   sheet). Desktop: the side panel changes in place and a live region says so.
+   tkOpen, not sheetOpen: the bundle is one scope, and sheet.js's sheetOpen(id) (later in it) would win. */
 var PL = (function () { var el = document.getElementById("cinema-p"); try { return el ? JSON.parse(el.textContent) : []; } catch (e) { return []; } })();
 var tk = q("[data-ticket]"), tkFrom = null, tkPushed = false, scrim = null, tkInert = [];
 /* while the sheet is modal, everything outside it (every sibling of the sheet and of each of its ancestors)
@@ -95,11 +97,12 @@ function fillTicket(btn, x) {
   tkSet("[data-tk-live]", sub(TX.ticket, { film: x.film, cin: x.cname, t: x.t }));
   tk.hidden = false;
   if (desk()) { tk.setAttribute("role", "region"); tk.removeAttribute("aria-modal"); }
-  else if (!tk.classList.contains("open")) sheetOpen(btn);
+  if (page === "film") { fsPicked(btn, x); return; }
+  if (!desk() && !tk.classList.contains("open")) tkOpen(btn);
 }
 
 function focusables() { return qa('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])', tk).filter(function (e) { return e.offsetParent !== null || e === document.activeElement; }); }
-function sheetOpen(btn) {
+function tkOpen(btn) {
   tkFrom = btn;
   tk.setAttribute("role", "dialog"); tk.setAttribute("aria-modal", "true"); tk.setAttribute("tabindex", "-1");
   if (!scrim) { scrim = document.createElement("div"); scrim.className = "scrim"; scrim.addEventListener("click", closeTicket); document.body.appendChild(scrim); }

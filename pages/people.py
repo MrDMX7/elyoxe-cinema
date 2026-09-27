@@ -1,5 +1,5 @@
 """Cast & directors pages (phase 2, A. People): /people/<slug>/ and /en/people/<slug>/, and a cast strip on every
-film page (slot film.info). Data: data["people"] and film["cast"] / film["directors"] (steps/people.py).
+film page (slot film.cast, the «الطاقم» tab). Data: data["people"] and film["cast"] / film["directors"] (steps/people.py).
 
 A person gets a page only with a name (Arabic or English) and at least one film we list (showing or archived).
 The page: the photo (only a freely licensed one, with its author and licence under it), the names, two sentences
@@ -176,4 +176,4 @@ def register(site):
     ppl = People(site)
     pages = [Page(("people", p["slug"]), lang, (lambda q=q, lang=lang: ppl.page(q, lang)))
              for q, p in sorted(ppl.p.items(), key=lambda kv: kv[1]["slug"]) for lang in ("ar", "en")]
-    return Plugin(pages=pages, slots={"film.info": lambda site, lang, fid: ppl.strip(site, lang, fid)} if ppl.p else {})
+    return Plugin(pages=pages, slots={"film.cast": lambda site, lang, fid: ppl.strip(site, lang, fid)} if ppl.p else {})
