@@ -38,3 +38,17 @@ Phase 3: 93 live UAE cinema map · 96 first show in the UAE + countdown · 97 «
 
 ## Added 2026-09-27 (owner picks from the fourth list)
 Phase 3: 109 UAE cut vs original runtime · 110 UAE vs US release date · 111 book in one tap (deep link to the show's seat page) · 115 mall parking fees (sourced) · 116 independent/outdoor/drive-in cinemas (Cinema Akil etc.) · 119 «هل تعرف؟» sourced trivia · 120 no-spoilers switch.
+
+## Phase 2 — RELEASED 2026-09-27 (merge c51595c)
+People pages · «نازل الخميس» · «آخر فرصة» · Arabic hub · events · seat map + seats left + best seat · calendar + leave-by + double feature · mall hours · snacks · price history + /prices/ + /boxoffice/ · compare · «شي يشبه» · /q/ answer pages · Ramadan/Eid · kids · summer · «يستاهل IMAX؟».
+
+## Added 2026-09-27 (owner picks, lists 5–15) → Phase 3 unless noted
+121 quietest hall · 122 couple/sofa seats · 123 rate the cinema · 124 Friday + all-prayer marks · 125 new cinema tracker · 126 ticket price changes · 127 Arab critics · 128 shared list · 129 taste quiz · 131 VIP night planner ·
+133 best-quality screening per film · 134 chains compared per film · 135 sold-out board · 136 free parking with ticket · 138 icon shortcuts · 139 Siri/Assistant · 140 weekend plan · 141 cinema diary ·
+150 booking-site status · 151 travel mode · 155 awards season · 156 global box office context · 157 weekly «اختيار سينما» · 158 guest lists · 159 question of the day · 160 embeddable charts · 161 Cinema Insights (after the traction bar) ·
+175 TV mode · 177 printable weekly schedule · 180 «شو الجديد» · 181 «اقترح ميزة» · 182 film DNA radar · 185 Google Discover articles · 187 «نشرة الخميس» email · 188 verdict short videos · 191 auto «شفته» check-in ·
+195 new-offer detector · 196 premium formats map · 199 find a film by photo · 200 «أنا في المول» mode · 201 cinematic film page · 202 cinematic hero touch · 203 instant pages (Speculation Rules) · 204 View Transitions · 206 live share image per film.
+
+## Future plan (not scheduled)
+153 live national counter · 171 «سينما الخليج» · 172 optional Elyoxe account.
+Open for the owner: 58–74, 162–170, 173/174/176, 178/179/183/184, 186/189/190/192, 193/194/197/198, 205/207/208, 209–216.
