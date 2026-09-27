@@ -36,7 +36,7 @@ def _iso(days=0, hours=0, base=NOW):
 # ================================================================ C1 raw reuse = resume only
 
 @pytest.fixture
-def sandbox(tmp_path, monkeypatch):
+def sandbox(tmp_path, monkeypatch, offline_steps):
     d = tmp_path / "data"
     for name, rel in [("DATA_DIR", ""), ("RAW_DIR", "raw"), ("LATEST_PATH", "latest.json"),
                       ("HEALTH_PATH", "health.json"), ("FILMS_CACHE_PATH", "films_cache.json"),

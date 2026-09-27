@@ -142,7 +142,7 @@ def test_film_reappearing_before_archival_resets_the_clock():
 # ---------------------------------------------------------------- the seeding-run rule (in refresh())
 
 @pytest.fixture
-def sandbox(tmp_path, monkeypatch):
+def sandbox(tmp_path, monkeypatch, offline_steps):
     data_dir = tmp_path / "data"
     monkeypatch.setattr(refresh, "DATA_DIR", data_dir)
     monkeypatch.setattr(refresh, "RAW_DIR", data_dir / "raw")

@@ -25,7 +25,7 @@ REAL_VERDICTS_DIR = REPO_ROOT / "verdicts"
 
 
 @pytest.fixture
-def sandbox(tmp_path, monkeypatch):
+def sandbox(tmp_path, monkeypatch, offline_steps):
     """Points every path refresh.py writes to at a tmp dir, and stubs enrich (no network)."""
     data_dir = tmp_path / "data"
     monkeypatch.setattr(refresh, "DATA_DIR", data_dir)
