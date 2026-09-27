@@ -81,9 +81,12 @@ def test_roxy_fixture_shape(data):
             assert isinstance(s["film_lang"], str)
 
 
-def test_roxy_prices_are_null_no_seat_hold(data):
-    """Binding rule: Roxy requires login to see a session's price (a seat-hold flow),
-    so every show in this reader's fixture must carry prices=None."""
+def test_fixture_prices_are_null_or_shaped_ok(data):
+    """This fixture is a pre-pricing-feature snapshot (resampled from a `prices` run before
+    the seat-selection price sampler existed), so every show still carries prices=None here.
+    That is a property of *this fixture file*, not a binding rule any more -- Roxy's
+    seat-selection page needs no login (see docs/probe/roxy.md and the live tests below).
+    test_roxy_fixture_shape already checks the general prices shape (None or a valid list)."""
     assert all(s["prices"] is None for s in data["shows"])
 
 
@@ -230,8 +233,150 @@ def test_roxy_twin_sessions_get_distinct_labels_and_price_health(monkeypatch):
         return _FakeResp(404, text="")
 
     monkeypatch.setattr(roxy._Client, "get", fake_get)
-    out = roxy.fetch(days=2)
+    out = roxy.fetch(days=2, prices=False)
     labels = sorted(sh["hall_label"] for sh in out["shows"])
     assert labels == ["Silver (session 151749)", "Silver (session 151750)"]
     assert all("_session" not in sh for sh in out["shows"])
+    assert all(k not in sh for sh in out["shows"] for k in ("_site_cid", "_nid", "_raw_date", "_raw_cname", "_hall_raw"))
+    _assert_health(out, attempted=0, priced=0)
+
+
+# --- Task: live seat-class prices from the seat-selection page ------------------------------
+
+
+def test_seat_legend_prices_from_fixture():
+    """Parser test: the seat-class legend on a real (trimmed) seat-selection page."""
+    from readers.roxy import _seat_legend_prices
+
+    html = (Path(__file__).resolve().parent / "fixtures" / "roxy_seat_selection.html").read_text(encoding="utf-8")
+    prices = _seat_legend_prices(html)
+    assert prices == [{"seat": "Standard", "aed": 43.0}, {"seat": "Premium View", "aed": 70.0}]
+
+
+def test_seat_legend_prices_no_categories_returns_none():
+    from readers.roxy import _seat_legend_prices
+
+    assert _seat_legend_prices("<div>no legend here</div>") is None
+
+
+def test_seat_selection_url_builder():
+    """URL builder test: matches the live shape verified by hand, e.g.
+    /en/seat-selection/0000000006/96027/177366/Al%20Khawaneej/Sep%2027%20Sun/22:30/Gold."""
+    from readers.roxy import _seat_selection_url
+
+    url = _seat_selection_url("0000000006", "96027", "177366", "Al Khawaneej", "Sep 27 Sun", "22:30", "Gold")
+    assert url == ("https://www.theroxycinemas.com/en/seat-selection/0000000006/96027/177366/"
+                   "Al%20Khawaneej/Sep%2027%20Sun/22:30/Gold")
+
+
+def test_seat_selection_url_builder_encodes_comma_in_cinema_name():
+    """'The Beach, JBR' -- a real Roxy cinema name -- must come out url-encoded (verified live)."""
+    from readers.roxy import _seat_selection_url
+
+    url = _seat_selection_url("0000000002", "227376", "178336", "The Beach, JBR", "Sep 27 Sun", "19:00", "Platinum")
+    assert url == ("https://www.theroxycinemas.com/en/seat-selection/0000000002/227376/178336/"
+                   "The%20Beach%2C%20JBR/Sep%2027%20Sun/19:00/Platinum")
+
+
+def _seat_fixture_html() -> str:
+    return (Path(__file__).resolve().parent / "fixtures" / "roxy_seat_selection.html").read_text(encoding="utf-8")
+
+
+def _roxy_one_session_fake(monkeypatch, seat_calls, seat_status=200):
+    """One movie, one cinema, one session -- everything a fetch() needs to reach the
+    pricing pass, wired through the module's own _Client.get."""
+    import datetime as _dt
+    from zoneinfo import ZoneInfo
+
+    import readers.roxy as roxy
+
+    today = _dt.datetime.now(ZoneInfo("Asia/Dubai")).date()
+    raw_date = f"{today:%b} {today.day} {today:%a}"
+    home_html = '<a href="/en/movie/heart-of-the-beast">Heart of the Beast</a>'
+    movie_html = '<div data-history-node-id="178231"><h1>Heart of the Beast</h1></div>'
+    slot = ('cinema-name="Citywalk" cinema-id="0000000001" screen="Silver" nid="178231" '
+            f'date="{raw_date}" time="23:10" session="227630"')
+    ajax_payload = {"html": slot}
+
+    def fake_get(self, url, **kw):
+        if url.endswith("/en"):
+            return _FakeResp(200, text=home_html)
+        if "movie-schedule/ajax" in url:
+            return _FakeResp(200, ajax_payload)
+        if "/en/seat-selection/" in url:
+            seat_calls.append(url)
+            return _FakeResp(seat_status, text=_seat_fixture_html() if seat_status == 200 else "")
+        if "/en/movie/" in url:
+            return _FakeResp(200, text=movie_html)
+        return _FakeResp(404, text="")
+
+    monkeypatch.setattr(roxy._Client, "get", fake_get)
+    return roxy
+
+
+def test_roxy_seat_selection_url_built_from_schedule_fields(monkeypatch):
+    """fetch() must build the seat-selection URL out of the fields already on the schedule
+    session tag (cinema-id, session, nid, cinema-name, date, time, screen) -- no extra request."""
+    import datetime as _dt
+    from urllib.parse import quote
+    from zoneinfo import ZoneInfo
+
+    seat_calls: list[str] = []
+    roxy = _roxy_one_session_fake(monkeypatch, seat_calls)
+
+    roxy.fetch(days=1)
+
+    today = _dt.datetime.now(ZoneInfo("Asia/Dubai")).date()
+    raw_date = f"{today:%b} {today.day} {today:%a}"
+    assert len(seat_calls) == 1
+    assert seat_calls[0] == (
+        f"https://www.theroxycinemas.com/en/seat-selection/0000000001/227630/178231/"
+        f"Citywalk/{quote(raw_date)}/23:10/Silver"
+    )
+
+
+def test_roxy_reuses_a_same_day_cached_sample_instead_of_resampling(monkeypatch):
+    """Cache reuse test: a second fetch() with the same persisted cache dict must not
+    re-request the seat-selection page (mirrors test_price_cache.py's cineroyal test)."""
+    seat_calls: list[str] = []
+    roxy = _roxy_one_session_fake(monkeypatch, seat_calls)
+    persisted_cache: dict = {}
+
+    out1 = roxy.fetch(days=1, cache=persisted_cache)
+    assert len(seat_calls) == 1
+    assert out1["price_health"]["attempted"] == 1
+    assert out1["price_health"]["priced"] == 1
+    assert out1["price_health"].get("cached", 0) == 0
+    assert persisted_cache
+
+    out2 = roxy.fetch(days=1, cache=persisted_cache)
+    assert len(seat_calls) == 1  # still just the one network call
+    assert out2["price_health"]["attempted"] == 0
+    assert out2["price_health"]["cached"] == 1
+    expected = [{"seat": "Standard", "aed": 43.0}, {"seat": "Premium View", "aed": 70.0}]
+    assert all(sh["prices"] == expected for sh in out2["shows"])
+
+
+def test_roxy_price_sampling_never_fails_the_chain_on_error(monkeypatch):
+    """A broken/blocked seat-selection page must not raise -- price_health.error records it,
+    the chain still returns its shows with prices=None."""
+    seat_calls: list[str] = []
+    roxy = _roxy_one_session_fake(monkeypatch, seat_calls, seat_status=403)
+
+    out = roxy.fetch(days=1)
+
+    assert out["shows"]
+    assert out["price_health"]["attempted"] == 1
+    assert out["price_health"]["priced"] == 0
+    assert isinstance(out["price_health"]["error"], str) and out["price_health"]["error"]
+    assert all(sh["prices"] is None for sh in out["shows"])
+
+
+def test_roxy_prices_false_skips_sampling_entirely(monkeypatch):
+    seat_calls: list[str] = []
+    roxy = _roxy_one_session_fake(monkeypatch, seat_calls)
+
+    out = roxy.fetch(days=1, prices=False)
+
+    assert seat_calls == []
     _assert_health(out, attempted=0, priced=0)

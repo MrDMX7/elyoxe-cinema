@@ -363,11 +363,13 @@ def test_hung_chain_exit_code_ignores_enrich_verdicts_health(sandbox, monkeypatc
 # ---------------------------------------------------------------- fix wave D
 
 def test_zero_attempted_price_health_is_never_degraded(sandbox, monkeypatch):
-    """Roxy reports price_health {attempted: 0} by design (prices come from prices.yaml)."""
+    """A chain that reports price_health {attempted: 0} (nothing sampled -- e.g. prices=False,
+    or every key was a cache hit) must not be treated as degraded. Stubbed as a roxy-shaped
+    reader here; not exercising the real readers.roxy.fetch()."""
     data_dir, _ = sandbox
     monkeypatch.setattr(refresh, "now_iso", lambda: "2026-09-25T12:00:00+04:00")
 
-    def roxy_like(days=2):
+    def roxy_like(days=2, cache=None):
         data = json.loads((REAL_FIXTURES_DIR / "roxy.json").read_text(encoding="utf-8"))
         for s in data["shows"]:
             s["prices"] = None

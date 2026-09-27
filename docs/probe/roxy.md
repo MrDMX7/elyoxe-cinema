@@ -78,14 +78,57 @@ GET /en/movie-schedule/ajax?nid=<movie-node-id>&promotion=
   - Language: `"Language: <X>"` text
   - Rating: `<span id="movie-rating">PG 13</span>` → normalized to `"PG13"` (space stripped)
 
-## Prices — always `null`, and why
+## Prices — live, from the seat-selection page, no login (corrected 2026-09-27)
 
-Clicking a session (or its "Book Now" link) leads to a login-gated flow:
-the site shows *"Please log in to continue"* before any seat map or price is
-shown. There is no separate "show prices without picking a seat" endpoint we
-could find. Per the binding rule (never trigger a seat hold, at most one
-price call per cinema×hall×day), Roxy's reader always sets `"prices": null`.
-`book` links to the movie's own page with `#movie-schedule-block`
+**Earlier note in this file was wrong.** Clicking a session's "Book Now" link
+does land on a page with a *"Please log in to continue"* modal — but that
+modal is for the *watchlist* feature ("You need to be logged in to add
+movies to your watchlist"), triggered by JS on click; it is not a gate on
+the page's own content, and a plain server-side `GET` on the seat-selection
+URL never triggers it. There is a real, ungated seat-class price source:
+
+```
+GET /en/seat-selection/<cinemaCode>/<sessionId>/<movieNid>/<cinema name>/<"Mon D Ddd">/<HH:MM>/<hall label>
+```
+
+e.g. `/en/seat-selection/0000000006/96027/177366/Al%20Khawaneej/Sep%2027%20Sun/22:30/Gold`.
+Every field in the URL is already on the schedule-ajax session tag (`cinema-id`,
+`session`, `nid`, `cinema-name`, `date`, `time`, `screen`) — no extra lookup
+needed, `readers/roxy.py`'s `_seat_selection_url()` builds it directly.
+
+The response is the full server-rendered seat map, whose legend carries one
+`<span>` per seat class:
+
+```html
+<span price="7000" tax="1001" price-in-aed="70" seat-category="Premium View">Premium View</span>
+```
+
+Confirmed live, repeatedly: a plain `GET` on this URL returns the seat map
+with **no redirect, no `Set-Cookie`, no booking/order id created** — nothing
+is held or selected. `readers/roxy.py`'s `_seat_legend_prices()` parses
+`price-in-aed`/`seat-category` with a single regex (`SEAT_LEGEND_RE`).
+
+**VAT/fees are already included in the published number.** `price` and `tax`
+are in fils (100ths of a dirham); `price-in-aed` is exactly `price / 100`.
+Sampled across several cinema×hall combinations, `tax / price` always landed
+on the same ratio (~1/7) regardless of the total (e.g. 615/4300, 1001/7000,
+1157/8100, 2543/17800) — that only holds if `tax` is a fixed fraction already
+folded into `price`, not an amount added on top. So `price-in-aed` is the
+inclusive, pay-this-at-checkout number, and that is what `readers.roxy`
+publishes as `prices[].aed` — no separate VAT line is added or subtracted.
+
+Sampled once per cinema×hall×show-date (not per session — twin sessions in
+the same hall/date share a sample), reusing `data/price_cache.json` across
+hourly runs like the other chains (`fetch(days=..., cache=...)`, wired
+through `refresh.py`'s `PRICE_CACHE_CHAINS`, which now includes `roxy`). A
+sampling failure (non-200, blocked, exception) never fails the chain — it's
+recorded honestly in `price_health` and that show's `prices` stays `null`.
+A live one-cinema-day run on 2026-09-27 (274 shows) priced 270/274 (98.5%);
+the 4 unpriced were all "Private Screen" (The Beach, JBR) — a whole-room
+rental format whose seat-selection page carries no seat-class legend at all
+(a real, expected null, not an error).
+
+`book` still links to the movie's own page with `#movie-schedule-block`
 (`https://www.theroxycinemas.com/en/movie/<slug>#movie-schedule-block`),
 which is the closest thing to a real "go book this" URL that doesn't require
 already knowing a live session id that may have sold out.
