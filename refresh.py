@@ -614,7 +614,11 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
 
     # phase-2 data steps: every steps/<name>.py with run(data, ctx) -> dict|None, in name order.
     # Each is isolated like enrich: a failure is recorded in health["steps"][name] and never aborts.
-    health["steps"] = run_steps(merged, {"offline": offline, "now": now, "data_dir": str(DATA_DIR)})
+    step_results = run_steps(merged, {"offline": offline, "now": now, "data_dir": str(DATA_DIR)})
+    health["steps"] = {"ok": all(r["ok"] for r in step_results.values()),
+                       "error": None if all(r["ok"] for r in step_results.values())
+                       else ", ".join(n for n, r in step_results.items() if not r["ok"]),
+                       "items": step_results}
 
     # film history: archive a film that's confirmed gone (permanent page, see update_film_history),
     # and collect fids appearing for the first time ever -- for run.sh's one new-film notification.
