@@ -84,7 +84,7 @@ UI = {
 # the chrome's own words (not in the template's {{…}} table)
 CHROME_T = {"city": ("المدينة", "City"), "card": ("البطاقة", "Card"), "mycard": ("بطاقتي", "My card"),
             "close": ("سكّر", "Close"), "near": ("قريب مني", "Near me"), "gov": ("حكومية", "Government"),
-            "bank": ("بنوك", "Banks"), "pick_city": ("وين أنت؟", "Where are you?"), "pick_card": ("وش عندك من بطاقة؟", "Which card do you have?"),
+            "bank": ("بنوك", "Banks"), "pick_city": ("وين أنت؟", "Where are you?"), "pick_card": ("شو عندك من بطاقة؟", "Which card do you have?"),
             "all_cards": ("خصم كل بطاقة في كل سينما", "Every card’s discount at every cinema"),
             "all_cities": ("كل السينمات حسب المدينة", "Every cinema by city")}
 # inline icons (24 px grid, stroked in currentColor): the phone tab bar and the header's search button
@@ -1055,7 +1055,9 @@ class Kit:
             "alt": P(other, *parts), "alt_lang": other, "hub": P(lang),
             "cinemas_href": P(lang, "cinemas"), "thursday_href": P(lang),
             "cards_href": P(lang, "cards"), "halls_href": P(lang, "halls"),
-            "c_films": ' aria-current="page"' if nav == "films" and pagekind == "home" else "",   # «الرئيسية» is the home page only "c_cinemas": ' aria-current="page"' if nav == "cinemas" else "",
+            # «الرئيسية» is the home page only
+            "c_films": ' aria-current="page"' if nav == "films" and pagekind == "home" else "",
+            "c_cinemas": ' aria-current="page"' if nav == "cinemas" else "",
             "c_cards": ' aria-current="page"' if nav == "cards" else "",
             "v": self.v, "js": "/assets/" + self.js_name, "page": pagekind, "attrs": attrs, "preload": "\n".join(pre), "robots": robots,
             "og_image": esc(self.og_override.get((lang, tuple(parts))) or og_image or f"{SITE}/assets/og-{lang}.png"),

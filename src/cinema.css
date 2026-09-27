@@ -68,7 +68,8 @@ span.num[dir=ltr],bdi.num{unicode-bidi:isolate}
 .pill{display:inline-flex;align-items:center;gap:6px;min-block-size:36px;min-inline-size:0;padding-inline:12px;border:1px solid var(--line-2);
   background:rgba(15,11,12,.4);color:var(--screen);font-size:13px;line-height:1.2;text-decoration:none;white-space:nowrap}
 .pill span{overflow:hidden;text-overflow:ellipsis;max-inline-size:8.5em;line-height:1.7}
-.pill::after{content:"";flex:0 0 auto;inline-size:6px;block-size:6px;border-inline-end:1.5px solid currentColor;border-block-end:1.5px solid currentColor;
+/* a down-pointing chevron (▾): direction-independent, so physical borders — logical ones point it sideways in RTL */
+.pill::after{content:"";flex:0 0 auto;inline-size:6px;block-size:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;
   transform:translateY(-2px) rotate(45deg);opacity:.7}
 .pill[aria-expanded=true]{border-color:var(--screen)}
 .alt{display:none;font-size:13px;color:var(--seat);text-decoration:none}

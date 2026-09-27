@@ -66,6 +66,7 @@ def test_every_page_has_one_header_one_tab_bar_of_four_the_pills_and_no_duplicat
         p = Ids(); p.feed(h)
         for i in ("pill-city", "pill-card", "sheet-city", "sheet-card", "main"):
             assert p.ids[i] == 1, (rel, i)
+        assert "{{" not in h, rel                                        # no template placeholder left
         dup = [k for k, n in p.ids.items() if n > 1]
         assert not dup, (rel, dup)
     assert seen > 100
@@ -163,3 +164,35 @@ def test_sheet_js_is_in_the_main_bundle(out):
     b = read(out, "assets", js)
     assert "function sheetOpen(" in b and "function bindSheets(" in b and "IntersectionObserver" in b
     assert b.index("function sheetOpen(") < b.index("(function init()")
+
+
+def test_header_cinemas_link_is_current_on_cinema_pages(out):
+    for parts in (("cinemas", "index.html"), ("dubai", "index.html"), ("en", "cinemas", "index.html")):
+        nav = between(read(out, *parts), '<nav class="nav"', "</nav>")
+        assert re.search(r'<a href="(/en)?/cinemas/" aria-current="page">', nav), parts
+    assert "aria-current" not in between(read(out, "cards", "index.html"), '<nav class="nav"', "</nav>").split("/cards/")[0]
+
+
+def test_pill_chevron_points_down_in_both_directions(out):
+    css = read(out, "assets", "cinema.css")
+    rule = re.search(r"\.pill::after\{[^}]*\}", css).group(0)
+    # a ▾ is not direction-dependent: physical borders (logical inline-end would point it sideways in RTL)
+    assert "border-right:" in rule and "border-bottom:" in rule and "inline-end" not in rule and "rotate(45deg)" in rule
+
+
+def test_card_sheet_asks_in_emirati():
+    import site_kit
+    assert site_kit.CHROME_T["pick_card"][0] == "شو عندك من بطاقة؟"
+
+
+def test_sheet_js_contract(out):
+    js = open(os.path.join(ROOT, "src", "js", "sheet.js"), encoding="utf-8").read()
+    # the focus trap covers form controls (a filter sheet has them)
+    for sel in ("input:not([disabled])", "select:not([disabled])", "textarea:not([disabled])", '[tabindex]:not([tabindex="-1"])'):
+        assert sel in js
+    # leaving from inside a sheet replaces its history entry; city/cinema picks and «قريب مني» go through it
+    assert "location.replace(u)" in js
+    assert "shGo(a.href)" in open(os.path.join(ROOT, "src", "js", "main.js"), encoding="utf-8").read()
+    assert "shGo(C.base" in open(os.path.join(ROOT, "src", "js", "near.js"), encoding="utf-8").read()
+    # a search tap before the lazy chunk arrived is kept and replayed by the chunk
+    assert "CINEMA_SEARCH_WANT" in js and "CINEMA_SEARCH_WANT" in open(os.path.join(ROOT, "src", "js", "search.js"), encoding="utf-8").read()

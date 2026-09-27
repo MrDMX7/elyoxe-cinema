@@ -50,7 +50,7 @@ function applyNear(fromTap) {
     if (!same && C.cities[n.city]) {
       var msg = sub(TX.near_pick, { cin: cin, km: km, city: cn });
       city = n.city; set("city", city);
-      if (page === "city") { set("nearnote", msg); location.href = C.base + n.city + "/"; return; }
+      if (page === "city") { set("nearnote", msg); shGo(C.base + n.city + "/"); return; }
       nearMsg(msg);
       pickCity(city);
       return;

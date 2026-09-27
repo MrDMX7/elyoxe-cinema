@@ -236,6 +236,9 @@ var STR = AR ? {
         close();
       }
     });
+    /* a trigger tapped before this chunk arrived (src/js/sheet.js searchTap kept it): open for it now */
+    var want = typeof window !== "undefined" && window.CINEMA_SEARCH_WANT;
+    if (want) { window.CINEMA_SEARCH_WANT = null; open({ currentTarget: want }); }
   }
 
 build();

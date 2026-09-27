@@ -16,7 +16,7 @@ function shInertOn(el) {
   }
 }
 function shFocusables() {
-  return qa('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])', SH).filter(function (e) { return e.offsetParent !== null || e === document.activeElement; });
+  return qa('a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])', SH).filter(function (e) { return e.offsetParent !== null || e === document.activeElement; });
 }
 function shOpeners(id) { return qa('[data-sheet-open="' + id + '"]'); }
 function sheetOpen(id, from) {
@@ -52,6 +52,25 @@ function sheetClose(fromPop, swap) {
   if (shFrom && shFrom.focus) shFrom.focus();
   shFrom = null;
 }
+/* leaving the page from inside an open sheet (a city pick on a city or cinema page, «قريب مني» there): the
+   sheet's pushed history entry is replaced by the new page, so Back returns to the page as it was — never to a
+   same-URL entry that bfcache could restore with the sheet still open */
+function shGo(u) {
+  if (shPushed) { shPushed = false; location.replace(u); } else location.href = u;
+}
+/* search triggers ([data-search]: the header's button, the tab bar's «بحث» link) work before the lazy search
+   chunk has arrived: the tap is kept, the chunk loaded if it is not on its way, and search.js opens the overlay
+   for it as soon as it runs. A page without the chunk (or a chunk that never comes) follows the link. */
+function searchTap(e) {
+  var t = e.target.closest && e.target.closest("[data-search]");
+  if (!t || e.defaultPrevented) return;   // the chunk's own listener already opened the overlay
+  var u = C.chunks && C.chunks.search;
+  if (!u) return;
+  e.preventDefault();
+  window.CINEMA_SEARCH_WANT = t;
+  if (!q('script[src="' + u + '"]')) { var sc = document.createElement("script"); sc.src = u; sc.async = true; document.head.appendChild(sc); }
+  setTimeout(function () { if (window.CINEMA_SEARCH_WANT === t) { window.CINEMA_SEARCH_WANT = null; if (t.href) location.href = t.href; } }, 8000);
+}
 /* the header over a hero: a gradient until the page has moved 40 px, then solid night. A 40 px sentinel at the
    top of the page says when (an IntersectionObserver, not a scroll listener) */
 function bindTop() {
@@ -73,6 +92,7 @@ function bindSheets() {
     /* a link that became a button answers Space as a button does */
     if (b.tagName === "A") b.addEventListener("keydown", function (e) { if (e.key === " ") { e.preventDefault(); b.click(); } });
   });
+  document.addEventListener("click", searchTap);
   document.addEventListener("click", function (e) { if (SH && e.target.closest && e.target.closest("[data-sheet-close]")) sheetClose(); });
   if (shScrim) shScrim.addEventListener("click", function () { sheetClose(); });
   document.addEventListener("keydown", function (e) {

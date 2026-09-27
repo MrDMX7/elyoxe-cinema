@@ -98,7 +98,7 @@ function lazyRow() {
     a.addEventListener("click", function (e) {
       var c = a.getAttribute("data-city");
       set("city", c);
-      if (page === "city" || page === "cinema") return;
+      if (page === "city" || page === "cinema") { e.preventDefault(); shGo(a.href); return; }
       e.preventDefault(); pickCity(c);
       if (a.closest("[role=dialog]")) sheetClose();
     });

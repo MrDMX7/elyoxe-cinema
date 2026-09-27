@@ -52,6 +52,25 @@ def sitemap_urls(b):
     return set(re.findall(r"<url>.*?</url>", b.decode("utf-8"), re.S))
 
 
+def inv(b):
+    """What a page is, whatever its chrome looks like (fix round 1 of the redesign's Task 2): its canonical and
+    hreflang links, title, description, robots, JSON-LD, and — inside <main> — the multisets of price cells
+    (data-aed / data-chain / data-hall) and of showtimes (data-show)."""
+    h = b.decode("utf-8")
+    one = lambda rx: re.findall(rx, h, re.S)
+    m = h[h.index("<main"):h.index("</main>")] if "<main" in h else ""
+    cells = lambda attr: sorted(re.findall(r'\sdata-' + attr + r'="([^"]*)"', m))
+    return {"links": one(r'<link rel="(?:canonical|alternate)"[^>]*>'), "title": one(r"<title>(.*?)</title>"),
+            "desc": one(r'<meta name="description"[^>]*>'), "robots": one(r'<meta name="robots"[^>]*>'),
+            "ld": one(r'<script type="application/ld\+json">(.*?)</script>'),
+            "aed": cells("aed"), "chain": cells("chain"), "hall": cells("hall"), "show": cells("show")}
+
+
+def ct_keys(b):
+    m = re.search(r"<script>window\.CT = (.*?);</script>", b.decode("utf-8"))
+    return set(json.loads(m.group(1))) if m else set()
+
+
 def _has_ref():
     if not GIT: return False
     r = subprocess.run([GIT, "-C", ROOT, "cat-file", "-e", GOLDEN_REF + "^{commit}"], capture_output=True)
@@ -122,6 +141,15 @@ def test_core_build_is_byte_identical_to_phase1(phase1, tmp_path, name, data, di
     bundle = "assets/cinema.HASH.js"
     diff = [p for p in before if p not in (bundle, "sitemap.xml") and not REDESIGN_CHANGED.search(p) and before[p] != after[p]]
     assert not diff, diff[:10]
+    # the pages' markup is the redesign's, but what each page IS must not move: links, title, description, robots,
+    # JSON-LD, its price cells and showtimes; window.CT only gains keys; no template placeholder is ever left
+    html = [p for p in before if p.endswith(".html")]
+    moved = [p for p in html if inv(before[p]) != inv(after[p])]
+    assert not moved, moved[:10]
+    lost = [p for p in html if not ct_keys(before[p]) <= ct_keys(after[p])]
+    assert not lost, lost[:10]
+    leak = [p for p in after if p.endswith(".html") and b"{{" in after[p]]
+    assert not leak, leak[:10]
     old, new = sitemap_urls(before["sitemap.xml"]), sitemap_urls(after["sitemap.xml"])
     assert old <= new and all(re.search(r"/(cinemas|sources)/", u) for u in new - old), sorted(new - old)[:4]
     assert sum(p.endswith(".html") for p in before) > 20 and any(p.startswith("data/") and p.endswith(".json") for p in before)
