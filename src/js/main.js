@@ -53,8 +53,12 @@ function pickCard(c) {
 
 /* «اليوم / بكرة» follow the visitor's clock (UAE time), not the build's: a page built last night calls
    this morning's shows «اليوم». A day already over keeps its date. */
+/* one formatting per date: a film page carries ~150 day labels over two or three dates, and each
+   toLocaleDateString builds a formatter (39 ms of start-up on a phone before this cache) */
+var HUMAN_DAY = {};
 function humanDay(d) {
-  try { return new Date(d + "T12:00:00Z").toLocaleDateString(AR ? "ar-AE-u-nu-latn" : "en-GB", { timeZone: "UTC", day: "numeric", month: "long" }); }
+  if (HUMAN_DAY[d]) return HUMAN_DAY[d];
+  try { return (HUMAN_DAY[d] = new Date(d + "T12:00:00Z").toLocaleDateString(AR ? "ar-AE-u-nu-latn" : "en-GB", { timeZone: "UTC", day: "numeric", month: "long" })); }
   catch (e) { return d; }
 }
 function dayName(d) { return d === TODAY ? C.today : d === TOMORROW ? C.tomorrow : humanDay(d); }

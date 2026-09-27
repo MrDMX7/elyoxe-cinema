@@ -222,3 +222,32 @@ def test_bundle_has_the_feel_module_and_parses(tmp_path, site):
     if NODE:
         r = subprocess.run([NODE, "--check", os.path.join(site, "assets", js)], capture_output=True, text=True, timeout=60)
         assert r.returncode == 0, r.stderr
+
+
+@pytest.mark.skipif(not NODE, reason="node not installed")
+def test_day_labels_format_each_date_once_and_read_the_same(tmp_path):
+    """156 day labels over 2 dates (a film page) build at most 2 formatters, and say exactly what the
+    uncached humanDay said (src/js/main.js)."""
+    main = open(os.path.join(ROOT, "src", "js", "main.js"), encoding="utf-8").read()
+    i = main.index("var HUMAN_DAY = {};")
+    j = main.index("function dayName", i)
+    cached = main[i:j]
+    old = ('function oldDay(d) {\n  try { return new Date(d + "T12:00:00Z").toLocaleDateString(AR ? "ar-AE-u-nu-latn" : "en-GB", '
+           '{ timeZone: "UTC", day: "numeric", month: "long" }); }\n  catch (e) { return d; }\n}\n')
+    out = {}
+    for lang in ("ar", "en"):
+        harness = (f"var AR = {str(lang == 'ar').lower()};\n" + old + cached + """
+var labels = []; for (var k = 0; k < 156; k++) labels.push(k % 3 ? "2026-09-27" : "2026-09-28");
+var want = labels.map(oldDay);
+var calls = 0, orig = Date.prototype.toLocaleDateString;
+Date.prototype.toLocaleDateString = function () { calls++; return orig.apply(this, arguments); };
+var got = labels.map(humanDay);
+process.stdout.write(JSON.stringify({ calls: calls, same: JSON.stringify(got) === JSON.stringify(want), sample: got.slice(0, 2), bad: humanDay("x") }));
+""")
+        (tmp_path / "d.js").write_text(harness, encoding="utf-8")
+        r = subprocess.run([NODE, str(tmp_path / "d.js")], capture_output=True, text=True, encoding="utf-8", timeout=60)
+        assert r.returncode == 0, r.stderr
+        out[lang] = json.loads(r.stdout)
+    for lang, o in out.items():
+        assert o["calls"] <= 2 and o["same"], (lang, o)          # 156 labels, 2 dates: at most 2 formatters, same text
+    assert out["en"]["sample"] == ["28 September", "27 September"] and out["en"]["bad"] in ("x", "Invalid Date")
