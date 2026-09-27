@@ -22,8 +22,15 @@ fingerprint and gets a normal 200, so this reader uses that instead of
 readers.common.Polite (which wraps plain `requests` and would 403 here).
 CITIES, HALLS, slug() and city_of() are still reused from readers.common.
 
-See docs/probe/roxy.md for the full probe notes, including why prices are
-always None here (booking needs login -> seat hold).
+Prices come from the seat-selection page (`/en/seat-selection/<cinemaCode>/
+<sessionId>/<movieNid>/<cinema name>/<"Mon D Ddd">/<HH:MM>/<hall label>`),
+built straight from fields already on the schedule-ajax session tag — a
+plain GET, no login, no seat picked/held (verified live, see
+docs/probe/roxy.md). Sampled once per cinema x hall x date, reusing
+data/price_cache.json across hourly runs like the other chains
+(refresh.py's PRICE_CACHE_CHAINS).
+
+See docs/probe/roxy.md for the full probe notes.
 """
 from __future__ import annotations
 
@@ -32,11 +39,13 @@ import json
 import re
 import time
 from typing import Any
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
 from curl_cffi import requests as cr
 
-from readers.common import CITIES, HALLS, city_of, lang_key, slug, subs_keys, youtube_id
+from readers.common import (CACHE_MISS, CITIES, HALLS, cache_get, cache_set, city_of, lang_key,
+                             slug, subs_keys, youtube_id)
 
 BASE = "https://www.theroxycinemas.com"
 UA_IMPERSONATE = "chrome"
@@ -96,6 +105,50 @@ TITLE_RE = re.compile(r"<h1[^>]*>([^<]+)</h1>")
 DURATION_RE = re.compile(r"(\d+)\s*Hour[s]?\s*(\d+)?\s*Minute[s]?")
 LANG_RE = re.compile(r"Language:\s*([A-Za-z]+)")
 RATING_RE = re.compile(r'id="movie-rating">([^<]+)<')
+
+# The seat-class legend on a seat-selection page: <span price="7000" tax="1001"
+# price-in-aed="70" seat-category="Premium View">...</span>. `price` and `tax` are in fils
+# (100ths of a dirham); `price-in-aed` is just price/100 -- the amount the customer pays.
+# `tax` is *included* in `price`, not additional: across every session sampled while probing
+# this (a handful of cinema x hall combinations), tax/price landed on the same ~1/7 ratio
+# regardless of the total, which only holds if tax is a fixed fraction already folded into
+# price -- i.e. price-in-aed is VAT/fee-inclusive, the number to publish. See docs/probe/roxy.md.
+SEAT_LEGEND_RE = re.compile(
+    r'price="(\d+)"\s+tax="(\d+)"\s+price-in-aed="([\d.]+)"\s+seat-category="([^"]+)"'
+)
+
+
+def _seat_legend_prices(html: str) -> list[dict] | None:
+    """Seat classes + inclusive AED prices from a seat-selection page's legend."""
+    out: dict[str, float] = {}
+    for _price, _tax, aed, category in SEAT_LEGEND_RE.findall(html):
+        try:
+            aed_f = float(aed)
+        except ValueError:
+            continue
+        if aed_f > 0 and category not in out:
+            out[category] = aed_f
+    return [{"seat": k, "aed": v} for k, v in out.items()] or None
+
+
+def _seat_selection_url(site_cinema_id: str, session_id: str, nid: str, cinema_name: str,
+                         raw_date: str, time_: str, hall_raw: str) -> str:
+    """Build the server-rendered seat-selection URL straight from schedule-ajax fields.
+    A plain GET on it shows the full seat map + price legend with no login and no seat
+    picked/held -- confirmed live (no redirect, no cookies set). Never call this more than
+    once per cinema x hall x date; the caller is responsible for that via the price cache."""
+    return (f"{BASE}/en/seat-selection/{site_cinema_id}/{session_id}/{nid}/"
+            f"{quote(cinema_name)}/{quote(raw_date)}/{time_}/{quote(hall_raw)}")
+
+
+def _sample_prices(client: "_Client", url: str) -> list[dict] | None:
+    """One read of the seat-selection page for one representative session in a
+    cinema x hall x date group. Returns None (never raises) on anything but a clean 200."""
+    r = client.get(url)
+    if r is None or r.status_code != 200:
+        return None
+    return _seat_legend_prices(r.text)
+
 
 WEEKDAY_DATE_RE = re.compile(r"^([A-Za-z]{3}) (\d{1,2}) [A-Za-z]{3}$")
 MONTHS = {m: i + 1 for i, m in enumerate(
@@ -294,12 +347,13 @@ def _label_twin_sessions(shows: list[dict[str, Any]]) -> None:
         sh.pop("_session", None)
 
 
-def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
+def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict[str, list[dict[str, Any]]]:
     """Fetch Roxy Cinemas UAE cinemas + showtimes for today + (days - 1) more days.
 
-    Prices are always None: seeing a session's seat map/price requires logging in
-    (the site shows "Please log in to continue" before any seat map or price), which
-    is a seat-hold flow we're not allowed to trigger. See docs/probe/roxy.md.
+    Prices are sampled from the seat-selection page, once per cinema x hall x date (not
+    per session -- twin sessions in the same hall on the same date share a price). `cache`
+    is refresh.py's data/price_cache.json slice for this chain/date: a hit is reused with
+    no network call. A price-sampling failure never fails the chain -- see price_health.
     """
     client = _Client()
     cinemas, id_by_site_id = _cinemas()
@@ -331,7 +385,7 @@ def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
         html = payload.get("html", "")
 
         for m in SESSION_RE.finditer(html):
-            _cinema_name, site_cinema_id, screen, _nid, raw_date, time_, session_id = m.groups()
+            cinema_name, site_cinema_id, screen, movie_nid, raw_date, time_, session_id = m.groups()
             cid = id_by_site_id.get(site_cinema_id)
             if not cid:
                 continue
@@ -346,6 +400,11 @@ def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
 
             shows.append({
                 "_session": session_id,
+                "_site_cid": site_cinema_id,
+                "_nid": movie_nid,
+                "_raw_date": raw_date,
+                "_raw_cname": cinema_name,
+                "_hall_raw": screen,
                 "cinema": cid,
                 "film_title": meta["title"],
                 "film_lang": meta["lang"],
@@ -369,10 +428,44 @@ def fetch(days: int = 2) -> dict[str, list[dict[str, Any]]]:
     if not shows:
         raise RuntimeError("roxy: fetch produced zero shows")
 
+    # Prices: one seat-selection legend read per cinema x hall x date (weekday/weekend
+    # prices can differ; twin sessions in the same hall/date share a key and thus a sample).
+    def pkey(sh: dict) -> tuple:
+        return (sh["cinema"], sh["_hall_raw"], sh["date"])
+
+    price_of: dict[tuple, list[dict] | None] = {}
+    health = {"attempted": 0, "priced": 0, "error": None}
+    if prices:
+        for sh in shows:
+            key = pkey(sh)
+            if key in price_of:
+                continue
+            hit = cache_get(cache, key)
+            if hit is not CACHE_MISS:  # sampled already today (this run or an earlier one)
+                price_of[key] = hit
+                health["cached"] = health.get("cached", 0) + 1
+                continue
+            url = _seat_selection_url(sh["_site_cid"], sh["_session"], sh["_nid"],
+                                       sh["_raw_cname"], sh["_raw_date"], sh["time"], sh["_hall_raw"])
+            health["attempted"] += 1
+            try:
+                price_of[key] = _sample_prices(client, url)
+            except Exception as e:  # never fail the chain on a price error
+                price_of[key] = None
+                health["error"] = f"{type(e).__name__}: {e}"
+            cache_set(cache, key, price_of[key])
+        for sh in shows:
+            sh["prices"] = price_of.get(pkey(sh))
+        health["priced"] = sum(1 for v in price_of.values() if v)
+        if health["attempted"] and not health["priced"] and not health["error"]:
+            health["error"] = f"0/{health['attempted']} seat-selection legend samples priced"
+
     _label_twin_sessions(shows)
-    # Roxy has no hold-free price source (seat map is login-gated): nothing attempted, no error.
-    return {"cinemas": cinemas, "shows": shows,
-            "price_health": {"attempted": 0, "priced": 0, "error": None}}
+    for sh in shows:
+        for k in ("_site_cid", "_nid", "_raw_date", "_raw_cname", "_hall_raw"):
+            sh.pop(k, None)
+
+    return {"cinemas": cinemas, "shows": shows, "price_health": health}
 
 
 if __name__ == "__main__":
