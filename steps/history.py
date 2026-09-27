@@ -1,11 +1,14 @@
-"""Step: today's prices into the price history (price_history.py), kept on the runner and in the bucket.
+"""Step: today's prices into the price history (price_history.py), kept on the runner and in a private bucket.
 
-  fetch s3://elyoxe-cinema-574771023173/state/price_history.jsonl (every run), union it with the local file and
-  this run's snapshot (per date the better read wins), write locally, upload when the bucket lacks anything
+  fetch s3://elyoxe-media-574771023173/cinema-state/price_history.jsonl (every run), union it with the local file
+  and this run's snapshot (per date the better read wins), write locally, upload when the bucket lacks anything.
+  The first copy lived at s3://elyoxe-cinema-574771023173/state/ — the site's own bucket, so it was publicly served
+  at cinema.elyoxe.com/state/. While that copy exists it is read and merged too, and removed only after the new
+  object holds everything in it (docs/CUTOVER-PHASE2.md).
 
 --offline (fixtures) writes nothing: fixture prices must never enter the real history. A failed download skips
 the upload (the step reports the failure; today waits in the local file for the next run's union). An absent
-object with local history is flagged in health and re-uploaded; deploy.sh never deletes state/. The bucket is used for the runner's own data/ only (use_bucket)."""
+object with local history is flagged in health and re-uploaded. The bucket is used for the runner's own data/ only (use_bucket)."""
 import os
 import shutil
 import subprocess
@@ -16,6 +19,7 @@ if ROOT not in sys.path: sys.path.insert(0, ROOT)
 import price_history as ph  # noqa: E402
 
 URI = f"s3://{ph.BUCKET}/{ph.KEY}"
+LEGACY_URI = f"s3://{ph.LEGACY_BUCKET}/{ph.LEGACY_KEY}"
 REGION = "ap-south-1"
 
 
@@ -26,12 +30,26 @@ def _aws(*args, timeout=60):
     return r.returncode, (r.stderr or r.stdout or "").strip()
 
 
-def s3_get(path):
-    """'ok' | 'absent' (the bucket has no history yet) | 'failed: …'."""
-    rc, msg = _aws("s3api", "head-object", "--bucket", ph.BUCKET, "--key", ph.KEY)
+def _get(bucket, key, path):
+    rc, msg = _aws("s3api", "head-object", "--bucket", bucket, "--key", key)
     if rc != 0:
         return "absent" if ("404" in msg or "Not Found" in msg or "NoSuchKey" in msg) else f"failed: {msg[-200:]}"
-    rc, msg = _aws("s3", "cp", URI, path, "--only-show-errors", timeout=120)
+    rc, msg = _aws("s3", "cp", f"s3://{bucket}/{key}", path, "--only-show-errors", timeout=120)
+    return "ok" if rc == 0 else f"failed: {msg[-200:]}"
+
+
+def s3_get(path):
+    """'ok' | 'absent' (the bucket has no history yet) | 'failed: …'."""
+    return _get(ph.BUCKET, ph.KEY, path)
+
+
+def legacy_get(path):
+    """The old, publicly served copy: 'ok' | 'absent' (already moved) | 'failed: …'."""
+    return _get(ph.LEGACY_BUCKET, ph.LEGACY_KEY, path)
+
+
+def legacy_rm():
+    rc, msg = _aws("s3", "rm", LEGACY_URI, "--only-show-errors")
     return "ok" if rc == 0 else f"failed: {msg[-200:]}"
 
 
@@ -66,7 +84,7 @@ def run(data, ctx):
     path = os.path.join(ctx.get("data_dir") or os.path.join(ROOT, "data"), "price_history.jsonl")
     bucket = use_bucket(path)
     local = ph.load(path)
-    remote, got = {}, None
+    remote, got, old, old_got = {}, None, {}, None
     if bucket:
         tmp = f"{path}.bucket.{os.getpid()}"
         try:
@@ -74,7 +92,14 @@ def run(data, ctx):
             if got == "ok": remote = ph.load(tmp)
         finally:
             if os.path.exists(tmp): os.remove(tmp)
+        if not got.startswith("failed"):
+            try:
+                old_got = legacy_get(tmp)
+                if old_got == "ok": old = ph.load(tmp)
+            finally:
+                if os.path.exists(tmp): os.remove(tmp)
     merged, _ = ph.merge(local, remote)
+    merged, _ = ph.merge(merged, old)
     merged, changed = ph.merge(merged, ph.snapshot(data, _halls()))
     out = {"days": len(ph.days(merged)), "changed": changed}
     if bucket: out["bucket"] = got
@@ -92,4 +117,10 @@ def run(data, ctx):
         out["pushed"] = s3_put(path)
         if out["pushed"] != "ok":
             raise RuntimeError(f"price history upload {out['pushed']}")
+    # the new object now holds everything the old public copy had: only then is the old one removed
+    if old_got == "ok":
+        rm = legacy_rm()
+        out["legacy"] = "moved" if rm == "ok" else f"remove {rm}"
+    elif old_got and old_got.startswith("failed"):
+        out["legacy"] = old_got
     return out

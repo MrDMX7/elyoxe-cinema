@@ -12,7 +12,7 @@ observation and never enters the history). `hall` is the halls.yaml key the site
 
 Idempotent per date: a date is replaced only by a better read of it — more live prices, then more shows (the
 first full read of a day is kept against the thinner hourly runs that follow once its early shows are gone), so the same data
-twice changes nothing. The file lives on the runner and in the bucket (state/price_history.jsonl), never in git.
+twice changes nothing. The file lives on the runner and in the private media bucket (cinema-state/price_history.jsonl), never in git.
 Read by pages/insights.py and pages/questions.py; written by steps/history.py."""
 from __future__ import annotations
 
@@ -23,8 +23,12 @@ import statistics
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PATH = os.path.join(ROOT, "data", "price_history.jsonl")
-BUCKET = "elyoxe-cinema-574771023173"
-KEY = "state/price_history.jsonl"
+# Private: no CloudFront distribution has the media bucket as an origin. The site's own bucket is served whole
+# (OAC), so the history must never live there — the old copy (LEGACY_*) is moved out by steps/history.py.
+BUCKET = "elyoxe-media-574771023173"
+KEY = "cinema-state/price_history.jsonl"
+LEGACY_BUCKET = "elyoxe-cinema-574771023173"
+LEGACY_KEY = "state/price_history.jsonl"
 PARTS = ("morning", "afternoon", "evening", "night")
 
 

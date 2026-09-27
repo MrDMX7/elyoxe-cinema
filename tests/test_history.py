@@ -124,6 +124,19 @@ def step(monkeypatch, tmp_path):
         obj.write_bytes(open(path, "rb").read()); return "ok"
 
     m.s3_get, m.s3_put, m.obj = get, put, obj
+    legacy = tmp_path / "legacy.jsonl"          # the old public copy, s3://elyoxe-cinema-…/state/ (served by the site)
+    m.fail_legacy = False
+
+    def legacy_get(path):
+        m.calls.append("legacy_get")
+        if m.fail_legacy: return "failed: timeout"
+        if not legacy.exists(): return "absent"
+        open(path, "wb").write(legacy.read_bytes()); return "ok"
+
+    def legacy_rm():
+        m.calls.append("legacy_rm")
+        legacy.unlink(); return "ok"
+    m.legacy_get, m.legacy_rm, m.legacy = legacy_get, legacy_rm, legacy
     monkeypatch.setenv("CINEMA_HISTORY_S3", "1")      # tmp dirs are sandboxes: force the (faked) bucket
     (tmp_path / "d").mkdir()
     m.ctx = {"data_dir": str(tmp_path / "d")}
@@ -137,7 +150,7 @@ def lines_of(d0, n):
 
 def test_step_first_run_starts_the_history_and_pushes_it(step):
     out = step.run(data(SHOWS), step.ctx)
-    assert step.calls == ["get", "put"] and out["bucket"] == "absent" and out["pushed"] == "ok" and out["new"] is True
+    assert step.calls == ["get", "legacy_get", "put"] and out["bucket"] == "absent" and out["pushed"] == "ok" and out["new"] is True
     assert sorted(ph.load(str(step.obj))) == ["2026-09-27", "2026-09-28"] == sorted(ph.load(step.local))
 
 
@@ -148,7 +161,7 @@ def test_step_merges_the_bucket_every_run_and_never_shrinks_it(step):
     assert out["bucket"] == "ok" and out["days"] == 22
     assert len(ph.load(str(step.obj))) == 22 and len(ph.load(step.local)) == 22
     step.calls.clear()
-    assert step.run(data(SHOWS), step.ctx)["changed"] == [] and step.calls == ["get"]   # nothing new: no upload
+    assert step.run(data(SHOWS), step.ctx)["changed"] == [] and step.calls == ["get", "legacy_get"]   # nothing new: no upload
 
 
 def test_step_lost_local_file_comes_back_from_the_bucket(step):
@@ -210,3 +223,38 @@ def test_step_runs_isolated_under_refresh(tmp_path, monkeypatch):
     res = refresh.run_steps(data(SHOWS), {"data_dir": str(tmp_path), "offline": False}, steps_dir=d)
     assert res["history"]["ok"] is True and res["history"]["days"] == 2
     assert os.path.exists(tmp_path / "price_history.jsonl")
+
+
+def test_history_lives_where_the_site_never_serves_it():
+    """cinema.elyoxe.com serves its whole bucket (OAC on elyoxe-cinema-…): the history is kept in the private
+    media bucket instead, which no distribution has as an origin."""
+    assert ph.BUCKET != "elyoxe-cinema-574771023173" and ph.BUCKET == "elyoxe-media-574771023173"
+    assert ph.KEY == "cinema-state/price_history.jsonl"
+    assert (ph.LEGACY_BUCKET, ph.LEGACY_KEY) == ("elyoxe-cinema-574771023173", "state/price_history.jsonl")
+
+
+def test_step_moves_the_public_legacy_copy_then_removes_it(step):
+    ph.dump(lines_of(1, 20), str(step.legacy))           # only the old public copy exists
+    out = step.run(data(SHOWS), step.ctx)
+    assert out["pushed"] == "ok" and out["legacy"] == "moved" and not step.legacy.exists()
+    assert len(ph.load(str(step.obj))) == 22             # nothing lost in the move
+    step.calls.clear()
+    assert "legacy" not in step.run(data(SHOWS), step.ctx) and "legacy_rm" not in step.calls
+
+
+def test_step_keeps_the_legacy_copy_when_the_new_one_is_not_safely_written(step):
+    ph.dump(lines_of(1, 20), str(step.legacy))
+    step.fail_put = True
+    with pytest.raises(RuntimeError, match="upload"):
+        step.run(data(SHOWS), step.ctx)
+    assert step.legacy.exists() and "legacy_rm" not in step.calls
+    step.fail_put, step.fail_legacy = False, True        # the old copy unreadable: never removed unread
+    out = step.run(data(SHOWS), step.ctx)
+    assert step.legacy.exists() and out["legacy"].startswith("failed") and "legacy_rm" not in step.calls
+
+
+def test_step_legacy_copy_already_contained_is_removed_without_an_upload(step):
+    ph.dump(lines_of(1, 20), str(step.obj))
+    ph.dump(lines_of(1, 20), str(step.legacy))
+    step.run(data(SHOWS), step.ctx)                       # today pushed; the legacy copy (a subset) removed
+    assert not step.legacy.exists()
