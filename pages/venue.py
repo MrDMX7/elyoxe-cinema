@@ -219,7 +219,7 @@ def group_pairs(pairs):
 
 def _times(ts, lang):
     more = f' <span class="more">+{num(len(ts) - MAX_TIMES)}</span>' if len(ts) > MAX_TIMES else ""
-    return " · ".join(f"{esc(x)} ← {esc(y)}" for x, y in ts[:MAX_TIMES]) + more
+    return ("، " if lang == "ar" else ", ").join(f"{esc(x)} ← {esc(y)}" for x, y in ts[:MAX_TIMES]) + more
 
 
 def _pair_li(site, lang, cid, fa, fb, ts, cinema=True):
