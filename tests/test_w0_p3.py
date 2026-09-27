@@ -118,6 +118,24 @@ def test_now_links_to_the_show_never_a_query():
     assert "هالعرض بدأ، هذي الأوقات الجاية" in t and re.search(r'addEventListener\("hashchange",\s*showFromHash\b', t)
 
 
+@needs_node
+def test_slice_end_times_without_dates_match_the_old_ones(tmp_path, site):
+    # parseSlice's end time is plain minute arithmetic now (the desktop ticket parses a city's day at start-up to leave
+    # a started show); it must equal the old hhmm(uae(date + time) + e minutes) on every show and past midnight
+    out = site[0]
+    rows = []
+    for f in sorted(Path(out, "data").glob("*-20*.json")):
+        j = json.loads(f.read_text(encoding="utf-8"))
+        d = re.search(r"(\d{4}-\d\d-\d\d)\.json$", f.name).group(1)
+        rows += [[d, a[2], e] for a, e in zip(j["S"], j.get("E") or []) if e]
+    assert len(rows) > 100
+    rows += [["2026-09-27", t, e] for t in ("00:00", "09:59", "23:59", "22:10") for e in (1, 50, 110, 125.5, 1439, 1500)]
+    got = node(tmp_path, ["pure.js", "home.js"], "[" + ",".join(
+        "[addMin(%s,%s), hhmm(uae(%s).getTime() + %s * 60e3)]" % (json.dumps(t), json.dumps(e), json.dumps(d + "T" + t), json.dumps(e))
+        for d, t, e in rows) + "]")
+    assert all(a == b for a, b in got), [r for r, g in zip(rows, got) if g[0] != g[1]][:5]
+
+
 # ---------------------------------------------------------------- #24 «الحين»
 @needs_node
 def test_now_prefers_a_film_worth_it_inside_the_window(tmp_path):
