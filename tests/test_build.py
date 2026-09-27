@@ -164,7 +164,7 @@ def test_city_day_slices_for_the_client(site):
     # the client is one bundle, named by its hash; the budget is 45 KB gzipped (spec: Budgets)
     import gzip
     home = open(os.path.join(out, "index.html"), encoding="utf-8").read()
-    name = re.search(r'<link rel="preload" href="/assets/(cinema\.[0-9a-f]{10}\.js)" as="script">', home).group(1)
+    name = re.search(r'\("/assets/(cinema\.[0-9a-f]{10}\.js)",document\)</script>', home).group(1)
     js = open(os.path.join(out, "assets", name), "rb").read()
     assert len(gzip.compress(js)) < 45 * 1024
     assert json.load(open(os.path.join(out, "data", "cinemas.json"), encoding="utf-8"))

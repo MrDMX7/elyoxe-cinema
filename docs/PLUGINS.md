@@ -33,7 +33,7 @@ runs once per build, before any page renders, and returns a `Plugin` (from `site
 | `pages` | `Page(parts, lang, build)` — `build()` returns `site.page()`'s keywords: `title`, `desc`, `body`, `kind`, and optionally `graph` (JSON-LD), `attrs`, `nav`, `og_image`, `robots`, `path`, `js` (lazy chunks for this page). Or `Emit(fn)`: a writer that calls `site.page()` itself, many times (the core types do this) |
 | `data` | `{"data/<name>.json": obj or fn() -> obj}` — written compact (the /data slice format) after every page |
 | `sitemap` | extra path-part tuples, for pages written with `path=`. Pages from `site.page()` are in the sitemap already (Arabic + `/en/` pair, hreflang) |
-| `nav` | `NavItem(key, href, label)` — `href` a path or `fn(lang)`, `label` `(ar, en)`. The key `films`, `cinemas`, `thursday` or `cards` re-points that built-in link (Task 2: «نازل الخميس» → `/coming/`); any other key adds a link after «البطاقات». A page passing `nav=key` marks it `aria-current` |
+| `nav` | `NavItem(key, href, label)` — `href` a path or `fn(lang)`, `label` `(ar, en)`. The key `films`, `cinemas`, `thursday` or `cards` re-points that built-in link (Task 2: «نازل الخميس» → `/coming/`); any other key adds a footer link after «البطاقات» (the phone's tab bar has four slots, for the four built-in links only). A page passing `nav=key` marks it `aria-current` |
 | `slots` | `{slot: fn(site, lang, **ctx) -> html}` — the only places a feature writes into a core page (below) |
 | `page_js` | `{page kind: (chunk, …)}` — load a lazy chunk on every page of a kind (`"film"`, `"city"`, `"cinema"`, `"home"` …) |
 
@@ -146,7 +146,7 @@ def test_example_pages_data_sitemap(hello):
 
 def test_example_nav_and_slot_reach_core_pages(hello):
     home = read(hello, "index.html")
-    assert '<a href="/hello/">أهلاً</a>' in re.search(r'<nav class="nav".*?</nav>', home, re.S).group(0)
+    assert '<a href="/hello/">أهلاً</a>' in re.search(r'<p class="foot-l">.*?</p>', home, re.S).group(0)
     assert home.index('id="tonight"') < home.index('<p class="wrap hello">')
 
 

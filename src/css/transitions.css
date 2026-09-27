@@ -13,7 +13,9 @@
   :root:active-view-transition-type(back){--vt-x:14px}
   :root[dir=rtl]:active-view-transition-type(back){--vt-x:-14px}
   body[data-page=film] .fposter .pst.hero{view-transition-name:poster}
-  .top{view-transition-name:top}
+  /* the name makes .top a stacking context: z 30 keeps the tab bar inside it above the page (posters are z 1),
+     under the open ticket (z 40) and its scrim (z 39) */
+  .top{view-transition-name:top;z-index:30}
   ::view-transition-group(*){animation-duration:.24s;animation-timing-function:var(--ease)}
   ::view-transition-old(root){animation:vt-out .18s var(--ease) both}
   ::view-transition-new(root){animation:vt-in .24s var(--ease) both}

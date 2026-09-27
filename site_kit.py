@@ -47,6 +47,16 @@ def ar_count(n, forms):
     return forms[0] if n == 1 else forms[1] if n == 2 else f"{n} {forms[2]}" if 3 <= n <= 10 else f"{n} {forms[3]}"
 
 
+def ar_count_num(n, forms):
+    """ar_count as markup: the digits in a .num span, the words escaped. 1 and 2 are words alone
+    («سينما وحدة», «سينمتين»), so a count never reads «1 سينما»."""
+    return esc(forms[0] if n == 1 else forms[1]) if n in (1, 2) else f"{num(n)} {esc(forms[2] if 3 <= n <= 10 else forms[3])}"
+
+
+CINEMAS_AR = ("سينما وحدة", "سينمتين", "سينمات", "سينما")
+FILMS_AR = ("فيلم واحد", "فيلمين", "أفلام", "فيلم")
+
+
 def seats_left(n, lang):
     if lang == "en": return f"{n} seat left" if n == 1 else f"{n} seats left"
     return "باقي " + ar_count(n, ("مقعد واحد", "مقعدين", "مقاعد", "مقعد"))
@@ -69,6 +79,9 @@ GENRE_FALLBACK = {"action": ("أكشن", "Action"), "adventure": ("مغامرة"
 FAMILY_RATINGS = {"G", "PG", "PG13", "PG-13", "PG 13"}
 KIDS_RATINGS = {"G", "PG"}
 CONF_WEAK = ("غير مؤكد — تأكد من الشباك", "Unconfirmed — check at the box office")
+# a source check's raw words (an English error page) are never printed: the card pages say what it means
+SOURCE_GONE = re.compile(r"not found|\b404\b", re.I)
+SOURCE_GONE_AR = "صفحة العرض الرسمية انحذفت، فما نعرض الخصم"
 UI = {
     "s_mark": ("سينما", "Cinema"), "s_films": ("الأفلام", "Films"), "s_cinemas": ("السينمات", "Cinemas"),
     "s_thursday": ("نازل الخميس", "Out Thursday"), "s_cards": ("البطاقات", "Cards"), "s_halls": ("القاعات", "Halls"),
@@ -333,9 +346,16 @@ def rule_offer(r, lang):
     return f"خصم {v}%" if lang == "ar" else f"{v}% off"
 
 
+def note_ar(r):
+    """A rule's Arabic note as the site prints it: a note carrying the source check's raw English error
+    («الرابط الرسمي رجع Page Not Found») becomes one Arabic sentence (SOURCE_GONE_AR)."""
+    n = (r or {}).get("note_ar") or ""
+    return SOURCE_GONE_AR if SOURCE_GONE.search(n) else n
+
+
 def rule_terms(r, lang):
     t = []
-    note = (r.get("note_ar") or "") if lang == "ar" else ""
+    note = note_ar(r) if lang == "ar" else ""
     if r.get("box_office_only") and "الشباك" not in note: t.append("من الشباك فقط" if lang == "ar" else "Box office only")
     if r.get("max_tickets") and not re.search("تذاكر|تذكرة", note): t.append(f'{r["max_tickets"]} تذاكر بالحد' if lang == "ar" else f'Up to {r["max_tickets"]} tickets')
     inc, exc = r.get("included_halls"), r.get("excluded_halls") or r.get("halls_excluded")
@@ -344,7 +364,7 @@ def rule_terms(r, lang):
     if exc: t.append(("ما يشمل " + "، ".join(hn(exc))) if lang == "ar" else "Excludes " + ", ".join(exc))
     if r.get("included_cinemas") is not None: t.append("في فروع محددة بس" if lang == "ar" else "Selected branches only")
     if r.get("valid_until"): t.append((f'لين {r["valid_until"]}') if lang == "ar" else f'Until {r["valid_until"]}')
-    if lang == "ar" and r.get("note_ar") and r.get("type"): t.append(r["note_ar"])
+    if lang == "ar" and note and r.get("type"): t.append(note)
     return t
 
 
@@ -451,7 +471,8 @@ class Emit:
 @dataclass
 class NavItem:
     """A header link. `key` films / cinemas / thursday / cards re-points that built-in link (href, and label
-    when given); any other key adds a link after «البطاقات». aria-current when a page passes nav=key."""
+    when given); any other key adds a link to the footer, after «البطاقات» (the phone's tab bar holds the four
+    built-in links only: a fifth sat off-screen). aria-current when a page passes nav=key."""
     key: str
     href: object = None          # a path, or fn(lang) -> path
     label: tuple = None          # (ar, en)
@@ -810,7 +831,9 @@ class Kit:
             q = f'<div class="me-q">{"أنا في" if lang == "ar" else "I’m in"} {pick} {"وعندي" if lang == "ar" else "with"}</div>'
         now = ""
         if mode in ("home", "city"):
-            now = (f'<a class="now" href="#tonight" data-now hidden><span class="now-tx"><span class="now-l">{esc(L(T["now_label"], lang))}</span>'
+            # id="now" on home: the manifest's «الحين» shortcut opens /#now (the slot is reserved while hidden)
+            nid = ' id="now"' if mode == "home" else ""
+            now = (f'<a class="now"{nid} href="#tonight" data-now hidden><span class="now-tx"><span class="now-l">{esc(L(T["now_label"], lang))}</span>'
                    f'<span class="now-f" data-now-film></span><span class="now-w" data-now-where></span></span>'
                    f'<span class="flip" dir="ltr" data-now-time></span></a>')
         near = (f'<p class="near js-only"><button type="button" class="lnk" data-near>{"أقرب سينما لي" if lang == "ar" else "Nearest cinema to me"}</button>'
@@ -990,7 +1013,7 @@ class Kit:
             "og_dims": (OG_DIMS if (lang, tuple(parts)) in self.og_override or not og_image else ""),
             "jsonld": json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False).replace("</", "<\\/"),
             "strings": json.dumps(strings, ensure_ascii=False).replace("</", "<\\/"),
-            "body": body + pdata, "c_thursday": "", "nav_extra": "",
+            "body": body + pdata, "c_thursday": "", "foot_extra": "",
         })
         self.nav_links(vals, lang, nav)
         self.hashes[P(lang, *parts)] = hashlib.sha1((title + desc + body).encode()).hexdigest()[:12]
@@ -1003,7 +1026,8 @@ class Kit:
     NAV = {"films": "hub", "cinemas": "cinemas_href", "thursday": "thursday_href", "cards": "cards_href"}
 
     def nav_links(self, vals, lang, nav):
-        """The modules' NavItems into the header: a built-in key re-points that link, any other adds one."""
+        """The modules' NavItems: a built-in key re-points that header link, any other adds a footer link (the
+        tab bar has four slots: «عربي وخليجي», «فعاليات» and «صباح العيال» sat off-screen at 390 px)."""
         for it in self.nav_items:
             href = it.href(lang) if callable(it.href) else it.href
             cur = ' aria-current="page"' if nav == it.key else ""
@@ -1012,7 +1036,7 @@ class Kit:
                 if it.label: vals["s_" + it.key] = esc(L(it.label, lang))
                 vals["c_" + it.key] = cur
             else:
-                vals["nav_extra"] += f'\n    <a href="{esc(href)}"{cur}>{esc(L(it.label or (it.key, it.key), lang))}</a>'
+                vals["foot_extra"] += f' <a href="{esc(href)}"{cur}>{esc(L(it.label or (it.key, it.key), lang))}</a>'
 
     def write(self, path, text):
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -1072,7 +1096,8 @@ class Kit:
             val = f'<span class="nil">{esc(L(T["expired"], lang))}</span>'; terms = [f'{"كان" if lang == "ar" else "Was"} {rule_offer(r, lang)}، {"لين" if lang == "ar" else "until"} {r.get("valid_until")}']
         elif st == "none_found":
             val = f'<span class="nil">{esc(L(T["none_found"], lang))}</span>'
-            terms = [r["note_ar"]] if lang == "ar" and r.get("note_ar") and r["note_ar"] != T["none_found"][0] else []
+            note = note_ar(r)
+            terms = [note] if lang == "ar" and note and note != T["none_found"][0] else []
         else:
             val = f'<span class="nil">{esc(L(T["unchecked"], lang))}</span>'; terms = []
         chk = (f' <a class="src" href="{esc(r["source"])}" rel="noopener" target="_blank">{"المصدر" if lang == "ar" else "Source"}</a>'

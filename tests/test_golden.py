@@ -7,6 +7,10 @@ are normalised: every HTML page, every /data JSON, the sitemap, robots, the serv
 The one file allowed to differ is the client bundle (cinema.<hash>.js): it gained the feature registry.
 The full build (every module under pages/) may only ADD files: phase-1 output is always a subset.
 
+Both builds read the same input with the shows that had already started when the data was built taken out:
+W0-P1 (the trust sweep) stopped drawing a hall whose times have all passed, which no normalisation can undo on
+the phase-1 side. Past-show rendering is covered by tests/test_w0_p1.py and tests/test_build.py.
+
 No git, or a clone without GOLDEN_REF (a shallow CI checkout): skipped."""
 import io, json, os, re, shutil, subprocess, sys, zipfile
 
@@ -30,13 +34,50 @@ TEXT = (".html", ".json", ".xml", ".txt", ".js", ".css", ".webmanifest", ".svg")
 # data-saver/«back» script in every page's head; the bundle loaded by the «boot» loader that holds it while the
 # page is prerendering (phase 1: a plain deferred <script>); the manifest's shortcuts and their three icons
 # (tests/test_feel.py covers them); the final review's I2 og:image:width/height pair (tests/test_og.py).
-SHELL_HTML = [(re.compile(r'<link rel="preload" href="[^"]+" as="script">\n'
+# W0-P1 dropped that bundle preload again (a repeat visit downloaded the bundle twice), so it is optional here.
+SHELL_HTML = [(re.compile(r'(?:<link rel="preload" href="[^"]+" as="script">\n)?'
                           r'<script type="speculationrules" id="spec">.*?</script>\n'
                           r'<script>\(function\(\)\{var c=navigator\.connection.*?</script>\n', re.S), ""),
               (re.compile(r'<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n'), ""),
               (re.compile(r'<script id="boot">\(function\(u,d\)\{.*?\}\)\("([^"]+)",document\)</script>'),
                r'<script src="\1" defer></script>')]
 SHELL_FILES = re.compile(r"^assets/icons/sc-[a-z]+\.png$")
+# W0-P1, the trust sweep on live main (MASTER-PLAN §4.1 #1-#10), each change undone on the new side (a no-op on
+# phase 1): home's near box carries id="now" (the «الحين» shortcut, #5); «من وين الأسعار» says the job runs every
+# hour (#7); counts read in Arabic grammar, «سينما وحدة» (#9); a source check's raw «Page Not Found» on a card row
+# is one Arabic sentence (#8: applied to both sides, as phase 1 printed the raw note)
+_CIN = {"سينما وحدة": 1, "سينمتين": 2}
+_FILM = {"فيلم واحد": 1, "فيلمين": 2}
+_n = lambda w, words: words.get(w) or int(w.split()[0])
+TRUST_HTML = [
+    (re.compile(r'<a class="now" id="now" href='), '<a class="now" href='),
+    (re.compile(r"، كل ساعة\. إذا ما حصلنا"), "، ثلاث مرات باليوم. إذا ما حصلنا"),
+    (re.compile(r"booking system, every hour\."), "booking system, three times a day."),
+    (re.compile(r'<span class="n">(سينما وحدة|سينمتين)</span>'),
+     lambda m: f'<span class="n"><span class="num">{_CIN[m.group(1)]}</span> سينما</span>'),
+    (re.compile(r'(<span class="n"><span class="num">\d+</span>) سينمات</span>'), r"\1 سينما</span>"),
+    (re.compile(r'<p class="lead">(سينما وحدة|سينمتين|\d+ سينمات|\d+ سينما) و(فيلم واحد|فيلمين|\d+ أفلام|\d+ فيلم) اليوم\.'),
+     lambda m: f'<p class="lead">{_n(m.group(1), _CIN)} سينما و{_n(m.group(2), _FILM)} فيلم اليوم.'),
+    (re.compile(r'<p class="lead">(\d+) cinemas? and (\d+) films? today\.'), r'<p class="lead">\1 cinemas and \2 films today.'),
+    (re.compile(r'(<span class="sub">)[^<]*?[Nn]ot [Ff]ound[^<]*?(?=( <a class="src"|</span>))'),
+     r"\1صفحة العرض الرسمية انحذفت، فما نعرض الخصم"),
+]
+# W0-P1's rules in the base sheet (the ticket's plan links in ink, the footer's tap targets), minified as built
+TRUST_CSS = (".foot-l a{display:inline-flex;align-items:center;min-block-size:44px}", ".foot a[aria-current]{color:var(--screen)}",
+             ".ticket .lnk{color:var(--ink);text-decoration-color:var(--ink-3)}", ".ticket .lnk:hover{text-decoration-color:var(--ink)}",
+             ".ticket .plan-add{padding-inline:16px;padding-block-end:12px}", ".ticket .plan-leave{color:var(--ink-2)}")
+
+
+def live_input(data, tmp):
+    """`data` without the shows already started at its `generated` time (both builds read this copy)."""
+    from site_kit import parse_iso
+    d = json.load(open(data, encoding="utf-8"))
+    now = parse_iso(d["generated"])
+    cut = (now.date().isoformat(), now.strftime("%H:%M"))
+    d["shows"] = [s for s in d["shows"] if (s["date"], s["time"]) >= cut]
+    p = os.path.join(str(tmp), "live_input.json")
+    json.dump(d, open(p, "w", encoding="utf-8"), ensure_ascii=False)
+    return p
 
 
 def _has_ref():
@@ -88,7 +129,9 @@ def files(out):
                     if v: t = t.replace(v.group(1), "HASH")
                 for rx, to in HASHES: t = rx.sub(to, t)
                 if rel.endswith(".html"):
-                    for rx, to in SHELL_HTML: t = rx.sub(to, t)
+                    for rx, to in SHELL_HTML + TRUST_HTML: t = rx.sub(to, t)
+                if rel == "assets/cinema.css":
+                    for rule in TRUST_CSS: t = t.replace(rule, "")
                 if rel == "manifest.webmanifest":
                     m = json.loads(t); m.pop("shortcuts", None); t = json.dumps(m, ensure_ascii=False, sort_keys=True)
                 if rel == "data/discounts.json":   # the same content; phase 1 ordered the chains by set iteration
@@ -102,6 +145,7 @@ def files(out):
 @pytest.mark.parametrize("name,data,disc", CASES, ids=[c[0] for c in CASES])
 def test_core_build_is_byte_identical_to_phase1(phase1, tmp_path, name, data, disc):
     if not os.path.exists(data): pytest.skip(f"{os.path.relpath(data, ROOT)} not in this checkout")
+    data = live_input(data, tmp_path)
     before = files(run_build(phase1, data, disc, str(tmp_path / "before")))
     after = files(run_build(ROOT, data, disc, str(tmp_path / "after"), "core"))
     assert sorted(before) == sorted(after)

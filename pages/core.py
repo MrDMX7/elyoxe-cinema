@@ -56,7 +56,7 @@ class CorePages(Pages):
             body += self.posters_row(lang, films, self.shows, "الليلة" if lang == "ar" else "Tonight")
             body += self.slot("home.after_tonight", lang)
             body += (f'<section class="wrap cities" id="cities"><h2>{"السينمات حسب المدينة" if lang == "ar" else "Cinemas by city"}</h2><ul class="clist">'
-                     + "".join(f'<li><a href="{P(lang, c)}">{esc(L((a, e), lang))}</a> <span class="n">{num(by_city[c])} {"سينما" if lang == "ar" else ("cinema" if by_city[c] == 1 else "cinemas")}</span></li>' for c, a, e in CITIES)
+                     + "".join(f'<li><a href="{P(lang, c)}">{esc(L((a, e), lang))}</a> <span class="n">{ar_count_num(by_city[c], CINEMAS_AR) if lang == "ar" else num(by_city[c]) + (" cinema" if by_city[c] == 1 else " cinemas")}</span></li>' for c, a, e in CITIES)
                      + '</ul></section>')
             hn = self.first_city_show(self.shows, ["dubai"])
             body += self.cards_strip(lang) + self.sources(lang) + (self.ticket(hn, lang, hidden=True) if hn else self.ticket_shell())
@@ -89,7 +89,7 @@ class CorePages(Pages):
                         + (f'<span class="age" data-at="{esc(ch["at"])}">{esc(L(T["updated"], lang))} {esc(ago(at, self.now, lang))}</span>' if at else "")
                         + state + '</li>')
         return (f'<section class="wrap srcs"><h2>{"من وين الأسعار" if lang == "ar" else "Where the prices come from"}</h2>'
-                f'<p class="hint">{"من نظام الحجز عند كل سينما، ثلاث مرات باليوم. إذا ما حصلنا السعر نكتب «السعر في الشباك»، وما نخمّن." if lang == "ar" else "From each chain’s booking system, three times a day. When we can’t read a price we say «price at the box office» — we never guess."}</p>'
+                f'<p class="hint">{"من نظام الحجز عند كل سينما، كل ساعة. إذا ما حصلنا السعر نكتب «السعر في الشباك»، وما نخمّن." if lang == "ar" else "From each chain’s booking system, every hour. When we can’t read a price we say «price at the box office» — we never guess."}</p>'
                 f'<ul class="chains">{"".join(rows)}</ul></section>')
 
     # -------------------------------------------------- city
@@ -109,7 +109,10 @@ class CorePages(Pages):
                              f'<a href="{P(lang, near)}">{esc(nn)}</a>.</p></section>')
                     body += self.ticket_shell()
                 else:
-                    body += (f'<p class="lead">{f"{len(cids)} سينما و{len(fids)} فيلم اليوم. السعر لكل قاعة من السينما نفسها، وينحسب بعد خصم بطاقتك." if lang == "ar" else f"{len(cids)} cinemas and {len(fids)} films today. Every hall’s price comes from the cinema itself and is worked out after your card."}</p></section>')
+                    nc, nf = len(cids), len(fids)
+                    counts = (f"{ar_count(nc, CINEMAS_AR)} و{ar_count(nf, FILMS_AR)} اليوم" if lang == "ar" else
+                              f"{nc} {'cinema' if nc == 1 else 'cinemas'} and {nf} {'film' if nf == 1 else 'films'} today")
+                    body += (f'<p class="lead">{f"{counts}. السعر لكل قاعة من السينما نفسها، وينحسب بعد خصم بطاقتك." if lang == "ar" else f"{counts}. Every hall’s price comes from the cinema itself and is worked out after your card."}</p></section>')
                     body += f'<div class="wrap">{self.me(lang, city, "city")}</div>'
                     if fids: body += self.posters_row(lang, fids, today, "الليلة في " + cn if lang == "ar" else "Tonight in " + cn, prayer=True)
                     body += self.slot("city.after_tonight", lang, city=city)
@@ -234,7 +237,7 @@ class CorePages(Pages):
         out = []
         days = ((self.today, ("اليوم", "Today")), (self.tomorrow, ("بكرة", "Tomorrow")))
         for day, lab in days[:2 if mode in ("full", "compact") else 1]:
-            ds = [s for s in shows if s["date"] == day]
+            ds = self.live_halls([s for s in shows if s["date"] == day], lambda s: (s["film"], self.hkey(s)))
             if not ds: continue
             out.append(f'<section class="day" data-d="{day}"><h2>{esc(L(lab, lang))} <small>{esc(human_date(day, lang))}</small></h2><div class="cfilms">')
             fids = sorted({s["film"] for s in ds}, key=lambda f: (-sum(1 for s in ds if s["film"] == f), self.ftitle(f, "en")))
@@ -367,13 +370,21 @@ class CorePages(Pages):
         return (f'<section class="tonight wrap similar"><div class="sec-h"><h2>{"أفلام معروضة الحين تشبهه" if lang == "ar" else "Showing now, in the same vein"}</h2></div>'
                 f'<div class="posters grid">{tiles}</div></section>')
 
+    def live_halls(self, shows, hall):
+        """The shows of every hall (`hall(s)` its key) that still has a time to come when the data was built:
+        a hall whose times have all passed is dropped with its heading («THEATRE من 195.00» over nothing).
+        Only the build's clock is known here: a hall whose last time passes later is the client's to hide."""
+        live = {hall(s) for s in shows if not self.is_past(s)}
+        return [s for s in shows if hall(s) in live]
+
     def film_schedule(self, shows, cities, lang, mode, on=None):
         """city → cinema group → hall: the hall's price (once, or per day when days differ), then the time
         buttons per day. mode full = today + tomorrow with booking URLs; today = today only; plain = unlinked."""
         days = [(self.today, ("اليوم", "Today"))] + ([(self.tomorrow, ("بكرة", "Tomorrow"))] if mode in ("full", "compact") else [])
         out = []
+        shows = self.live_halls([s for s in shows if s["date"] in {d for d, _ in days}], lambda s: (s["cinema"], self.hkey(s)))
         for city in cities:
-            cs = [s for s in shows if self.cinemas[s["cinema"]].get("city") == city and s["date"] in (d for d, _ in days)]
+            cs = [s for s in shows if self.cinemas[s["cinema"]].get("city") == city]
             if not cs: continue
             out.append(f'<section class="fcity" data-city="{city}"><h2><a href="{P(lang, city)}">{esc(L(CITY[city], lang))}</a></h2>')
             for cid in dict.fromkeys(s["cinema"] for s in cs):
@@ -394,7 +405,7 @@ class CorePages(Pages):
                         low = min((p for p in priced["prices"] if (p.get("aed") or 0) > 0), key=lambda p: p["aed"])
                         return (("من " if lang == "ar" else "from ")
                                 + self.pcell(low["aed"], chain, priced.get("hall") or "OTHER", k, cid, self.table_date(priced), lang))
-                    hd = [(d, lab) for d, lab in days if any(s["date"] == d for s in hs)]
+                    hd = [(d, lab) for d, lab in days if any(s["date"] == d and not (mode == "compact" and self.is_past(s)) for s in hs)]
                     per_day = {d: price_for([s for s in hs if s["date"] == d]) for d, _ in hd}
                     known = {v for v in per_day.values() if v}
                     split = len(known) > 1 or (len(known) == 1 and None in per_day.values())
