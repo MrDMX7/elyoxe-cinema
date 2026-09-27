@@ -22,9 +22,30 @@ function planUtc(iso, hm) {
 function planStampUtc(date) { return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z"; }
 function planIcsEsc(s) { return String(s || "").replace(/\\/g, "\\\\").replace(/[,;]/g, "\\$&").replace(/\n/g, "\\n"); }
 
+/* RFC 5545 §3.1 line folding: no content line over 75 OCTETS, continued by CRLF + one leading space.
+   An Arabic title/cinema pair blows past 75 octets almost immediately (2 bytes/char), so this is not
+   optional — folded on UTF-8 BYTES, never inside a multi-byte character (a continuation byte, top two
+   bits 10xxxxxx, never starts a chunk). The leading space of a continuation line counts toward its own
+   75-octet budget, so a continuation chunk is at most 74 content octets. */
+function planFold(line) {
+  var bytes = new TextEncoder().encode(line);
+  if (bytes.length <= 75) return line;
+  var dec = new TextDecoder(), out = [], start = 0, limit = 75;
+  while (start < bytes.length) {
+    var end = Math.min(start + limit, bytes.length);
+    while (end > start && (bytes[end] & 0xC0) === 0x80) end--;   // back off a split mid-character
+    out.push(dec.decode(bytes.slice(start, end)));
+    start = end;
+    limit = 74;
+  }
+  return out.join("\r\n ");
+}
+
 /* the .ics text: DTSTART/DTEND in Asia/Dubai (a fixed +04:00 offset, no VTIMEZONE ambiguity), a 60-min
    VALARM (design C.41), and a Google Maps link in the description since the client has the cinema's
-   coordinates (data/cinemas.json) but never a street address. */
+   coordinates (data/cinemas.json) but never a street address. Every line is folded (planFold) before
+   being joined — most stay one physical line (bytes.length <= 75 is a no-op), SUMMARY/LOCATION/
+   DESCRIPTION with real Arabic content usually don't. */
 function planIcs(x) {
   var endDate = x.endHm && x.endHm < x.time ? planNextDate(x.date) : x.date;
   var dtStart = x.date.replace(/-/g, "") + "T" + x.time.replace(":", "") + "00";
@@ -44,7 +65,7 @@ function planIcs(x) {
     "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + planIcsEsc(x.film), "TRIGGER:-PT60M", "END:VALARM",
     "END:VEVENT", "END:VCALENDAR"
   ];
-  return lines.join("\r\n") + "\r\n";
+  return lines.map(planFold).join("\r\n") + "\r\n";
 }
 
 function planGCalUrl(x) {

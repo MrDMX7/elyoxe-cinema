@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import sys
+import types
 
 import pytest
 
@@ -57,6 +58,80 @@ def test_mall_for_cinema_only_matches_a_listed_cinema():
     malls = {"m1": {"cinemas": ["a", "b"]}}
     assert venue.mall_for_cinema(malls, "a")[0] == "m1"
     assert venue.mall_for_cinema(malls, "z") == (None, None)
+
+
+def test_indirectly_sourced_malls_are_flagged_in_the_data_itself():
+    """The three City Centre entries could not be fetched directly this pass (review minor #3): they
+    must carry `source_note` so a future maintainer knows to re-verify them, without having to diff
+    against the task report to find out which ones."""
+    malls = venue.load_malls()
+    indirect = ("city-centre-deira", "city-centre-mirdif", "city-centre-sharjah")
+    for mid in indirect:
+        assert malls[mid].get("source_note"), mid
+    # every directly-fetched entry stays unflagged (source_note is not padding on everything)
+    assert "source_note" not in malls["dubai-mall"]
+    assert "source_note" not in malls["abu-dhabi-mall"]
+
+
+# ---------------------------------------------------------------- snacks (B.46)
+class _SiteStub:
+    """Just enough of Kit for snacks_section: .rules (already official-only, as site_kit filters it) and
+    .h.chain_name — never the full build, so this stays a unit test of venue.py's own logic."""
+    def __init__(self, rules=None):
+        self.rules = rules or {}
+        self.h = types.SimpleNamespace(chain_name=lambda chain, lang: chain)
+
+
+def test_snacks_price_is_wrapped_in_num_like_every_other_price(monkeypatch):
+    monkeypatch.setattr(venue, "load_snacks", lambda: {
+        "vox": {"combos": [{"ar": "بوشار", "en": "Popcorn", "aed": 26.0, "source": "https://x", "checked": "2026-09-27"}]}})
+    html = venue.snacks_section(_SiteStub(), "ar", "vox")
+    assert 'class="num"' in html and money_str(26.0) in html
+
+
+def money_str(x):
+    from site_kit import money
+    return money(x)
+
+
+def test_snacks_note_ar_is_rendered_not_dropped(monkeypatch):
+    monkeypatch.setattr(venue, "load_snacks", lambda: {
+        "vox": {"combos": [{"ar": "ناتشوز", "en": "Nachos", "aed": 53.0, "note_ar": "مع جبنة وصوص",
+                             "source": "https://x", "checked": "2026-09-27"}]}})
+    html = venue.snacks_section(_SiteStub(), "ar", "vox")
+    assert "مع جبنة وصوص" in html and 'class="ndesc"' in html
+
+
+def test_snacks_note_ar_absent_on_english_page(monkeypatch):
+    monkeypatch.setattr(venue, "load_snacks", lambda: {
+        "vox": {"combos": [{"ar": "ناتشوز", "en": "Nachos", "aed": 53.0, "note_ar": "مع جبنة وصوص",
+                             "source": "https://x", "checked": "2026-09-27"}]}})
+    html = venue.snacks_section(_SiteStub(), "en", "vox")
+    assert "مع جبنة وصوص" not in html
+
+
+def test_snacks_no_chain_entry_renders_nothing(monkeypatch):
+    monkeypatch.setattr(venue, "load_snacks", lambda: {})
+    assert venue.snacks_section(_SiteStub(), "ar", "novo") == ""
+
+
+# ---------------------------------------------------------------- FOOD_WORDS heuristic
+def test_food_words_surfaces_an_official_note_that_mentions_food(monkeypatch):
+    monkeypatch.setattr(venue, "load_snacks", lambda: {})   # no combos: isolate the food-discount branch
+    rules = {"cineroyal": {"fab": {"note_ar": "التذكرة بـ20 درهم وخصم 20% على الأكل", "source": "https://cineroyal.ae/x"}}}
+    html = venue.snacks_section(_SiteStub(rules), "ar", "cineroyal")
+    assert 'class="food-disc"' in html and "الأكل" in html
+
+
+def test_food_words_skips_a_note_that_never_mentions_food():
+    rules = {"star": {"fazaa": {"note_ar": "من الشباك فقط، 4 تذاكر باليوم", "source": "https://x"}}}
+    assert venue.snacks_section(_SiteStub(rules), "ar", "star") == ""   # no combos, no food word: nothing
+
+
+def test_food_words_matches_every_listed_word():
+    for w in venue.FOOD_WORDS:
+        rules = {"c": {"card": {"note_ar": f"خصم على {w}", "source": "https://x"}}}
+        assert venue.snacks_section(_SiteStub(rules), "ar", "c") != "", w
 
 
 # ---------------------------------------------------------------- double feature (design C.43)
@@ -168,6 +243,59 @@ def test_ics_end_after_midnight_rolls_the_date(tmp_path):
 def test_ics_escapes_commas_and_newlines(tmp_path):
     ics = run(tmp_path, 'planIcs({film:"a, b\\nc",cin:"x",date:"2026-09-27",time:"20:00",endHm:null,lat:null,lng:null})')
     assert "SUMMARY:a\\, b\\nc — x" in ics
+
+
+def _ics_esc(s):
+    """Python mirror of plan.js's planIcsEsc, for building the expected value in the folding test."""
+    return s.replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;").replace("\n", "\\n")
+
+
+def _unfold_ics(text):
+    """RFC 5545 §3.1 unfolding: a CRLF immediately followed by exactly one space or tab continues the
+    previous logical line. This is the small unfold/parse helper the fold fix is checked against."""
+    return re.sub(r"\r\n[ \t]", "", text)
+
+
+def _ics_props(text):
+    """{property name: value} from the UNFOLDED text (this file's properties never repeat a name)."""
+    out = {}
+    for ln in _unfold_ics(text).split("\r\n"):
+        if ln and ":" in ln:
+            k, _, v = ln.partition(":")
+            out[k.split(";")[0]] = v
+    return out
+
+
+@pytest.mark.skipif(not NODE, reason="node not installed")
+def test_ics_long_arabic_lines_are_folded_at_75_octets_and_unfold_correctly(tmp_path):
+    film = "فيلم طويل جداً, بعنوان يحكي قصة قديمة عن رحلة بعيدة جداً في الصحراء الكبرى وسط الليل"
+    cin = "سينما فوكس — مول الإمارات الكبير في الطابق الثاني قرب المدخل الرئيسي جداً وبعيد شوي"
+    x = {"film": film, "cin": cin, "date": "2026-09-27", "time": "20:00", "endHm": "22:15", "lat": 25.1, "lng": 55.2}
+    ics = run(tmp_path, "planIcs(" + json.dumps(x, ensure_ascii=False) + ")")
+    physical = ics.split("\r\n")
+    if physical and physical[-1] == "":
+        physical = physical[:-1]
+    # it actually folded (more physical lines than the fixed 16-line template) and every one is legal
+    assert len(physical) > 16
+    for ln in physical:
+        n = len(ln.encode("utf-8"))
+        assert n <= 75, (n, ln)
+    assert any(ln.startswith(" ") for ln in physical)          # continuation lines exist
+    assert not any(ln.startswith("  ") for ln in physical)     # exactly one leading space, never more
+    # never split a multi-byte Arabic character: every physical line must itself decode as valid UTF-8
+    for ln in physical:
+        ln.encode("utf-8").decode("utf-8")   # raises UnicodeDecodeError on a broken split
+    # unfolding restores exactly the original, unfolded property values
+    props = _ics_props(ics)
+    assert props["SUMMARY"] == _ics_esc(film + " — " + cin)
+    assert props["LOCATION"] == _ics_esc(cin)
+    assert props["TRIGGER"] == "-PT60M"
+
+
+@pytest.mark.skipif(not NODE, reason="node not installed")
+def test_ics_short_ascii_lines_stay_unfolded(tmp_path):
+    ics = run(tmp_path, 'planIcs({film:"a",cin:"b",date:"2026-09-27",time:"20:00",endHm:null,lat:null,lng:null})')
+    assert "\r\n " not in ics   # nothing here is anywhere near 75 octets
 
 
 @pytest.mark.skipif(not NODE, reason="node not installed")

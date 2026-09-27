@@ -14,6 +14,12 @@
 # midnight (the end of that calendar date). Where a source gives one flat time for every day, every key
 # repeats it. `open` is the general opening time; `open_fri` overrides it only where the source states a
 # later Friday opening.
+#
+# source_note: present only on an entry whose `source` we could NOT fetch directly this pass (the site
+# timed out or was blocked) — its numbers came from a search result that itself quoted that same official
+# page, not from a blog. Not a rule violation (the header above allows this), but flagged so a future
+# maintainer knows exactly which entries to re-verify by direct fetch once the site is reachable, instead
+# of re-checking all of them.
 malls:
   dubai-mall:
     ar: "دبي مول"
@@ -168,6 +174,7 @@ malls:
     hours: {mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "00:00", sat: "00:00", sun: "00:00"}
     source: "https://www.citycentredeira.com/"
     checked: "2026-09-27"
+    source_note: "citycentremalls.com timed out on every direct fetch; numbers are from a search result quoting this same official page"
 
   city-centre-mirdif:
     ar: "سيتي سنتر مردف"
@@ -177,6 +184,7 @@ malls:
     hours: {mon: "00:00", tue: "00:00", wed: "00:00", thu: "00:00", fri: "00:00", sat: "00:00", sun: "00:00"}
     source: "https://www.citycentremirdif.com/en/plan-your-visit"
     checked: "2026-09-27"
+    source_note: "citycentremalls.com timed out on every direct fetch; numbers are from a search result quoting this same official page"
 
   city-centre-sharjah:
     ar: "سيتي سنتر الشارقة"
@@ -187,3 +195,4 @@ malls:
     hours: {sat: "22:00", sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "00:00", fri: "00:00"}
     source: "http://www.citycentresharjah.com/opening-hours.aspx"
     checked: "2026-09-27"
+    source_note: "blocked by Cloudflare on every direct fetch attempt (curl and a fetch tool alike); numbers are from a search result quoting this same official page"

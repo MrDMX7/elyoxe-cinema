@@ -17,7 +17,7 @@ import os
 
 import yaml
 
-from site_kit import L, Plugin, ROOT, dates, esc, human_date, money
+from site_kit import L, Plugin, ROOT, dates, esc, human_date, money, num
 
 CSS = ("venue",)
 JS = ("plan",)
@@ -171,9 +171,13 @@ def snacks_section(site, lang, chain):
     snacks = load_snacks()
     entry = snacks.get(chain) or {}
     combos = entry.get("combos") or []
-    rows = "".join(
-        f'<tr><td>{esc(L((c.get("ar"), c.get("en")), lang))}</td><td>{money(c["aed"])} <small>{esc(L(("درهم", "AED"), lang))}</small></td></tr>'
-        for c in combos if c.get("aed") is not None)
+    def combo_row(c):
+        name = esc(L((c.get("ar"), c.get("en")), lang))
+        note = c.get("note_ar") if lang == "ar" else None   # the only language this note is written in
+        note_html = f'<small class="ndesc">{dates(esc(note))}</small>' if note else ""
+        return (f'<tr><td>{name}{note_html}</td>'
+                f'<td>{num(money(c["aed"]))} <small>{esc(L(("درهم", "AED"), lang))}</small></td></tr>')
+    rows = "".join(combo_row(c) for c in combos if c.get("aed") is not None)
     body = ""
     if rows:
         head = "الأكل والمشروبات" if lang == "ar" else "Snacks and drinks"
