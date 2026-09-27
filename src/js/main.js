@@ -114,11 +114,13 @@ function lazyRow() {
       applyFilters();
     });
   });
-  relabelDays(); upgradeTimes();
-  /* the day showing first: today while it still has a time to come, else the next day that has one */
-  var days = qa("[data-day]"), ahead = function (b) {
-    var d = b.getAttribute("data-day");
-    return qa('.times[data-d="' + d + '"] [data-start]').some(function (a) { return uae(d + "T" + a.getAttribute("data-start")).getTime() >= NOW.getTime(); });
+  relabelDays();
+  /* the day showing first: today while it still has a time to come, else the next day that has one (a compact
+     schedule's times are still text here: upgradeTimes() runs after, so this click filters text, not buttons) */
+  var hm = hhmm(NOW.getTime()), days = qa("[data-day]"), ahead = function (b) {
+    var d = b.getAttribute("data-day"), ts = [];
+    qa('.times[data-d="' + d + '"]').forEach(function (t) { ts = ts.concat(t.textContent.match(/\d\d:\d\d/g) || []); });
+    return d > TODAY ? ts.length > 0 : d === TODAY && ts.some(function (t) { return t >= hm; });
   };
   var cur = days.filter(function (b) { return b.getAttribute("data-day") >= TODAY && ahead(b); })[0] ||
     days.filter(function (b) { return b.getAttribute("data-day") === TODAY; })[0] ||
@@ -147,6 +149,6 @@ function lazyRow() {
   setInterval(function () {
     var d = TODAY; tick(); if (d !== TODAY) relabelDays();
     marks(); hidePassed(); ages(); renderNow(); rollTicket();
-    if (typeof planRefresh === "function" && tk && !tk.hidden) planRefresh();
+    if (typeof planRefresh === "function" && tk && !tk.hidden && (desk() || tk.classList.contains("open"))) planRefresh();
   }, 60e3);
 })();

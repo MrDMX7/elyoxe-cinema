@@ -147,6 +147,8 @@ def test_best_reviewed_puts_scored_films_first_by_critics_plus_audience(tmp_path
                    "resident-evil", "avengers-encore", "pradhama", "runner"]     # none: last, by verdict, then the page's order
     js = (JS / "filters.js").read_text(encoding="utf-8")
     assert 'if (ST.sort === "verdict")' in js and "scoreRank(scoresOf(fid)" in js
+    # a re-sorted sideways row starts at its first film (it used to stay where the old first tile went)
+    assert "if (box.scrollWidth > box.clientWidth) box.scrollLeft = 0;" in js
 
 
 def test_scores_island_on_the_pages_with_the_sort(site):
@@ -296,4 +298,4 @@ def test_the_minute_moves_the_ticket_and_hides_passed_halls():
     f = (JS / "filters.js").read_text(encoding="utf-8")
     assert 'var GONE = ".hl, .tl, .scin, .cg, .cf, .srow, .fcity, .day[data-d]";' in f
     # «ما في شي يطابق» is never blamed on the clock: the empty list is judged without the blocks whose times ran out
-    assert ".filter(function (el) { return !isGone(el); })" in f
+    assert ".filter(function (el) { return gone.get(el) !== 1; })" in f and "var gone = hidePassed();" in f

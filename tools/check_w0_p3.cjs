@@ -162,8 +162,10 @@ async function scenarioSort(vp) {
   const got = await p.evaluate(() => {
     let sc = null; try { sc = JSON.parse(document.getElementById("cinema-sc").textContent); } catch (e) {}
     const tiles = [...document.querySelectorAll("[data-films] .film[data-fid]")].filter((e) => !e.classList.contains("x") && !e.classList.contains("off"));
-    return { sc, order: tiles.map((e) => [e.getAttribute("data-fid"), e.getAttribute("data-v")]) };
+    const r = tiles[0] && tiles[0].getBoundingClientRect();
+    return { sc, order: tiles.map((e) => [e.getAttribute("data-fid"), e.getAttribute("data-v")]), firstInView: !!r && r.right > 0 && r.left < innerWidth };
   });
+  check(vp + " after the sort, the row starts at its first film (in view)", got.firstInView, got.order[0] && got.order[0][0]);
   await p.locator("[data-films]").scrollIntoViewIfNeeded();
   await shot(p, "sort-" + vp);
   if (!got.sc) { check(vp + " «الأحسن تقييم» has the page's scores (#cinema-sc)", false, "no #cinema-sc"); await c.close(); return; }

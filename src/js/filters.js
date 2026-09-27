@@ -40,6 +40,9 @@ function sortIn(box, sel) {
   var to = els.map(function (e) { return [sortKey(e), e]; }).sort(function (a, b) { return a[0] - b[0]; });
   if (to.every(function (p, i) { return p[1] === els[i]; })) return;   /* already in order: no reflow, focus kept */
   to.forEach(function (p) { box.appendChild(p[1]); });
+  /* a sideways row (the «الليلة» posters) would stay scrolled to where the old first tile went: a new order
+     starts at its first film */
+  if (box.scrollWidth > box.clientWidth) box.scrollLeft = 0;
 }
 function markControls() {
   var f = filt();
@@ -54,13 +57,19 @@ function markControls() {
    time at all is not judged. The filters mark what they hide with xf; x (display:none) is xf or gone. */
 var GONE = ".hl, .tl, .scin, .cg, .cf, .srow, .fcity, .day[data-d]";
 function tmLive(a) { return !a.classList.contains("past") && !a.closest(".times[hidden]"); }
-function isGone(el) { var ts = qa(".tm[data-start]", el); return ts.length > 0 && !ts.some(tmLive); }
 function hideBy(el, v) { el.classList.toggle(el.matches(GONE) ? "xf" : "x", v); }
+/* one pass over the times (hundreds on a busy film page): each marks the blocks above it as having a time, and a live one
+   as having a time to come; a block with times and none to come is gone */
 function hidePassed() {
-  qa(GONE).forEach(function (el) {
-    if (el.closest(".similar, [data-ticket]")) return;
-    el.classList.toggle("x", el.classList.contains("xf") || isGone(el));
+  var els = qa(GONE).filter(function (el) { return !el.closest(".similar, [data-ticket]"); }), st = new Map();
+  if (!els.length) return st;
+  els.forEach(function (el) { st.set(el, 0); });   /* 0 no time, 1 times all passed, 2 a time to come */
+  qa(".tm[data-start]").forEach(function (a) {
+    var v = tmLive(a) ? 2 : 1;
+    for (var n = a.parentElement; n && n !== body; n = n.parentElement) { var s = st.get(n); if (s !== undefined && s < v) st.set(n, v); }
   });
+  els.forEach(function (el) { el.classList.toggle("x", el.classList.contains("xf") || st.get(el) === 1); });
+  return st;
 }
 function applyFilters() {
   markControls();   /* first: the empty-state line reads the controls' state */
@@ -80,12 +89,12 @@ function applyFilters() {
     if (ok && timeOn) ok = el.classList.contains("film") ? !S || el.getAttribute("data-fit") !== "0" : anyTm(el);
     hideBy(el, !ok);
   });
-  hidePassed();
+  var gone = hidePassed();
   sortIn(q("[data-films]"), ".film[data-fid]");
   sortIn(q(".sched"), ".srow");
   qa(".cfilms").forEach(function (c) { sortIn(c, ".cf"); });
   /* «nothing matches» is said only when the filters emptied the list, never when the day's times ran out */
-  var list = (page === "film" ? qa(".cg") : page === "cinema" ? qa(".cf") : qa("[data-films] .film")).filter(function (el) { return !isGone(el); });
+  var list = (page === "film" ? qa(".cg") : page === "cinema" ? qa(".cf") : qa("[data-films] .film")).filter(function (el) { return gone.get(el) !== 1; });
   var none = list.length > 0 && !list.some(function (el) { return !el.classList.contains("x") && !el.closest(".x"); });
   qa("[data-empty]").forEach(function (e) {
     e.hidden = !none;

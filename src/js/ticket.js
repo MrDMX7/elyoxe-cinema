@@ -78,7 +78,12 @@ function showOf(b) {
 function showKeyOf(b) { var s = showOf(b); return showKey(s.cin, s.d, s.t, s.hk); }
 function tmStart(b) { var s = showOf(b); return uae(s.d + "T" + s.t).getTime(); }
 function tmPast(b) { return tmStart(b) < NOW.getTime(); }
-function byStart(a, b) { return tmStart(a) - tmStart(b); }
+/* the buttons that have not started, soonest first (each start worked out once) */
+function upcoming(bs) {
+  var n = NOW.getTime();
+  return bs.map(function (b) { return [tmStart(b), b]; }).filter(function (x) { return x[0] >= n; })
+    .sort(function (x, y) { return x[0] - y[0]; }).map(function (x) { return x[1]; });
+}
 /* a time button inside a schedule (not a tile, not the ticket), in document order */
 function schedTimes(scope) { return qa(".tm[data-start]", scope || document).filter(function (b) { return !!b.closest(".times[data-d]") && !tk.contains(b); }); }
 /* press the day chip a time belongs to, when the page has day chips and another day is showing */
@@ -104,7 +109,7 @@ function showFromHash() {
     showDay(hit); tkUser = true; tapTime(hit, true); scrollNear(hit);
     return true;
   }
-  var cg = hit && hit.closest(".cg"), next = cg ? schedTimes(cg).filter(function (b) { return !tmPast(b); }).sort(byStart)[0] : null;
+  var cg = hit && hit.closest(".cg"), next = cg ? upcoming(schedTimes(cg))[0] : null;
   var p = document.createElement("p");
   p.className = "hint"; p.setAttribute("data-gone", ""); p.setAttribute("role", "status"); p.textContent = TK.gone;
   if (next) {
@@ -122,7 +127,7 @@ function showFromHash() {
 function tkScope() { return page === "film" ? q('.fcity[data-city="' + city + '"]') : q(".cgs, .cfilms, .sched") ? document : null; }
 function nextShow() {
   var sc = tkScope(); if (!sc) return null;
-  var up = schedTimes(sc === document ? null : sc).filter(function (b) { return !tmPast(b); }).sort(byStart);
+  var up = upcoming(schedTimes(sc === document ? null : sc));
   return up.filter(function (b) { return b.hasAttribute("data-p"); })[0] || up[0] || null;
 }
 function pickState(on) {
