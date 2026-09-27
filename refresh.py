@@ -212,6 +212,26 @@ def _run_chain(chain: str, days: int, offline: bool, timeout: float, price_cache
     return {"ok": True, "result": payload, "error": None, "seconds": seconds}
 
 
+def run_steps(data: dict, ctx: dict, steps_dir: Path | None = None) -> dict:
+    """Run every steps/<name>.py that defines run(data, ctx), sorted by name, each isolated.
+    Returns {name: {"ok", "error", **whatever run returned}} for health.json."""
+    import importlib.util
+    out = {}
+    d = steps_dir or (ROOT / "steps")
+    for path in sorted(d.glob("[a-z]*.py")) if d.is_dir() else []:
+        name = path.stem
+        try:
+            spec = importlib.util.spec_from_file_location(f"steps.{name}", path)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            extra = mod.run(data, ctx) or {}
+            out[name] = {"ok": True, "error": None, **extra}
+        except Exception as e:  # noqa: BLE001 - a feature step must degrade, never abort the publish
+            out[name] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
+            print(f"refresh: step {name} failed: {e}", file=sys.stderr)
+    return out
+
+
 def _attach_verdicts(data: dict) -> None:
     for fid, film in data.get("films", {}).items():
         verdict = _load_json(verdicts_mod.VERDICTS_DIR / f"{fid}.json")
@@ -591,6 +611,10 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
                 f"failed: {', '.join(verdict_health['failed'])}"
             )
     _attach_verdicts(merged)
+
+    # phase-2 data steps: every steps/<name>.py with run(data, ctx) -> dict|None, in name order.
+    # Each is isolated like enrich: a failure is recorded in health["steps"][name] and never aborts.
+    health["steps"] = run_steps(merged, {"offline": offline, "now": now, "data_dir": str(DATA_DIR)})
 
     # film history: archive a film that's confirmed gone (permanent page, see update_film_history),
     # and collect fids appearing for the first time ever -- for run.sh's one new-film notification.
