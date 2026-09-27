@@ -170,17 +170,29 @@ var window = {}, RM = false, page = "home", body = null, q = function () { retur
 function feature(fn) { FEAT.push(fn); }
 """ + feel + """
 feature(function () { ran.push("geo"); });
+feature(function () { ran.push("search"); throw new Error("a feature that throws"); });
+feature(function () { ran.push("share"); });
+console.error = function () {};
 FEAT.forEach(function (f) { f(); });
 var before = ran.slice();
 document.prerendering = false; (L.prerenderingchange || []).forEach(function (f) { f(); });
-var after = ran.slice();
-document.prerendering = false; ran = []; feature(function () { ran.push("now"); }); FEAT[FEAT.length - 1]();
-process.stdout.write(JSON.stringify([before, after, ran]));
+var sync = ran.slice(), steps = [];
+/* each feature in its own task: after each zero-timeout at most one more has run */
+function step() { steps.push(ran.length); if (ran.length < 3) setTimeout(step, 0); else done(); }
+setTimeout(step, 0);
+function done() {
+  ran = []; feature(function () { ran.push("late"); }); FEAT[FEAT.length - 1]();
+  setTimeout(function () { process.stdout.write(JSON.stringify([before, sync, steps, ran])); }, 5);
+}
 """
     (tmp_path / "t.js").write_text(harness, encoding="utf-8")
     r = subprocess.run([NODE, str(tmp_path / "t.js")], capture_output=True, text=True, encoding="utf-8", timeout=60)
     assert r.returncode == 0, r.stderr
-    assert json.loads(r.stdout) == [[], ["geo"], ["now"]]
+    before, sync, steps, late = json.loads(r.stdout)
+    assert before == [] and sync == []          # nothing while prerendering, nothing in the activation task itself
+    # then one feature per task, in order (feel.js's own two features queue first); a throwing one stops no other
+    assert steps[-1] == 3 and len(steps) >= 3 and all(0 <= b - a <= 1 for a, b in zip(steps, steps[1:]))
+    assert late == ["late"]
 
 
 @pytest.mark.skipif(not NODE, reason="node not installed")

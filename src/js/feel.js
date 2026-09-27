@@ -9,10 +9,26 @@ function whenActive(fn) {
   if (!document.prerendering) { fn(); return; }
   document.addEventListener("prerenderingchange", function () { fn(); }, { once: true });
 }
-var featureNow = feature;
+/* after the core has bound the page, each feature starts in a task of its own, in order: the main thread
+   is given back between them (scheduler.yield where the browser has it, else a zero timeout), so start-up
+   is a row of short tasks instead of one long one */
+function nextTask(fn) {
+  var s = window.scheduler;
+  if (s && typeof s.yield === "function") s.yield().then(fn, fn); else setTimeout(fn, 0);
+}
+var featureNow = feature, featQ = [], featBusy = false;
+function featDrain() {
+  var fn = featQ.shift();
+  if (!fn) { featBusy = false; return; }
+  try { fn(); } catch (e) { if (window.console) console.error(e); }
+  nextTask(featDrain);
+}
 feature = function (fn) {
   featureNow(function () {
-    whenActive(function () { try { fn(); } catch (e) { if (window.console) console.error(e); } });
+    whenActive(function () {
+      featQ.push(fn);
+      if (!featBusy) { featBusy = true; nextTask(featDrain); }
+    });
   });
 };
 
