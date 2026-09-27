@@ -9,6 +9,8 @@ pytest
 anthropic
 boto3
 Pillow
+fonttools
+brotli
 cryptography
 pycryptodome
 tzdata; sys_platform == "win32"

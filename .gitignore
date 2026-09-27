@@ -20,3 +20,4 @@ data/posters/
 data/og/
 data/*.bak
 data/*.corrupt-*
+data/.req-hash

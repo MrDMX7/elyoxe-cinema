@@ -71,7 +71,13 @@ def sandbox(tmp_path):
     fake_flock.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
     _make_executable(fake_flock)
 
-    env = {**os.environ, "PATH": f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}"}
+    # C2 (final review): never the production log nor the real notify mechanism, on any machine --
+    # run.sh refuses to start under pytest without both (test_run_sh_refuses_under_pytest_without_the_overrides)
+    env = {**os.environ, "PATH": f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}",
+           "CINEMA_LOG_DIR": (tmp_path / "data").as_posix(),
+           "CINEMA_ENV_SH": (tmp_path / "no-such-termux-env.sh").as_posix()}
+    env.pop("CINEMA_PIP_INSTALL", None)
+    env.pop("ELYOXE_JOB", None)   # the Fold's own run sets it; the sandbox behaves the same everywhere
     run = lambda *a: subprocess.run(
         [GIT, *a], cwd=tmp_path, env=env, capture_output=True, text=True, encoding="utf-8",
     )
@@ -234,3 +240,90 @@ def test_a_second_failed_pull_is_also_degraded_not_a_repeat_alert(sandbox):
     rc2, out2, log2 = run_cinema(sandbox)
     assert rc2 == 78, out2
     assert "DEGRADED: pull" in log2
+
+
+# ================================================================ C2: never the real log / notify
+
+def test_run_sh_refuses_under_pytest_without_the_overrides(sandbox):
+    """The guard: a test that runs run.sh without CINEMA_LOG_DIR/CINEMA_ENV_SH (so it would append to the
+    Fold's production cinema.log and source the real notify) is stopped at the door, before any log line."""
+    tmp_path, env = sandbox
+    for missing in ("CINEMA_LOG_DIR", "CINEMA_ENV_SH"):
+        bare = {k: v for k, v in env.items() if k != missing}
+        bare["PYTEST_CURRENT_TEST"] = os.environ.get("PYTEST_CURRENT_TEST", "guard")
+        r = subprocess.run([BASH, "run.sh"], cwd=tmp_path, env=bare, capture_output=True, text=True, encoding="utf-8")
+        assert r.returncode == 64, r.stdout + r.stderr
+        assert "refusing" in r.stderr
+        assert not (tmp_path / "data" / "cinema.log").exists()
+
+
+def test_the_sandbox_log_is_the_temp_one_and_notify_is_unavailable(sandbox):
+    set_tests(sandbox[0], passing=False)
+    rc, out, log = run_cinema(sandbox)
+    assert rc == 6
+    assert "FAILED: الاختبارات فشلت" in log                 # written to <tmp>/data/cinema.log, nowhere else
+    assert "notify (unavailable): سينما ✗" in log           # CINEMA_ENV_SH points nowhere: no real notify
+
+
+# ================================================================ C1: requirements self-heal
+
+def _fake_pip(tmp_path, fail=False):
+    calls = tmp_path / "pip-calls"
+    script = tmp_path / "fakepip.sh"
+    script.write_text(f'#!/usr/bin/env bash\necho call >> "{calls.as_posix()}"\nexit {1 if fail else 0}\n',
+                      encoding="utf-8")
+    return f"bash {script.as_posix()}", calls
+
+
+def _pip_calls(calls):
+    return len(calls.read_text(encoding="utf-8").splitlines()) if calls.exists() else 0
+
+
+def test_requirements_install_runs_once_per_change_and_records_the_hash(sandbox):
+    tmp_path, env = sandbox
+    set_tests(tmp_path, passing=True)
+    cmd, calls = _fake_pip(tmp_path)
+    env["CINEMA_PIP_INSTALL"] = cmd
+    (tmp_path / "requirements.txt").write_text("requests\n", encoding="utf-8")
+
+    rc, out, log = run_cinema(sandbox)                       # no data/.req-hash yet: install
+    assert rc == 0, out
+    assert _pip_calls(calls) == 1
+    h1 = (tmp_path / "data" / ".req-hash").read_text(encoding="utf-8").strip()
+    assert len(h1) == 64
+
+    rc, out, _ = run_cinema(sandbox)                         # unchanged: no install
+    assert rc == 0, out
+    assert _pip_calls(calls) == 1
+
+    (tmp_path / "requirements.txt").write_text("requests\nfonttools\nbrotli\n", encoding="utf-8")
+    rc, out, _ = run_cinema(sandbox)                         # changed: install again, new hash
+    assert rc == 0, out
+    assert _pip_calls(calls) == 2
+    assert (tmp_path / "data" / ".req-hash").read_text(encoding="utf-8").strip() != h1
+
+
+def test_a_failed_install_stops_before_tests_and_keeps_the_old_hash(sandbox):
+    tmp_path, env = sandbox
+    set_tests(tmp_path, passing=True)
+    cmd, calls = _fake_pip(tmp_path, fail=True)
+    env["CINEMA_PIP_INSTALL"] = cmd
+    (tmp_path / "requirements.txt").write_text("requests\n", encoding="utf-8")
+
+    rc, out, log = run_cinema(sandbox)
+    assert rc == 5, out
+    assert "FAILED: pip install" in log
+    assert not (tmp_path / "data" / ".req-hash").exists()    # never recorded as installed
+    assert "== cinema run done" not in log
+
+    rc2, out2, log2 = run_cinema(sandbox)                    # still failing: degraded, retried every run
+    assert rc2 == 78, out2
+    assert _pip_calls(calls) == 2
+    assert "DEGRADED: deps" in log2
+
+    cmd_ok, _ = _fake_pip(tmp_path)                          # fixed: installs, records, recovers
+    env["CINEMA_PIP_INSTALL"] = cmd_ok
+    rc3, out3, _ = run_cinema(sandbox)
+    assert rc3 == 0, out3
+    assert (tmp_path / "data" / ".req-hash").exists()
+    assert "deps" not in alert_state(sandbox)

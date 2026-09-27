@@ -29,14 +29,23 @@ set -uo pipefail
 DEGRADED_RC=78
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$HERE"
-LOG_DIR=/data/data/com.termux/files/usr/var/log/elyoxe
+# Test seams (final review C2): CINEMA_LOG_DIR / CINEMA_ENV_SH point the log and the notify mechanism
+# elsewhere. tests/test_degraded_state.py runs this script for real and MUST set both (a temp dir and a
+# no-op env file) -- otherwise a test run on the Fold would append to the production cinema.log and
+# send real notifications to the owner. Guard: under pytest (PYTEST_CURRENT_TEST is inherited by every
+# subprocess a test starts) without both overrides, refuse before touching any log or sourcing anything.
+if [ -n "${PYTEST_CURRENT_TEST:-}" ] && { [ -z "${CINEMA_LOG_DIR:-}" ] || [ -z "${CINEMA_ENV_SH:-}" ]; }; then
+  echo "run.sh: refusing to run under pytest without CINEMA_LOG_DIR and CINEMA_ENV_SH (would write the real log / notify the owner)" >&2
+  exit 64
+fi
+LOG_DIR="${CINEMA_LOG_DIR:-/data/data/com.termux/files/usr/var/log/elyoxe}"
 [ -d "$LOG_DIR" ] || LOG_DIR="$HERE/data"
 LOG="$LOG_DIR/cinema.log"
 mkdir -p "$(dirname "$LOG")" data
 exec > >(while IFS= read -r l; do printf '[%s] %s\n' "$(date '+%F %T')" "$l"; done | tee -a "$LOG") 2>&1
 
 # notify <title> <body> <id> — the workspace mechanism (termux-env.sh → notify.py); never fails the run.
-ENV_SH=/root/workspace/automation/phone/termux-env.sh
+ENV_SH="${CINEMA_ENV_SH:-/root/workspace/automation/phone/termux-env.sh}"
 if [ -f "$ENV_SH" ]; then . "$ENV_SH"; fi
 note() { if declare -F notify >/dev/null; then notify "$@" >/dev/null 2>&1 || echo "notify failed: $1"; else echo "notify (unavailable): $1 — $2"; fi; }
 # alert <alerts.py args> — prints the notification body when a condition starts or clears, else nothing
@@ -109,6 +118,24 @@ if ! git pull --ff-only -q; then
 fi
 ok_now pull "git pull رجع يشتغل"
 echo "   at $(git log --oneline -1)"
+
+# dependencies self-heal (final review C1): a pull that adds a package to requirements.txt must not turn
+# the test gate red on a missing import. data/.req-hash holds the sha256 of the requirements.txt that was
+# last installed successfully; a different (or missing) hash -> pip install -r before the tests. A failed
+# install is a condition like any other (fresh alert, then degraded). CINEMA_PIP_INSTALL is a test seam.
+req_hash() { "$PY" -c 'import hashlib,sys; print(hashlib.sha256(open(sys.argv[1],"rb").read()).hexdigest())' requirements.txt 2>/dev/null; }
+if [ -f requirements.txt ]; then
+  want=$(req_hash); have=$(cat data/.req-hash 2>/dev/null)
+  if [ -n "$want" ] && [ "$want" != "$have" ]; then
+    echo "   requirements.txt changed (${have:0:12} -> ${want:0:12}): installing"
+    if ${CINEMA_PIP_INSTALL:-"$PY" -m pip install -q -r requirements.txt}; then
+      write_marker_atomic data/.req-hash "$want"
+    else
+      fail "pip install -r requirements.txt فشل — ما نُشر شي، الموقع على النسخة السابقة" 5 deps
+    fi
+  fi
+  ok_now deps "تنصيب المكتبات رجع يشتغل"
+fi
 
 # test gate (ruling 2026-09-26): whatever was just pulled must pass the suite before it can publish.
 # Red -> no refresh, no deploy: the live site stays on the last good build. The laptop pushes by hand
