@@ -45,13 +45,15 @@ def phase1(tmp_path_factory):
     return str(d)
 
 
-def run_build(root, data, disc, out, mode="core"):
+def run_build(root, data, disc, out, mode="core", seed="0"):
     code = ("import sys, inspect; sys.path.insert(0, sys.argv[1]); import build\n"
             "kw = {}\n"
             "if sys.argv[6] == 'core' and 'modules' in inspect.signature(build.build).parameters:\n"
             "    kw['modules'] = build.discover(only=('core',))\n"
             "build.build(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], noindex=False, **kw)\n")
-    env = dict(os.environ, PYTHONHASHSEED="0"); env.pop("PREVIEW", None)   # discounts.json iterates a set
+    # phase 1's discounts.json lists chains from a set (sorted since phase 2): a fixed seed keeps the old side
+    # stable, and files() compares that file by content, not key order
+    env = dict(os.environ, PYTHONHASHSEED=seed); env.pop("PREVIEW", None)
     r = subprocess.run([sys.executable, "-c", code, root, data, disc, out, HALLS, mode], cwd=root, env=env,
                        capture_output=True, text=True, encoding="utf-8", timeout=300)
     assert r.returncode == 0, r.stderr[-3000:]
@@ -72,6 +74,8 @@ def files(out):
                     v = re.search(r'^var V = "([0-9a-f]{10})"', t, re.M)
                     if v: t = t.replace(v.group(1), "HASH")
                 for rx, to in HASHES: t = rx.sub(to, t)
+                if rel == "data/discounts.json":   # the same content; phase 1 ordered the chains by set iteration
+                    t = json.dumps(json.loads(t), ensure_ascii=False, sort_keys=True)
                 b = t.encode("utf-8")
             for rx, to in HASHES: rel = rx.sub(to, rel)
             got[rel] = b
@@ -96,3 +100,14 @@ def test_full_build_only_adds_to_phase1(phase1, tmp_path, name, data, disc):
     before = files(run_build(phase1, data, disc, str(tmp_path / "before")))
     after = files(run_build(ROOT, data, disc, str(tmp_path / "after"), "all"))
     assert set(before) <= set(after), sorted(set(before) - set(after))[:10]
+
+
+def test_discounts_json_does_not_depend_on_the_hash_seed(tmp_path):
+    """data/discounts.json lists the chains sorted: two builds under different hash seeds write the same bytes."""
+    name, data, disc = CASES[0]
+    a = run_build(ROOT, data, disc, str(tmp_path / "a"), "core", seed="1")
+    b = run_build(ROOT, data, disc, str(tmp_path / "b"), "core", seed="2")
+    read = lambda o: open(os.path.join(o, "data", "discounts.json"), "rb").read()
+    assert read(a) == read(b)
+    chains = json.loads(read(a))["chains"]["ar"]
+    assert list(chains) == sorted(chains)

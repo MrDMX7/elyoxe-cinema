@@ -622,7 +622,7 @@ class CorePages(Pages):
         self.write(os.path.join(ddir, "cinemas.json"), json.dumps(geo, ensure_ascii=False, separators=(",", ":")))
         rules = {ch: {card: {k: v for k, v in r.items() if k in ("status", "type", "value", "excluded_halls", "halls_excluded", "included_halls", "included_cinemas", "valid_until", "confidence", "box_office_only", "max_tickets", "note_ar")}
                       for card, r in (cards or {}).items()} for ch, cards in self.rules.items()}
-        chains = {ch: self.h.chain_name(ch, "ar") for ch in set(self.rules) | {c["chain"] for c in self.cinemas.values()}}
+        chains = {ch: self.h.chain_name(ch, "ar") for ch in sorted(set(self.rules) | {c["chain"] for c in self.cinemas.values()})}
         chains_en = {ch: self.h.chain_name(ch, "en") for ch in chains}
         self.write(os.path.join(ddir, "discounts.json"), json.dumps({"cards": self.cards, "rules": rules, "chains": {"ar": chains, "en": chains_en}},
                                                                     ensure_ascii=False, separators=(",", ":"), default=str))

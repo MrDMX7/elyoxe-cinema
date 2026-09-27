@@ -1,0 +1,43 @@
+/* insights (pages/insights.py, pages/questions.py): price index, history chart, box office, compare, «شي يشبه»,
+   question pages. «هـ»: gold only on prices, screen light for lines, no boxes, logical properties. */
+.pi h2,.ph h2,.pt-w h2,.bo-w h2,.cmp h2,.sim h2,.qa h2{margin-block:28px 8px}
+.pidx td b,.pt-w td b{color:var(--gold);font-weight:600}
+.pidx td,.pidx th{vertical-align:baseline}
+.chart{margin:12px 0 0;max-inline-size:760px}
+.chart svg{display:block;inline-size:100%;block-size:auto}
+.chart .ln{fill:none;stroke:var(--screen);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.chart .lb{fill:var(--dim);font:12px var(--body)}
+.chart .ax{fill:var(--seat);font:11px var(--body)}
+.chart .base{stroke:var(--line-2);stroke-width:1}
+.chart figcaption{color:var(--seat);font-size:12px;margin-block-start:6px}
+.chg{list-style:none;padding:0;margin:14px 0}
+.chg li{padding-block:6px;border-block-end:1px solid var(--line)}
+.chg .num{color:var(--gold)}
+.chg small{color:var(--seat);margin-inline-start:8px}
+.chart-t{margin-block:12px}
+.chart-t summary{cursor:pointer;color:var(--dim)}
+.bo{list-style:none;counter-reset:bo;padding:0;margin:8px 0 0}
+.bo li{counter-increment:bo;display:grid;grid-template-columns:2.2em 1fr auto auto;grid-template-areas:"n f s c" "n f v v";gap:2px 16px;align-items:center;padding-block:10px;border-block-end:1px solid var(--line)}
+.bo li::before{content:counter(bo);grid-area:n;font-family:var(--body);color:var(--seat);font-size:18px}
+.bo li>a{grid-area:f;display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--screen);min-inline-size:0}
+.bo .pst.sm,.sim .pst.sm{inline-size:48px;flex:none}
+.bo-t,.sim-t{font-family:var(--display);font-weight:var(--dw);font-size:19px;line-height:1.2}
+.bo-n{grid-area:s;color:var(--dim);font-size:13px}
+.bo-c{grid-area:c;color:var(--seat);font-size:13px}
+.bo .vw{grid-area:v;font-size:12px;text-align:end}
+.sim-l{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(15rem,100%),1fr));gap:10px 20px}
+.sim-l li{display:flex;flex-direction:column;gap:2px;padding-block:6px;border-block-end:1px solid var(--line)}
+.sim-l a{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--screen)}
+.sim-w{color:var(--seat);font-size:12px;padding-inline-start:58px}
+.cmp-ui{display:flex;flex-wrap:wrap;gap:10px 16px;margin-block-end:12px}
+.cmp-ui label{display:flex;flex-direction:column;gap:4px;color:var(--seat);font-size:12px}
+.cmp-ui select{background:var(--night);color:var(--screen);border:0;border-block-end:1px solid var(--line-2);font:inherit;font-size:15px;padding:6px 0;min-inline-size:12rem}
+.cmp-t td{white-space:normal;min-inline-size:9rem}
+.cmp-t td .p{color:var(--gold);font-weight:600}
+.qa .ans{font-size:18px;line-height:1.7;max-inline-size:64ch}
+.qa .ans .num{color:inherit}
+.qa .ev{margin-block-start:18px}
+.q-hub h2{margin-block:26px 6px}
+.q-hub ul{list-style:none;padding:0;margin:0}
+.q-hub li{padding-block:8px;border-block-end:1px solid var(--line)}
+.q-hub a{text-decoration:none}

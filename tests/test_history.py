@@ -1,0 +1,160 @@
+"""price_history.py + steps/history.py: the daily price snapshot, its merge rule, and the bucket copy."""
+import importlib.util, json, os, sys
+
+import pytest
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+import price_history as ph  # noqa: E402
+import refresh  # noqa: E402
+
+
+def load_step():
+    spec = importlib.util.spec_from_file_location("steps_history_t", os.path.join(ROOT, "steps", "history.py"))
+    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+    return m
+
+
+def show(cin, film, date, time, aed, hall="Standard", **kw):
+    return {"cinema": cin, "film": film, "date": date, "time": time, "hall": hall, "hall_label": "",
+            "prices": [{"seat": "A", "aed": aed}, {"seat": "B", "aed": aed + 10}] if aed else None, **kw}
+
+
+def data(shows, generated="2026-09-27T09:00:00+04:00"):
+    return {"generated": generated,
+            "cinemas": {"v1": {"chain": "vox", "city": "dubai"}, "v2": {"chain": "vox", "city": "dubai"},
+                        "s1": {"chain": "star", "city": "al-ain"}},
+            "films": {"a": {"title": "A"}, "b": {"title": "B"}, "old": {"title": "Old", "status": "archived"}},
+            "shows": shows}
+
+
+SHOWS = [show("v1", "a", "2026-09-27", "10:00", 40), show("v1", "a", "2026-09-27", "19:00", 50),
+         show("v2", "a", "2026-09-27", "22:00", 60), show("v2", "b", "2026-09-27", "13:00", 90, hall="IMAX"),
+         show("s1", "b", "2026-09-27", "00:30", 30), show("s1", "b", "2026-09-27", "16:00", None),
+         show("s1", "b", "2026-09-27", "17:00", 99, price_source="table"),
+         show("v1", "old", "2026-09-27", "18:00", 5), show("v1", "a", "2026-09-28", "18:00", 45)]
+
+
+def test_snapshot_medians_per_chain_hall_city_and_uae():
+    snap = ph.snapshot(data(SHOWS))
+    assert sorted(snap) == ["2026-09-27", "2026-09-28"]
+    d = snap["2026-09-27"]
+    assert d["n"] == 7 and d["priced"] == 5            # the archived film's show is out; table + unpriced not priced
+    P = {(r[0], r[1], r[2]): r[3:] for r in d["prices"]}
+    assert P[("vox", "Standard", "dubai")] == [50.0, 40.0, 60.0, 3]      # cheapest seat per show
+    assert P[("vox", "Standard", "")] == [50.0, 40.0, 60.0, 3]
+    assert P[("vox", "IMAX", "")] == [90.0, 90.0, 90.0, 1]
+    assert P[("star", "Standard", "al-ain")] == [30.0, 30.0, 30.0, 1]   # the fallback-table 99 never enters
+    assert d["films"] == {"a": [3, 2], "b": [4, 2]}
+    parts = {(r[0], r[1], r[2]): r[3:] for r in d["parts"]}
+    assert parts[("vox", "Standard", "morning")] == [40.0, 1] and parts[("star", "Standard", "night")] == [30.0, 1]
+
+
+def test_part_of_day():
+    assert [ph.part_of_day(t) for t in ("04:59", "05:00", "11:59", "12:00", "17:00", "21:00", "23:59")] == \
+        ["night", "morning", "morning", "afternoon", "evening", "night", "night"]
+
+
+def test_merge_is_idempotent_and_keeps_the_fuller_read():
+    first = ph.snapshot(data(SHOWS))
+    m, ch = ph.merge({}, first)
+    assert ch == ["2026-09-27", "2026-09-28"]
+    assert ph.merge(m, first) == (m, [])                               # the same data twice: nothing moves
+    thinner = ph.snapshot(data(SHOWS[2:]))                                 # later that day, early shows gone
+    assert ph.merge(m, thinner)[1] == []
+    fuller = ph.snapshot(data(SHOWS + [show("v1", "a", "2026-09-28", "20:00", 45)]))
+    m2, ch2 = ph.merge(m, fuller)
+    assert ch2 == ["2026-09-28"] and m2["2026-09-28"]["n"] == 2 and m2["2026-09-27"] is m["2026-09-27"]
+
+
+def test_dump_load_roundtrip_skips_torn_lines(tmp_path):
+    p = str(tmp_path / "h.jsonl")
+    m, _ = ph.merge({}, ph.snapshot(data(SHOWS)))
+    ph.dump(m, p)
+    txt = open(p, encoding="utf-8").read()
+    assert txt.count("\n") == 2 and txt.index("2026-09-27") < txt.index("2026-09-28")
+    open(p, "a", encoding="utf-8").write('{"date": "2026-09-29", "pri')                 # a killed write
+    assert ph.load(p) == json.loads(json.dumps(m))
+    assert ph.load(str(tmp_path / "none.jsonl")) == {}
+
+
+def line(d, med, parts=(), films=None, n=10):
+    return {"date": d, "n": n, "priced": n, "prices": [["vox", "Standard", "", med, med, med, n]],
+            "parts": [["vox", "Standard", p, v, 5] for p, v in parts], "films": films or {}}
+
+
+def test_series_cheapest_time_and_week():
+    L = {"2026-09-01": line("2026-09-01", 40, [("morning", 30), ("night", 50)]),   # Tuesday
+         "2026-09-08": line("2026-09-08", 42, [("morning", 32), ("night", 52)]),   # Tuesday again
+         "2026-09-09": line("2026-09-09", 45, [("morning", 20)]),                   # one Wednesday: an anecdote
+         "2026-09-10": {"date": "2026-09-10", "n": 3, "priced": 0, "prices": [], "parts": []}}
+    assert ph.days(L) == ["2026-09-01", "2026-09-08", "2026-09-09"]
+    assert ph.series(L, "vox") == [("2026-09-01", 40, 10), ("2026-09-08", 42, 10), ("2026-09-09", 45, 10)]
+    assert ph.series(L, "vox", upto="2026-09-08")[-1][0] == "2026-09-08"
+    ct = ph.cheapest_time(L, "vox")
+    assert ct[0] == (1, "morning", 31.0, 10, 2) and ct[-1][:3] == (1, "night", 51.0)
+    assert all(r[0] != 2 for r in ct)
+    W = {"2026-09-20": line("2026-09-20", 1, films={"a": [10, 3]}), "2026-09-26": line("2026-09-26", 1, films={"a": [5, 4], "b": [7, 1]}),
+         "2026-09-27": line("2026-09-27", 1, films={"b": [1, 1]})}
+    tot, used = ph.week_films(W, "2026-09-26")
+    assert used == ["2026-09-20", "2026-09-26"] and tot == {"a": [15, 4], "b": [7, 1]}
+
+
+# ---------------------------------------------------------------- the step
+@pytest.fixture
+def step(monkeypatch):
+    m = load_step()
+    calls = []
+    m.s3_get = lambda path: calls.append(("get", path)) or m._next_get
+    m.s3_put = lambda path: calls.append(("put", path)) or "ok"
+    m._next_get = "absent"
+    m.calls = calls
+    monkeypatch.setenv("CINEMA_HISTORY_S3", "1")      # tmp dirs are sandboxes: force the (faked) bucket
+    return m
+
+
+def test_step_first_run_pulls_then_writes_and_pushes(step, tmp_path):
+    out = step.run(data(SHOWS), {"data_dir": str(tmp_path), "now": None})
+    p = str(tmp_path / "price_history.jsonl")
+    assert [c[0] for c in step.calls] == ["get", "put"] and out["pulled"] == "absent" and out["pushed"] == "ok"
+    assert out["changed"] == ["2026-09-27", "2026-09-28"] and out["days"] == 2 and len(ph.load(p)) == 2
+    step.calls.clear()
+    again = step.run(data(SHOWS), {"data_dir": str(tmp_path)})                # local file now: no pull; same data: no push
+    assert step.calls == [] and again["changed"] == []
+
+
+def test_step_download_failure_never_starts_a_fresh_file(step, tmp_path):
+    step._next_get = "failed: AccessDenied"
+    with pytest.raises(RuntimeError):
+        step.run(data(SHOWS), {"data_dir": str(tmp_path)})
+    assert not os.path.exists(tmp_path / "price_history.jsonl")
+
+
+def test_step_offline_and_bucket_off(step, tmp_path, monkeypatch):
+    assert step.run(data(SHOWS), {"data_dir": str(tmp_path), "offline": True}) == {"skipped": "offline"}
+    assert not os.listdir(tmp_path)
+    monkeypatch.setenv("CINEMA_HISTORY_S3", "0")
+    out = step.run(data(SHOWS), {"data_dir": str(tmp_path)})
+    assert step.calls == [] and out["changed"] and "pushed" not in out
+
+
+def test_bucket_only_for_the_runners_data_dir(monkeypatch, tmp_path):
+    m = load_step()
+    monkeypatch.delenv("CINEMA_HISTORY_S3", raising=False)
+    assert m.use_bucket(os.path.join(ROOT, "data", "price_history.jsonl")) is True
+    assert m.use_bucket(str(tmp_path / "price_history.jsonl")) is False     # the test suite's refresh sandboxes
+    monkeypatch.setenv("CINEMA_HISTORY_S3", "0")
+    assert m.use_bucket(os.path.join(ROOT, "data", "price_history.jsonl")) is False
+
+
+def test_step_runs_isolated_under_refresh(tmp_path, monkeypatch):
+    """refresh.run_steps loads it by file (other steps are other tasks': only this one is run here)."""
+    d = tmp_path / "steps"; d.mkdir()
+    real = os.path.join(ROOT, "steps", "history.py")
+    (d / "history.py").write_text("import importlib.util as u" + chr(10)
+                                  + f"s = u.spec_from_file_location('h', {real!r})" + chr(10)
+                                  + "m = u.module_from_spec(s); s.loader.exec_module(m); run = m.run" + chr(10), encoding="utf-8")
+    monkeypatch.setenv("CINEMA_HISTORY_S3", "0")
+    res = refresh.run_steps(data(SHOWS), {"data_dir": str(tmp_path), "offline": False}, steps_dir=d)
+    assert res["history"]["ok"] is True and res["history"]["days"] == 2
+    assert os.path.exists(tmp_path / "price_history.jsonl")
