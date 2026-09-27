@@ -551,6 +551,16 @@ def test_archived_film_keeps_its_page(site):
     for page in (read(out), read(out, "al-ain"), read(out, "al-ain", "star-bawadi-mall")):
         assert "/film/weapons/" not in page and "/film/the-long-walk/" not in page
     for f in os.listdir(os.path.join(out, "data")):
+        if f == "search.json":
+            # pages/search.py (task A5, ruling round 2, task-A5-review.md): search is a lookup surface, not
+            # a listing -- an archived film keeps a real page (this very test asserts that above), so it
+            # stays findable there too, marked `x` and ranked after every showing match by the client,
+            # never silently indistinguishable from a film still on. Every other data file keeps this
+            # test's original contract untouched.
+            entries = json.loads(open(os.path.join(out, "data", f), encoding="utf-8").read())
+            weapons = [e for e in entries if e.get("p") == "film/weapons"]
+            assert weapons and weapons[0].get("x") == 1
+            continue
         assert "weapons" not in open(os.path.join(out, "data", f), encoding="utf-8").read()
     sm = open(os.path.join(out, "sitemap.xml"), encoding="utf-8").read()
     assert "<loc>https://cinema.elyoxe.com/film/weapons/</loc><lastmod>2026-09-17</lastmod>" in sm

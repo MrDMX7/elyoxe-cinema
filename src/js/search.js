@@ -6,11 +6,11 @@
 var AR = K.AR, esc = K.esc, q = K.q, qa = K.qa;
 var STR = AR ? {
     ph: "دور على فيلم، سينما أو أحد الطاقم…", open: "بحث", close: "سكّر",
-    films: "أفلام", cinemas: "سينمات", people: "ناس",
+    films: "أفلام", cinemas: "سينمات", people: "ناس", archived: "انتهى عرضه",
     empty: "ما لقينا شي يطابق بحثك — جرّب كلمة غير."
   } : {
     ph: "Search a film, cinema or someone in the cast…", open: "Search", close: "Close",
-    films: "Films", cinemas: "Cinemas", people: "People",
+    films: "Films", cinemas: "Cinemas", people: "People", archived: "No longer showing",
     empty: "Nothing matches your search — try a different word."
   };
 
@@ -105,13 +105,17 @@ var STR = AR ? {
     GROUPS.forEach(function (g) {
       var rows = byGroup[g.key];
       if (!rows || !rows.length) return;
-      html += '<li class="srch-g" role="presentation">' + esc(g.label) + "</li>";
+      var gid = "srch-g-" + g.key, opts = "";
       rows.slice(0, 8).forEach(function (m) {
         var id = "srch-opt-" + n++;
-        html += '<li id="' + id + '" role="option" class="srch-r" data-p="' + esc(m.p) + '">'
+        var arch = m.x ? '<small class="srch-arc">' + esc(STR.archived) + "</small>" : "";
+        opts += '<li id="' + id + '" role="option" class="srch-r' + (m.x ? " srch-r-x" : "") + '" data-p="' + esc(m.p) + '">'
           + '<a tabindex="-1" href="' + esc(href(m.p)) + '">' + thumb(m)
-          + '<span' + (AR && !m.a ? ' lang="en" dir="ltr"' : "") + ">" + esc(name(m)) + "</span></a></li>";
+          + '<span' + (AR && !m.a ? ' lang="en" dir="ltr"' : "") + ">" + esc(name(m)) + "</span>" + arch + "</a></li>";
       });
+      /* a labelled ARIA group under the listbox, not a plain unlabelled heading row */
+      html += '<li role="group" aria-labelledby="' + gid + '"><p id="' + gid + '" class="srch-g">' + esc(g.label)
+        + '</p><ul class="srch-g-rows">' + opts + "</ul></li>";
     });
     list.innerHTML = html;
     activeId = -1;
@@ -130,7 +134,12 @@ var STR = AR ? {
       var s = score(query, DATA[i].k || []);
       if (s >= 0) scored.push({ s: s, e: DATA[i] });
     }
-    scored.sort(function (x, y) { return y.s - x.s; });
+    /* a showing match always outranks an archived one, whatever their scores -- the archived film is
+       still found (its page is real and useful), just never ahead of one you can actually watch */
+    scored.sort(function (x, y) {
+      var ax = x.e.x ? 1 : 0, ay = y.e.x ? 1 : 0;
+      return ax !== ay ? ax - ay : y.s - x.s;
+    });
     render(scored.slice(0, 40).map(function (x) { return x.e; }));
   }
 
@@ -213,7 +222,8 @@ var STR = AR ? {
       if (li) { e.preventDefault(); go(li); }
     });
     document.addEventListener("keydown", function (e) {
-      if (panel.hidden && e.key === "/" && !/^(INPUT|TEXTAREA)$/.test((e.target || {}).tagName || "")) {
+      var t = e.target || {}, tag = t.tagName || "";
+      if (panel.hidden && e.key === "/" && !/^(INPUT|TEXTAREA|SELECT)$/.test(tag) && !t.isContentEditable) {
         e.preventDefault(); open();
       } else if (!panel.hidden && e.key === "Escape") {
         close();

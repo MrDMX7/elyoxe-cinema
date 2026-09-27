@@ -105,6 +105,48 @@ def test_no_people_data_no_index_page(tmp_path):
     assert not os.path.exists(os.path.join(o, "people"))
 
 
+def test_page_budget_holds_with_300_people(tmp_path):
+    """Fix round 1 (task-A5-review.md): a real refresh can carry well over 100 distinct cast/director qids
+    across a season of films -- steps/people.py caps a single film's own credits, never the site-wide
+    total. A flat photo grid for 300 rows would blow the ~125 KB page target long before that; site.fit()
+    (site_kit.py) must fall back to the photo-less "compact" mode, and every person must still be listed --
+    this is a budget fix, not a pagination cut that drops people from the page."""
+    d = json.load(open(DATA, encoding="utf-8"))
+    fs = d["films"]
+    for f in fs.values():
+        f["cast"], f["directors"] = [], []
+    people = {}
+    now_ids, rest_ids = [], []
+    for i in range(150):
+        q = f"Q{1000 + i}"
+        fs["heart-of-the-beast"]["cast"].append(q)          # showing now
+        now_ids.append(q)
+        people[q] = {"qid": q, "slug": f"now-person-{i}", "name_en": f"Now Person {i}", "name_ar": None,
+                     "gender": None,
+                     "photo": ({"src": f"/posters/people/{q.lower()}-160.webp",
+                                "src2x": f"/posters/people/{q.lower()}-320.webp", "licence": "CC BY",
+                                "licence_url": "https://x", "author": "A", "page": "https://x"} if i % 2 else None),
+                     "bio": {"ar": None, "en": None}, "notable": []}
+    for i in range(150):
+        q = f"Q{2000 + i}"
+        fs["weapons"]["cast"].append(q)                     # archived only -> the "Everyone" group
+        rest_ids.append(q)
+        people[q] = {"qid": q, "slug": f"rest-person-{i}", "name_en": f"Rest Person {i}", "name_ar": None,
+                     "gender": None, "photo": None, "bio": {"ar": None, "en": None}, "notable": []}
+    d["people"] = people
+    p = tmp_path / "big.json"
+    p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+    o = str(tmp_path / "out")
+    build.build(str(p), DISC, o, modules=MODULES)
+    for parts in (("people", "index.html"), ("en", "people", "index.html")):
+        size = os.path.getsize(os.path.join(o, *parts))
+        assert size <= 125_000, f"{parts}: {size} bytes"
+    h = read(o, "people", "index.html")
+    for q in now_ids + rest_ids:                             # the fix is a byte budget, not a row cut
+        assert f'/people/{people[q]["slug"]}/' in h
+    assert h.count("<img") < len(now_ids)                    # the fit() fallback dropped photo markup, not rows
+
+
 def test_no_qualifying_people_no_index_page(tmp_path):
     """data["people"] present but nobody has both a name and a film we list -> same as none."""
     d = json.load(open(DATA, encoding="utf-8"))

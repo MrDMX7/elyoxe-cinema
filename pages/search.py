@@ -64,8 +64,10 @@ def _malls(cinemas):
         return {}
     out = {}
     for mid, m in raw.items():
-        cid = next((c for c in (m.get("cinemas") or []) if c in cinemas), None)
-        if not cid or not cinemas[cid].get("city"):
+        # fix round 1 (task-A5-review.md): the FIRST listed cinema is not always the one with a city --
+        # try every cinema this mall lists, in order, and take the first that both exists and has one.
+        cid = next((c for c in (m.get("cinemas") or []) if c in cinemas and cinemas[c].get("city")), None)
+        if not cid:
             continue
         out[mid] = {"ar": m.get("ar"), "en": m.get("en"), "path": f"{cinemas[cid]['city']}/{cid}"}
     return out
@@ -85,11 +87,19 @@ def _entry(t, ar, en, path, img=None):
 
 
 def build_index(site):
+    """Every film, showing or archived: an archived film keeps a real, useful page (pages/people.py links
+    to it from "shown before"), and search is a lookup surface, not a listing -- unlike the daily schedule
+    slices, hiding it here would just make it unfindable. Ruling (task-A5-review.md, round 2): keep it,
+    marked `x` (archived) so the client both ranks it after every showing match and labels it, never
+    silently indistinguishable from a film still on."""
     out = []
     for fid, f in site.films.items():
         e = _entry("f", f.get("title_ar"), f.get("title"), f"film/{fid}", f.get("poster"))
-        if e:
-            out.append(e)
+        if not e:
+            continue
+        if f.get("status") == "archived":
+            e["x"] = 1
+        out.append(e)
     for cid, c in site.cinemas.items():
         e = _entry("c", c.get("name_ar"), c.get("name"), f"{c.get('city')}/{cid}" if c.get("city") else None)
         if e:

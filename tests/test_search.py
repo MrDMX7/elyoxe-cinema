@@ -82,6 +82,47 @@ def test_no_people_data_means_no_person_entries(index):
     assert not any(e["t"] == "p" for e in index)   # fixtures/sample_latest.json has no data["people"]
 
 
+def test_archived_films_are_indexed_and_marked(index):
+    """Ruling round 2 (task-A5-review.md): search is a lookup surface, not a listing -- an archived film
+    keeps a real, useful page (linked from a person's "shown before" list), so it stays findable, marked
+    `x` so the client can both rank it after every showing match and label it. "weapons" is archived in
+    fixtures/sample_latest.json (tests/test_build.py::test_archived_film_keeps_its_page asserts its page
+    exists and that it is absent from every OTHER data/*.json file -- search.json is its one exception,
+    checked there too)."""
+    data = json.load(open(DATA, encoding="utf-8"))
+    archived_fids = {fid for fid, f in data["films"].items() if f.get("status") == "archived"}
+    assert archived_fids
+    films = {e["p"]: e for e in index if e["t"] == "f"}
+    assert "film/weapons" in films and films["film/weapons"].get("x") == 1
+    for fid in archived_fids:
+        e = films.get(f"film/{fid}")
+        assert e is not None and e.get("x") == 1
+    showing_fids = {fid for fid, f in data["films"].items() if f.get("status") != "archived"}
+    for fid in showing_fids:
+        e = films.get(f"film/{fid}")
+        if e:
+            assert "x" not in e
+
+
+def test_malls_pick_the_first_cinema_that_has_a_city_not_just_the_first_listed():
+    """Fix round 1 (task-A5-review.md): a mall's `cinemas:` list can name a cinema id first that turns out
+    to have no `city` recorded -- the mall must still resolve to a LATER one that does, not be dropped."""
+    cinemas = {"no-city-cinema": {}, "has-city-cinema": {"city": "dubai"}}
+    malls_yaml = search.MALLS_PATH
+    import yaml
+    raw = {"malls": {"test-mall": {"ar": "تست", "en": "Test", "cinemas": ["no-city-cinema", "has-city-cinema"]}}}
+    import tempfile, os as _os
+    fd, path = tempfile.mkstemp(suffix=".yaml")
+    try:
+        with _os.fdopen(fd, "w", encoding="utf-8") as fh:
+            yaml.safe_dump(raw, fh)
+        search.MALLS_PATH = path
+        out = search._malls(cinemas)
+    finally:
+        search.MALLS_PATH = malls_yaml
+    assert out["test-mall"]["path"] == "dubai/has-city-cinema"
+
+
 def test_every_entry_has_a_name_a_path_and_at_least_one_key(index):
     for e in index:
         assert e["t"] in ("f", "c", "m", "p")
@@ -168,6 +209,109 @@ def test_js_score_tolerates_one_or_two_typos_by_word_length():
     # a long word tolerates two
     assert json.loads(run_node('console.log(score("dhabx", ["abudhabi"]));')) == -1  # too different, not just 2 edits
     assert json.loads(run_node('console.log(score("abudabi", ["abudhabi"]));')) >= 0
+
+
+DOM_STUB = r"""
+var FOCUSED = null, DOC_LISTENERS = {}, PANEL_REFS = {};
+function makeEl(tag) {
+  return {
+    tagName: String(tag || "div").toUpperCase(), attrs: {}, listeners: {}, hidden: false, className: "", value: "",
+    setAttribute: function (k, v) { this.attrs[k] = String(v); },
+    getAttribute: function (k) { return this.attrs.hasOwnProperty(k) ? this.attrs[k] : null; },
+    removeAttribute: function (k) { delete this.attrs[k]; },
+    addEventListener: function (t, fn) { (this.listeners[t] = this.listeners[t] || []).push(fn); },
+    fire: function (t, ev) { (this.listeners[t] || []).forEach(function (fn) { fn(ev || {}); }); },
+    appendChild: function (c) { return c; },
+    insertBefore: function (c) { return c; },
+    focus: function () { FOCUSED = this; },
+    scrollIntoView: function () {},
+    classList: { add: function () {}, remove: function () {}, contains: function () { return false; } }
+  };
+}
+var HOST = makeEl("div"), ALT = makeEl("a");
+PANEL_REFS.input = makeEl("input"); PANEL_REFS.list = makeEl("ul");
+PANEL_REFS.empty = makeEl("p"); PANEL_REFS.close = makeEl("button");
+function fakeQ(sel) {
+  if (sel === ".top-in") return HOST;
+  if (sel === ".alt") return ALT;
+  if (sel === "#srch-input") return PANEL_REFS.input;
+  if (sel === "#srch-list") return PANEL_REFS.list;
+  if (sel === "#srch-empty") return PANEL_REFS.empty;
+  if (sel === "#srch-close") return PANEL_REFS.close;
+  return null;
+}
+global.document = {
+  documentElement: { classList: { add: function () {}, remove: function () {} } },
+  body: { appendChild: function () {} },
+  createElement: function (tag) { return makeEl(tag); },
+  addEventListener: function (t, fn) { (DOC_LISTENERS[t] = DOC_LISTENERS[t] || []).push(fn); }
+};
+var K = {
+  AR: false, esc: function (s) { return String(s); }, q: fakeQ, qa: function () { return []; },
+  getJSON: function () { return Promise.resolve([]); }, C: { base: "/" },
+  now: function () { return new Date(); }, get: function () { return null; }, set: function () {}
+};
+"""
+
+
+@pytest.mark.skipif(not NODE, reason="node not installed")
+def test_js_open_close_aria_expanded_and_focus_return(tmp_path):
+    """open()/close() through the real button+input+panel wiring build() sets up, over a tiny hand-rolled
+    DOM stub (no jsdom in this repo's toolchain -- toolcheck's own "ask the device" rule: it is genuinely
+    not installed, not merely unconfigured)."""
+    src = open(RAW, encoding="utf-8").read()
+    tail = r"""
+var results = {};
+results.initiallyHidden = panel.hidden;
+btn.fire("click");                                    // open()
+results.afterOpenHidden = panel.hidden;
+results.afterOpenAriaExpanded = input.getAttribute("aria-expanded");
+DATA = [{t: "f", a: "فيلم", e: "Film", p: "film/x", k: ["film"]}];
+input.value = "film";
+input.fire("input");                                  // search("film") -> one exact match
+results.afterSearchAriaExpanded = input.getAttribute("aria-expanded");
+input.fire("keydown", { key: "Escape", preventDefault: function () {} });   // close()
+results.afterEscapeHidden = panel.hidden;
+results.focusReturnedToButton = FOCUSED === btn;
+console.log(JSON.stringify(results));
+"""
+    script = DOM_STUB + src + "\n" + tail
+    r = subprocess.run([NODE, "-e", script], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    out = json.loads(r.stdout.strip())
+    assert out["initiallyHidden"] is True
+    assert out["afterOpenHidden"] is False and out["afterOpenAriaExpanded"] == "false"
+    assert out["afterSearchAriaExpanded"] == "true"
+    assert out["afterEscapeHidden"] is True
+    assert out["focusReturnedToButton"] is True
+
+
+@pytest.mark.skipif(not NODE, reason="node not installed")
+def test_js_archived_films_ranked_after_showing_and_labelled():
+    """Ruling round 2 (task-A5-review.md): an archived film (`x: 1` in the index, pages/search.py) is still
+    a real result -- but on an equal score it must render after a showing match, labelled, never mixed in
+    indistinguishably. Two entries tie on an exact-match score (100) here on purpose, so the only thing that
+    can separate them in `list.innerHTML`'s order is the archived flag, not the score."""
+    src = open(RAW, encoding="utf-8").read()
+    tail = r"""
+DATA = [
+  { t: "f", a: null, e: "Old Film", p: "film/old", k: ["tie"], x: 1 },
+  { t: "f", a: null, e: "New Film", p: "film/new", k: ["tie"] }
+];
+input.value = "tie";
+input.fire("input");
+var html = list.innerHTML;
+console.log(JSON.stringify({
+  order: html.indexOf("film/new") < html.indexOf("film/old") ? "new-first" : "old-first",
+  labelled: html.indexOf("No longer showing") !== -1,
+  newUnlabelled: html.slice(0, html.indexOf("film/old")).indexOf("No longer showing") === -1
+}));
+"""
+    script = DOM_STUB + src + "\n" + tail
+    r = subprocess.run([NODE, "-e", script], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    out = json.loads(r.stdout.strip())
+    assert out["order"] == "new-first" and out["labelled"] is True and out["newUnlabelled"] is True
 
 
 @pytest.mark.skipif(not NODE, reason="node not installed")
