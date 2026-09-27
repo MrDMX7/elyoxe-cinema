@@ -89,3 +89,69 @@ Two sampled examples: Reel Dubai Mall Screen 3 at 11:00 had 174/178 free, best s
 - Novo only yields a `_sid` for sessions with a `session_id`, which is why it had 13 shows picked.
 - The step only runs when refresh runs (4 times a day until the cutover). «باقي» therefore shows for up to 90 min after
   each run, and the client hides it after that.
+
+---
+
+# Fix round 1 (review task-3-review.md)
+
+0. **origin/main merged** into phase2 (`55c47ed`), including 01c10fa (Roxy live prices). No conflicts, and none of
+   the merged files overlapped with other agents' uncommitted files.
+1. **Roxy added.** Roxy's public seat-selection page (plain GET, no login, no cookie) carries the whole seat grid:
+   - `seats._roxy` reads `.seats-row`, sold seats (status 7), `input.wheelchair`, the `screen-type` class and the
+     `span[seat-category][price-in-aed]` legend.
+   - The screen end is top: the screen image comes before the rows, and the dearer "Premium View" rows are last.
+   - Roxy's `_sample_prices` got an `on_layout` hook, and every Roxy show carries `_sid` = its seat-selection URL.
+   - The sampler makes 1 GET per show.
+   - The seats.py docstring table is corrected, and the Reel guest-token ruling is noted there.
+   - Fixture: `tests/fixtures/seats/roxy.html` (live, trimmed, not edited). It gives 57 seats: 54 free, 1 taken, 2 wheelchair.
+2. **The caps now count every redirect.** `_Metered` sends every request with `allow_redirects=False` and follows
+   `Location` itself. Each hop goes through the cap, the deadline, the 1 s gap and the count.
+   - A test covers a curl-style response with an empty `history`.
+   - A test covers the cap stopping inside a redirect chain.
+   - `_Spent`/`_Blocked` are now `BaseException`, so the readers' `except Exception` retries no longer swallow them.
+   - VOX and Reel keep 1 request in reserve for the order's own abandon/cancelOrder, so a cap hit mid-sample still
+     releases the order and the total stays within 60. This is tested with `vox._sample_prices` itself.
+   - VOX's cost per sample is 9, as measured live.
+3. **No other screen's map.** Shapes are keyed by physical screen where the chain names it:
+   - Star `screen_name`
+   - Cine Royal `screenRefId`
+   - Cinema City screen name
+   - Reel `ScreenName`
+
+   VOX, Novo and Roxy name no screen. For them there is one entry per distinct shape of a label, and a label with
+   more than one shape gets no `seatmap`, so no drawing and no seat total. A show's own fresh sample is always its
+   own map. The step sets `show.seatmap` only when the shape is certain, and `pages/seats.py` uses only that.
+4. The report is untracked again (`git rm --cached`) and kept locally.
+
+Minors:
+- A 429 stops the chain at once (the metered session is called directly, so there is no retry).
+- Late sampler threads stop at the deadline: `Budget(deadline=…)` refuses any request after it.
+- `_`-prefixed show keys are dropped in two places:
+  - first in the step, before any import (tested with `seats` failing to import)
+  - again at build time (`pages/seats.private_off`)
+- The Cine Royal warm-up is counted once (the cost is 2 for the first sample, then 1; tested).
+
+Tests: `tests/test_seats.py` has 35 tests (11 new) and all pass. Seat and reader tests: 116 passed.
+
+Full suite: `5 failed, 537 passed` (exit 1). None of the 5 failures is in the seats/readers code. They are the 3 already
+reported before this round:
+- the page budget (8 film pages over 150 KB in builds with and without seats)
+- `/summer/` noindex (the seasons module)
+- the hung-chain timeout (`steps/coming.py` takes 59 s)
+
+## Live check 2 (2026-09-27 ~11:10 Dubai)
+Real caps and real chains. Every HTTP request was counted independently by host, with `requests` and `curl_cffi`
+wrapped, and those counts match the Budget figures exactly.
+
+The price hooks kept 76 layouts (75 distinct shapes). 255 shows got a fresh count and 593 got a certain hall shape.
+No `_` key was left on any show.
+
+| chain | shows picked | requests (independently counted) | shows sampled |
+|---|---|---|---|
+| star | 113 | 60 | 60 |
+| roxy | 59 | 59 | 59 |
+| reel | 43 | 58 | 19 |
+| vox | 275 | 54 | 6 (~9 per sample with the redirects) |
+| cineroyal | 50 | 51 | 50 |
+| cinemacity | 44 | 44 | 44 |
+| novo | 17 | 17 | 17 |
