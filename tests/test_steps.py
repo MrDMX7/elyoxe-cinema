@@ -10,7 +10,8 @@ def test_steps_run_in_order_and_failures_are_isolated(tmp_path):
     out = refresh.run_steps(data, {}, steps_dir=tmp_path)
     assert data["seen"] == ["a", "b"]
     assert out["a_boom"]["ok"] is False and "ValueError" in out["a_boom"]["error"]
-    assert out["b_ok"] == {"ok": True, "error": None, "n": 1}
+    assert {k: v for k, v in out["b_ok"].items() if k != "sec"} == {"ok": True, "error": None, "n": 1}
+    assert all(isinstance(r["sec"], float) and r["sec"] >= 0 for r in out.values())   # health shows each step's cost
     assert "_private" not in out
 
 

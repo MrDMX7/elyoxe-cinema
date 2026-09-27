@@ -220,6 +220,7 @@ def run_steps(data: dict, ctx: dict, steps_dir: Path | None = None) -> dict:
     d = steps_dir or (ROOT / "steps")
     for path in sorted(d.glob("[a-z]*.py")) if d.is_dir() else []:
         name = path.stem
+        t0 = time.monotonic()
         try:
             spec = importlib.util.spec_from_file_location(f"steps.{name}", path)
             mod = importlib.util.module_from_spec(spec)
@@ -229,6 +230,7 @@ def run_steps(data: dict, ctx: dict, steps_dir: Path | None = None) -> dict:
         except Exception as e:  # noqa: BLE001 - a feature step must degrade, never abort the publish
             out[name] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
             print(f"refresh: step {name} failed: {e}", file=sys.stderr)
+        out[name]["sec"] = round(time.monotonic() - t0, 2)
     return out
 
 
