@@ -21,9 +21,15 @@ Per chain (what each response exposes, and how the screen end was established):
 | cinemacity | POST launch/seatpreview/<uuid> `seatsLayoutModel.rows[]` | isASeat false = aisle; status 1 sold, isUnavailable or another status = blocked; no price (that is GetTickets) | top: as Novo |
 | reel | POST seats/getSeatLayout `Sourcedata.AreaEntityList[]` | Status Space = aisle, Empty, Sold, Special = wheelchair (counted in Sessions.json SeatsAvailable), other = blocked | top: the first row is the area named "Premium Front" |
 | vox | GET /booking/<order>/seats (HTML) | td.blank = aisle; .sold = taken; .wheelchair = wheelchair; a disabled input = blocked; class name from the legend li with the same data-area | top: the screen block precedes the table and the dearer "Preferred View" rows are the last |
-| roxy | — | the seat map is behind a login: no map | — |
+| roxy | GET /en/seat-selection/<cinema>/<session>/<nid>/… (HTML, public: no login, no cookie) | div.seat without an input = aisle; .sold (status 7) = taken; input.wheelchair = wheelchair; status 0 = free, other = blocked; class from the input's screen-type, price from the legend span[seat-category][price-in-aed] | top: the screen image precedes the rows, and the dearer "Premium View" rows are the last |
 
-Nothing here selects, holds or releases a seat, and nothing logs in: the sampler makes exactly the read calls
+A shape is kept per physical screen where the chain names it (Star screen_name, Cine Royal screenRefId, Cinema
+City screen name, Reel ScreenName); VOX, Novo and Roxy name none, so theirs are kept per hall label, and a label
+seen with more than one shape gets no drawing and no seat total (steps/occupancy.py). A show's own fresh sample is
+always its own map.
+
+Nothing here selects, holds or releases a seat, and nothing logs in (Reel's anonymous guest token, the one its
+price reader uses, is not an account — ruled acceptable in fix round 1): the sampler makes exactly the read calls
 the readers already make for prices (VOX/Reel/Novo open the same anonymous seat-less order the chain's own
 page opens, and VOX/Reel abandon it through the page's own link, as the readers do).
 """
@@ -35,11 +41,12 @@ import re
 import threading
 import time
 from datetime import datetime, timedelta
+from urllib.parse import urljoin
 from zoneinfo import ZoneInfo
 
 DUBAI = ZoneInfo("Asia/Dubai")
 STATUS = ("free", "taken", "blocked", "wheelchair")
-SUPPORTED = ("star", "cineroyal", "novo", "cinemacity", "reel", "vox")
+SUPPORTED = ("star", "cineroyal", "novo", "cinemacity", "reel", "vox", "roxy")
 
 FRESH_MIN = 90            # occupancy older than this is never shown
 WINDOW_H = 3              # sample shows starting within the next 3 hours
@@ -227,7 +234,33 @@ def _vox(raw):
     return _hall(rows, "top", prices)
 
 
-NORMALISERS = {"star": _star, "cineroyal": _cineroyal, "novo": _novo, "cinemacity": _cinemacity, "reel": _reel, "vox": _vox}
+def _roxy(raw):
+    if not isinstance(raw, str) or "seats-row" not in raw:
+        return None
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(raw, "lxml")
+    prices = {}
+    for sp in soup.select("span[seat-category][price-in-aed]"):
+        if _num(sp.get("price-in-aed")): prices.setdefault(sp["seat-category"].strip(), float(sp["price-in-aed"]))
+    rows = []
+    for tr in soup.select(".seats-row"):
+        cells = [d for d in tr.find_all("div", recursive=False) if "letter" not in (d.get("class") or [])]
+        seats, name = [], None
+        for x, d in enumerate(cells):
+            inp = d.find("input")
+            if inp is None:
+                continue
+            name = name or inp.get("row-name")
+            label = inp.get("value") or inp.get("column") or f"{name}{x}"
+            code = str(inp.get("status") or "")
+            st = ("taken" if "sold" in (d.get("class") or []) or code == "7"
+                  else "wheelchair" if "wheelchair" in (inp.get("class") or []) else "free" if code == "0" else "blocked")
+            seats.append(_seat(label, x, inp.get("seat-id") or label, st, (inp.get("screen-type") or "").strip()))
+        rows.append({"name": name or "", "seats": seats})
+    return _hall(rows, "top", prices)
+
+
+NORMALISERS = {"roxy": _roxy, "star": _star, "cineroyal": _cineroyal, "novo": _novo, "cinemacity": _cinemacity, "reel": _reel, "vox": _vox}
 
 
 def normalise(chain, raw):
@@ -325,32 +358,61 @@ def shape_key(shape):
 
 # ---------------------------------------------------------------- layouts kept from the price sampling
 _LOCK = threading.Lock()
-KEPT: dict = {}   # "cinema|hall_label" -> {"shape", "at"}: filled while the readers sample prices this run
+KEPT: dict = {}   # "cinema|hall_label|screen" -> {"shape", "at", "date"}: filled while the readers sample prices
 
 
-def keep(chain, cinema, hall_label, date, raw):
-    """Readers' hook: the seat-layout response they fetched for a price, kept as the hall's shape. Never raises."""
+def hall_key(cinema, hall_label, screen=None):
+    """A hall shape's key: the physical screen when the chain names it, else "#<shape key>" (keep())."""
+    return f"{cinema}|{hall_label or ''}|{screen or ''}"
+
+
+def keep(chain, cinema, hall_label, date, raw, screen=None):
+    """Readers' hook: the seat-layout response they fetched for a price, kept as that screen's shape (or the
+    label's, with screen None). Never raises."""
     try:
         hall = normalise(chain, raw)
         if hall:
             shape, _ = compact(hall)
+            # no screen named: one entry per distinct shape, so a label covering two screens shows as two
+            key = hall_key(cinema, hall_label, screen) if screen else hall_key(cinema, hall_label, "#" + shape_key(shape))
             with _LOCK:
-                KEPT[f"{cinema}|{hall_label}"] = {"shape": shape, "at": datetime.now(DUBAI).isoformat(timespec="seconds"),
-                                                  "date": date}
+                KEPT[key] = {
+                    "shape": shape, "at": datetime.now(DUBAI).isoformat(timespec="seconds"), "date": date}
     except Exception:  # noqa: BLE001 - a map is a bonus; the price sample must never suffer for it
         pass
 
 
 # ---------------------------------------------------------------- the occupancy sampler
+class _Stop(BaseException):
+    """Ends a chain's sampling. A BaseException on purpose: the readers' clients retry on `except Exception`,
+    and a stop must go straight through them."""
+
+
+class _Spent(_Stop):
+    """The chain's request cap (or the run's deadline) is reached."""
+
+
+class _Blocked(_Stop):
+    """The chain said stop (401/403/429, a failed guest session)."""
+
+
+ABANDON = re.compile(r"/abandon\b|cancelOrder")   # a seat-less order's own release call: may use the reserve
+
+
 class Budget:
-    """At most `cap` HTTP requests to one chain, `gap` seconds apart. `spend(n)` records what a call cost
-    (a redirect or a retry is a request); `can(n)` says whether n more fit."""
+    """At most `cap` HTTP requests to one chain, each start `gap` seconds after the last, none after
+    `deadline` (a clock() value). `reserve` requests are kept for releasing an order (ABANDON), so a cap hit
+    mid-sample still lets the page's own abandon go out — the total stays within `cap`."""
 
-    def __init__(self, cap=MAX_REQ, gap=GAP_S, clock=time.monotonic, sleep=time.sleep):
-        self.cap, self.gap, self.used, self._last, self.clock, self.sleep = cap, gap, 0, None, clock, sleep
+    def __init__(self, cap=MAX_REQ, gap=GAP_S, clock=time.monotonic, sleep=time.sleep, deadline=None, reserve=0):
+        self.cap, self.gap, self.used, self._last = cap, gap, 0, None
+        self.clock, self.sleep, self.deadline, self.reserve = clock, sleep, deadline, reserve
 
-    def can(self, n=1):
-        return self.used + n <= self.cap
+    def can(self, n=1, release=False):
+        return self.used + n <= self.cap - (0 if release else self.reserve)
+
+    def late(self):
+        return self.deadline is not None and self.clock() > self.deadline
 
     def wait(self):
         if self._last is not None:
@@ -362,27 +424,43 @@ class Budget:
         self.used += n
 
 
-def _hops(r):
-    return 1 + len(getattr(r, "history", None) or [])
+_REDIRECT = (301, 302, 303, 307, 308)
 
 
 class _Metered:
-    """Wraps a requests / curl_cffi session: every call waits for the budget's gap and is counted, or refused
-    (raises _Spent) when the cap is reached — the reader's own client does the talking."""
+    """Wraps a requests / curl_cffi session. Every HTTP request — each redirect hop included, followed here
+    with allow_redirects=False because curl_cffi never fills `history` — is refused past the cap or the
+    deadline (_Spent), waits for the gap, and is counted. A 429 stops the chain at once (_Blocked)."""
 
-    def __init__(self, session, budget):
-        self._s, self._b = session, budget
+    def __init__(self, session, budget, reserve_for=None):
+        self._s, self._b, self._rel = session, budget, reserve_for
+
+    def _one(self, method, url, **kw):
+        release = bool(self._rel and self._rel.search(url))
+        if self._b.late() or not self._b.can(1, release):
+            raise _Spent(url)
+        self._b.wait()
+        self._b.spend(1)
+        r = self._s.request(method, url, allow_redirects=False, **kw)
+        if getattr(r, "status_code", None) == 429:
+            raise _Blocked(f"429 {url}")
+        return r
 
     def request(self, method, url, **kw):
-        if not self._b.can():
-            raise _Spent()
-        self._b.wait()
-        try:
-            r = self._s.request(method, url, **kw)
-        except Exception:
-            self._b.spend(1)
-            raise
-        self._b.spend(_hops(r))
+        follow = kw.pop("allow_redirects", True)
+        r = self._one(method, url, **kw)
+        for _ in range(10):
+            loc = (getattr(r, "headers", None) or {}).get("location") or (getattr(r, "headers", None) or {}).get("Location")
+            if not follow or r.status_code not in _REDIRECT or not loc:
+                return r
+            url = urljoin(str(r.url or url), loc)
+            if r.status_code in (301, 302, 303) and method != "HEAD":
+                method = "GET"
+                for k in ("data", "json", "params"):
+                    kw.pop(k, None)
+            else:
+                kw.pop("params", None)
+            r = self._one(method, url, **kw)
         return r
 
     def get(self, url, **kw):
@@ -395,73 +473,86 @@ class _Metered:
         return getattr(self._s, k)
 
 
-class _Spent(Exception):
-    pass
+class _Direct:
+    """A reader client's get() with no retry of its own, over a metered curl_cffi session (VOX, Roxy)."""
+
+    def __init__(self, metered, impersonate="chrome"):
+        self.s, self.imp = metered, impersonate
+
+    def get(self, url, **kw):
+        kw.setdefault("timeout", 30)
+        return self.s.get(url, impersonate=self.imp, **kw)
+
+
+def _json(r):
+    try:
+        return r.json() if r is not None and r.status_code == 200 else None
+    except ValueError:
+        return None
 
 
 def _sampler(chain, budget):
-    """fn(show) -> raw layout | None for one chain, built on the reader's own client and constants. Returns
-    (fn, cost of one sample in requests) or None when the chain has no hold-free seat map."""
+    """fn(show) -> raw layout | None for one chain, on the reader's own session setup, token and helpers.
+    Returns (fn, cost) where cost() is what the next sample may take in requests, or None (no seat map).
+    Polite's own retries are bypassed (the metered session is called directly): a 429 is a stop."""
     if chain == "star":
         from readers import star
         from readers.common import Polite
         http = Polite(gap=0, headers={"Accept": "application/json", "Authorization": star.TOKEN})
-        http.s = _Metered(http.s, budget)
+        m = _Metered(http.s, budget)
 
         def fn(show):
-            r = http.get(f"{star.BASE}/seat-layout/{show['_sid']}")
-            if r is not None and r.status_code in (401, 403, 429):
+            r = m.get(f"{star.BASE}/seat-layout/{show['_sid']}", timeout=30)
+            if r.status_code in (401, 403):
                 raise _Blocked(f"seat-layout {r.status_code}")
-            return r.json() if r is not None and r.status_code == 200 else None
-        return fn, 1
+            return _json(r)
+        return fn, lambda: 1
     if chain == "cineroyal":
         from readers import cineroyal
         from readers.common import Polite
-        http = Polite(gap=0)
-        http.s = _Metered(http.s, budget)
+        m = _Metered(Polite(gap=0).s, budget)
         warm = {"done": False}
 
         def fn(show):
             cref, sref, day, t, pretty = show["_sid"].split("|", 4)
             if not warm["done"]:   # the same-origin GET that sets the session cookie, as the reader does
-                http.get(cineroyal.BASE + "/home/nowShowing"); warm["done"] = True
-            r = http.post(cineroyal.BASE + "/home/getSeatsByScreenRef",
-                          data=json.dumps({"screenRefId": int(sref), "cinemaRefId": int(cref), "showDate": day, "showTime": t}),
-                          headers={"Content-Type": "application/json;charset=UTF-8", "Origin": cineroyal.BASE,
-                                   "Referer": f"{cineroyal.BASE}/home/chooseScreen?prettyUrl={pretty}"})
-            return r.json() if r is not None and r.status_code == 200 else None
-        return fn, 2
+                warm["done"] = True
+                m.get(cineroyal.BASE + "/home/nowShowing", timeout=30)
+            r = m.post(cineroyal.BASE + "/home/getSeatsByScreenRef", timeout=30,
+                       data=json.dumps({"screenRefId": int(sref), "cinemaRefId": int(cref), "showDate": day, "showTime": t}),
+                       headers={"Content-Type": "application/json;charset=UTF-8", "Origin": cineroyal.BASE,
+                                "Referer": f"{cineroyal.BASE}/home/chooseScreen?prettyUrl={pretty}"})
+            return _json(r)
+        return fn, lambda: 1 if warm["done"] else 2
     if chain == "novo":
         from readers import novo
         from readers.common import Polite
-        http = Polite(gap=0)
-        http.s = _Metered(http.s, budget)
+        m = _Metered(Polite(gap=0).s, budget)
 
         def fn(show):
             cid, sid = show["_sid"].split("|", 1)
-            r = http.get(f"{novo.BOOKING_API}/seat-layout/cinemas/{cid}/sessions/{sid}", params={"country_id": 2, "channel": "web"})
-            return r.json() if r is not None and r.status_code == 200 else None
-        return fn, 1
+            return _json(m.get(f"{novo.BOOKING_API}/seat-layout/cinemas/{cid}/sessions/{sid}",
+                               params={"country_id": 2, "channel": "web"}, timeout=30))
+        return fn, lambda: 1
     if chain == "cinemacity":
         from readers import cinemacity
         from readers.common import Polite
-        http = Polite(gap=0)
-        http.s = _Metered(http.s, budget)
+        m = _Metered(Polite(gap=0).s, budget)
 
         def fn(show):
             uuid = cinemacity._session_uuid(show.get("book"))
             if not uuid:
                 return None
-            r = http.post(f"{cinemacity.BOOKING}/api/launch/seatpreview/{uuid}",
-                          json={"requestData": None, "circuitId": 0, "selectedLanguageCulture": "en-US"},
-                          headers={"Accept": "application/json", "Content-Type": "application/json"})
-            return r.json() if r is not None and r.status_code == 200 else None
-        return fn, 1
+            return _json(m.post(f"{cinemacity.BOOKING}/api/launch/seatpreview/{uuid}", timeout=30,
+                                json={"requestData": None, "circuitId": 0, "selectedLanguageCulture": "en-US"},
+                                headers={"Accept": "application/json", "Content-Type": "application/json"}))
+        return fn, lambda: 1
     if chain == "reel":
         from readers import reel
         pc = reel._PriceClient()
         pc._time = type("_NoGap", (), {"monotonic": staticmethod(time.monotonic), "sleep": staticmethod(lambda s: None)})
-        pc.s = _Metered(pc.s, budget)
+        pc.s = _Metered(pc.s, budget, reserve_for=ABANDON)
+        budget.reserve = max(budget.reserve, 1)
         state = {"login": None}
 
         def fn(show):
@@ -479,11 +570,12 @@ def _sampler(chain, budget):
             finally:
                 pc.on_layout = None
             return out.get("raw")
-        return fn, 3
+        return fn, lambda: 3 if state["login"] else 4   # (guest login) + cookie + layout + cancel
     if chain == "vox":
         from readers import vox
-        client = vox._Client(gap=0)
-        client.s = _Metered(client.s, budget)
+        from curl_cffi import requests as cr
+        client = _Direct(_Metered(cr.Session(), budget, reserve_for=ABANDON), vox.UA_IMPERSONATE)
+        budget.reserve = max(budget.reserve, 1)
 
         def fn(show):
             out = {}
@@ -492,12 +584,20 @@ def _sampler(chain, budget):
             except vox._Blocked as e:
                 raise _Blocked(str(e))
             return out.get("raw")
-        return fn, 7   # booking (+redirect), seats/fetch (+redirect), seats, abandon
+        # booking + its redirect, seats/fetch + its redirect, seats (up to 3 tries), abandon (from the reserve)
+        return fn, lambda: 9   # measured live: ~9 per sample with every redirect counted
+    if chain == "roxy":
+        from readers import roxy
+        from curl_cffi import requests as cr
+        client = _Direct(_Metered(cr.Session(), budget), roxy.UA_IMPERSONATE)
+
+        def fn(show):
+            r = client.get(show["_sid"])
+            if r.status_code in (401, 403):
+                raise _Blocked(f"seat-selection {r.status_code}")
+            return r.text if r.status_code == 200 else None
+        return fn, lambda: 1
     return None
-
-
-class _Blocked(Exception):
-    pass
 
 
 def _start(show):
@@ -506,6 +606,9 @@ def _start(show):
 
 def show_key(show):
     return "|".join(str(show.get(k) or "") for k in ("cinema", "film", "date", "time", "hall_label"))
+
+
+NEEDS_SID = ("star", "cineroyal", "novo", "reel", "roxy")
 
 
 def pick(shows, now, recent=None):
@@ -520,7 +623,7 @@ def pick(shows, now, recent=None):
         chain = s.get("_chain")
         if chain not in SUPPORTED:
             continue
-        if chain in ("star", "cineroyal", "novo", "reel") and not s.get("_sid"):
+        if chain in NEEDS_SID and not s.get("_sid"):
             continue
         if chain in ("vox", "cinemacity") and not s.get("book"):
             continue
@@ -549,11 +652,13 @@ def pick(shows, now, recent=None):
 
 
 def sample(shows, now, recent=None, samplers=None, budget_for=None, deadline_s=RUN_BUDGET_S):
-    """Read the seat map of each picked show, chains side by side, each within its Budget. Returns
-    ({show key: {"free", "total", "at", "shape", "st", "best"}}, {chain: {"requests", "sampled", "error"}})."""
+    """Read the seat map of each picked show, chains side by side, each within its Budget; no request starts
+    after deadline_s. Returns ({show key: {"free", "total", "at", "shape", "st", "best"}},
+    {chain: {"requests", "sampled", "picked", "error"}})."""
     plan = pick(shows, now, recent)
     results, report, lock = {}, {}, threading.Lock()
-    budget_for = budget_for or (lambda chain: Budget())
+    stop_at = time.monotonic() + deadline_s
+    budget_for = budget_for or (lambda chain: Budget(deadline=stop_at))
 
     def run(chain, todo):
         budget = budget_for(chain)
@@ -563,16 +668,16 @@ def sample(shows, now, recent=None, samplers=None, budget_for=None, deadline_s=R
             if made is None:
                 return
             fn, cost = made
-            t0 = time.monotonic()
+            cost = cost if callable(cost) else (lambda c=cost: c)
             for show in todo:
-                if not budget.can(cost) or time.monotonic() - t0 > deadline_s:
+                if not budget.can(cost()) or time.monotonic() > stop_at:
                     break
                 try:
                     raw = fn(show)
                 except _Spent:
                     break
                 except _Blocked as e:
-                    rep["error"] = f"stopped: {e}"
+                    rep["error"] = f"stopped: {e}"[:160]
                     break
                 except Exception as e:  # noqa: BLE001 - one show's failure is that show's
                     rep["error"] = f"{type(e).__name__}: {e}"[:160]
@@ -585,6 +690,8 @@ def sample(shows, now, recent=None, samplers=None, budget_for=None, deadline_s=R
                     results[show_key(show)] = {**counts(hall), "at": datetime.now(DUBAI).isoformat(timespec="seconds"),
                                                "shape": shape, "st": st, "best": best_seat(hall)}
                 rep["sampled"] += 1
+        except _Stop as e:
+            rep["error"] = f"stopped: {e}"[:160]
         except Exception as e:  # noqa: BLE001 - a chain's sampler failing costs that chain only
             rep["error"] = f"{type(e).__name__}: {e}"[:160]
         finally:
@@ -594,8 +701,7 @@ def sample(shows, now, recent=None, samplers=None, budget_for=None, deadline_s=R
 
     threads = [threading.Thread(target=run, args=(c, t), daemon=True) for c, t in plan.items()]
     for t in threads: t.start()
-    stop = time.monotonic() + deadline_s + 60
-    for t in threads: t.join(max(0.0, stop - time.monotonic()))
+    for t in threads: t.join(max(0.0, stop_at + 45 - time.monotonic()))   # one request's timeout past the deadline
     with lock:
         return dict(results), {c: dict(r) for c, r in report.items()}
 

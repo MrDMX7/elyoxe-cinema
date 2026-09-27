@@ -278,7 +278,8 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                             health["attempted"] += 1
                             price_cache[price_key] = _get_seat_prices(
                                 s, screen_ref, cinema_ref, show_date_iso, formatted_time, pretty_url,
-                                on_layout=lambda raw, c=cinema_id, h=hall_label, d=show_date_iso: keep_layout(CHAIN, c, h, d, raw),
+                                on_layout=lambda raw, c=cinema_id, h=hall_label, d=show_date_iso, sc=screen_ref: keep_layout(
+                                    CHAIN, c, h, d, raw, screen=str(sc)),
                             )
                             cache_set(cache, price_key, price_cache[price_key])
                     prices = price_cache[price_key]
@@ -303,6 +304,7 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                         "book": f"{BASE}/home/chooseScreen?prettyUrl={pretty_url}",
                         # the session, for seats.py's occupancy sample (stripped before publishing)
                         "_sid": f"{cinema_ref}|{screen_ref}|{show_date_iso}|{formatted_time}|{pretty_url}",
+                        "_screen": str(screen_ref),
                         **extras,
                     })
 

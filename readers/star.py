@@ -358,7 +358,7 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                             try:
                                 body = pr.json()
                                 seat_recs = body.get("Records") or []
-                                keep_layout(CHAIN, cinema["id"], hall_label, date, body)
+                                keep_layout(CHAIN, cinema["id"], hall_label, date, body, screen=rec.get("screen_name"))
                             except json.JSONDecodeError:
                                 seat_recs = []
                             by_type: dict[str, float] = {}
@@ -397,7 +397,9 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                     "hall_label": hall_label,
                     "prices": prices,
                     "book": _book_url(movie_id),
-                    "_sid": rec.get("ss_id"),  # the session, for seats.py's occupancy sample (stripped before publishing)
+                    # the session and its screen, for seats.py (steps/occupancy.py strips both before publishing)
+                    "_sid": rec.get("ss_id"),
+                    "_screen": rec.get("screen_name"),
                     **extras_by_movie.get(movie_id, {}),
                     **show_lang(rec),
                 }

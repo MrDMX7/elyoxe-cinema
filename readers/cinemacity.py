@@ -279,7 +279,8 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                         price_tries[key] = price_tries.get(key, 0) + 1
                         uuid = _session_uuid(book)
                         price_cache[key] = _sample_prices(
-                            sess, uuid, on_layout=lambda raw, h=hall_label, d=date: keep_layout(CHAIN, cid, h, d, raw)) if uuid else None
+                            sess, uuid, on_layout=lambda raw, h=hall_label, d=date, sc=(s.get("screen") or {}).get("name"): keep_layout(
+                                CHAIN, cid, h, d, raw, screen=sc)) if uuid else None
                         health["attempted"] += 1
                         cache_set(cache, key, price_cache[key])
                     shows.append({
@@ -294,6 +295,7 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                         "hall_label": hall_label,
                         "prices": key,  # resolved after the loop, once every hall is sampled
                         "book": book,
+                        "_screen": (s.get("screen") or {}).get("name"),  # for seats.py, stripped before publishing
                         **extras,
                         **show_lang(tags),
                     })

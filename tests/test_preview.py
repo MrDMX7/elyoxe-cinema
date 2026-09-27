@@ -51,6 +51,8 @@ def test_default_build_stays_indexable(tmp_path, monkeypatch, env):
             continue
         if "no confirmed discount for this card" in html or "ما لقينا خصم مؤكد لهالبطاقة" in html:
             continue   # an unconfirmed card's old URL: a noindex note by design (test_hourly_safe.py)
+        if "No chain-confirmed events yet" in html or "ما عندنا فعاليات مؤكدة" in html:
+            continue   # an honestly-empty /events/ hub: noindex by design (task-2 fix round 2)
         assert "noindex" not in html, p
     robots = open(os.path.join(out, "robots.txt"), encoding="utf-8").read()
     assert "Sitemap: https://cinema.elyoxe.com/sitemap.xml" in robots

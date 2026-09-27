@@ -164,7 +164,7 @@ def show(chain, cin, t, sid="1", day="2026-09-27", **kw):
 def test_pick_window_round_robin_and_resample():
     shows = [show("star", "s-a", "18:00"), show("star", "s-a", "18:30", "2"), show("star", "s-a", "20:59", "3"),
              show("star", "s-a", "21:01", "4"), show("star", "s-b", "19:00", "5"), show("star", "s-b", "19:00", "5"),
-             show("roxy", "r", "18:30"), show("star", "s-c", "18:40", sid=None), show("star", "s-a", "18:30", "9", day="2026-09-28")]
+             show("other", "r", "18:30"), show("star", "s-c", "18:40", sid=None), show("star", "s-a", "18:30", "9", day="2026-09-28")]
     got = seats.pick(shows, NOW)
     assert list(got) == ["star"]
     assert [(s["cinema"], s["time"]) for s in got["star"]] == [("s-a", "18:30"), ("s-b", "19:00"), ("s-a", "20:59")]
@@ -182,17 +182,17 @@ def test_budget_caps_requests_and_spaces_them():
     c = Clock()
     b = seats.Budget(cap=3, gap=1.0, clock=c, sleep=c.sleep)
 
-    class S:
-        calls = 0
-        def request(self, m, u, **kw):
-            S.calls += 1; c.t += 0.2
-            return type("R", (), {"history": [1] if u.endswith("redirect") else []})()
-    m = seats._Metered(S(), b)
-    m.get("a"); m.get("b/redirect")
+    class S(FakeSession):
+        def request(self, method, url, **kw):
+            c.t += 0.2
+            return super().request(method, url, **kw)
+    s = S({"https://x/b": (302, "/b2")})
+    m = seats._Metered(s, b)
+    m.get("https://x/a"); m.get("https://x/b")
     assert b.used == 3 and not b.can()
     with pytest.raises(seats._Spent):
-        m.get("c")
-    assert S.calls == 2 and all(abs(d - 0.8) < 1e-9 for d in c.sleeps)     # 1 s between starts
+        m.get("https://x/c")
+    assert len(s.calls) == 3 and all(abs(d - 0.8) < 1e-9 for d in c.sleeps)     # 1 s between starts
 
 
 def test_sample_respects_60_per_chain_and_never_raises():
@@ -261,10 +261,13 @@ def test_step_strips_sid_keeps_maps_and_attaches_only_fresh(tmp_path, monkeypatc
     got = mod.run(d, {"offline": True, "now": NOW.isoformat(), "data_dir": str(tmp_path)})
     assert all("_sid" not in s for s in d["shows"])
     assert d["shows"][0]["seats"]["free"] == 5 and "seats" not in d["shows"][1] and "seats" not in d["shows"][2]
-    assert got["maps_kept"] == 1 and got["attached"] == 1
+    assert got["maps_kept"] == 1 and got["attached"] == 1 and got["drawn"] == 2
     sm = json.loads((tmp_path / "seatmaps.json").read_text(encoding="utf-8"))
-    assert list(sm["halls"]) == ["n1|2D"] and sm["halls"]["n1|2D"]["m"] in sm["maps"]
-    assert d["seatmaps"]["halls"] == {"n1|2D": sm["halls"]["n1|2D"]["m"]} and set(d["seatmaps"]["maps"]) == {"k1", sm["halls"]["n1|2D"]["m"]}
+    (hk, h), = sm["halls"].items()
+    k = h["m"]
+    assert sm["v"] == 2 and hk == "n1|2D|#" + k and k in sm["maps"]
+    assert d["shows"][0]["seatmap"] == k == d["shows"][1]["seatmap"] and "seatmap" not in d["shows"][2]
+    assert set(d["seatmaps"]["maps"]) == {"k1", k}
     assert seats.KEPT == {}
 
 
@@ -301,7 +304,7 @@ def test_reader_hook_keeps_what_the_price_sample_read(monkeypatch):
     seats.KEPT.clear()
     common.keep_layout("cineroyal", "cineroyal-deerfields-mall", "ROYAL PLUS", "2026-09-27", fx("cineroyal"))
     common.keep_layout("star", "x", "y", "z", object())                   # never raises
-    assert list(seats.KEPT) == ["cineroyal-deerfields-mall|ROYAL PLUS"]
+    assert [k.rpartition("#")[0] for k in seats.KEPT] == ["cineroyal-deerfields-mall|ROYAL PLUS|"]   # no screen: per shape
     seats.KEPT.clear()
 
 
@@ -321,7 +324,8 @@ def site_out(tmp_path_factory):
     s0["seats"] = {"free": 36, "total": 39, "at": (gen - timedelta(minutes=20)).isoformat(), "m": key, "st": st,
                    "best": {"row": "C", "x": 4}}
     s1["seats"] = {"free": 1, "total": 39, "at": (gen - timedelta(minutes=200)).isoformat(), "m": key, "st": st, "best": None}
-    d["seatmaps"] = {"halls": {f"{s1['cinema']}|{s1.get('hall_label') or ''}": key}, "maps": {key: shape}}
+    s1["seatmap"] = key
+    d["seatmaps"] = {"maps": {key: shape}}
     p = tmp_path_factory.mktemp("seatdata") / "latest.json"
     p.write_text(json.dumps(d), encoding="utf-8")
     out = str(tmp_path_factory.mktemp("seatsite"))
@@ -383,3 +387,156 @@ def test_chunk_parses_and_draws(tmp_path, site_out):
     assert s_shape == "القاعة فيها 39 مقعد، أحسن مكان: الصف G وسط"
     assert s_full == "ما باقي مقاعد من 39"
     assert l_ar == "باقي 23 مقعد" and l_en == "1 seat left" and l_two == "باقي مقعدين"
+
+
+# ================================================================ fix round 1
+def test_roxy_seat_selection_page():
+    h = seats.normalise("roxy", (FX / "roxy.html").read_text(encoding="utf-8"))
+    assert [r["name"] for r in h["rows"]] == ["E", "D", "C", "B", "A"] and h["screen_side"] == "top"
+    assert tally(h) == {"free": 54, "taken": 1, "wheelchair": 2}
+    assert seats.counts(h) == {"free": 56, "total": 57}
+    assert {c["name"]: c["aed"] for c in h["classes"]} == {"Standard": 43.0, "Premium View": 70.0}
+    assert h["rows"][0]["seats"][0]["id"] == "E12" and h["rows"][0]["seats"][0]["col"] == "12"
+    assert h["rows"][-1]["seats"][-1]["x"] == 10                       # the trailing aisle cell (11) is not a seat
+
+
+class FakeResp:
+    def __init__(self, url, status=200, loc=None, body=""):
+        self.url, self.status_code, self.headers, self.text, self.history = url, status, ({"location": loc} if loc else {}), body, []
+
+
+class FakeSession:
+    """curl_cffi-like: history stays empty; follows nothing when allow_redirects=False (asserted)."""
+    def __init__(self, routes):
+        self.routes, self.calls = routes, []
+
+    def request(self, method, url, **kw):
+        assert kw.get("allow_redirects") is False, "the meter must follow redirects itself"
+        self.calls.append((method, url))
+        status, loc = self.routes.get(url, (200, None))
+        return FakeResp(url, status, loc)
+
+
+def test_redirects_are_counted_and_spaced_even_with_an_empty_history():
+    c = Clock()
+    b = seats.Budget(cap=10, gap=1.0, clock=c, sleep=c.sleep)
+    s = FakeSession({"https://x/a": (302, "/b"), "https://x/b": (303, "https://x/c")})
+    r = seats._Metered(s, b).get("https://x/a")
+    assert r.url == "https://x/c" and b.used == 3 and [u for _, u in s.calls] == ["https://x/a", "https://x/b", "https://x/c"]
+    assert len(c.sleeps) == 2                                          # every hop waited for the gap
+    r = seats._Metered(s, b).get("https://x/a", allow_redirects=False)
+    assert r.status_code == 302 and b.used == 4                        # the caller's own no-follow is kept
+
+
+def test_cap_stops_inside_a_redirect_chain():
+    b = seats.Budget(cap=2, clock=Clock(), sleep=lambda d: None)
+    s = FakeSession({"https://x/a": (302, "/b"), "https://x/b": (302, "/c")})
+    with pytest.raises(seats._Spent):
+        seats._Metered(s, b).get("https://x/a")
+    assert b.used == 2 and len(s.calls) == 2
+
+
+def test_stops_are_not_swallowed_by_except_exception():
+    for exc in (seats._Spent, seats._Blocked):
+        try:
+            try:
+                raise exc("x")
+            except Exception:                                          # what the readers' clients catch
+                pytest.fail(f"{exc.__name__} was caught by except Exception")
+        except exc:
+            pass
+
+
+def test_429_stops_at_once():
+    b = seats.Budget(cap=10, clock=Clock(), sleep=lambda d: None)
+    s = FakeSession({"https://x/a": (429, None)})
+    with pytest.raises(seats._Blocked):
+        seats._Metered(s, b).get("https://x/a")
+    assert len(s.calls) == 1
+
+
+def test_deadline_stops_a_late_thread():
+    c = Clock()
+    b = seats.Budget(cap=10, clock=c, sleep=c.sleep, deadline=5.0)
+    m = seats._Metered(FakeSession({}), b)
+    m.get("https://x/a")
+    c.t = 6.0
+    with pytest.raises(seats._Spent):
+        m.get("https://x/b")
+
+
+def test_vox_abandons_the_order_when_the_cap_stops_mid_sample():
+    from readers import vox
+    order = "abc_0002-1"
+    base = vox.BASE
+    routes = {f"{base}/booking/0002-1": (302, f"/booking/{order}/guest"),
+              f"{base}/booking/{order}/seats/fetch": (302, f"/booking/{order}/seats/processing")}
+    s = FakeSession(routes)
+    b = seats.Budget(cap=5, clock=Clock(), sleep=lambda d: None, reserve=1)
+    client = seats._Direct(seats._Metered(s, b, reserve_for=seats.ABANDON))
+    with pytest.raises(seats._Spent):
+        vox._sample_prices(client, f"{base}/booking/0002-1")
+    urls = [u for _, u in s.calls]
+    assert any("/abandon" in u for u in urls) and b.used == 5 and len(urls) == 5
+
+
+def test_cineroyal_warm_up_is_counted_once(monkeypatch):
+    import requests
+    seen = []
+
+    def fake(self, method, url, **kw):
+        seen.append(url)
+        r = requests.models.Response(); r.status_code = 200; r._content = b"{}"; r.url = url
+        return r
+    monkeypatch.setattr(requests.Session, "request", fake)
+    b = seats.Budget(clock=Clock(), sleep=lambda d: None)
+    fn, cost = seats._sampler("cineroyal", b)
+    assert cost() == 2
+    fn({"_sid": "2|7|2026-09-27|11:40PM|x"})
+    assert cost() == 1
+    fn({"_sid": "2|7|2026-09-27|11:50PM|x"})
+    assert b.used == 3 and seen[0].endswith("/home/nowShowing") and sum("nowShowing" in u for u in seen) == 1
+
+
+def test_shapes_are_per_screen_and_ambiguous_labels_show_nothing(tmp_path):
+    mod = step()
+    seats.KEPT.clear()
+    novo = fx("novo")
+    reel = fx("reel")
+    seats.keep("star", "s1", "NORMAL", "2026-09-27", {"Records": fx("star")["Records"]}, screen="SCREEN 1")
+    seats.keep("novo", "s1", "NORMAL", "2026-09-27", novo, screen="SCREEN 2")          # another screen, same label
+    seats.keep("reel", "r1", "Premium 19", "2026-09-27", reel, screen="Premium 19")
+    seats.keep("novo", "n1", "2D", "2026-09-27", novo)                                   # no screen known, one shape
+    seats.keep("novo", "v1", "Std", "2026-09-27", novo)
+    seats.keep("reel", "v1", "Std", "2026-09-28", reel)                                  # no screen, two shapes seen
+    base = {"film": "f", "date": "2026-09-27", "time": "18:30"}
+    shows = [{**base, "cinema": "s1", "hall_label": "NORMAL", "_screen": "SCREEN 1"},
+             {**base, "cinema": "s1", "hall_label": "NORMAL", "_screen": "SCREEN 2", "time": "19:00"},
+             {**base, "cinema": "s1", "hall_label": "NORMAL", "time": "20:00"},
+             {**base, "cinema": "r1", "hall_label": "Premium 19", "_screen": "Premium 19"},
+             {**base, "cinema": "n1", "hall_label": "2D"},
+             {**base, "cinema": "v1", "hall_label": "Std"}]
+    d = {"cinemas": {c: {"chain": "novo"} for c in ("s1", "r1", "n1", "v1")}, "shows": shows}
+    mod.run(d, {"offline": True, "now": NOW.isoformat(), "data_dir": str(tmp_path)})
+    got = [s.get("seatmap") for s in d["shows"]]
+    k_star = seats.shape_key(seats.compact(seats.normalise("star", fx("star")))[0])
+    k_novo = seats.shape_key(seats.compact(seats.normalise("novo", novo))[0])
+    k_reel = seats.shape_key(seats.compact(seats.normalise("reel", reel))[0])
+    assert got == [k_star, k_novo, None, k_reel, k_novo, None]
+    assert all("_screen" not in s for s in d["shows"]) and set(d["seatmaps"]["maps"]) == {k_star, k_novo, k_reel}
+
+
+def test_step_strips_private_keys_even_when_seats_cannot_load(tmp_path, monkeypatch):
+    mod = step()
+    monkeypatch.setitem(sys.modules, "seats", None)                   # `import seats` now raises ImportError
+    d = data_with([{"cinema": "s1", "film": "f", "date": "2026-09-27", "time": "18:30", "_sid": 5, "_screen": "S"}])
+    with pytest.raises(ImportError):
+        mod.run(d, {"offline": True, "now": NOW.isoformat(), "data_dir": str(tmp_path)})
+    assert d["shows"][0] == {"cinema": "s1", "film": "f", "date": "2026-09-27", "time": "18:30"}
+
+
+def test_build_drops_private_show_keys():
+    import pages.seats as ps
+    shows = [{"cinema": "a", "_sid": 1, "_screen": "x", "time": "18:00"}]
+    ps.private_off(shows)
+    assert shows == [{"cinema": "a", "time": "18:00"}]

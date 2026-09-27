@@ -73,10 +73,10 @@ def test_events_hub_lists_recognised_events_from_data(out):
     assert "<loc>https://cinema.elyoxe.com/events/</loc>" in sm
 
 
-def test_events_hub_empty_state_is_honest_and_still_indexable(tmp_path):
-    # test_preview.py::test_default_build_stays_indexable is a pre-existing, project-wide
-    # contract this task doesn't own: no page may carry "noindex" outside its own two named
-    # exemptions. An empty /events/ must honor that -- same as /arabic/'s own empty state.
+def test_events_hub_empty_state_is_noindex_and_out_of_sitemap(tmp_path):
+    # Fix round 2 (re-review, Critical persisted): a genuinely empty /events/ must be noindex and
+    # excluded from the sitemap -- tests/test_preview.py carries a matching exemption for this
+    # exact honest-empty text so that pre-existing, project-wide contract still holds.
     data = json.loads(open(DATA, encoding="utf-8").read())
     data["events"] = []
     empty_data = tmp_path / "no_events.json"
@@ -86,12 +86,23 @@ def test_events_hub_empty_state_is_honest_and_still_indexable(tmp_path):
 
     h = open(os.path.join(o, "events", "index.html"), encoding="utf-8").read()
     assert "ما عندنا فعاليات مؤكدة" in h
-    assert "noindex" not in h
+    assert '<meta name="robots" content="noindex,nofollow">' in h
     en = open(os.path.join(o, "en", "events", "index.html"), encoding="utf-8").read()
-    assert "No chain-confirmed events yet" in en and "noindex" not in en
+    assert "No chain-confirmed events yet" in en
+    assert '<meta name="robots" content="noindex,nofollow">' in en
 
     sm = open(os.path.join(o, "sitemap.xml"), encoding="utf-8").read()
+    assert "/events/" not in sm   # excluded entirely, ar and en both
+
+
+def test_events_hub_with_real_events_is_indexed_and_in_sitemap(out):
+    # `out` is the module fixture built from tests/fixtures/coming_sample.json, which carries a
+    # real (K-Fest) event -- the opposite case from the empty-state test above.
+    h = read(out, "events", "index.html")
+    assert "noindex" not in h
+    sm = read(out, "sitemap.xml")
     assert "<loc>https://cinema.elyoxe.com/events/</loc>" in sm
+    assert "<loc>https://cinema.elyoxe.com/en/events/</loc>" in sm
 
 
 def test_last_chance_strip_on_home_and_its_city_only(out):

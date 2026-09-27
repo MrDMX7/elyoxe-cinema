@@ -337,6 +337,7 @@ def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict
             # the session, for seats.py's occupancy sample (stripped before publishing)
             "_sid": "|".join((s["CinemaId"], str(s["SessionId"]), "STANDARD" if code.startswith("OTHER:") else code,
                               (s.get("ScreenName") or "").strip())),
+            "_screen": (s.get("ScreenName") or "").strip() or None,
             **film_extras(film, genre_names),
         })
 
@@ -368,7 +369,8 @@ def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict
             errors = []
             for key, (cid, sid, code, screen) in sample_for.items():
                 health["attempted"] += 1
-                pc.on_layout = lambda raw, c=cinema_id_of[cid], h=screen or code, d=key[3]: keep_layout(CHAIN, c, h, d, raw)
+                pc.on_layout = lambda raw, c=cinema_id_of[cid], h=screen or code, d=key[3], sc=screen: keep_layout(
+                    CHAIN, c, h, d, raw, screen=sc or None)
                 try:
                     price_of[key] = pc.sample(cid, sid, code, screen)
                 except _SampleError as e:
