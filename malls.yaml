@@ -1,0 +1,189 @@
+# malls.yaml — opening hours per mall, for Phase 2 Task 4 «مول يسكّر» (docs/superpowers/specs/
+# 2026-09-27-phase2-design.md, C.44 «Mall closing»). Read by pages/venue.py.
+#
+# Every entry below came from that mall's own official page (or, where the page is a heavy JS app that
+# would not render for a fetch, from a search whose answer quoted that same official page directly —
+# never a blog/aggregator number alone). checked = the date we read it. A mall in cinemas.yaml that has
+# no entry here is one we could not confirm this way — left absent on purpose, never guessed (owner's
+# rule, docs/superpowers/specs/2026-09-26-phase1-design.md).
+#
+# hours: the mall's own general RETAIL closing time, not the cinema's — a chain often keeps its own
+# entrance open later than the shops (pages/venue.py's «يخلص بعد تسكير المول — استعمل مدخل السينما» note
+# is exactly that gap, not a claim the film gets cut off). Keys are lowercase weekday abbreviations
+# (mon tue wed thu fri sat sun); a show's own calendar date (Asia/Dubai) picks the key. "00:00" means
+# midnight (the end of that calendar date). Where a source gives one flat time for every day, every key
+# repeats it. `open` is the general opening time; `open_fri` overrides it only where the source states a
+# later Friday opening.
+malls:
+  dubai-mall:
+    ar: "دبي مول"
+    en: "The Dubai Mall"
+    cinemas: [reel-dubai-mall, cinemacity-fountain-views]
+    open: "10:00"
+    hours: {mon: "23:00", tue: "23:00", wed: "23:00", thu: "23:00", fri: "00:00", sat: "00:00", sun: "00:00"}
+    source: "https://thedubaimall.com/en/plan-your-visit/opening-hours"
+    checked: "2026-09-27"
+
+  mall-of-the-emirates:
+    ar: "مول الإمارات"
+    en: "Mall of the Emirates"
+    cinemas: [vox-mall-of-the-emirates, vox-kempinski-mall-of-emirates]
+    open: "10:00"
+    hours: {mon: "23:00", tue: "23:00", wed: "23:00", thu: "23:00", fri: "00:00", sat: "00:00", sun: "00:00"}
+    source: "https://www.malloftheemirates.com/en/plan-your-visit"
+    checked: "2026-09-27"
+
+  abu-dhabi-mall:
+    ar: "أبوظبي مول"
+    en: "Abu Dhabi Mall"
+    cinemas: [vox-abu-dhabi-mall-abu-dhabi]
+    open: "10:00"
+    hours: {sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "23:00", sat: "23:00"}
+    source: "https://www.abudhabi-mall.com/contact-us/"
+    checked: "2026-09-27"
+
+  yas-mall:
+    ar: "ياس مول"
+    en: "Yas Mall"
+    cinemas: [vox-yas-mall-abu-dhabi, vox-yas-mall]
+    open: "10:00"
+    # the official page gives one flat "10:00 AM – 10:00 PM" with no weekday/weekend split published
+    hours: {sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "22:00", sat: "22:00"}
+    source: "https://www.yasmall.ae/en/home"
+    checked: "2026-09-27"
+
+  al-wahda-mall:
+    ar: "الوحدة مول"
+    en: "Al Wahda Mall"
+    cinemas: [star-al-wahda-mall-abu-dhabi]
+    open: "10:00"
+    hours: {sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "23:00", fri: "00:00", sat: "00:00"}
+    source: "https://alwahda-mall.com/mall-timings"
+    checked: "2026-09-27"
+
+  marina-mall-abu-dhabi:
+    ar: "مارينا مول"
+    en: "Marina Mall"
+    cinemas: [cinemacity-starlight]
+    open: "10:00"
+    hours: {sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "00:00", sat: "00:00"}
+    source: "https://marinamall.ae/plan-your-visit/"
+    checked: "2026-09-27"
+
+  dalma-mall:
+    ar: "دلما مول"
+    en: "Dalma Mall"
+    cinemas: [cineroyal-dalma-mall]
+    open: "10:00"
+    hours: {sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "00:00", sat: "00:00"}
+    source: "https://www.dalmamall.ae/opening-hours/"
+    checked: "2026-09-27"
+
+  dubai-festival-city-mall:
+    ar: "دبي فستيفال سيتي مول"
+    en: "Dubai Festival City Mall"
+    cinemas: [vox-dubai-festival-city-mall]
+    open: "10:00"
+    hours: {mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "00:00", sat: "00:00", sun: "00:00"}
+    source: "https://www.dubaifestivalcity.com/"
+    checked: "2026-09-27"
+
+  wafi-mall:
+    ar: "وافي مول"
+    en: "Wafi Mall"
+    cinemas: [vox-wafi-mall-at-wafi-city]
+    open: "10:00"
+    hours: {sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "00:00", sat: "00:00"}
+    source: "https://www.wafi.com/"
+    checked: "2026-09-27"
+
+  al-ghurair-centre:
+    ar: "مركز الغرير"
+    en: "Al Ghurair Centre"
+    cinemas: [star-al-ghurair-centre-dubai]
+    open: "10:00"
+    hours: {mon: "23:00", tue: "23:00", wed: "23:00", thu: "23:00", fri: "00:00", sat: "00:00", sun: "00:00"}
+    source: "https://alghuraircentre.com/en/plan-your-visit"
+    checked: "2026-09-27"
+
+  dubai-hills-mall:
+    ar: "دبي هيلز مول"
+    en: "Dubai Hills Mall"
+    cinemas: [roxy-dubai-hills-mall]
+    open: "10:00"
+    hours: {sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "00:00", sat: "00:00"}
+    source: "https://www.dubaihillsmall.ae/"
+    checked: "2026-09-27"
+
+  reem-mall:
+    ar: "ريم مول"
+    en: "Reem Mall"
+    cinemas: [vox-reem-mall-abu-dhabi]
+    open: "10:00"
+    hours: {sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "00:00", sat: "00:00"}
+    source: "https://www.reemmall.ae/"
+    checked: "2026-09-27"
+
+  khalidiyah-mall:
+    ar: "الخالدية مول"
+    en: "Khalidiyah Mall"
+    cinemas: [cineroyal-khalidiyah-mall]
+    open: "10:00"
+    hours: {sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "00:00", sat: "00:00"}
+    source: "https://www.khalidiyahmall.com/mall-trading-hours/"
+    checked: "2026-09-27"
+
+  al-jimi-mall:
+    ar: "الجيمي مول"
+    en: "Al Jimi Mall"
+    cinemas: [vox-al-jimi-mall]
+    open: "10:00"
+    hours: {sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "00:00", sat: "00:00"}
+    source: "https://www.aldar.com/en/explore-aldar/businesses/investment/retail/malls/al-jimi-mall"
+    checked: "2026-09-27"
+
+  al-ain-mall:
+    ar: "العين مول"
+    en: "Al Ain Mall"
+    cinemas: [star-mall-of-al-ain-al-ain]
+    open: "10:00"
+    hours: {sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "00:00", sat: "00:00"}
+    source: "https://visitalain.ae/en/experiences/shopping/al-ain-mall"
+    checked: "2026-09-27"
+
+  mercato:
+    ar: "مركاتو"
+    en: "Mercato"
+    cinemas: [vox-mercato]
+    open: "10:00"
+    hours: {sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "22:00", sat: "22:00"}
+    source: "https://www.mercatoshoppingmall.com/faq/"
+    checked: "2026-09-27"
+
+  city-centre-deira:
+    ar: "سيتي سنتر ديرة"
+    en: "City Centre Deira"
+    cinemas: [vox-city-centre-deira]
+    open: "10:00"
+    hours: {mon: "22:00", tue: "22:00", wed: "22:00", thu: "22:00", fri: "00:00", sat: "00:00", sun: "00:00"}
+    source: "https://www.citycentredeira.com/"
+    checked: "2026-09-27"
+
+  city-centre-mirdif:
+    ar: "سيتي سنتر مردف"
+    en: "City Centre Mirdif"
+    cinemas: [vox-city-centre-mirdif]
+    open: "10:00"
+    hours: {mon: "00:00", tue: "00:00", wed: "00:00", thu: "00:00", fri: "00:00", sat: "00:00", sun: "00:00"}
+    source: "https://www.citycentremirdif.com/en/plan-your-visit"
+    checked: "2026-09-27"
+
+  city-centre-sharjah:
+    ar: "سيتي سنتر الشارقة"
+    en: "City Centre Sharjah"
+    cinemas: [vox-city-centre-sharjah]
+    open: "10:00"
+    open_fri: "14:00"
+    hours: {sat: "22:00", sun: "22:00", mon: "22:00", tue: "22:00", wed: "22:00", thu: "00:00", fri: "00:00"}
+    source: "http://www.citycentresharjah.com/opening-hours.aspx"
+    checked: "2026-09-27"

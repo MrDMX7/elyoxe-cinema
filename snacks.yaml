@@ -1,0 +1,25 @@
+# snacks.yaml — combo names and prices per chain (docs/superpowers/specs/2026-09-27-phase2-design.md,
+# B.46 «Snacks»). Read by pages/venue.py, shown on cinema pages and in the ticket.
+#
+# Every combo below is priced from that chain's own menu page, with the date we read it. A chain not
+# listed here is one whose current menu we could not confirm this way (a promo-only or third-party
+# number is not a menu price) — left out on purpose, never guessed. Official card F&B discounts are NOT
+# repeated here: pages/venue.py reads them straight from discounts.yaml (site.rules), official only.
+#
+# combos: [{ar, en, aed, source, checked}] — aed is the price as published (incl. VAT unless the source
+# says otherwise, noted per entry).
+chains:
+  vox:
+    combos:
+      - ar: "بوشار وسط (مزيج)"
+        en: "Standard Mix Popcorn"
+        aed: 26.00
+        note_ar: "الحجم الوسط، مزيج مالح وكراميل"
+        source: "https://uae.voxcinemas.com/candy-bar-menu"
+        checked: "2026-09-27"
+      - ar: "كومبو ناتشوز سوبريم"
+        en: "Nachos Supreme Combo"
+        aed: 53.00
+        note_ar: "ناتشوز مع جبنة وصوص + بوشار صغير + مشروب غازي صغير"
+        source: "https://uae.voxcinemas.com/candy-bar-menu"
+        checked: "2026-09-27"
