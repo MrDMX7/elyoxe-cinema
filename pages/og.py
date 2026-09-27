@@ -1,0 +1,68 @@
+"""Feature module (docs/PLUGINS.md): the per-film share image (steps/og.py renders it; roadmap #206)
+and the film/cinema share buttons whose links keep the visitor's city+card (roadmap #82).
+
+- `register` copies whichever PNGs steps/og.py left current in data/og/ into out/og/, and points
+  each film page's og:image (Twitter falls back to it: src/page.html carries no separate
+  twitter:image) at its own file via `site.og_override` (site_kit.py's one hook for this, kept to a
+  single additive line — this module owns that hook, per the batch's file split).
+- `slots` add a plain share link to the film page (`film.info`) and the cinema page
+  (`cinema.after_halls`): static markup, same shape as the ticket's own `[data-tk-share]` link
+  (site_kit.py's `ticket()`); src/js/share.js (this module's `JS`) rewrites every `[data-share]`
+  link's href with the visitor's own `?city=&card=` just before it is used, exactly like
+  src/js/ticket.js already does for the ticket's share link.
+"""
+import os
+import shutil
+from urllib.parse import quote
+
+from site_kit import ROOT, SITE, P, Plugin, esc
+
+CSS = ("og",)
+JS = ("share",)
+DIRS = ("og",)
+
+
+def _share_link(site, lang, url, msg):
+    """Same shape as the ticket's own share link (site_kit.py `ticket()`), so src/js/share.js can treat every
+    `[data-share]` link the same way: `data-share-url` is what gets `?city=&card=` appended at click time."""
+    wa = "https://wa.me/?text=" + quote(msg + "\n" + url, safe="")
+    return (f'<p class="pshare"><a class="share" href="{esc(wa)}" rel="noopener" target="_blank" '
+            f'data-share data-share-msg="{esc(msg)}" data-share-url="{esc(url)}">'
+            f'{esc("أرسلها للقروب" if lang == "ar" else "Send to the group")}</a></p>')
+
+
+def _film_slot(site, lang, fid):
+    f = site.films.get(fid) or {}
+    if f.get("status") == "archived":
+        return ""  # nothing left to share a live price for
+    t = site.ftitle(fid, lang)
+    return _share_link(site, lang, SITE + P(lang, "film", fid), t)
+
+
+def _cinema_slot(site, lang, cid):
+    cn = site.cname(cid, lang)
+    city = (site.cinemas.get(cid) or {}).get("city")
+    if not city:
+        return ""
+    return _share_link(site, lang, SITE + P(lang, city, cid), cn)
+
+
+def register(site):
+    out_dir = os.path.join(ROOT, "data", "og")
+    for fid, f in site.films.items():
+        og = f.get("og")
+        if not isinstance(og, dict):
+            continue
+        for lang, name in og.items():
+            src_path = os.path.join(out_dir, name)
+            if not os.path.isfile(src_path):
+                continue
+            dest = os.path.join(site.out, "og", name)
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            shutil.copy2(src_path, dest)
+            site.og_override[(lang, ("film", fid))] = f"{SITE}/og/{name}"
+
+    return Plugin(slots={
+        "film.info": lambda site, lang, fid: _film_slot(site, lang, fid),
+        "cinema.after_halls": lambda site, lang, cid: _cinema_slot(site, lang, cid),
+    })

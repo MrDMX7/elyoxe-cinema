@@ -515,6 +515,7 @@ class Kit:
             if f.get("poster_color") and not HEX.match(str(f["poster_color"])): f["poster_color"] = None
             if f.get("trailer") and not YT.match(str(f["trailer"])): f["trailer"] = None
         self.tpl = open(os.path.join(SRC, "page.html"), encoding="utf-8").read()
+        self.og_override = {}   # (lang, parts) -> full URL; a feature (pages/og.py) fills this before pages render
         self.urls, self.hashes, self.lastmod_path = [], {}, None
         self.names = load_cinema_names(os.path.join(ROOT, "cinemas.yaml"))
         h = hashlib.sha1()
@@ -982,7 +983,7 @@ class Kit:
             "c_films": ' aria-current="page"' if nav == "films" else "", "c_cinemas": ' aria-current="page"' if nav == "cinemas" else "",
             "c_cards": ' aria-current="page"' if nav == "cards" else "",
             "v": self.v, "js": "/assets/" + self.js_name, "page": pagekind, "attrs": attrs, "preload": "\n".join(pre), "robots": robots,
-            "og_image": esc(og_image or f"{SITE}/assets/og-{lang}.png"),
+            "og_image": esc(self.og_override.get((lang, tuple(parts))) or og_image or f"{SITE}/assets/og-{lang}.png"),
             "jsonld": json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False).replace("</", "<\\/"),
             "strings": json.dumps(strings, ensure_ascii=False).replace("</", "<\\/"),
             "body": body + pdata, "c_thursday": "", "nav_extra": "",

@@ -30,8 +30,9 @@ tick();
 function nowMin() { var s = hhmm(NOW.getTime()); return +s.slice(0, 2) * 60 + +s.slice(3); }
 
 /* state: the visitor's choices, remembered (localStorage may be off: every read has a default) */
-if (param("city")) set("city", param("city"));
-if (param("card") != null) set("card", param("card"));
+/* ?city=&card= from a shared link (src/js/share.js, hoisted: applied here when there is nothing saved
+   yet or it already agrees; a differing saved value is never silently overwritten -- share.js asks) */
+shareParams();
 var city = pageCity || get("city") || "dubai", card = get("card") || "";
 if (C.cities && !C.cities[city]) city = "dubai";
 if (C.cards && card && !C.cards[card]) card = "";

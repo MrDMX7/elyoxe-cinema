@@ -1,0 +1,15 @@
+/* pages/og.py — the film/cinema share link (roadmap #82). Same brand rules as the rest of the page: no
+   radius, no shadow; the ticket's `.share` already carries the velvet/gold treatment inside `.tk-act` —
+   this just gives it room to stand alone on a film or cinema page. */
+.pshare{margin-block-start:14px}
+.pshare .share{display:inline-flex;align-items:center;min-block-size:48px;background:var(--velvet);color:var(--screen);
+  text-decoration:none;font-weight:600;padding-inline:16px}
+.pshare .share:focus-visible{outline:2px solid var(--gold);outline-offset:-5px}
+.pshare .share[data-share-applied]{background:var(--ink)}
+
+/* the "opened with your friend's settings" prompt (src/js/share.js) — one line, never silent */
+.shareask{position:fixed;inset-inline:0;inset-block-end:0;z-index:20;display:flex;align-items:center;gap:10px;
+  background:var(--ink);color:var(--screen);padding:12px 16px;border-block-start:1px solid var(--velvet)}
+.shareask p{margin:0;flex:1 1 auto;font-size:14px}
+.shareask button{min-block-size:36px;padding-inline:14px;background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.shareask [data-share-yes]{background:var(--gold);color:var(--ink);border-color:var(--gold)}
