@@ -29,8 +29,14 @@ function geoChange(e) {
 feature(function () {
   document.addEventListener("click", geoChange);
   if (!geoWanted()) return;
+  /* a prerendered page (speculation rules) asks only once the visitor actually opens it */
+  if (document.prerendering) document.addEventListener("prerenderingchange", geoAsk, { once: true });
+  else geoAsk();
+});
+function geoAsk() {
+  if (!geoWanted()) return;
   fetch("/geo", { credentials: "omit", cache: "no-store" })
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (j) { if (j && "city" in j) geoApply(j); })
     .catch(function () {});
-});
+}

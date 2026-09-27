@@ -82,6 +82,94 @@ Resources:
             return request;
         }
 
+  # /geo (roadmap 237): the visitor's city among our eight, from CloudFront's viewer geolocation, answered by
+  # the function itself (the bucket is never asked). FunctionCode is infra/geo.js verbatim (tests/test_geo.py
+  # checks). First made by infra/geo.py, then imported into this stack (infra/geo_stack.py) — hence Retain.
+  GeoFunction:
+    Type: AWS::CloudFront::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Name: elyoxe-cinema-geo
+      AutoPublish: true
+      FunctionConfig: { Comment: "cinema /geo: city from the network", Runtime: cloudfront-js-2.0 }
+      FunctionCode: |
+        // elyoxe-cinema-geo — viewer-request on the /geo behavior of the cinema distribution (E1200YJEC3LL6I).
+        // Answers the request itself (it never reaches the bucket) with the visitor's city among our eight, read
+        // from CloudFront's own geolocation of the viewer's address:
+        //   {"city": "al-ain"}   or   {"city": null}   (outside the UAE, or a city/region we cannot place)
+        // The CloudFront-Viewer-* headers reach a viewer-request function only because the behavior's origin
+        // request policy (elyoxe-cinema-geo) lists them. The city name wins over the region: Al Ain sits in the
+        // Abu Dhabi region. Nothing is logged; the answer is private, no-store (never cached, per visitor).
+        var CITY = {
+            'abu dhabi': 'abu-dhabi', 'abudhabi': 'abu-dhabi', 'musaffah': 'abu-dhabi', 'mussafah': 'abu-dhabi',
+            'khalifa city': 'abu-dhabi', 'mohamed bin zayed city': 'abu-dhabi', 'ruwais': 'abu-dhabi', 'madinat zayed': 'abu-dhabi',
+            'al ain': 'al-ain', 'alain': 'al-ain', 'ain': 'al-ain', 'al ain city': 'al-ain',
+            'dubai': 'dubai', 'jebel ali': 'dubai', 'hatta': 'dubai',
+            'sharjah': 'sharjah', 'ash shariqah': 'sharjah', 'khor fakkan': 'sharjah', 'khawr fakkan': 'sharjah',
+            'kalba': 'sharjah', 'dibba al hisn': 'sharjah',
+            'ajman': 'ajman', 'ajman city': 'ajman',
+            'ras al khaimah': 'ras-al-khaimah', 'ras al khaymah': 'ras-al-khaimah', 'rak': 'ras-al-khaimah',
+            'fujairah': 'fujairah', 'al fujairah': 'fujairah', 'al fujayrah': 'fujairah', 'dibba al fujairah': 'fujairah',
+            'umm al quwain': 'umm-al-quwain', 'umm al qaiwain': 'umm-al-quwain', 'umm al qawain': 'umm-al-quwain'
+        };
+        // ISO 3166-2:AE subdivision codes (CloudFront-Viewer-Country-Region)
+        var REGION = { AZ: 'abu-dhabi', DU: 'dubai', SH: 'sharjah', AJ: 'ajman', RK: 'ras-al-khaimah', FU: 'fujairah', UQ: 'umm-al-quwain' };
+        // CloudFront-Viewer-Country-Region-Name, when the code is missing
+        var REGION_NAME = { 'abu dhabi': 'abu-dhabi', 'dubai': 'dubai', 'sharjah': 'sharjah', 'ajman': 'ajman',
+            'ras al khaimah': 'ras-al-khaimah', 'fujairah': 'fujairah', 'umm al quwain': 'umm-al-quwain' };
+
+        function norm(s) {
+            if (!s) return '';
+            try { s = decodeURIComponent(s); } catch (e) {}
+            s = s.toLowerCase().replace(/[‘’'`]/g, '').replace(/[^a-z]+/g, ' ').trim();
+            if (s.indexOf('emirate of ') === 0) s = s.slice(11);
+            return s;
+        }
+
+        function cityOf(country, city, region, regionName) {
+            if ((country || '').toUpperCase() !== 'AE') return null;
+            var c = norm(city);
+            if (CITY[c]) return CITY[c];
+            var r = (region || '').toUpperCase();
+            if (REGION[r]) return REGION[r];
+            var n = norm(regionName);
+            return REGION_NAME[n] || null;
+        }
+
+        function h(headers, k) { return headers[k] ? headers[k].value : ''; }
+
+        function handler(event) {
+            var hs = event.request.headers;
+            var city = cityOf(h(hs, 'cloudfront-viewer-country'), h(hs, 'cloudfront-viewer-city'),
+                h(hs, 'cloudfront-viewer-country-region'), h(hs, 'cloudfront-viewer-country-region-name'));
+            return {
+                statusCode: 200,
+                statusDescription: 'OK',
+                headers: {
+                    'content-type': { value: 'application/json; charset=utf-8' },
+                    'cache-control': { value: 'private, no-store' },
+                    'x-content-type-options': { value: 'nosniff' }
+                },
+                body: { encoding: 'text', data: JSON.stringify({ city: city }) }
+            };
+        }
+
+  # A viewer-request function sees CloudFront-Viewer-* only when the behavior's origin request policy lists them.
+  GeoPolicy:
+    Type: AWS::CloudFront::OriginRequestPolicy
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      OriginRequestPolicyConfig:
+        Name: elyoxe-cinema-geo
+        Comment: viewer geolocation for /geo (city from the network)
+        HeadersConfig:
+          HeaderBehavior: whitelist
+          Headers: [CloudFront-Viewer-City, CloudFront-Viewer-Country, CloudFront-Viewer-Country-Region, CloudFront-Viewer-Country-Region-Name]
+        CookiesConfig: { CookieBehavior: none }
+        QueryStringsConfig: { QueryStringBehavior: none }
+
   Distribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -113,6 +201,18 @@ Resources:
           FunctionAssociations:
             - EventType: viewer-request
               FunctionARN: !GetAtt RewriteFunction.FunctionMetadata.FunctionARN
+        CacheBehaviors:
+          - PathPattern: /geo
+            TargetOriginId: site
+            ViewerProtocolPolicy: redirect-to-https
+            Compress: false
+            AllowedMethods: [GET, HEAD]
+            CachedMethods: [GET, HEAD]
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad          # Managed-CachingDisabled
+            OriginRequestPolicyId: !Ref GeoPolicy
+            FunctionAssociations:
+              - EventType: viewer-request
+                FunctionARN: !GetAtt GeoFunction.FunctionMetadata.FunctionARN
         # Missing key through OAC without s3:ListBucket is a 403 — both become the 404 page.
         CustomErrorResponses:
           - { ErrorCode: 403, ResponseCode: 404, ResponsePagePath: /404.html, ErrorCachingMinTTL: 60 }

@@ -92,7 +92,8 @@ function pickCity(c) { picked.push(c); set("city", c); }
 var el = { textContent: "", insertAdjacentHTML: function (p, h) { this.textContent += h; } };
 function qa(s) { return s === "[data-near-msg]" ? [el] : []; }
 function q() { return null; }
-var document = { addEventListener: function () {} };
+var listeners = {};
+var document = { prerendering: %(prerendering)s, addEventListener: function (t, f) { (listeners[t] = listeners[t] || []).push(f); } };
 function feature(f) { feats.push(f); }
 var answer = %(answer)s, beforeAnswer = %(before)s;
 function fetch(u, o) {
@@ -103,16 +104,19 @@ function fetch(u, o) {
 }
 %(src)s
 feats.forEach(function (f) { f(); });
+var callsWhilePrerendering = calls.length;
+if (%(activate)s) { document.prerendering = false; (listeners.prerenderingchange || []).forEach(function (f) { f(); }); }
 setTimeout(function () {
-  process.stdout.write(JSON.stringify({ calls: calls, picked: picked, msg: el.textContent, store: store }));
+  process.stdout.write(JSON.stringify({ early: callsWhilePrerendering, calls: calls, picked: picked, msg: el.textContent, store: store }));
 }, 20);
 """
 
 
-def client(tmp_path, store=None, page="home", pageCity=None, search="", answer=None, before=None):
+def client(tmp_path, store=None, page="home", pageCity=None, search="", answer=None, before=None, prerendering=False, activate=False):
     src = open(os.path.join(ROOT, "src", "js", "geo.js"), encoding="utf-8").read()
     return node(tmp_path, HARNESS % {"store": json.dumps(store or {}), "page": json.dumps(page), "pageCity": json.dumps(pageCity),
-                                     "search": json.dumps(search), "answer": json.dumps(answer), "before": json.dumps(before), "src": src})
+                                     "search": json.dumps(search), "answer": json.dumps(answer), "before": json.dumps(before), "src": src,
+                                     "prerendering": json.dumps(prerendering), "activate": json.dumps(activate)})
 
 
 def test_first_visit_picks_the_network_city_and_says_so(tmp_path):
@@ -134,6 +138,14 @@ def test_a_saved_city_is_never_overridden_and_never_asks(tmp_path):
 def test_a_city_picked_while_waiting_wins(tmp_path):
     r = client(tmp_path, answer={"city": "al-ain"}, before="sharjah")
     assert r["calls"] == ["/geo"] and r["picked"] == [] and r["msg"] == "" and r["store"]["city"] == "sharjah"
+    assert r["store"]["geo"] == "1"
+
+
+def test_a_prerendered_page_waits_until_it_is_shown(tmp_path):
+    r = client(tmp_path, answer={"city": "al-ain"}, prerendering=True)
+    assert r["calls"] == [] and r["picked"] == [] and "geo" not in r["store"]      # never opened: never asked
+    r = client(tmp_path, answer={"city": "al-ain"}, prerendering=True, activate=True)
+    assert r["early"] == 0 and r["calls"] == ["/geo"] and r["picked"] == ["al-ain"]
 
 
 def test_city_pages_and_city_links_do_not_ask(tmp_path):
@@ -157,3 +169,23 @@ def test_failure_changes_nothing(tmp_path, answer):
 def test_geo_is_in_the_bundle():
     import build
     assert any(p.replace("\\", "/").endswith("src/js/geo.js") for p in build.js_files())
+
+
+def test_the_stack_template_carries_geo_verbatim():
+    """infra/template.yaml owns /geo (so a stack deploy keeps it): its inline function is infra/geo.js byte for
+    byte, its policy forwards the same four headers as infra/geo.py, and the /geo behavior uses both."""
+    import re
+    sys.path.insert(0, os.path.join(ROOT, "infra"))
+    t = open(os.path.join(ROOT, "infra", "template.yaml"), encoding="utf-8").read()
+    code = open(os.path.join(ROOT, "infra", "geo.js"), encoding="utf-8").read()
+    m = re.search(r"  GeoFunction:\n(?:.*\n)*?      FunctionCode: \|\n((?:(?:        .*)?\n)+?)\n  \S", t)
+    inline = "\n".join(l[8:] for l in m.group(1).rstrip("\n").split("\n")) + "\n"
+    assert inline == code
+    heads = re.search(r"Headers: \[([^\]]+)\]", t[t.index("  GeoPolicy:"):]).group(1)
+    geo_py = open(os.path.join(ROOT, "infra", "geo.py"), encoding="utf-8").read()
+    for h in [x.strip() for x in heads.split(",")]:
+        assert f'"{h}"' in geo_py
+    assert len(heads.split(",")) == 4
+    beh = t[t.index("        CacheBehaviors:"):t.index("        CustomErrorResponses:")]
+    assert "PathPattern: /geo" in beh and "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" in beh
+    assert "!Ref GeoPolicy" in beh and "!GetAtt GeoFunction.FunctionMetadata.FunctionARN" in beh

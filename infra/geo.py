@@ -10,8 +10,9 @@ Touches the cinema distribution E1200YJEC3LL6I only (never E2QY4WECG1P5WO):
   python infra/geo.py --undo     # remove the /geo behavior (add --apply to do it); the function and policy stay
 Undo in full: `--undo --apply`, then `aws cloudfront delete-function --name elyoxe-cinema-geo --if-match <etag>`
 and `aws cloudfront delete-origin-request-policy --id <id> --if-match <etag>`.
-The distribution belongs to the elyoxe-cinema stack (infra/template.yaml), which does not know /geo: a stack
-update that replaces DistributionConfig drops the behavior — rerun this script after one.
+infra/template.yaml now carries the same function, policy and behavior; infra/geo_stack.py imports the two
+resources into the elyoxe-cinema stack and then lets it own the behavior. Until that has run, a stack update that
+replaces DistributionConfig from an older template drops /geo — rerun this script after one.
 Nothing here logs a request; the distribution's standard logging is off.
 """
 import json, os, subprocess, sys, tempfile, time, urllib.request
