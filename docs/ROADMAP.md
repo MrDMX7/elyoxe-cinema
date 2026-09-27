@@ -56,3 +56,7 @@ Open for the owner: 58–74, 162–170, 173/174/176, 178/179/183/184, 186/189/19
 ## Added 2026-09-27 (list 16)
 Phase 3: 219 nearest entrance & parking level · 220 voice reviews in Emirati (transcribed, moderated) · 221 spoiler-gated discussion · 222 franchise hubs · 224 ending explained links (spoiler-gated).
 Open: 217, 218, 223; list 17 = 225–231.
+
+## Added 2026-09-27 (lists 17–18)
+Phase 3: 225 mall pages · 229 «سفراء سينما» · 231 weekly numbers card · 232 Arabic synopsis for every film (facts only, owner-reviewable) · 233 rating trend arrows.
+Open: 226–228, 230, 234–236; list 19 = 237–241.
