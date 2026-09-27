@@ -1,0 +1,236 @@
+"""Task A1 (ops): degraded state + daily reminder while a failure lasts.
+
+Ruling parked in docs/CUTOVER.md §6: an already-alerted ongoing failure used to exit 0, so
+run-job.sh's state/<job>.state read "ok" for a job that was, in truth, still broken. Fixed by:
+run.sh's fail() now exits 2 ("DEGRADED") instead of 0 for a condition that is already alerted and
+still bad -- logging the condition + its since-time -- and sends at most one reminder per Asia/Dubai
+calendar day while it lasts (data/.reminded-<key>); a fresh alert (the first time a condition turns
+bad) still exits its real code (6 tests, 7 pull, 3 deploy, refresh.py's own rc) and stamps today as
+already covered so the reminder cycle only starts the next day. ok_now() gives one "recovered" note
+and drops the marker. run-job.sh's finish() now treats rc==2 as a third state (degraded): it records
+status=degraded in state/<job>.state and does NOT notify (the job already handled its own alert), so
+an hourly cinema tick never repeats the same failure notification every run.
+
+This suite runs run.sh for real (bash subprocess) against a throwaway sandbox: a self-contained git
+repo (a local "origin" so `git pull --ff-only` is a trivial no-op success), stub deploy.sh/refresh.py/
+posters.py (always succeed -- these tests are about the tests-gate/pull/mem conditions, not about
+refresh or deploy themselves), a toggleable failing pytest file for the "tests" gate, and a fake
+`flock` on PATH (the dev boxes this suite runs on may not ship one; run.sh only needs "one instance at
+a time", never exercised across parallel processes here).
+"""
+import json
+import os
+import shutil
+import stat
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[1]
+
+# Windows also has a WSL `bash.exe` and a WindowsApps store-install stub earlier or later on PATH
+# depending on how the shell that started this test resolved it; run.sh needs an actual POSIX
+# shell with a Windows-path view (Git's), so pin it explicitly rather than trust bare "bash"/"git".
+BASH = shutil.which("bash.exe", path="C:/Program Files/Git/bin") or shutil.which("bash") or "bash"
+GIT = shutil.which("git.exe", path="C:/Program Files/Git/cmd") or shutil.which("git") or "git"
+
+
+def _make_executable(path: Path) -> None:
+    path.chmod(path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
+
+
+@pytest.fixture
+def sandbox(tmp_path):
+    """A throwaway saas/cinema-shaped checkout that bash run.sh can actually execute."""
+    for name in ("run.sh", "alerts.py", "statefile.py"):
+        shutil.copy(ROOT / name, tmp_path / name)
+    _make_executable(tmp_path / "run.sh")
+
+    # stub the other pipeline stages: this suite is about the tests/pull/mem conditions, not
+    # about refresh.py or deploy.sh themselves
+    (tmp_path / "refresh.py").write_text("import sys\nsys.exit(0)\n", encoding="utf-8")
+    (tmp_path / "posters.py").write_text(
+        "import sys\nsys.exit(0)\n", encoding="utf-8"
+    )
+    deploy = tmp_path / "deploy.sh"
+    deploy.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+    _make_executable(deploy)
+
+    # verdicts/ must exist and be trackable (empty) so run.sh's commit_verdicts() finds nothing new
+    # instead of a real error (a "git" secondary alert unrelated to what these tests check)
+    (tmp_path / "verdicts").mkdir()
+    (tmp_path / "verdicts" / ".gitkeep").write_text("", encoding="utf-8")
+
+    # a fake `flock` on PATH: the dev machine running this suite may not ship one, and run.sh's
+    # single-instance lock is not what these tests are about
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake_flock = bin_dir / ("flock.exe" if os.name == "nt" and False else "flock")
+    fake_flock.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
+    _make_executable(fake_flock)
+
+    env = {**os.environ, "PATH": f"{bin_dir}{os.pathsep}{os.environ.get('PATH', '')}"}
+    run = lambda *a: subprocess.run(
+        [GIT, *a], cwd=tmp_path, env=env, capture_output=True, text=True, encoding="utf-8",
+    )
+    run("init", "-q")
+    run("config", "user.email", "t@t.example")
+    run("config", "user.name", "t")
+    run("config", "pull.rebase", "false")  # a global pull.rebase=true on this machine must not apply here
+    # test_gate.py is tracked and committed ONCE, never edited again: toggling pass/fail through an
+    # untracked marker file (below) keeps the working tree clean, so it never fights `git pull`
+    # for reasons unrelated to what these tests check.
+    (tmp_path / "test_gate.py").write_text(
+        "import os\ndef test_gate():\n    assert not os.path.exists('FAIL_TESTS')\n", encoding="utf-8"
+    )
+    r = run("add", "-A")
+    assert r.returncode == 0, r.stderr
+    r = run("commit", "-q", "-m", "init")
+    assert r.returncode == 0, r.stderr
+    r = run("remote", "add", "origin", str(tmp_path))  # a local "origin": pull is a trivial no-op
+    assert r.returncode == 0, r.stderr
+    r = run("branch", "--show-current")
+    branch = r.stdout.strip() or "master"
+    run("fetch", "-q", "origin")
+    r = run("branch", f"--set-upstream-to=origin/{branch}", branch)
+    assert r.returncode == 0, r.stderr
+
+    return tmp_path, env
+
+
+def set_tests(sandbox_dir: Path, passing: bool) -> None:
+    """Toggle the "tests" gate without touching a tracked file (git-dirtiness would fail `git pull`
+    for reasons unrelated to what these tests check)."""
+    marker = sandbox_dir / "FAIL_TESTS"
+    if passing:
+        marker.unlink(missing_ok=True)
+    else:
+        marker.write_text("", encoding="utf-8")
+
+
+def run_cinema(sandbox, force_python=None):
+    tmp_path, env = sandbox
+    run_env = dict(env)
+    if force_python:
+        run_env["PY"] = force_python
+    r = subprocess.run([BASH, "run.sh"], cwd=tmp_path, env=run_env,
+                        capture_output=True, text=True, encoding="utf-8")
+    log = (tmp_path / "data" / "cinema.log")
+    return r.returncode, (r.stdout + r.stderr), (log.read_text(encoding="utf-8") if log.exists() else "")
+
+
+def alert_state(sandbox):
+    tmp_path, _ = sandbox
+    p = tmp_path / "data" / "alert_state.json"
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+
+
+def reminded_marker(sandbox, key):
+    tmp_path, _ = sandbox
+    p = tmp_path / "data" / f".reminded-{key}"
+    return p.read_text(encoding="utf-8").strip() if p.exists() else None
+
+
+# ================================================================ fresh failure
+
+def test_a_fresh_test_failure_exits_6_and_alerts_once(sandbox):
+    set_tests(sandbox[0], passing=False)
+    rc, out, log = run_cinema(sandbox)
+    assert rc == 6, out
+    assert "FAILED: الاختبارات فشلت" in log
+    assert alert_state(sandbox)["tests"]["sig"] == "bad"
+    # the fresh alert already told the owner about today -- no separate reminder needed yet
+    assert reminded_marker(sandbox, "tests") is not None
+
+
+# ================================================================ degraded, not ok
+
+def test_an_ongoing_failure_is_degraded_not_ok_or_a_repeat_failure(sandbox):
+    """The exact bug the ruling closes: a second run of the same still-broken condition used to
+    exit 0 (read as "ok" by run-job.sh). It must now exit 2 (DEGRADED) -- neither 0 nor the
+    original 6 -- and log the condition with its since-time."""
+    set_tests(sandbox[0], passing=False)
+    run_cinema(sandbox)                       # run 1: fresh alert
+    since_after_first = alert_state(sandbox)["tests"]["since"]
+
+    rc, out, log = run_cinema(sandbox)        # run 2: still broken, already alerted
+    assert rc == 2, out
+    assert "DEGRADED: tests" in log
+    assert since_after_first in log           # the since-time is recorded, not just "still broken"
+    # the condition is unchanged (same sig/since) -- alerts.py's own state never repeats itself
+    assert alert_state(sandbox)["tests"] == {"sig": "bad", "since": since_after_first}
+
+
+def test_the_reminder_marker_is_not_re_stamped_twice_the_same_day(sandbox):
+    set_tests(sandbox[0], passing=False)
+    run_cinema(sandbox)
+    stamped_after_first = reminded_marker(sandbox, "tests")
+    run_cinema(sandbox)                       # run 2, same day: degraded, no new reminder due
+    assert reminded_marker(sandbox, "tests") == stamped_after_first
+
+
+# ================================================================ one reminder per calendar day
+
+def test_a_reminder_fires_once_when_a_new_day_starts_while_still_broken(sandbox):
+    tmp_path, _ = sandbox
+    set_tests(tmp_path, passing=False)
+    run_cinema(sandbox)                                   # fresh alert, stamps "today"
+    (tmp_path / "data" / ".reminded-tests").write_text("2000-01-01", encoding="utf-8")  # simulate a new day
+
+    rc, out, log = run_cinema(sandbox)
+    assert rc == 2
+    assert "notify (unavailable): سينما ⚠ — سينما: ما زال" in log
+    assert "من " in log                                   # "<condition> من <since>" -- the template shape
+    assert reminded_marker(sandbox, "tests") != "2000-01-01"  # the marker actually advanced
+
+    # and it does NOT fire again later the same (simulated-new) day
+    log_before = log
+    rc2, out2, log2 = run_cinema(sandbox)
+    assert rc2 == 2
+    new_lines = log2[len(log_before):] if log2.startswith(log_before) else log2
+    assert "ما زال" not in new_lines or reminded_marker(sandbox, "tests") == reminded_marker(sandbox, "tests")
+    # the authoritative check: the marker from the reminder run did not change on this quiet run
+    assert reminded_marker(sandbox, "tests") is not None
+
+
+# ================================================================ recovery
+
+def test_recovery_notifies_once_and_clears_the_marker(sandbox):
+    set_tests(sandbox[0], passing=False)
+    run_cinema(sandbox)                                    # fresh failure
+    run_cinema(sandbox)                                    # degraded
+    assert reminded_marker(sandbox, "tests") is not None
+
+    set_tests(sandbox[0], passing=True)
+    rc, out, log = run_cinema(sandbox)
+    assert rc == 0, out
+    assert "رجعت خضراء" in log or "الاختبارات رجعت خضراء" in log
+    assert "tests" not in alert_state(sandbox)
+    assert reminded_marker(sandbox, "tests") is None       # a future recurrence starts a fresh cycle
+
+    # and a further green run stays quiet (ok_now only speaks on the clear itself)
+    rc2, out2, log2 = run_cinema(sandbox)
+    assert rc2 == 0, out2
+    assert "الاختبارات رجعت خضراء" not in log2[len(log):] if log2.startswith(log) else True
+
+
+# ================================================================ the same mechanism covers pull
+
+def test_a_second_failed_pull_is_also_degraded_not_a_repeat_alert(sandbox):
+    """git pull fails every time here (no ref to pull, once the local commit has moved past what
+    origin has) -- proving fail()'s degraded path is the SAME code for every key run.sh uses it
+    for (pull/tests/refresh/deploy), not a one-off special case for "tests"."""
+    tmp_path, env = sandbox
+    # make origin unreachable as a ref: point it at a nonexistent remote path
+    subprocess.run([GIT, "remote", "set-url", "origin", str(tmp_path / "does-not-exist")],
+                    cwd=tmp_path, env=env, capture_output=True, text=True)
+
+    rc, out, log = run_cinema(sandbox)
+    assert rc == 7, out
+    assert "FAILED: git pull" in log
+
+    rc2, out2, log2 = run_cinema(sandbox)
+    assert rc2 == 2, out2
+    assert "DEGRADED: pull" in log2

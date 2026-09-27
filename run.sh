@@ -9,9 +9,13 @@
 # (data/price_cache.json), so the extra runs cost showtime/listing calls only.
 # By hand, in the foreground:  bash run.sh [--force]   (arguments go to refresh.py)
 #
-# Exit: 0 = deployed (possibly with degraded chains), non-zero = nothing deployed (6 = the test suite
-#   failed on the pulled code, 7 = git pull failed; the live site is left as it was) -- except a failure that was already
-#   alerted and is still going on: logged, exit 0, so an hourly job doesn't repeat it (see below).
+# Exit: 0 = deployed (possibly with degraded chains). 2 = DEGRADED — a failure (tests/pull/refresh/
+#   deploy/memory-wait) that was already alerted and is STILL going on: nothing new deployed, logged
+#   as DEGRADED, quiet except at most one reminder per Asia/Dubai calendar day (ruling, docs/CUTOVER.md
+#   §6) -- run-job.sh's state/<job>.state must record "degraded" (not "ok") for this exit code, never
+#   silently exit 0 for an ongoing failure. Any other non-zero = a FRESH failure just alerted, nothing
+#   deployed (6 = the test suite failed on the pulled code, 7 = git pull failed, 3 = deploy.sh failed;
+#   the live site is left as it was).
 # Notifications (final review I3): on a CHANGE of state only -- alerts.py keeps data/alert_state.json and
 # says whether a condition just started (notify), just cleared (notify once) or is still the same (quiet).
 # run-job.sh keeps this job quiet on success (QUIET_OK).
@@ -30,16 +34,49 @@ if [ -f "$ENV_SH" ]; then . "$ENV_SH"; fi
 note() { if declare -F notify >/dev/null; then notify "$@" >/dev/null 2>&1 || echo "notify failed: $1"; else echo "notify (unavailable): $1 — $2"; fi; }
 # alert <alerts.py args> — prints the notification body when a condition starts or clears, else nothing
 alert() { "${PY:-python3}" alerts.py "$@" 2>/dev/null || true; }
-# ok_now <key> <message on clear> — a condition is absent this run; notify once if it had been alerted
-ok_now() { local m; m=$(alert cond "$1" --ok --clear "$2"); [ -z "$m" ] || note "سينما ✓" "$m" "elyoxe-cinema-$1"; }
-fail() {  # fail <message> <rc> <key>
+# since_of <key> — the ISO "since" time alerts.py recorded for a still-bad condition, or "".
+# alerts.py's own CLI has no query for this (it only prints a message on start/clear), so this reads
+# its state file directly -- read-only, never writes it.
+since_of() {
+  "${PY:-python3}" - "$1" <<'PYEOF' 2>/dev/null
+import json, sys
+try:
+    d = json.load(open("data/alert_state.json", encoding="utf-8"))
+    print(d.get(sys.argv[1], {}).get("since", ""))
+except Exception:
+    print("")
+PYEOF
+}
+# remind_once <key> <message> — at most one notification per Asia/Dubai calendar day while a
+# condition stays bad (ruling, docs/CUTOVER.md §6). data/.reminded-<key> holds the last date
+# reminded; fail() also stamps it the day the FRESH alert fires, so the reminder cycle only starts
+# the following day (the owner already knows about today's failure from that first alert).
+remind_once() {
+  local key="$1" msg="$2" today marker
+  today=$(TZ=Asia/Dubai date +%F)
+  marker="$HERE/data/.reminded-$key"
+  [ "$(cat "$marker" 2>/dev/null)" = "$today" ] && return 0
+  echo "$today" > "$marker"
+  note "سينما ⚠" "$msg" "elyoxe-cinema-$key"
+}
+# ok_now <key> <message on clear> — a condition is absent this run; notify once if it had been
+# alerted, and drop its reminder marker so a future recurrence of the same key starts a fresh cycle
+ok_now() { local m; m=$(alert cond "$1" --ok --clear "$2"); rm -f "$HERE/data/.reminded-$1"; [ -z "$m" ] || note "سينما ✓" "$m" "elyoxe-cinema-$1"; }
+fail() {  # fail <message> <rc> <key> -- <rc> is the FRESH-failure exit code (6 tests, 7 pull, 3
+  # deploy, refresh.py's own rc). A failure that was already alerted and is STILL going on exits 2
+  # (degraded) instead of repeating <rc> or going quiet with 0 -- so run-job.sh's state/<job>.state
+  # records "degraded" with a since-time, not "ok" -- with at most one reminder per calendar day
+  # while it lasts (remind_once above).
   echo "FAILED: $1"
   if [ -z "$(alert cond "$3" --bad "$1" --clear "")" ]; then
-    echo "   (already alerted: $3 — quiet until it clears)"
-    exit 0
+    local since; since=$(since_of "$3")
+    echo "DEGRADED: $3 since ${since:-?} — quiet unless today's reminder is still due"
+    remind_once "$3" "سينما: ما زال $1 من ${since:-?}"
+    exit 2
   fi
   # run-job.sh notifies a non-zero exit; notify here only when run on its own
   [ -z "${ELYOXE_JOB:-}" ] && note "سينما ✗" "$1" "elyoxe-cinema"
+  echo "$(TZ=Asia/Dubai date +%F)" > "$HERE/data/.reminded-$3"   # today already covered by this fresh alert
   exit "${2:-1}"
 }
 
