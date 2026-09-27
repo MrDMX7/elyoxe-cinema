@@ -7,7 +7,10 @@
    concatenated with core.js into one scope (build.js_files), so `shareParams` below is hoisted and
    callable from core.js's own state block even though this file's text sits after it. */
 
-var pendingShare = null;
+/* NOT `= null`: core.js calls shareParams() (hoisted) BEFORE this line runs in the concatenated bundle,
+   so a plain initializer here would wipe the pending prompt it just queued (release fix: the live
+   "use your friend's settings?" bar never appeared). Keep whatever shareParams() already set. */
+var pendingShare = pendingShare || null;
 
 /* called once, from core.js, before `city`/`card` are read for the first time */
 function shareParams() {

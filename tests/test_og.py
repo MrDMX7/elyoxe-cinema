@@ -244,7 +244,7 @@ def test_og_dims_only_for_1200x630_images(tmp_path):
     assert '<meta property="og:image:width" content="1200">' in home
 
 
-def _node(tmp_path, search, script):
+def _node(tmp_path, search, script, before=""):
     """share.js standalone: `feature()` is stubbed to never call its callback, so shareParams()/shareURL()
     (both hoisted, top-level) can be driven directly with fake get/set/param/city/card — the same
     contract core.js gives every feature module (docs/PLUGINS.md)."""
@@ -263,7 +263,7 @@ def _node(tmp_path, search, script):
         "var city, card;\n"
         "var C = { cities: { dubai: 'دبي' }, cards: { carrefour: 'كاريفور' } }, AR = true;\n"
     )
-    src = stub + share + "\n" + script
+    src = stub + before + "\n" + share + "\n" + script
     (tmp_path / "t.js").write_text(src, encoding="utf-8")
     r = subprocess.run(["node", str(tmp_path / "t.js")], capture_output=True, text=True, encoding="utf-8", timeout=30)
     assert r.returncode == 0, r.stderr
@@ -351,3 +351,14 @@ shareParams();
 process.stdout.write(JSON.stringify({ city: get("city"), card: get("card") }));
 """)
     assert got == {"city": "dubai", "card": None}
+
+
+@pytest.mark.skipif(not NODE, reason="node not installed")
+def test_pending_prompt_survives_the_bundle_order(tmp_path):
+    """The live bundle runs core.js (which calls the hoisted shareParams()) BEFORE share.js's own top-level
+    statements. A `var pendingShare = null;` there wiped the queued prompt, so the "use your friend's
+    settings?" bar never showed on cinema.elyoxe.com. Reproduce that order."""
+    got = _node(tmp_path, "?city=dubai", """
+process.stdout.write(JSON.stringify({ city: get("city"), pending: pendingShare }));
+""", before='STORE["city"] = "abu-dhabi";\nshareParams();')
+    assert got == {"city": "abu-dhabi", "pending": {"city": "dubai", "card": None}}
