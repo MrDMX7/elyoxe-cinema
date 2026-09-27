@@ -31,4 +31,7 @@ Phase 3: 75 Emirati «مواطن» discount card · 76 student / senior cards ·
 85 Google Play app (TWA) · 86 Wallet pass (Google/Apple) · App Store app.
 
 ## Open for the owner's pick
-58–74 (second list) · 93–108 (third list).
+58–74 (second list) · 94, 95, 98–101, 103, 108 (third list) · 109–120 (fourth list).
+
+## Added 2026-09-27 (owner picks from the third list)
+Phase 3: 93 live UAE cinema map · 96 first show in the UAE + countdown · 97 «اسمع الحكم» Emirati audio verdict (Kore) · 102 calendar subscription for «نازل الخميس» · 104 yearly archive pages · 105 annual cinema price report · 106 festivals & events guides · 107 Hindi + Malayalam UI.
