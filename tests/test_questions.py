@@ -153,6 +153,15 @@ def test_where_lists_todays_cinemas(out):
     assert "data-near" in w and 'data-lat="' in w and "25 سبتمبر 2026" in faq(w)["acceptedAnswer"]["text"]
 
 
+def test_format_names_read_whole_in_the_answer(out):
+    """«4DX» in an Arabic answer read «DX4»: the number isolate took the 4 alone (MASTER-PLAN §4.1 #19)."""
+    ans = re.search(r'<p class="ans">(.*?)</p>', read(out, "q", "where-4dx", "index.html"), re.S).group(1)
+    assert '<bdi dir="ltr">4DX</bdi>' in ans and ">4</span>DX" not in ans
+    from pages.questions import Questions
+    assert Questions.digits("MX4D بـ55.00 و2D و20%") == ('<bdi dir="ltr">MX4D</bdi> بـ<span class="num" dir="ltr">55.00</span> '
+                                                        'و<bdi dir="ltr">2D</bdi> و<span class="num" dir="ltr">20%</span>')
+
+
 def test_tonight_counts_only_shows_still_ahead_and_after_midnight(tmp_path_factory):
     d = fixture()
     d["generated"] = "2026-09-25T22:10:00+04:00"

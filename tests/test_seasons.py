@@ -69,14 +69,16 @@ def _site_stub():
 
 def test_kids_shows_filters_to_kids_flagged_films_before_cutoff():
     site = _site_stub()
-    groups = seasons.kids_shows(site, before_hour=14)
-    for city, fids in groups.items():
-        for fid, shows in fids:
-            assert build.film_flags(site.films[fid])[1] is True
-            for s in shows:
-                assert s["date"] == site.today
-                assert s["time"] < "14:00"
-                assert (site.cinemas.get(s["cinema"]) or {}).get("city") == city
+    for day in (site.today, site.tomorrow):
+        groups = seasons.kids_shows(site, before_hour=14, day=day)
+        for city, fids in groups.items():
+            for fid, shows in fids:
+                assert build.film_flags(site.films[fid])[1] is True
+                for s in shows:
+                    assert s["date"] == day
+                    assert s["time"] < "14:00"
+                    assert not site.is_past(s)                  # a show already started is not offered
+                    assert (site.cinemas.get(s["cinema"]) or {}).get("city") == city
 
 
 def test_summer_active_only_in_july_august():
@@ -208,6 +210,55 @@ def test_build_eid_page_absent_outside_the_ten_day_window(tmp_path):
     assert '/eid/' not in home
 
 
+def _kids_film(d):
+    d["films"]["heart-of-the-beast"].update(rating="G", genres=["animation"], family=True, kids=True)
+
+
+def _ct(html):
+    import re
+    return json.loads(re.search(r"<script>window\.CT = (.*?);</script>", html).group(1))
+
+
+def test_kids_page_in_the_morning_has_this_morning_then_tomorrow_waiting(tmp_path):
+    """Before 14:00: this morning shows, tomorrow morning is in the page but hidden until 14:00 (when.js)."""
+    import re
+
+    def m(d):
+        d["generated"] = "2026-09-25T09:00:00+04:00"
+        _kids_film(d)
+    out = _build(tmp_path, m)
+    for lang, parts in (("ar", ("kids", "index.html")), ("en", ("en", "kids", "index.html"))):
+        kids = _read(out, *parts)
+        today = re.search(r'<section class="wrap kids-day" data-until="2026-09-25T14:00">(.*?)</section>', kids, re.S).group(1)
+        tomorrow = re.search(r'<section class="wrap kids-day" data-from="2026-09-25T14:00" hidden>(.*?)</section>', kids, re.S).group(1)
+        assert ("اليوم الصبح" if lang == "ar" else "This morning") in today
+        assert ("بكرة الصبح" if lang == "ar" else "Tomorrow morning") in tomorrow
+        for block in (today, tomorrow):
+            assert "/film/heart-of-the-beast/" in block and "10:30" in block and "15:30" not in block
+        assert re.match(r"/assets/when\.[0-9a-f]{10}\.js$", _ct(kids)["chunks"]["when"])
+
+
+def test_kids_page_after_two_pm_lists_tomorrow_morning(tmp_path):
+    """After 14:00 the page used to say there was nothing (MASTER-PLAN §4.1 #21): now it is tomorrow morning."""
+    def m(d):
+        d["generated"] = "2026-09-25T16:00:00+04:00"
+        _kids_film(d)
+    out = _build(tmp_path, m)
+    kids = _read(out, "kids", "index.html")
+    assert "data-until" not in kids and "اليوم الصبح" not in kids
+    assert '<section class="wrap kids-day" data-from="2026-09-25T14:00"><h2>بكرة الصبح</h2>' in kids
+    assert 'href="/film/heart-of-the-beast/"' in kids and "ما فيه عروض عيال قبل الظهر اليوم" not in kids
+
+
+def test_kids_page_says_tomorrow_is_not_in_yet(tmp_path):
+    def m(d):
+        d["generated"] = "2026-09-25T16:00:00+04:00"
+        _kids_film(d)
+        d["shows"] = [x for x in d["shows"] if x["date"] != "2026-09-26"]
+    kids = _read(_build(tmp_path, m), "kids", "index.html")
+    assert "ما عندنا عروض عيال بكرة الصبح للحين" in kids
+
+
 def test_build_kids_page_lists_only_kids_flagged_films_before_1400(tmp_path):
     def m(d):
         # the fixture already sets explicit "family"/"kids" (False) on this film, so film_flags()
@@ -235,18 +286,19 @@ def test_build_summer_page_in_season_has_no_time_cutoff_and_no_noindex(tmp_path)
     assert '<a href="/summer/">' in home
 
 
-def test_build_summer_page_out_of_season_is_noindex_and_unlinked(tmp_path):
+def test_summer_page_is_not_built_out_of_season(tmp_path):
+    """The empty noindex placeholder is deleted (W0-P2, MASTER-PLAN §4.1 #22): out of July and August there is
+    no /summer/ at all, and a folder an older build left in out/ is cleared ("summer" stays in DIRS)."""
+    stale = tmp_path / "out" / "summer"
+    stale.mkdir(parents=True)
+    (stale / "index.html").write_text("old placeholder", encoding="utf-8")
+
     def m(d):
         d["generated"] = "2026-01-15T09:00:00+04:00"
     out = _build(tmp_path, m)
-    summer = _read(out, "summer", "index.html")
-    assert 'name="robots" content="noindex,nofollow"' in summer
-    home = _read(out, "index.html")
-    assert '<a href="/summer/">' not in home
-    # final review I2: a noindex page never goes in the sitemap (Search Console: "Submitted URL marked noindex")
-    sm = _read(out, "sitemap.xml")
-    assert "/summer/" not in sm
-    assert os.path.exists(os.path.join(out, "en", "summer", "index.html"))
+    assert not os.path.exists(os.path.join(out, "summer")) and not os.path.exists(os.path.join(out, "en", "summer"))
+    assert "/summer/" not in _read(out, "index.html") and "/summer/" not in _read(out, "sitemap.xml")
+    assert "summer" in seasons.DIRS
 
 
 def test_summer_in_season_is_in_the_sitemap(tmp_path):

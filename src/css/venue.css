@@ -1,4 +1,4 @@
-/* venue.css — Phase 2 Task 4: mall-closing note, snacks table and double-feature list on cinema/film
+/* venue.css — Phase 2 Task 4: mall-closing note, snacks table and double-feature list on cinema
    pages (pages/venue.py). Reuses the design's tokens (cinema.css :root) and its existing .hint/.src/
    .chkd/.prices classes; only the new blocks are styled here. */
 .mall-note,.snacks,.dfeat{padding-block:14px 16px;border-block-end:1px solid var(--line)}
@@ -11,6 +11,12 @@
 .dfeat ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
 .dfeat li{color:var(--dim);font-size:13px;line-height:1.6}
 .dfeat li b{color:var(--screen);font-weight:600}
+.dfeat small{font-variant-numeric:tabular-nums}
+.dfeat small span:not([hidden])~span:not([hidden])::before{content:"، "}
+:lang(en) .dfeat small span:not([hidden])~span:not([hidden])::before{content:", "}
+.food-disc b{color:var(--screen);font-weight:600}
+/* src/js/when.js: a timed block the clock has passed is gone, whatever display its own class gives it */
+[data-until][hidden],[data-from][hidden],[data-when-group][hidden]{display:none}
 .plan-add{margin-block-start:10px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:baseline}
 .plan-leave{color:var(--seat);font-size:12px;flex-basis:100%;margin:0}
 

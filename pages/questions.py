@@ -296,9 +296,13 @@ class Questions(Pages):
 
     @staticmethod
     def digits(text):
-        """escaped answer with each number isolated (an Arabic run must not reorder «55.00» or «20%»)."""
-        return re.sub(r"(&#?\w+;)|(\d+(?:[.:]\d+)?%?)",
-                      lambda m: m.group(1) or f'<span class="num" dir="ltr">{m.group(2)}</span>', esc(text))
+        """escaped answer with each number isolated (an Arabic run must not reorder «55.00» or «20%»), and a
+        format name that mixes digits and Latin letters («4DX», «MX4D», «2D») isolated whole, left to right: a
+        lone «4» isolated inside «4DX» made the line read «DX4» (MASTER-PLAN §4.1 #19). The edges are Latin
+        letters and digits, not a word boundary: «و2D» has none before the 2."""
+        return re.sub(r"(&#?\w+;)|(?<![A-Za-z0-9])((?=[A-Za-z0-9]*[A-Za-z])[A-Za-z0-9]*\d[A-Za-z0-9]*)(?![A-Za-z0-9])|(\d+(?:[.:]\d+)?%?)",
+                      lambda m: m.group(1) or (f'<bdi dir="ltr">{m.group(2)}</bdi>' if m.group(2) else f'<span class="num" dir="ltr">{m.group(3)}</span>'),
+                      esc(text))
 
     def hub(self, lang, qs):
         ar = lang == "ar"

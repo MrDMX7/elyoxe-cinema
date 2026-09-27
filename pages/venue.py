@@ -1,12 +1,17 @@
 """pages/venue.py — Phase 2 Task 4: "inside the mall" (docs/superpowers/specs/2026-09-27-phase2-design.md,
-C «Planning» + B.46 «Snacks»). Fills two of site_kit.Kit.SLOTS (docs/PLUGINS.md has both, so no fallback
-/cinemas/<id>/extras data slice is needed):
+C «Planning» + B.46 «Snacks»). Fills one of site_kit.Kit.SLOTS (docs/PLUGINS.md):
 
   cinema.after_halls  «المول يسكّر HH:MM» + which of today's shows end after that (malls.yaml), the
                       chain's snack combos (snacks.yaml) and any OFFICIAL card F&B discount already in
-                      discounts.yaml (site.rules — never a new number), and today's double-feature pairs
-                      at this cinema.
-  film.info           today's double-feature pairs this film is in, at any cinema.
+                      discounts.yaml (site.rules — never a new number), each under its card's name, and
+                      today's double-feature pairs at this cinema that have not started yet.
+
+The film page's all-cities double feature is deleted (W0-P2, MASTER-PLAN §4.1 #14: 107 pairs, past times,
+above the schedule). On the cinema page a pair leaves the list when its first film starts: the build drops
+the ones already started, and the lazy chunk src/js/when.js hides the rest as the clock passes them
+(`data-until`), and the whole list once none is left (`data-when-group`). when.js is generic: any page that
+marks blocks with data-until / data-from and asks for the chunk gets the same behaviour (pages/seasons.py's
+/kids/ does).
 
 The calendar/leave-by/ics side of Task 4 is client-side: src/js/plan.js (in the ticket, main bundle).
 
@@ -17,10 +22,11 @@ import os
 
 import yaml
 
-from site_kit import CITIES, L, P, Plugin, ROOT, dates, esc, human_date, money, num
+from site_kit import L, Plugin, ROOT, dates, esc, human_date, money, num, rule_state
 
 CSS = ("venue",)
 JS = ("plan",)
+LAZY_JS = ("when",)
 
 MALLS_PATH = os.path.join(ROOT, "malls.yaml")
 SNACKS_PATH = os.path.join(ROOT, "snacks.yaml")
@@ -186,10 +192,15 @@ def snacks_section(site, lang, chain):
         body += (f'<p class="hint"><a class="src" href="{esc(c0["source"])}" rel="noopener" target="_blank">{"المصدر" if lang == "ar" else "Source"}</a>'
                  f' <small class="chkd">{"تحققنا" if lang == "ar" else "checked"} {esc(human_date(c0.get("checked"), lang))}</small></p>')
     food_rows = ""
+    cards = {c.get("id"): c for c in (site.disc.get("cards") or [])}
     for card, r in (site.rules.get(chain) or {}).items():
         note = r.get("note_ar") or ""
-        if any(w in note for w in FOOD_WORDS):
-            food_rows += f'<li>{dates(esc(note))} <a class="src" href="{esc(r.get("source") or "")}" rel="noopener" target="_blank">{"المصدر" if lang == "ar" else "Source"}</a></li>'
+        if any(w in note for w in FOOD_WORDS) and rule_state(r, site.today) == "ok":
+            c = cards.get(card) or {}
+            name = (c.get("name_ar") if lang == "ar" else c.get("name_en")) or c.get("name_en") or card
+            say = dates(esc(note)) if lang == "ar" else f'<span lang="ar" dir="rtl">{dates(esc(note))}</span>'
+            food_rows += (f'<li><b><bdi>{esc(name)}</bdi></b>: {say} <a class="src" href="{esc(r.get("source") or "")}" '
+                          f'rel="noopener" target="_blank">{"المصدر" if lang == "ar" else "Source"}</a></li>')
     if food_rows:
         head2 = "خصم البطاقات على الأكل" if lang == "ar" else "Card discounts on food"
         body += f'<h3>{esc(head2)}</h3><ul class="food-disc">{food_rows}</ul>'
@@ -199,10 +210,10 @@ def snacks_section(site, lang, chain):
     return f'<section class="snacks"><h2>{esc(head0)}</h2>{body}</section>'
 
 
-PER_CITY = 2     # film page: this many pairings per city (earliest first), FILM_TIMES start times each
-FILM_TIMES = 2
-MAX_LINES = 30   # cinema page: the day's first 30 pairings of two films…
-MAX_TIMES = 3    # …each with its first three start times (a busy multiplex has ~250 such lines: ~35 KB)
+MAX_LINES = 20   # cinema page: the day's first 20 pairings of two films still ahead…
+MAX_TIMES = 3    # …each with its first three start times (a busy multiplex has ~250 such lines: ~35 KB). The block
+                 # stays under the 6 KB the arrow version took: it counts against the page budget, and a heavier
+                 # one would push the busiest cinemas' schedules into the plain mode that drops per-show booking links
 
 
 def group_pairs(pairs):
@@ -218,32 +229,27 @@ def group_pairs(pairs):
     return [v for _, v in sorted(out, key=lambda kv: (kv[0], kv[1][:3]))]
 
 
-def _times(ts, lang, cap=MAX_TIMES):
-    """The start times, isolated left-to-right (so an RTL line cannot reorder them): 11:45 → 14:00, …"""
-    more = f" +{len(ts) - cap}" if len(ts) > cap else ""
-    return f'<bdi dir="ltr" class="num">{", ".join(f"{esc(x)} → {esc(y)}" for x, y in ts[:cap])}{more}</bdi>'
+def group_times(ts, lang, day, cap=MAX_TIMES):
+    """The first `cap` pairs of start times, each «21:00 ثم 23:15» ("21:00 then 23:15"): two starts, in reading
+    order, with no arrow to flip in an RTL line. Each pair is its own span that leaves at its first start."""
+    then = " ثم " if lang == "ar" else " then "
+    more = f" <bdi>+{len(ts) - cap}</bdi>" if len(ts) > cap else ""   # isolated, or an RTL line prints «5+»
+    # an RTL line keeps «21:00 ثم 23:15» in reading order on its own: no arrow, so no isolate is needed. The
+    # day is on the list (data-d), each pair carries only its first start: when.js reads the two together. The
+    # comma between two pairs is venue.css's, drawn only between pairs still shown, so a hidden one leaves no «، ،»
+    return "".join(f'<span data-until="{esc(x)}">{esc(x)}{then}{esc(y)}</span>' for x, y in ts[:cap]) + more
 
 
-def _pair_li(site, lang, cid, fa, fb, ts, cinema=True, cap=MAX_TIMES):
-    cin = ""
-    if cinema:
-        c = site.cinemas.get(cid) or {}
-        name = f"<bdi>{esc(site.cname(cid, lang))}</bdi>"
-        cin = f' — <a href="{P(lang, c.get("city"), cid)}">{name}</a>' if c.get("city") else f" — {name}"
-    arrow = " ← " if lang == "ar" else " → "
-    return (f'<li><b><bdi>{esc(site.ftitle(fa, lang))}</bdi></b>{arrow}<b><bdi>{esc(site.ftitle(fb, lang))}</bdi></b> '
-            f'<small>{_times(ts, lang, cap)}</small>{cin}</li>')
+def _pair_li(site, lang, day, fa, fb, ts):
+    then = " ثم " if lang == "ar" else " then "
+    return (f'<li data-when-group><b><bdi>{esc(site.ftitle(fa, lang))}</bdi></b>{then}<b><bdi>{esc(site.ftitle(fb, lang))}</bdi></b> '
+            f'<small>{group_times(ts, lang, day)}</small></li>')
 
 
-def _details(lang, n, items, more=""):
-    head = "فيلمين ورا بعض" if lang == "ar" else "Back-to-back double feature"
-    return (f'<details class="dfeat"><summary>{esc(head)} <small>({num(n)})</small></summary>'
-            f'<ul>{"".join(items)}</ul>{more}</details>')
-
-
-def double_feature_html(site, lang, pairs, show_cinema=True):
-    """A cinema page: the day's pairings, one line per two films (earliest first, capped), collapsed — the slot
-    counts against the page budget, and the schedule must never shrink for it."""
+def double_feature_html(site, lang, pairs, day):
+    """A cinema page: `day`'s pairings still ahead, one line per two films (earliest first, capped), collapsed —
+    the slot counts against the page budget, and the schedule must never shrink for it. No count in the
+    summary: the client hides pairs as they start, and a number would go stale with them."""
     if not pairs:
         return ""
     groups = group_pairs(pairs)
@@ -251,24 +257,15 @@ def double_feature_html(site, lang, pairs, show_cinema=True):
     if len(groups) > MAX_LINES:
         more = (f'<p class="hint">{"وفيه" if lang == "ar" else "and"} {num(len(groups) - MAX_LINES)} '
                 f'{"غيرها بعد" if lang == "ar" else "more later in the day"}</p>')
-    return _details(lang, len(groups), [_pair_li(site, lang, *g, cinema=show_cinema) for g in groups[:MAX_LINES]], more)
+    head = "فيلمين ورا بعض" if lang == "ar" else "Back-to-back double feature"
+    items = "".join(_pair_li(site, lang, day, fa, fb, ts) for _cid, fa, fb, ts in groups[:MAX_LINES])
+    return f'<details class="dfeat" data-d="{esc(day)}" data-when-group><summary>{esc(head)}</summary><ul>{items}</ul>{more}</details>'
 
 
-def film_double_feature_html(site, lang, pairs):
-    """A film page: pairings anywhere in the country — a few per city (earliest first), each naming its
-    cinema, whose own page lists that cinema's day. Collapsed, so the day's schedule stays the page."""
-    if not pairs:
-        return ""
-    groups = group_pairs(pairs)
-    by_city, order = {}, [c[0] for c in CITIES]
-    for g in groups:
-        by_city.setdefault((site.cinemas.get(g[0]) or {}).get("city"), []).append(g)
-    keep = [g for city in sorted(by_city, key=lambda c: order.index(c) if c in order else len(order))
-            for g in by_city[city][:PER_CITY]]
-    more = ""
-    if len(keep) < len(groups):
-        more = (f'<p class="hint">{"والباقي في صفحة كل سينما" if lang == "ar" else "More on each cinema’s page"}</p>')
-    return _details(lang, len(groups), [_pair_li(site, lang, *g, cap=FILM_TIMES) for g in keep], more)
+def future_pairs(kit, cid):
+    """Today's pairs at `cid` whose first film has not started at build time (Kit.is_past, the build's clock)."""
+    todays = [s for s in kit._by_cin.get(cid, []) if s["date"] == kit.today and not kit.is_past(s)]
+    return [p for p in double_features(todays) if p[0]["cinema"] == cid]
 
 
 def register(site):
@@ -276,15 +273,7 @@ def register(site):
 
     def after_halls(kit, lang, cid):
         chain = kit.cinemas[cid]["chain"]
-        todays = [s for s in kit._by_cin.get(cid, []) if s["date"] == kit.today]
-        pairs = [p for p in double_features(todays) if p[0]["cinema"] == cid]
         return (mall_section(kit, lang, cid, malls) + snacks_section(kit, lang, chain)
-                + double_feature_html(kit, lang, pairs, show_cinema=False))
+                + double_feature_html(kit, lang, future_pairs(kit, cid), kit.today))
 
-    def film_info(kit, lang, fid):
-        todays = [s for s in kit.shows if s["date"] == kit.today]
-        pairs = [p for p in double_features([s for s in todays if s["film"] == fid] + [s for s in todays if s["film"] != fid])
-                 if p[0]["film"] == fid or p[1]["film"] == fid]
-        return film_double_feature_html(kit, lang, pairs)
-
-    return Plugin(slots={"cinema.after_halls": after_halls, "film.info": film_info})
+    return Plugin(slots={"cinema.after_halls": after_halls}, page_js={"cinema": ["when"]})
