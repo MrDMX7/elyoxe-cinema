@@ -41,7 +41,7 @@ import re
 import threading
 import time
 from datetime import datetime, timedelta
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 from zoneinfo import ZoneInfo
 
 DUBAI = ZoneInfo("Asia/Dubai")
@@ -425,6 +425,7 @@ class Budget:
 
 
 _REDIRECT = (301, 302, 303, 307, 308)
+_SECRET = ("authorization", "cookie", "proxy-authorization")
 
 
 class _Metered:
@@ -435,19 +436,32 @@ class _Metered:
     def __init__(self, session, budget, reserve_for=None):
         self._s, self._b, self._rel = session, budget, reserve_for
 
-    def _one(self, method, url, **kw):
+    def _one(self, method, url, bare=False, **kw):
         release = bool(self._rel and self._rel.search(url))
         if self._b.late() or not self._b.can(1, release):
             raise _Spent(url)
         self._b.wait()
         self._b.spend(1)
-        r = self._s.request(method, url, allow_redirects=False, **kw)
+        saved = {}
+        if bare:   # another host: neither the caller's nor the session's credentials go along
+            kw["headers"] = {k: v for k, v in (kw.get("headers") or {}).items() if k.lower() not in _SECRET}
+            h = getattr(self._s, "headers", None)
+            if h is not None:
+                saved = {k: h[k] for k in list(h.keys()) if k.lower() in _SECRET}
+                for k in saved:
+                    del h[k]
+        try:
+            r = self._s.request(method, url, allow_redirects=False, **kw)
+        finally:
+            if saved:
+                self._s.headers.update(saved)
         if getattr(r, "status_code", None) == 429:
             raise _Blocked(f"429 {url}")
         return r
 
     def request(self, method, url, **kw):
         follow = kw.pop("allow_redirects", True)
+        host, bare = urlsplit(url).netloc.lower(), False
         r = self._one(method, url, **kw)
         for _ in range(10):
             loc = (getattr(r, "headers", None) or {}).get("location") or (getattr(r, "headers", None) or {}).get("Location")
@@ -460,7 +474,8 @@ class _Metered:
                     kw.pop(k, None)
             else:
                 kw.pop("params", None)
-            r = self._one(method, url, **kw)
+            bare = bare or urlsplit(url).netloc.lower() != host   # once it has left the host, for good
+            r = self._one(method, url, bare=bare, **kw)
         return r
 
     def get(self, url, **kw):

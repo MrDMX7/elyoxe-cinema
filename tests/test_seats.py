@@ -540,3 +540,29 @@ def test_build_drops_private_show_keys():
     shows = [{"cinema": "a", "_sid": 1, "_screen": "x", "time": "18:00"}]
     ps.private_off(shows)
     assert shows == [{"cinema": "a", "time": "18:00"}]
+
+
+def test_cross_host_redirect_drops_authorization_and_cookie():
+    """A hop to another host never carries the chain's token or cookie — neither the caller's headers nor
+    the session's own defaults (star's session holds its Authorization); a same-host hop keeps them."""
+    class S(FakeSession):
+        def __init__(self, routes):
+            super().__init__(routes)
+            self.headers = {"Authorization": "Bearer T", "User-Agent": "UA"}
+            self.sent = []
+
+        def request(self, method, url, **kw):
+            merged = {**self.headers, **{k: v for k, v in (kw.get("headers") or {}).items()}}
+            self.sent.append((url, {k: v for k, v in merged.items() if v is not None}))
+            return super().request(method, url, **kw)
+    s = S({"https://api.chain/a": (302, "/b"), "https://api.chain/b": (302, "https://cdn.other/c"),
+           "https://cdn.other/c": (302, "https://api.chain/d")})
+    b = seats.Budget(cap=10, clock=Clock(), sleep=lambda d: None)
+    seats._Metered(s, b).get("https://api.chain/a", headers={"Cookie": "sid=1", "X-Keep": "k"})
+    sent = dict(s.sent)
+    for u in ("https://api.chain/a", "https://api.chain/b"):
+        assert sent[u]["Authorization"] == "Bearer T" and sent[u]["Cookie"] == "sid=1"
+    for u in ("https://cdn.other/c", "https://api.chain/d"):          # once it left the host, never again
+        assert "Authorization" not in sent[u] and "Cookie" not in sent[u], u
+        assert sent[u]["X-Keep"] == "k" and sent[u]["User-Agent"] == "UA"
+    assert s.headers["Authorization"] == "Bearer T"                   # the session itself is left as it was
