@@ -1,6 +1,8 @@
 // Film page behaviour checks (UI redesign Task 4): the day bar, a time → the dock → the ticket sheet (phone) or the
 // side column (desktop), the empty state, the tabs (keyboard, #hash, the hero's «قارن»), the verdict's «المزيد»,
-// the «⋯» sheet, a city change, the card reprice, no duplicate ids, no sideways scroll, and the page with no script.
+// the «⋯» sheet, a city change, the card reprice, no duplicate ids, no sideways scroll, and the page with no script;
+// fix round 1: a malformed #hash, the clock (a chosen show starting, the desktop's next show), «المزيد»'s overlay,
+// the price-note marker, «N سينمات ثانية» kept open, the network-city note, the ticket column at 1280×720.
 // usage: node tools/film_check.cjs <base url, e.g. http://127.0.0.1:8871> <film path, e.g. film/heart-of-the-beast/> [now]
 // PLAYWRIGHT: where the playwright package is (default: the Elyoxe site's node_modules on this laptop)
 const { chromium } = require(process.env.PLAYWRIGHT || "C:/Users/requi/workspace/web/elyoxe/site/node_modules/playwright");
@@ -23,7 +25,7 @@ const { chromium } = require(process.env.PLAYWRIGHT || "C:/Users/requi/workspace
     return p;
   };
   const dupIds = p => p.evaluate(() => { const c = {}; document.querySelectorAll("[id]").forEach(e => c[e.id] = (c[e.id] || 0) + 1); return Object.keys(c).filter(k => c[k] > 1); });
-  const firstFree = ".fcity.here .times[data-d]:not([hidden]) .tm[data-start]:not(.past):not(.x)";
+  const firstFree = ".fcity.here > .cg:not(.more-h) .times[data-d]:not([hidden]) .tm[data-start]:not(.past):not(.x)";
   const hasTimes = async p => !!(await p.$(firstFree));
 
   // ---------------------------------------------------------------- phone
@@ -34,6 +36,8 @@ const { chromium } = require(process.env.PLAYWRIGHT || "C:/Users/requi/workspace
   const dockHidden0 = await p.$eval("[data-dock]", d => d.hidden).catch(() => null);
   ok("phone: no dock before a time is chosen", dockHidden0 === true, dockHidden0);
   ok("phone: nothing pre-selected", (await p.$$(".cgs .tm.on")).length === 0);
+  const cmp0 = await p.evaluate(() => [...document.scripts].some(s => /\/assets\/compare\./.test(s.src)));
+  ok("phone: the compare chunk waits for its tab (not fetched at start-up)", !cmp0, cmp0);
   // the day bar
   const days = await p.$$eval("[data-day]", bs => bs.filter(x => !x.hidden).map(x => x.getAttribute("data-day")));
   if (days.length > 1) {
@@ -114,11 +118,26 @@ const { chromium } = require(process.env.PLAYWRIGHT || "C:/Users/requi/workspace
   // ---------------------------------------------------------------- desktop
   p = await open(desk);
   ok("desktop: no duplicate ids", (await dupIds(p)).length === 0, await dupIds(p));
-  const st0 = await p.evaluate(() => ({ tk: !document.querySelector("[data-ticket]").hidden, empty: !document.querySelector("[data-tk-empty]").hidden,
-    on: !!document.querySelector(".cgs .tm.on"), dock: getComputedStyle(document.querySelector("[data-dock]")).display }));
-  ok("desktop: the ticket column shows a pick or «اختر وقت», never both", st0.tk !== st0.empty && (st0.tk ? st0.on : true) && st0.dock === "none", st0);
+  // the column is the next show in the visitor's city (fix round 1, I5), «اختر وقت» only when there is none
+  const nextOf = () => p.evaluate(() => {
+    let best = null;
+    document.querySelectorAll(".fcity.here > .cg:not(.more-h):not(.x) .tx:not([hidden]) .tm[data-start]:not(.past):not(.x)").forEach(b => {
+      if (!best || b.getAttribute("data-start") < best.getAttribute("data-start")) best = b;
+    });
+    const t = document.querySelector("[data-ticket]");
+    return { next: best && [best.getAttribute("data-start"), best.closest("[data-cin]").getAttribute("data-cin")],
+      tk: !t.hidden, empty: !document.querySelector("[data-tk-empty]").hidden, time: t.querySelector("[data-tk-time]") && t.querySelector("[data-tk-time]").textContent,
+      cin: t.getAttribute("data-cin"), on: [...document.querySelectorAll(".cgs .tm.on")].map(b => b.getAttribute("data-start")),
+      dock: getComputedStyle(document.querySelector("[data-dock]")).display, live: (t.querySelector("[data-tk-live]") || {}).textContent || "" };
+  });
+  await p.waitForTimeout(400);
+  const st0 = await nextOf();
+  ok("desktop: the column opens on the next show in the visitor's city (quietly), «اختر وقت» only with none",
+    st0.dock === "none" && (st0.next ? st0.tk && !st0.empty && st0.time === st0.next[0] && st0.cin === st0.next[1] && st0.on.join() === st0.next[0] && !st0.live
+      : !st0.tk && st0.empty), st0);
   if (await hasTimes(p)) {
-    const tm = await p.$(firstFree);
+    const tms = await p.$$(firstFree);
+    const tm = tms[tms.length - 1];
     const want = await tm.evaluate(a => ({ t: a.getAttribute("data-start"), cin: a.closest("[data-cin]").getAttribute("data-cin"), show: a.getAttribute("data-show") }));
     await tm.click();
     await p.waitForTimeout(700);
@@ -126,10 +145,11 @@ const { chromium } = require(process.env.PLAYWRIGHT || "C:/Users/requi/workspace
       time: t.querySelector("[data-tk-time]").textContent, cin: t.getAttribute("data-cin"), sticky: getComputedStyle(t.parentNode).position, open: t.classList.contains("open") }; });
     ok("desktop: a time fills the side column", st1.tk && !st1.empty && st1.time === want.t && st1.cin === want.cin && st1.sticky === "sticky" && !st1.open, st1);
     if (days.length > 1) {
-      await p.click(`[data-day="${days.find(d => d !== days[0])}"]`);
-      await p.waitForTimeout(300);
-      const st2 = await p.evaluate(() => ({ tk: !document.querySelector("[data-ticket]").hidden, empty: !document.querySelector("[data-tk-empty]").hidden }));
-      ok("desktop: another day → «اختر وقت»", !st2.tk && st2.empty, st2);
+      const d2 = days.find(d => d !== days[0]);
+      await p.click(`[data-day="${d2}"]`);
+      await p.waitForTimeout(400);
+      const st2 = await nextOf();
+      ok("desktop: another day → that day's next show (or «اختر وقت»)", st2.next ? st2.tk && st2.time === st2.next[0] && st2.cin === st2.next[1] : !st2.tk && st2.empty, st2);
       await p.click(`[data-day="${days[0]}"]`);
     }
   } else skip("desktop time → column", "no time still to come today");
@@ -152,8 +172,11 @@ const { chromium } = require(process.env.PLAYWRIGHT || "C:/Users/requi/workspace
   if (await p.$("[data-tab-go=compare]")) {
     await p.click("[data-tab-go=compare]");
     await p.waitForTimeout(500);
-    const c = await p.evaluate(() => ({ sel: document.querySelector("[role=tab][aria-selected=true]").getAttribute("data-tab"), shown: !document.getElementById("compare").hidden }));
-    ok("the hero's «قارن» opens its tab", c.sel === "compare" && c.shown, c);
+    await p.waitForTimeout(800);
+    const c = await p.evaluate(() => ({ sel: document.querySelector("[role=tab][aria-selected=true]").getAttribute("data-tab"), shown: !document.getElementById("compare").hidden,
+      ui: document.querySelectorAll("#compare [data-cmp-ui] select").length }));
+    // the compare chunk is fetched once its tab is shown (fix round 1), and draws the two film pickers
+    ok("the hero's «قارن» opens its tab, and the compare box draws", c.sel === "compare" && c.shown && c.ui === 2, c);
   } else skip("hero «قارن»", "no compare box on this page");
   await p.close();
   // a #hash opens its tab
@@ -176,6 +199,168 @@ const { chromium } = require(process.env.PLAYWRIGHT || "C:/Users/requi/workspace
     ok("a city from the sheet: its cinemas first and open, the others folded", cs.first === c2 && cs.here && cs.open.join() === c2, cs);
   } else skip("city change", "one city");
   await p.close();
+
+  // ---------------------------------------------------------------- fix round 1
+  // I3: a malformed #hash is no tab and stops nothing (prices, discounts, the schedule's layout all happen)
+  {
+    const reqs = [];
+    const pg = await b.newPage(phone);
+    pg.on("pageerror", e => errors.push("[#100%] " + String(e)));
+    pg.on("request", r => reqs.push(r.url()));
+    await pg.goto(url + "#100%", { waitUntil: "networkidle" });
+    await pg.waitForTimeout(600);
+    const st = await pg.evaluate(() => ({ tabs: !!document.querySelector("[role=tablist]"), tx: document.querySelectorAll(".cgs .tx").length,
+      sel: (document.querySelector("[role=tab][aria-selected=true]") || {}).textContent || "" }));
+    ok("a malformed #hash (#100%): start-up runs to the end (tabs, the schedule's layout, discounts.json)",
+      st.tabs && st.tx > 0 && reqs.some(u => u.includes("/data/discounts.json")), { ...st, discounts: reqs.some(u => u.includes("/data/discounts.json")) });
+    await pg.close();
+  }
+  // I2 + I5 with a real clock: a chosen show keeps its ticket when it starts; the page's own pick moves on
+  if (now) {
+    const t0 = new Date(now + ":00+04:00");
+    const soonest = pg => pg.evaluate(sel => {
+      document.querySelectorAll("[data-pick]").forEach(b => b.removeAttribute("data-pick"));
+      let best = null;
+      document.querySelectorAll(sel).forEach(b => { if (!best || b.getAttribute("data-start") < best.getAttribute("data-start")) best = b; });
+      if (!best) return null;
+      best.setAttribute("data-pick", "");
+      return { t: best.getAttribute("data-start"), d: best.closest("[data-d]").getAttribute("data-d") };
+    }, firstFree);
+    const mins = s => Math.ceil((new Date(s.d + "T" + s.t + ":00+04:00") - t0) / 60000);
+    let pg = await b.newPage(phone);
+    pg.on("pageerror", e => errors.push("[clock] " + String(e)));
+    await pg.clock.install({ time: t0 });
+    await pg.goto(base + path, { waitUntil: "networkidle" });
+    await pg.waitForTimeout(600);
+    const s = await soonest(pg);
+    if (s) {
+      await pg.click("[data-pick]");
+      await pg.waitForTimeout(500);
+      await pg.click("[data-dk-open]");
+      await pg.waitForTimeout(600);
+      await pg.clock.fastForward((mins(s) + 2) * 60000);
+      await pg.waitForTimeout(300);
+      const st = await pg.evaluate(() => { const t = document.querySelector("[data-ticket]"), b = document.querySelector("[data-pick]");
+        return { open: t.classList.contains("open"), focusIn: t.contains(document.activeElement), past: b.classList.contains("past"), on: b.classList.contains("on"),
+          dock: !document.querySelector("[data-dock]").hidden, time: t.querySelector("[data-tk-time]").textContent }; });
+      ok("phone: the chosen show starts with its ticket open — it stays open, focused, struck and chosen (I2)",
+        st.open && st.focusIn && st.past && st.on && st.dock && st.time === s.t, { ...st, after: mins(s) + 2 + " min" });
+    } else skip("phone clock", "no show to come");
+    await pg.close();
+    pg = await b.newPage(desk);
+    pg.on("pageerror", e => errors.push("[clock desk] " + String(e)));
+    await pg.clock.install({ time: t0 });
+    await pg.goto(base + path, { waitUntil: "networkidle" });
+    await pg.waitForTimeout(600);
+    const a0 = await pg.evaluate(() => { const t = document.querySelector("[data-ticket]"); return t.hidden ? null : t.querySelector("[data-tk-time]").textContent; });
+    const s2 = await soonest(pg);
+    if (s2 && a0 === s2.t) {
+      await pg.clock.fastForward((mins(s2) + 1) * 60000);
+      await pg.waitForTimeout(400);
+      const st = await pg.evaluate(sel => {
+        let best = null;
+        document.querySelectorAll(sel).forEach(b => { if (!best || b.getAttribute("data-start") < best.getAttribute("data-start")) best = b; });
+        const t = document.querySelector("[data-ticket]");
+        return { next: best && best.getAttribute("data-start"), tk: !t.hidden, time: t.querySelector("[data-tk-time]").textContent, empty: !document.querySelector("[data-tk-empty]").hidden };
+      }, firstFree);
+      ok("desktop: the page's own pick starts → the column moves to the next show (I5)", st.next ? st.tk && st.time === st.next && st.time !== a0 : st.empty, { was: a0, ...st });
+      // a pick of the visitor's own stays when it starts
+      const s3 = await soonest(pg);
+      if (s3) {
+        await pg.click("[data-pick]");
+        await pg.waitForTimeout(400);
+        await pg.clock.fastForward((Math.ceil((new Date(s3.d + "T" + s3.t + ":00+04:00") - await pg.evaluate(() => Date.now())) / 60000) + 1) * 60000);
+        await pg.waitForTimeout(400);
+        const st3 = await pg.evaluate(() => { const t = document.querySelector("[data-ticket]"); return { tk: !t.hidden, time: t.querySelector("[data-tk-time]").textContent,
+          past: document.querySelector("[data-pick]").classList.contains("past") }; });
+        ok("desktop: the visitor's own pick stays in the column when it starts (I2)", st3.tk && st3.time === s3.t && st3.past, st3);
+      }
+    } else skip("desktop clock", "no auto pick to follow (" + JSON.stringify([a0, s2]) + ")");
+    await pg.close();
+  } else skip("clock checks", "no [now] given");
+  // I1: «المزيد» sits over the third line's end with its fade, not on the words
+  {
+    const pg = await b.newPage(phone);
+    await pg.goto(url, { waitUntil: "networkidle" });
+    await pg.waitForTimeout(700);
+    const m = await pg.evaluate(() => { const b = document.querySelector("[data-fv-more]"); if (!b || b.hidden) return null;
+      const cs = getComputedStyle(b); return { pos: cs.position, bg: cs.backgroundImage, pad: parseFloat(cs.paddingInlineStart), deco: cs.textDecorationLine }; });
+    if (m) ok("«المزيد»: absolute over the third line, a fade behind it, room for it (I1)", m.pos === "absolute" && m.bg !== "none" && m.pad >= 40 && m.deco === "none", m);
+    else skip("«المزيد» style", "the verdict fits");
+    // M10: a price with a note says so on its button (a table price's date, or a card's «للشخص» / an excluded hall:
+    // the cards are tried until one gives a note)
+    await pg.waitForTimeout(300);
+    const cardN = await pg.evaluate(async () => {
+      if (document.querySelector(".tx .tm .p small")) return "";
+      for (const b of document.querySelectorAll("#sheet-card button[data-card]")) {
+        if (!b.getAttribute("data-card")) continue;
+        b.click(); await new Promise(r => setTimeout(r, 60));
+        if (document.querySelector(".tx .tm .p small")) return b.getAttribute("data-card");
+      }
+      return null;
+    });
+    const n = await pg.evaluate(() => { const s = document.querySelector(".tx .tm .p small"); if (!s) return null;
+      return { after: getComputedStyle(s.parentNode, "::after").content, shown: getComputedStyle(s).position, text: s.textContent }; });
+    if (n) ok("a price's note: a gold * on the button, the words read out (M10)", n.after === '"*"' && n.shown === "absolute" && n.text.length > 0, { card: cardN, ...n });
+    else skip("price note marker", "no price with a note on this page");
+    await pg.close();
+  }
+  // M6: «N سينمات ثانية» opened stays open through a sort by distance
+  {
+    const ctx = await b.newContext({ ...phone, geolocation: { latitude: 25.1972, longitude: 55.2796 }, permissions: ["geolocation"] });
+    const pg = await ctx.newPage();
+    pg.on("pageerror", e => errors.push("[near] " + String(e)));
+    await pg.goto(url, { waitUntil: "networkidle" });
+    await pg.waitForTimeout(600);
+    if (await pg.$("[data-more-c]")) {
+      await pg.click("[data-more-c]");
+      await pg.click("#pill-city");
+      await pg.waitForTimeout(300);
+      await pg.click("#sheet-city [data-near]");
+      await pg.waitForTimeout(1500);
+      const st = await pg.evaluate(() => ({ hidden: document.querySelectorAll(".fcity.here .cg.more-h").length, btn: !!document.querySelector("[data-more-c]"),
+        dist: [...document.querySelectorAll(".fcity.here [data-dist]")].filter(e => e.textContent).length }));
+      ok("«N سينمات ثانية» opened stays open when «قريب مني» sorts the cinemas (M6)", st.hidden === 0 && !st.btn && st.dist > 0, st);
+    } else skip("M6", "four cinemas or fewer in the city");
+    await ctx.close();
+  }
+  // M9: the city picked from the network is said once under the header, and goes with ×
+  {
+    const ctx = await b.newContext(phone);
+    await ctx.route("**/geo", r => r.fulfill({ status: 200, contentType: "application/json", body: '{"city":"sharjah"}' }));
+    const pg = await ctx.newPage();
+    pg.on("pageerror", e => errors.push("[geo] " + String(e)));
+    await pg.goto(base + path, { waitUntil: "networkidle" });
+    await pg.waitForTimeout(800);
+    const st = await pg.evaluate(() => { const n = document.querySelector("[data-geo-note]"); return n ? { text: n.textContent, pill: document.querySelector("#pill-city").textContent,
+      fixed: getComputedStyle(n).position, top: n.getBoundingClientRect().top } : null; });
+    ok("network city: one line under the header names the city, with «غيّرها» (M9)", !!st && /الشارقة|Sharjah/.test(st.text) && /الشارقة|Sharjah/.test(st.pill) && st.fixed === "fixed", st);
+    if (st) {
+      await pg.click("[data-geo-x]");
+      const gone = await pg.evaluate(() => !document.querySelector("[data-geo-note]"));
+      await pg.reload({ waitUntil: "networkidle" });
+      await pg.waitForTimeout(600);
+      const again = await pg.evaluate(() => !!document.querySelector("[data-geo-note]"));
+      ok("network city note: × takes it away, and it is not said again", gone && !again, { gone, again });
+    }
+    await ctx.close();
+  }
+  // M11: on a 1280×720 screen the stuck ticket column fits, «احجز» on screen
+  {
+    const pg = await b.newPage({ viewport: { width: 1280, height: 720 } });
+    await pg.goto(url, { waitUntil: "networkidle" });
+    await pg.waitForTimeout(600);
+    if (await pg.$(firstFree)) {
+      await pg.click(firstFree);
+      await pg.waitForTimeout(600);
+      await pg.evaluate(() => { const e = document.querySelector(".cgs"); scrollTo(0, e.getBoundingClientRect().top + scrollY + 200); });
+      await pg.waitForTimeout(300);
+      const st = await pg.evaluate(() => { const c = document.querySelector(".tkcol").getBoundingClientRect(), bk = document.querySelector("[data-tk-book]").getBoundingClientRect();
+        return { colBottom: Math.round(c.bottom), bookBottom: Math.round(bk.bottom), h: innerHeight }; });
+      ok("1280×720: the ticket column fits the screen, «احجز» visible (M11)", st.colBottom <= st.h && st.bookBottom <= st.h && st.bookBottom > 0, st);
+    } else skip("M11", "no time to choose");
+    await pg.close();
+  }
 
   // ---------------------------------------------------------------- no script
   p = await b.newPage({ ...phone, javaScriptEnabled: false });

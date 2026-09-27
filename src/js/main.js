@@ -62,15 +62,20 @@ function humanDay(d) {
 function dayName(d) { return d === TODAY ? C.today : d === TOMORROW ? C.tomorrow : humanDay(d); }
 function relabelDays() {
   /* the film page's day bar: «اليوم»/«بكرة» over the weekday and date; a day that is neither says its weekday */
+  var later = qa("[data-day]").some(function (o) { return o.getAttribute("data-day") >= TODAY; });
   qa("[data-day]").forEach(function (b) {
     var d = b.getAttribute("data-day"), t = q("b", b), n = q("span", b), named = d === TODAY || d === TOMORROW;
+    /* a day already over (the page was built the night before) has nothing left to book: its button goes — decided
+       first, so it is never labelled (its date would be the page's first toLocaleDateString, ~200 ms of ICU on a
+       slow phone, fix round 1 M1) */
+    b.hidden = d < TODAY && later;
+    if (b.hidden) return;
     if (!t) { b.textContent = dayName(d); return; }
     t.textContent = named ? dayName(d) : b.getAttribute("data-wd") || dayName(d);
     if (n && !named) n.textContent = humanDay(d);
-    /* a day already over (the page was built the night before) has nothing left to book: its button goes */
-    b.hidden = d < TODAY && qa("[data-day]").some(function (o) { return o.getAttribute("data-day") >= TODAY; });
   });
-  qa(".times[data-d] > .dl").forEach(function (l) { l.textContent = dayName(l.parentNode.getAttribute("data-d")); });
+  /* (a film page's hall rows are laid out anew by film.js, without these labels: not worth formatting a date for) */
+  qa(".times[data-d] > .dl").forEach(function (l) { if (!l.closest(".cgs")) l.textContent = dayName(l.parentNode.getAttribute("data-d")); });
   /* a day heading already carries the human date in its <small>: a day that is neither today nor
      tomorrow keeps only that, never the ISO date twice */
   qa(".day[data-d] > h2").forEach(function (h) {
@@ -144,11 +149,11 @@ function bindRails() {
   var note = get("nearnote"); if (note) { set("nearnote", ""); nearMsg(note); }
   posterFallback();
   markCard(); marks(); ages(); renderPrices(false);
-  if (page === "film") { renderFilm(); fsSoon(); }
   bindSheets(); bindFilters(); bindBill(); bindRails(); bindTicket(); bindTabs(); bindTrailer(); bindPWA(); lazyRow();
   startFeatures();
   applyFilters();
   if (ST.prayer) applyPrayer();
+  if (page === "film") fsStart();   /* the city and the day are known: «يبدأ بعد», the desktop's next show */
   if (LOC) applyNear(false);
   getJSON("/data/discounts.json").then(function (j) {
     D = j; renderPrices(false);
@@ -165,6 +170,6 @@ function bindRails() {
       if (gone && nx) nx.click();
     }
     marks(); ages(); renderNow(); renderNear();
-    if (page === "film") { fsSoon(); fsCheck(); }
+    if (page === "film") { fsSoon(); fsTick(); }
   }, 60e3);
 })();

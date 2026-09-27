@@ -38,7 +38,7 @@ function renderTerms(chain) {
 
 /* what the ticket needs about a time: from its own attributes when the page wrote them all (a hall row
    around it, prices in #cinema-p), else from its city's slice — never a guessed hall */
-function openTicket(btn) {
+function openTicket(btn, quiet) {   /* quiet: the page's own pick (film.js fsAuto) — nothing said */
   if (!tk || !q("[data-tk-rows]", tk)) return;
   qa(".tm.on").forEach(function (o) { o.classList.remove("on"); o.removeAttribute("aria-current"); });
   btn.classList.add("on");
@@ -59,7 +59,7 @@ function openTicket(btn) {
       hn: (hl && q(".hn", hl) && q(".hn", hl).textContent) || (hl && q("small", hl) && q("small", hl).textContent) || (s && s.hn) || "",
       ends: btn.getAttribute("data-ends") || (s && s.e), lg: btn.getAttribute("data-lang") || (s && s.lg), sb: btn.getAttribute("data-subs") || (s && s.sb),
       p: btn.hasAttribute("data-p") ? PL[+btn.getAttribute("data-p")] : s && s.p, asof: btn.getAttribute("data-asof") || (s && s.asof),
-      left: +btn.getAttribute("data-left") || 0,
+      left: +btn.getAttribute("data-left") || 0, quiet: !!quiet,
       book: btn.getAttribute("data-book") || (s && s.b) || btn.getAttribute("href") || (C.sites && C.sites[chain]) || "",
       cname: ((grp && grp !== body && q(".cg-h h3, .cn", grp)) || q("h1.pt") || {}).textContent || "",
       film: ((fr ? q(".cf-b h3, .sf .t", fr) : q("h1.ft")) || {}).textContent || ""
@@ -94,7 +94,7 @@ function fillTicket(btn, x) {
   var link = location.origin + (x.fid ? C.base + "film/" + x.fid + "/" : location.pathname);
   if (sh) { sh.setAttribute("data-share", msg); sh.setAttribute("data-url", link); sh.href = "https://wa.me/?text=" + encodeURIComponent(msg + "\n" + link); }
   geo().then(function () { var g = q("[data-tk-go]", tk), h = goLinks(x.cin); if (g && h) g.innerHTML = '<span class="go">' + h + "</span>"; });
-  tkSet("[data-tk-live]", sub(TX.ticket, { film: x.film, cin: x.cname, t: x.t }));
+  if (!x.quiet) tkSet("[data-tk-live]", sub(TX.ticket, { film: x.film, cin: x.cname, t: x.t }));
   tk.hidden = false;
   if (desk()) { tk.setAttribute("role", "region"); tk.removeAttribute("aria-modal"); }
   if (page === "film") { fsPicked(btn, x); return; }

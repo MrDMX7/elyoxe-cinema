@@ -17,7 +17,8 @@ function uae(s) { return new Date(s.length <= 16 ? s + ":00+04:00" : s); }
 function day(d) { return new Date(d.getTime() + 4 * 3600e3).toISOString().slice(0, 10); }
 function hhmm(ms) { return new Date(ms + 4 * 3600e3).toISOString().slice(11, 16); }
 function nm(o) { return o ? (AR ? o.ar : o.en) : ""; }
-function param(k) { var m = new RegExp("[?&]" + k + "=([^&]+)").exec(location.search); return m ? decodeURIComponent(m[1]) : null; }
+/* a malformed value («?city=%») is no value: never an exception at start-up (fix round 1, I3's sibling) */
+function param(k) { var m = new RegExp("[?&]" + k + "=([^&]+)").exec(location.search); try { return m ? decodeURIComponent(m[1]) : null; } catch (e) { return null; } }
 var JC = {};
 function getJSON(u) { return JC[u] || (JC[u] = fetch(u).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })); }
 function desk() { return !!(window.matchMedia && window.matchMedia("(min-width: 1024px)").matches); }

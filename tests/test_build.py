@@ -314,13 +314,18 @@ def test_rerelease_is_labelled_in_both_languages(tmp_path):
     assert "إعادة عرض" not in read(out, "film", "resident-evil")
 
 
-def test_template_verdict_line_is_shown_for_an_unknown_film(tmp_path):
+def test_an_unknown_verdict_is_the_word_alone(tmp_path):
     def m(d):
         d["films"]["crawlers"]["verdict"] = {"verdict": "unknown", "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
                                              "en": "Not enough ratings yet.", "basis": "", "by": "template"}
     out = _built(tmp_path, m)
-    assert "ما لقينا تقييمات كافية لهالفيلم للحين." in read(out, "film", "crawlers")
-    assert "Not enough ratings yet." in read(out, "en", "film", "crawlers")
+    # UI redesign Task 4 fix round 1 (I4): no verdict yet is said by the word alone — «ما في تقييم كافي» — never followed by
+    # the template's sentence saying it again («ما في تقييم كافي. ما لقينا تقييمات كافية لهالفيلم للحين.»)
+    ar, en = read(out, "film", "crawlers"), read(out, "en", "film", "crawlers")
+    assert '<p class="fv verdict v-unknown" id="fv" data-fv><b class="word">ما في تقييم كافي</b></p>' in ar
+    assert '<p class="fv verdict v-unknown" id="fv" data-fv><b class="word">Not enough reviews</b></p>' in en
+    assert "ما لقينا تقييمات كافية لهالفيلم للحين." not in ar and "Not enough ratings yet." not in en
+    assert "data-fv-more" not in ar and "data-fv-more" not in en              # nothing to open
 
 
 def test_every_real_cinema_has_a_display_name_in_both_languages():

@@ -18,12 +18,27 @@ function geoApply(j) {
     el.textContent = sub(GEO_TX.pick, { city: C.cities[c] });
     el.insertAdjacentHTML("beforeend", '<button type="button" class="lnk" data-geo-change>' + esc(GEO_TX.change) + "</button>");
   });
+  geoNote(c);
   return true;
 }
+/* the same words as one line under the header (the city sheet's line is out of sight until the sheet opens): said
+   once, where the city was picked, and gone with ×, with «غيّرها», or with any city the visitor chooses (fix round 1, M9) */
+function geoNote(c) {
+  if (q("[data-geo-note]")) return;
+  var n = document.createElement("div");
+  n.className = "gnote"; n.setAttribute("data-geo-note", ""); n.setAttribute("role", "status");
+  n.innerHTML = "<p>" + esc(sub(GEO_TX.pick, { city: C.cities[c] })) + '<button type="button" class="lnk" data-geo-change>' + esc(GEO_TX.change) + "</button></p>" +
+    '<button type="button" class="gnote-x" data-geo-x aria-label="' + esc(TX.close) + '"></button>';
+  var top = q(".top");
+  if (top && top.parentNode) top.parentNode.insertBefore(n, top.nextSibling); else body.insertBefore(n, body.firstChild);
+}
+function geoNoteGone() { var n = q("[data-geo-note]"); if (n) n.parentNode.removeChild(n); }
 function geoChange(e) {
+  if (e.target.closest && e.target.closest("[data-geo-x], #sheet-city a[data-city], #sheet-city [data-near]")) { geoNoteGone(); return; }
   var b = e.target.closest && e.target.closest("[data-geo-change]");
   if (!b) return;
-  sheetOpen("sheet-city", b);
+  sheetOpen("sheet-city", b.closest("[data-geo-note]") ? q("#pill-city") || b : b);
+  geoNoteGone();
 }
 feature(function () {
   document.addEventListener("click", geoChange);

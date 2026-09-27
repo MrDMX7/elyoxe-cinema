@@ -85,6 +85,7 @@ function applyFilters() {
     if (none) e.innerHTML = esc(TX.empty) + (active() ? " " + esc(sub(TX.active, { f: active() })) : "") + ' <button type="button" class="lnk" data-reset>' + esc(TX.reset) + "</button>";
   });
   markControls();
+  if (page === "film") fsCheck();   /* a chosen time filtered away goes; the desktop takes the next one */
 }
 /* what is filtering, in words: the pressed chips and the chosen time */
 function active() {

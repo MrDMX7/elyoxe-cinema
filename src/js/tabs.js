@@ -22,13 +22,15 @@ function bindTabs() {
     });
     if (focus) tabs[i].focus();
   }
+  /* a hash as an id: a malformed one («#100%») is no tab, never an exception (it used to stop the whole start-up) */
+  function idOf(h) { try { return decodeURIComponent(String(h || "").replace(/^#/, "")); } catch (e) { return ""; } }
   function byId(id) {
     var el = id && document.getElementById(id), p = el && (el.getAttribute("role") === "tabpanel" ? el : el.closest("[role=tabpanel]"));
     return p ? panels.indexOf(p) : -1;
   }
   /* an address naming a tab (or anything inside one): that tab, and the tabs brought into view under the header */
   function fromHash(smooth) {
-    var i = byId(decodeURIComponent(location.hash.slice(1)));
+    var i = byId(idOf(location.hash));
     if (i < 0) return false;
     show(i, false);
     list.scrollIntoView({ block: "start", behavior: smooth && !RM ? "smooth" : "auto" });
@@ -58,7 +60,7 @@ function bindTabs() {
   document.addEventListener("click", function (e) {
     var a = e.target.closest && e.target.closest('a[href^="#"]');
     if (!a || a.closest("[data-tabs]")) return;
-    var i = byId(decodeURIComponent(a.getAttribute("href").slice(1)));
+    var i = byId(idOf(a.getAttribute("href")));
     if (i < 0) return;
     e.preventDefault();
     show(i, false);

@@ -74,6 +74,14 @@ span.num[dir=ltr],bdi.num{unicode-bidi:isolate}
 .pill[aria-expanded=true]{border-color:var(--screen)}
 .alt{display:none;font-size:13px;color:var(--seat);text-decoration:none}
 .alt:hover{color:var(--screen)}
+/* «اخترنا دبي حسب شبكتك — غيّرها» (geo.js): one line under the header, over the page (nothing moves), dismissible */
+.gnote{position:fixed;inset-block-start:var(--head);inset-inline:0;z-index:29;display:flex;align-items:center;gap:8px;
+  padding-inline:var(--gut) 6px;min-block-size:40px;background:rgba(23,16,15,.96);border-block-end:1px solid var(--line);font-size:13px;color:var(--dim)}
+.gnote p{flex:1 1 auto;min-inline-size:0}
+.gnote .lnk{min-block-size:32px;color:var(--screen)}
+.gnote-x{inline-size:36px;block-size:36px;flex:0 0 auto;border:0;background:none;cursor:pointer;position:relative;color:var(--dim)}
+.gnote-x::before,.gnote-x::after{content:"";position:absolute;inset-inline-start:11px;inset-block-start:17px;inline-size:14px;block-size:1.5px;background:currentColor;transform:rotate(45deg)}
+.gnote-x::after{transform:rotate(-45deg)}
 /* the phone's tab bar: four places, icon over label */
 .tabs{position:fixed;inset-block-end:0;inset-inline:0;z-index:30;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
   background:rgba(15,11,12,.96);border-block-start:1px solid var(--line);padding-block-end:env(safe-area-inset-bottom)}
@@ -233,10 +241,11 @@ h2 small{font-family:var(--body);font-weight:400;font-size:13px;color:var(--seat
 .fhero .bd.pf img.pb{inset:-12%;inline-size:124%;block-size:124%;object-fit:cover;filter:blur(28px) brightness(.42) saturate(1.15)}
 /* no poster either: the film's colour as a velvet-dark glow (the typographic tile stands in the poster's place) */
 .fhero .bd.noimg{background:radial-gradient(70% 55% at 50% 30%,color-mix(in srgb,var(--pc) 70%,var(--night)),var(--night) 75%)}
-.fhero .bd-t{position:absolute;inset-block-start:calc(var(--head) + 24px);inset-inline-start:50%;translate:-50% 0;inline-size:min(44vw,190px);
+.fhero .bd-t{position:absolute;inset-block-start:calc(var(--head) + 24px);inset-inline-start:50%;translate:-50% 0;inline-size:min(30vw,130px);
   block-size:auto;aspect-ratio:2/3;opacity:.7;box-shadow:0 30px 80px -20px rgba(122,22,38,.9)}
 :root[dir=rtl] .fhero .bd-t{translate:50% 0}
-.fhero .bd-t .pst-t{font-size:30px}
+.fhero.np .fhero-in{padding-block-start:calc(var(--head) + 24px + min(30vw,130px) * 1.5 + 24px)}
+.fhero .bd-t .pst-t{font-size:22px}
 .fhero .bd::after{background:linear-gradient(0deg,var(--night) 3%,rgba(15,11,12,.4) 50%,rgba(15,11,12,.15) 100%),
   linear-gradient(to var(--to-end),rgba(15,11,12,.8),rgba(15,11,12,0) 65%)}
 .fhero-in{position:relative;z-index:1;display:flex;gap:32px;align-items:flex-end;inline-size:100%;padding-block:calc(var(--head) + 40px) 26px}
@@ -257,10 +266,12 @@ p.rr{font-size:13px;color:var(--dim);margin-block:-6px 12px}
 .fv.v-yes .word{color:var(--gold)}
 /* «المزيد» sits over the end of the third line (never below it: showing it must not move the hero, CLS) */
 .fv-w{position:relative;max-inline-size:60ch}
-.fv-m{position:absolute;inset-block-end:0;inset-inline-end:0;font-size:inherit;line-height:1.6;color:var(--screen);padding-inline-start:48px;
-  background:linear-gradient(to var(--to-end),rgba(15,11,12,0),rgba(15,11,12,.9) 40px);text-decoration:none;font-weight:500}
-.fv.open + .fv-m{position:static;background:none;padding:0;font-size:13px;color:var(--seat);text-decoration:underline;min-block-size:32px}
-.fv-m[hidden]{display:none}
+.fv-w .fv-m{position:absolute;inset-block-end:0;inset-inline-end:0;margin:0;border:0;padding:0 0 0 0;padding-inline-start:56px;cursor:pointer;
+  font:inherit;font-size:15px;line-height:1.6;font-weight:500;color:var(--screen);text-decoration:none;
+  background:linear-gradient(to var(--to-end),rgba(15,11,12,0),var(--night) 44px)}
+.fv-w .fv-m:hover,.fv-w .fv-m:focus-visible{text-decoration:underline;text-underline-offset:.2em}
+.fv-w .fv.open + .fv-m{position:static;background:none;padding:0;font-size:13px;font-weight:400;color:var(--seat);text-decoration:underline;min-block-size:32px}
+.fv-w .fv-m[hidden]{display:none}
 .ff{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--seat);margin-block-start:12px}
 .ff .num{color:inherit}
 .basis{font-size:12px;color:var(--seat);margin-block-start:8px}
@@ -303,11 +314,19 @@ p.rr{font-size:13px;color:var(--dim);margin-block:-6px 12px}
 .fcity[open] > summary::after{transform:rotate(-135deg)}
 .fcity > summary h2{font-family:var(--body);font-size:16px;font-weight:500}
 .fc-n{font-size:13px;color:var(--seat)}
-.fcity.here{border:0}
-.fcity.here > summary{cursor:default;min-block-size:0;padding-block:18px 0}
-.fcity.here > summary::after{display:none}
+.js .fcity.here{border:0}
+.js .fcity.here > summary{cursor:default;min-block-size:0;padding-block:18px 0}
+.js .fcity.here > summary::after{display:none}
 .cg{padding-block:20px;border-block-end:1px solid var(--line)}
 .cg.more-h{display:none}
+/* below the fold, laid out only when it comes near: a busy film page's cinemas, the tabs' panels and the footer were
+   most of its first layout after the first paint (Lighthouse: ~+2 on the median, same-conditions A/B); each keeps its
+   real size once seen */
+.cgs .cg{content-visibility:auto;contain-intrinsic-block-size:auto 240px}
+.tpns,.foot{content-visibility:auto;contain-intrinsic-block-size:auto 480px}
+/* the first paint already shows what film.js will: the visitor's (server: Dubai's) three first cinemas, the rest folded
+   behind «N سينمات ثانية» — so the 20-odd others are never laid out before the script takes over (data-more) */
+.js .fcity.here:not([data-more]) > .cg:nth-child(n+5):not(:nth-child(5):last-child){display:none}
 .cg-h{display:flex;align-items:baseline;gap:4px 10px;margin-block-end:12px;flex-wrap:wrap}
 .cg-h h3{font-family:var(--body);font-size:16px;font-weight:500}
 .cg-h h3 a{text-decoration:none}
@@ -327,10 +346,15 @@ p.rr{font-size:13px;color:var(--dim);margin-block:-6px 12px}
 .tx .tm .hn{font-size:11px;color:var(--seat);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-inline-size:10em}
 .tx .tm .p{font-size:12px;display:block}
 .tx .tm .p .num,.tx .tm .p b{font-size:12px;font-weight:400;color:var(--gold)}
-.tx .tm .p s,.tx .tm .p small{display:none}
+.tx .tm .p s{display:none}
+/* a price with a note («السعر بتاريخ …», «القاعة مب داخلة في الخصم», «للشخص — بشرط تذكرتين»): the note is read out with the
+   price and stays out of sight; a gold asterisk says there is one, the ticket spells it out (M10) */
+.tx .tm .p small{position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.tx .tm .p.nb::after{content:"*";color:var(--gold);margin-inline-start:2px}
 .tx .tm .sn{font-size:11px;color:var(--live);font-weight:400;margin-inline-start:6px;white-space:nowrap}
 .tx .tm.past{text-decoration:none;opacity:.35;color:var(--screen);border-color:var(--line-2)}
 .tx .tm.old{display:none}
+.tx .tm.on.past{opacity:.75}   /* the chosen time, started: still chosen, its ticket still open (fix round 1, I2) */
 .tx .tm.nowish{border-color:var(--line-2)}
 .tx .tm.on,.tx .tm[aria-current]{background:rgba(226,182,89,.1);border-color:var(--gold);color:var(--screen)}
 .tx .tm.on small.hn,.tx .tm[aria-current] small.hn{color:var(--seat)}
@@ -381,7 +405,6 @@ body.docked{padding-block-end:calc(140px + env(safe-area-inset-bottom))}
 /* an archived film: when it showed, and the way back to what is on */
 .fhero .archived{margin-block-start:20px;padding-block:14px 0;border-block-start:1px solid var(--line);display:flex;flex-direction:column;gap:14px;align-items:flex-start}
 .arch-s{font-family:var(--display);font-weight:var(--dw);font-size:26px;line-height:1.25}
-.cg-m{font-size:12px;color:var(--seat);display:flex;flex-wrap:wrap;gap:4px 10px}
 .hl-n .pr,.times .pr{font-size:12px}
 .hl-n .p .num,.times .pr .p .num{font-size:14px}
 .times{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-block-start:6px}
@@ -628,6 +651,7 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
 @media (min-width:1024px){
   .fhero{min-block-size:min(80vh,760px)}
   .fhero-in{padding-block:calc(var(--head) + 60px) 40px;gap:40px}
+  .fhero.np .fhero-in{padding-block-start:calc(var(--head) + 60px)}
   .fposter{display:block;flex:0 0 auto}
   .fhero .bd-t{display:none}
   .pst.hero{inline-size:240px;block-size:360px;aspect-ratio:auto}
@@ -643,7 +667,11 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
   .cg{padding-block:20px}
   .cg-h h3{font-size:18px}
   .tx .tm{min-inline-size:92px}
-  .tkcol{position:sticky;inset-block-start:calc(var(--head) + 80px);align-self:start;margin-block-start:20px}
+  /* never taller than the room under the bar (a 720 px screen, a card's terms and the seat map make it ~600 px): it
+     scrolls inside, and «احجز» with «أرسلها للقروب» stay pinned at its foot (M11) */
+  .tkcol{position:sticky;inset-block-start:calc(var(--head) + 80px);align-self:start;margin-block-start:20px;
+    max-block-size:calc(100vh - var(--head) - 100px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+  .tkcol .tk-act{position:sticky;inset-block-end:0;z-index:1}
   .tkcol .ticket{position:static;margin:0}
   .tk-empty{display:flex;flex-direction:column;gap:8px;background:var(--tint);border:1px dashed var(--line-2);padding:22px}
   .tk-empty[hidden]{display:none}

@@ -30,7 +30,7 @@ function showDistances() {
   }
   sortByKm(qa(".rows > .row.cin"));
   qa(".fcity").forEach(function (sec) { sortByKm(qa(":scope > .cg", sec)); });
-  if (page === "film") fsMore();   /* the three nearest stay open, the rest fold again */
+  if (page === "film") { fsMore(); fsCheck(); }   /* the three nearest stay open, the rest fold again */
   qa(".srow .sc").forEach(function (sc) { sortByKm(qa(":scope > .scin", sc)); });
 }
 function nearest() {

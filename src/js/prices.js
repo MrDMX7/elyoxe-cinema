@@ -33,7 +33,10 @@ function priceHTML(el, go) {
   if (x.a != null) return '<s class="num">' + fmt(aed) + "</s><b>" + d + "</b>" + ppNote(x.r) + asof;
   return '<span class="num">' + d + "</span>" + (x.st === "excluded" ? "<small>" + esc(C.excluded) + "</small>" : "") + asof;
 }
-function renderPrices(go) { qa(".p[data-aed]").forEach(function (el) { el.innerHTML = priceHTML(el, go); }); }
+function renderPrices(go) {
+  qa(".p[data-aed]").forEach(function (el) { el.innerHTML = priceHTML(el, go); });
+  if (page === "film") fsNotes();
+}
 
 /* the cheapest ticket for this visitor among shows [{c, h, k, p: [[seat, aed]…]}] */
 function best(shows) {

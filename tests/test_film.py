@@ -14,6 +14,8 @@ import pytest
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 import build  # noqa: E402
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
 
 DATA = os.path.join(ROOT, "fixtures", "sample_latest.json")
 DISC = os.path.join(ROOT, "fixtures", "sample_discounts.yaml")
@@ -73,7 +75,10 @@ def test_hero_frame_is_the_lcp_and_poster_fallback_is_one_download(tmp_path):
     assert '<div class="bd pf"' in h2 and 'class="pb"' in h2
     pb = re.search(r'<img src="([^"]+)" class="pb"', h2).group(1)
     card = re.search(r'<span class="pst hero img"[^>]*>.*?<img src="([^"]+)"([^>]*)>', h2).group(0)
-    assert f'src="{pb}"' in card and 'srcset=' not in card or 'sizes="(min-width:1024px) 240px, 1px"' in card
+    # the card on a phone resolves to the very file the blurred layer fetched: the same src, and if it has a srcset, `1px`
+    # on a phone picks that file's 342w entry
+    assert f'src="{pb}"' in card
+    assert 'srcset=' not in card or ('sizes="(min-width:1024px) 240px, 1px"' in card and f'{pb} 342w' in card)
 
 
 def test_day_bar_and_its_options_sheet(out):
@@ -99,8 +104,10 @@ def test_schedule_by_city_ticket_column_and_dock(out):
     m = main_of(h)
     sec = m[m.index('<section class="fsched"'):]
     assert '<h2 class="vh" id="times-h">المواعيد والأسعار</h2>' in sec
-    cities = re.findall(r'<details class="fcity" data-city="([a-z-]+)"( open)?><summary><h2>[^<]+</h2><span class="fc-n">([^<]+)</span></summary>', sec)
-    assert cities and [c for c, o, _ in cities if o] == ["dubai"]          # no script: Dubai open (the default city)
+    cities = re.findall(r'<details class="fcity(?: here)?" data-city="([a-z-]+)"( open)?><summary><h2>[^<]+</h2><span class="fc-n">([^<]+)</span></summary>', sec)
+    # Dubai (the default city) first, open and «here» from the first paint: the script moves nothing above it (CLS)
+    assert cities and cities[0][0] == "dubai" and [c for c, o, _ in cities if o] == ["dubai"]
+    assert '<details class="fcity here" data-city="dubai" open>' in sec and sec.count("fcity here") == 1
     assert re.match(r"^(سينما وحدة|سينمتين|\d+ سينمات|\d+ سينما)$", dict((c, n) for c, _, n in cities)["dubai"])
     # every time a booking link with its show id; the halls and their «من» prices for a visitor with no script
     assert re.search(r'<div class="hl" data-hall="[^"]+" data-hk="[^"]+"><p class="hl-n"><span class="hn">', sec)
@@ -124,7 +131,8 @@ def test_tabs_are_links_to_sections_in_order(out):
     keys = [k for k, _, _ in got]
     assert keys == [k for k in order if k in keys] and keys[0] == "about" and "compare" in keys
     assert dict((k, j) for k, j, _ in got)["compare"] == ' class="js-only"'    # script-drawn: so is its tab
-    assert [t for _, _, t in got][:2] == ["عن الفيلم", "شي يشبه"] or "الطاقم" in [t for _, _, t in got]
+    labels = {"about": "عن الفيلم", "cast": "الطاقم", "similar": "شي يشبه", "double": "فيلمين ورا بعض", "compare": "قارن"}
+    assert [t for _, _, t in got] == [labels[k] for k in keys]
     secs = re.findall(r'<section class="tpn" id="(\w+)">', m)
     assert secs == keys                                                        # no script: the sections, in the tabs' order
     about = m[m.index('<section class="tpn" id="about">'):]
@@ -204,7 +212,7 @@ def test_a_film_with_many_shows_stays_within_150kb(tmp_path):
     for parts in (("film", FID), ("en", "film", FID)):
         h = read(o, *parts)
         assert 'class="tl"' in h or "data-show=" in h                          # a schedule, whichever form fitted
-        assert h.count('<details class="fcity"') >= 6
+        assert len(re.findall(r'<details class="fcity(?: here)?"', h)) >= 6
         size = os.path.getsize(os.path.join(o, *parts, "index.html"))
         assert size <= BUDGET, (parts, size)
 
@@ -219,3 +227,69 @@ def test_real_film_pages_within_150kb(tmp_path):
         for fid in os.listdir(base):
             f = os.path.join(base, fid, "index.html")
             if os.path.exists(f): assert os.path.getsize(f) <= BUDGET, (f, os.path.getsize(f))
+
+
+# ---------------------------------------------------------------- fix round 1
+def test_no_top_level_name_is_declared_twice_in_the_bundle():
+    """The bundle is one function scope (build.bundle_js): a second `function x` (or `var x`) anywhere silently replaces
+    the first — ticket.js's sheetOpen was lost to sheet.js's that way (fix round 1, M8: the whole class, not one name)."""
+    seen = {}
+    for path in build.js_files():
+        for line in open(path, encoding="utf-8"):
+            m = re.match(r"^function\s+([\w$]+)\s*\(", line) or re.match(r"^var\s+([\w$]+)", line)
+            if m: seen.setdefault(m.group(1), []).append(os.path.basename(path))
+    dup = {k: v for k, v in seen.items() if len(v) > 1}
+    assert not dup, dup
+    assert len(seen) > 150                                                       # it did read the modules
+
+
+NODE = shutil.which("node")
+
+
+@pytest.mark.skipif(not NODE, reason="node not installed")
+def test_a_malformed_hash_never_stops_the_tabs(tmp_path):
+    """«#100%» is not a tab and not an exception: bindTabs() (in the unguarded start-up line) used to throw a URIError
+    from decodeURIComponent and leave the page without prices, discounts or its clock (fix round 1, I3). Run in node
+    with the few DOM pieces tabs.js touches."""
+    src = open(os.path.join(ROOT, "src", "js", "tabs.js"), encoding="utf-8").read()
+    for h in ("#100%", "#%E0%A4%A", "#about", "#nowhere"):
+        stub = """
+function mk(id) { return { id: id, a: {}, hidden: false, tabIndex: 0, setAttribute: function (k, v) { this.a[k] = String(v); },
+  getAttribute: function (k) { return k in this.a ? this.a[k] : null; }, closest: function () { return null; }, addEventListener: function () {},
+  scrollIntoView: function () {}, focus: function () {} }; }
+var list = mk("list"), t1 = mk(""), t2 = mk(""), p1 = mk("about"), p2 = mk("similar");
+t1.a["data-tab"] = "about"; t2.a["data-tab"] = "similar";
+var ids = { about: p1, similar: p2 };
+var document = { getElementById: function (i) { return ids[i] || null; }, addEventListener: function () {} };
+var window = { addEventListener: function () {} }, history = { state: null, replaceState: function () {} };
+var location = { hash: %s }, RM = true, AR = true;
+function q(s) { return s === "[data-tabs]" ? list : null; }
+function qa(s) { return s === "a[data-tab]" ? [t1, t2] : []; }
+""" % json.dumps(h)
+        (tmp_path / "t.js").write_text(stub + src + "\nbindTabs(); console.log(JSON.stringify([t1.a['aria-selected'], p1.hidden, p2.hidden, list.a.role]));", encoding="utf-8")
+        r = subprocess.run([NODE, str(tmp_path / "t.js")], capture_output=True, text=True, encoding="utf-8", timeout=60)
+        assert r.returncode == 0, (h, r.stderr)
+        sel, h1, h2, role = json.loads(r.stdout.strip())
+        assert role == "tablist" and sel == "true" and h1 is False and h2 is True, (h, r.stdout)
+    core = open(os.path.join(ROOT, "src", "js", "core.js"), encoding="utf-8").read()
+    assert "try { return m ? decodeURIComponent(m[1]) : null; } catch (e) { return null; }" in core   # ?city=% too
+
+
+def test_unknown_verdict_and_the_hero_without_any_picture(out):
+    """I4: an unknown verdict is its word alone; M7: with no frame and no poster the hero says so (class np), so the
+    typographic tile sits above the words on a phone; M5: the dock's live region is outside the dock, always rendered."""
+    for parts in (("film", "crawlers"), ("en", "film", "crawlers")):
+        h = read(out, *parts)
+        assert '<section class="fhero np">' in h
+        assert re.search(r'<div class="dock"[^>]*hidden>.*?data-dk-open[^>]*>[^<]+</button></div><p class="vh" data-dk-live aria-live="polite"></p>', h)
+    css = open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
+    assert ".fhero.np .fhero-in{padding-block-start:calc(var(--head) + 24px + min(30vw,130px) * 1.5 + 24px)}" in css
+    # I1: the «المزيد» rules outrank .lnk (the button no longer carries it); M4: one .cg-m
+    assert ".fv-w .fv-m{position:absolute;" in css and css.count(".cg-m{") == 1
+    assert 'class="lnk fv-m"' not in read(out, "film", FID)
+
+
+def test_the_options_sheet_counts_in_the_budget():
+    """M3: the schedule's budget subtracts the bar AND its «⋯» sheet as drawn, not an empty sheet."""
+    src = open(os.path.join(ROOT, "pages", "core.py"), encoding="utf-8").read()
+    assert "bar0 = self.film_bar(lang, days); sheet0 = self._sheets.pop()" in src and "len((hero + tabs + bar0 + sheet0).encode())" in src

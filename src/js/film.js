@@ -5,7 +5,7 @@
    order, every button carrying its hall (data-hall/data-hk, so ticket.js and seatmap.js read it off the button
    itself) and its own price cell (the cheapest seat of that show, or of its hall that day when the page was
    compact), which prices.js reprices after the card like any other. */
-var FS = { btn: null, x: null, flat: false };
+var FS = { btn: null, x: null, auto: false, ready: false, open: {} };
 function fsCell(aed, chain, hall, hk, cin, asof) {
   return '<span class="p" data-aed="' + fmt(aed) + '" data-chain="' + esc(chain) + '" data-hall="' + esc(hall) + '" data-hk="' + esc(hk) +
     '" data-cin="' + esc(cin) + '"' + (asof ? ' data-asof="' + esc(asof) + '"' : "") + "></span>";
@@ -15,12 +15,15 @@ function fsAttrs(el, skip) {
   for (var i = 0; i < el.attributes.length; i++) { var x = el.attributes[i]; if (!skip[x.name]) o += " " + x.name + '="' + esc(x.value) + '"'; }
   return o;
 }
-/* one string per cinema, one parse: a page of 500 times was ~350 ms of main thread done button by button */
-function fsFlat() {
-  if (FS.flat) return;
-  FS.flat = true;
-  var skip = { "class": 1 };
-  qa(".cgs .cg").forEach(function (cg) {
+/* one string per cinema, one parse (a page of 500 times was ~350 ms of main thread done button by button); and only
+   the cinemas on screen: at start-up the visitor's city's first three, the rest when they are shown («N سينمات ثانية»,
+   a sort by distance) or their city is opened (fsHydrate) — a folded cinema is never seen before that (fix round 1,
+   M2). Returns the cinemas it laid out. */
+function fsFlat(sec) {
+  var done = [];
+  if (!sec) return done;
+  qa(":scope > .cg:not(.more-h):not([data-flat])", sec).forEach(function (cg) {
+    cg.setAttribute("data-flat", ""); done.push(cg);
     var cin = cg.getAttribute("data-cin"), chain = cg.getAttribute("data-chain"), byD = {}, ds = [];
     qa(":scope > .hl", cg).forEach(function (hl) {
       var code = hl.getAttribute("data-hall"), hk = hl.getAttribute("data-hk"), hn = q(".hn", hl), base = q(".hl-n .p[data-aed]", hl);
@@ -39,7 +42,8 @@ function fsFlat() {
         /* the server's buttons (every attribute kept: href, data-show, data-p …) and its started times */
         qa(".tm[data-start]", box).forEach(function (el) {
           var t = el.getAttribute("data-start"), tag = el.tagName.toLowerCase();
-          byD[d].push([t, "<" + tag + ' class="' + esc(el.className) + '"' + fsAttrs(el, { "class": 1, "data-hall": 1, "data-hk": 1 }) + hall + ">" +
+          /* data-occ left out: seatmap.js's «باقي N مقعد» is drawn again on the new button */
+          byD[d].push([t, "<" + tag + ' class="' + esc(el.className) + '"' + fsAttrs(el, { "class": 1, "data-hall": 1, "data-hk": 1, "data-occ": 1 }) + hall + ">" +
             inner(t, el.hasAttribute("data-p") ? PL[+el.getAttribute("data-p")] : null, el.getAttribute("data-asof")) + "</" + tag + ">"]);
         });
         /* a compact page's times as text: buttons whose ticket comes from the city's slice */
@@ -62,6 +66,25 @@ function fsFlat() {
     if (lat && lng && h) h.insertAdjacentHTML("beforeend", '<a class="map" href="https://www.google.com/maps/dir/?api=1&destination=' + esc(lat + "," + lng) +
       '" rel="noopener" target="_blank">' + esc(TX.map) + "</a>");
   });
+  return done;
+}
+/* a time's price with a note (a table price's date, «للشخص — بشرط تذكرتين», an excluded hall) gets a gold * (fix round
+   1, M10); the note itself is read out with the price */
+function fsNotes(r) { qa(".tx .tm .p[data-aed]", r).forEach(function (p) { p.classList.toggle("nb", !!q("small", p)); }); }
+/* a city laid out after start-up: its day shown, its times struck or not, its prices after the card, the filters,
+   the prayer marks, «يبدأ بعد» — what start-up did for the first */
+function fsHydrate(sec) {
+  var cgs = fsFlat(sec);
+  if (!cgs.length || !FS.ready) return;
+  var on = q('[data-day][aria-pressed="true"]'), d = on && on.getAttribute("data-day");
+  cgs.forEach(function (cg) {
+    if (d) qa(".times[data-d]", cg).forEach(function (t) { t.hidden = t.getAttribute("data-d") !== d; });
+    qa(".p[data-aed]", cg).forEach(function (el) { el.innerHTML = priceHTML(el, false); });
+    fsNotes(cg);
+  });
+  marks();
+  if (ST.prayer) applyPrayer(); else applyFilters();
+  fsSoon();
 }
 /* the visitor's city open and first (renderFilm moves it), the others folded; in it the three nearest cinemas
    (near.js sorts them once the visitor is located), the rest behind «N سينمات ثانية في <city>» */
@@ -75,13 +98,17 @@ function fsCities() {
   var nc = q("[data-nc]");
   if (nc) { nc.hidden = !!here || !secs.length; nc.textContent = here ? "" : sub(C.not_in_city, { city: C.cities[city] || city }); }
   fsMore();
+  if (!here && secs[0]) fsHydrate(secs[0]);
 }
 function fsMore() {
   qa(".cg.more-h").forEach(function (c) { c.classList.remove("more-h"); });
   qa("[data-more-c]").forEach(function (b) { b.parentNode.removeChild(b); });
-  var sec = q(".fcity.here"); if (!sec) return;
+  var sec = q(".fcity.here");
+  if (!sec) return;
+  qa(".fcity[data-city]").forEach(function (s) { s.setAttribute("data-more", ""); });   /* the classes below rule now, not the first paint's CSS */
+  if (FS.open[city]) { fsHydrate(sec); return; }   /* opened once: it stays open (a day switch, a sort) */
   var cs = qa(":scope > .cg", sec).filter(function (c) { return !c.classList.contains("x"); });
-  if (cs.length <= 4) return;
+  if (cs.length <= 4) { fsHydrate(sec); return; }
   var rest = cs.slice(3);
   rest.forEach(function (c) { c.classList.add("more-h"); });
   var b = document.createElement("button");
@@ -90,8 +117,11 @@ function fsMore() {
   b.textContent = AR && k === 2 ? "سينمتين ثانيتين في " + cn :
     sub(TX.more_cin, { n: AR ? arCount(k, ["سينما وحدة", "سينمتين", "سينمات", "سينما"]) : k + " more cinemas", city: cn });
   rest[rest.length - 1].parentNode.insertBefore(b, rest[rest.length - 1].nextSibling);
+  fsHydrate(sec);   /* the three on screen */
   b.addEventListener("click", function () {
+    FS.open[city] = true;
     rest.forEach(function (c) { c.classList.remove("more-h"); });
+    fsHydrate(sec);
     b.parentNode.removeChild(b);
     var a = q(".cg-h a", rest[0]); if (a) a.focus();
   });
@@ -103,10 +133,10 @@ function fsSoon() {
   qa(".tm .sn").forEach(function (e) { e.parentNode.removeChild(e); });
   qa(".cgs .tx").forEach(function (box) {
     var past = qa(".tm.past", box);
-    past.forEach(function (a, i) { a.classList.toggle("old", i < past.length - 2); });
+    past.forEach(function (a, i) { a.classList.toggle("old", i < past.length - 2 && !a.classList.contains("on")); });
   });
   var n = NOW.getTime();
-  qa(".cgs .times[data-d]:not([hidden])").forEach(function (box) {
+  qa(".cgs .tx:not([hidden])").forEach(function (box) {
     var d = box.getAttribute("data-d");
     var b = qa(".tm[data-start]", box).filter(function (a) { return !a.classList.contains("past") && !a.classList.contains("x"); })[0];
     if (!b) return;
@@ -117,16 +147,17 @@ function fsSoon() {
   });
 }
 
-/* a time picked (ticket.js has filled the ticket): desktop shows it in the side column; a phone shows the dock */
+/* a time picked (ticket.js has filled the ticket): desktop shows it in the side column; a phone shows the dock.
+   x.quiet: the page chose it (the desktop's next show), not the visitor — no dock, nothing said */
 function fsPicked(btn, x) {
-  FS.btn = btn; FS.x = x;
+  FS.btn = btn; FS.x = x; FS.auto = !!x.quiet;
   var em = q("[data-tk-empty]"); if (em) em.hidden = true;
   if (desk()) { tk.hidden = false; return; }
-  fsDock(true);
+  if (!x.quiet) fsDock(true);
 }
 function fsDock(say) {
   var dk = q("[data-dock]"), x = FS.x;
-  if (!dk || !x) return;
+  if (!dk || !x || FS.auto) return;
   var low = (x.p || []).reduce(function (m, p) { return m == null || p[1] < m ? p[1] : m; }, null);
   var known = x.hall != null && x.hk != null, r = card && D && known && low != null ? after(low, x.chain, x.hall, card, x.hk, x.cin) : { a: null };
   q("[data-dk-p]", dk).innerHTML = low != null ? '<span class="num">' + fmt(r.a != null ? r.a : low) + "</span> " + esc(C.aed) + (r.a != null && ppNote(r.r) ? " " + ppNote(r.r) : "")
@@ -136,38 +167,81 @@ function fsDock(say) {
   if (r.a != null) bits.push(sub(TX.after_c, { card: C.cards[card] }));
   q("[data-dk-s]", dk).textContent = dayName(x.d) + " " + bits.join(TX.sep);
   dk.hidden = false; body.classList.add("docked");
-  if (say) q("[data-dk-live]", dk).textContent = sub(TX.ticket, { film: x.film, cin: x.cname, t: x.t });
+  /* said once the dock is on screen (a live region filled in the task that shows it can go unsaid, fix round 1 M5);
+     the region itself sits outside the dock, always rendered */
+  var live = q("[data-dk-live]");
+  if (say && live) {
+    live.textContent = "";
+    requestAnimationFrame(function () { live.textContent = sub(TX.ticket, { film: x.film, cin: x.cname, t: x.t }); });
+  }
 }
-/* nothing chosen (or the chosen time went out of sight: another day, another city, filtered, or started): the desktop
-   column says «اختر وقت», a phone drops the dock */
+/* nothing chosen (or the chosen time went out of sight: another day, another city, filtered, folded): a phone drops
+   the dock; the desktop column says «اختر وقت» until fsAuto finds the next show */
 function fsClear() {
   qa(".tm.on").forEach(function (o) { o.classList.remove("on"); o.removeAttribute("aria-current"); });
-  FS.btn = null; FS.x = null;
+  FS.btn = null; FS.x = null; FS.auto = false;
   var dk = q("[data-dock]"); if (dk) dk.hidden = true;
   body.classList.remove("docked");
   if (tk && tk.classList.contains("open")) closeTicket();
   if (tk) tk.hidden = true;
   var em = q("[data-tk-empty]"); if (em) em.hidden = false;
 }
+/* in sight: a show that has started stays chosen (the ticket says the film itself begins ~15 minutes later, and the
+   chains sell during the ads); only a day, a city, a filter or a fold takes it away (fix round 1, I2) */
 function fsSeen(b) {
-  return !!b && b.isConnected && !b.classList.contains("past") && !b.classList.contains("x") && !b.closest("[hidden], .x, .more-h, details:not([open])");
+  return !!b && b.isConnected && !b.classList.contains("x") && !b.closest("[hidden], .x, .more-h, details:not([open])");
 }
-function fsCheck() { if (!fsSeen(FS.btn)) fsClear(); }
+/* the desktop column is never empty while the visitor's city has a show to come on the chosen day: the next one
+   there, among the cinemas on screen (fix round 1, I5) */
+function fsNext() {
+  var best = null;
+  qa(".fcity.here > .cg:not(.more-h):not(.x) .tx:not([hidden]) .tm[data-start]:not(.past):not(.x)").forEach(function (b) {
+    if (!best || b.getAttribute("data-start") < best.getAttribute("data-start")) best = b;
+  });
+  return best;
+}
+function fsAuto() {
+  if (!FS.ready || !tk || !desk() || (FS.btn && fsSeen(FS.btn))) return;
+  var n = fsNext();
+  if (n) openTicket(n, true); else fsClear();
+}
+/* after a day, city, filter or fold change */
+function fsCheck() {
+  if (!FS.ready) return;
+  if (FS.btn && !fsSeen(FS.btn)) fsClear();
+  fsAuto();
+}
+/* the minute clock: a show the visitor chose stays chosen when it starts (struck, its ticket open); the page's own
+   pick moves on to the next show */
+function fsTick() {
+  if (!FS.ready) return;
+  if (FS.btn && FS.auto && FS.btn.classList.contains("past")) { FS.btn.classList.remove("on"); FS.btn.removeAttribute("aria-current"); FS.btn = null; }
+  fsAuto();
+}
+/* start-up, once the visitor's city and day are known (main.js init) */
+function fsStart() {
+  FS.ready = true;
+  fsSoon();
+  fsAuto();
+}
 
 function bindFilm() {
   if (page !== "film" || !q(".cgs")) { bindVerdict(); return; }
-  fsFlat(); bindVerdict();
-  /* the server's pick (the next show in Dubai) stands on a desktop while it is in view; a phone starts with nothing
-     chosen (no dock until a time is tapped), and a desktop with no pick to show says «اختر وقت» */
-  var on = q(".cgs .tm.on");
-  if (desk()) { if (on && tk) FS.btn = on; else fsClear(); }
-  else if (on) { on.classList.remove("on"); on.removeAttribute("aria-current"); }
+  bindVerdict();
+  /* the server's pick (the next show in Dubai when the page was built) is let go: renderFilm lays out the visitor's
+     city, and on a desktop fsAuto chooses its next show; a phone starts with nothing chosen (no dock until a tap) */
+  qa(".cgs .tm.on").forEach(function (o) { o.classList.remove("on"); o.removeAttribute("aria-current"); });
+  /* a folded city is laid out the first time it opens */
+  qa(".fcity[data-city]").forEach(function (sec) {
+    sec.addEventListener("toggle", function () { if (sec.open) fsHydrate(sec); fsCheck(); });
+  });
   document.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-dk-open]");
     if (b && tk) tkOpen(b);
     /* the visitor's city is the schedule, not a fold: its heading does not close it */
     if (e.target.closest && e.target.closest(".fcity.here > summary")) e.preventDefault();
   });
+  renderFilm();   /* the visitor's city first and laid out, before the day is chosen and the prices drawn */
 }
 /* the verdict: three lines, «المزيد» opens the rest (only when there is more) */
 function bindVerdict() {

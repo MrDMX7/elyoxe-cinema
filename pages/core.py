@@ -88,7 +88,7 @@ class CorePages(Pages):
         o = {"t": self.ftitle(fid, lang), "h": P(lang, "film", fid), "v": v, "w": vw, "x": self.bill_facts(fid, lang),
              "c": f.get("poster_color") or hue(fid)}
         if self.title_attr(fid, lang): o["e"] = 1
-        if say: o["s"] = dates(esc(say))
+        if say and v != "unknown": o["s"] = dates(esc(say))   # no verdict yet: the word alone (Task 4 fix round 1, I4)
         if f.get("trailer"): o["tr"] = f["trailer"]
         if bd and bd.get("w1280") and bd.get("w640"): o["b"] = [rel(bd["w640"]), rel(bd["w1280"])]
         elif f.get("poster"): o["p"] = [rel(f["poster"]), rel(f.get("poster_2x") or f["poster"])]
@@ -492,9 +492,12 @@ class CorePages(Pages):
             sub += f'<p class="rr">{esc(L(RERELEASE, lang))}{" — من سنة" if ar and y else (" — first released" if y else "")}{y}</p>'
         vd = f.get("verdict") or {}; say = vd.get("ar") if ar else vd.get("en")
         word = L(VERDICT.get(v, VERDICT["unknown"]), lang)
+        # no verdict yet: the word says it all («ما في تقييم كافي»); its template sentence only said it again (fix round 1, I4)
+        if v == "unknown": say = None
         verdict = (f'<div class="fv-w"><p class="fv verdict v-{v}" id="fv" data-fv><b class="word">{esc(word)}{"." if say else ""}</b>'
                    + (f' <span class="say">{dates(esc(say))}</span>' if say else "") + '</p>'
-                   f'<button type="button" class="lnk fv-m" data-fv-more aria-controls="fv" aria-expanded="false" hidden>{esc(L(FILM_T["more"], lang))}</button></div>')
+                   + (f'<button type="button" class="fv-m" data-fv-more aria-controls="fv" aria-expanded="false" hidden>{esc(L(FILM_T["more"], lang))}</button>'
+                      if say else "") + '</div>')
         facts = []
         if rates: facts.append(f'<span class="basis rates">{"".join(rates)}</span>')
         if f.get("runtime"): facts.append(f'<span>{num(f["runtime"])} {esc(L(HOME_T["min"], lang))}</span>')
@@ -509,7 +512,8 @@ class CorePages(Pages):
         # «قارن» opens its tab (tabs.js); the tab itself is script-drawn (compare.js), so is this link
         if cmp_tab: acts += f'<a class="btn ghost js-only" href="#compare" data-tab-go="compare">{esc(L(FILM_T["compare"], lang))}</a>'
         arch = self.archive_note(fid, lang) if f.get("status") == "archived" else ""
-        return (f'<section class="fhero{" fr" if frame else ""}"><div class="fh-bd">{pic}</div><div class="wrap fhero-in">'
+        cls = " fr" if frame else "" if f.get("poster") else " np"   # np: the typographic tile stands in the poster's place
+        return (f'<section class="fhero{cls}"><div class="fh-bd">{pic}</div><div class="wrap fhero-in">'
                 f'<div class="fposter">{card}</div><div class="fh-t"><h1 class="ft"{attr}>{esc(t)}</h1>{sub}{verdict}{ff}'
                 + (f'<p class="cta">{acts}</p>' if acts else "") + f'{arch}</div></div></section>')
 
@@ -616,14 +620,14 @@ class CorePages(Pages):
                 dock = (f'<div class="dock" data-dock role="region" aria-label="{esc(L(FILM_T["chosen"], lang))}" hidden><div class="dk-t">'
                         f'<p class="dk-p" data-dk-p></p><p class="dk-s" data-dk-s></p></div>'
                         f'<button type="button" class="btn dk-b" data-dk-open aria-haspopup="dialog">{esc(L(FILM_T["details"], lang))}</button>'
-                        f'<p class="vh" data-dk-live aria-live="polite"></p></div>')
+                        f'</div><p class="vh" data-dk-live aria-live="polite"></p>')   # the live region outside the dock: always rendered (M5)
                 graph = [self.movie_ld(fid, lang)] + [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:30] + [self.breadcrumb_ld(lang, (t, P(lang, "film", fid)))]
                 if not cities:
                     sched = f'<p class="lead">{esc(L(FILM_T["none"], lang))}</p>'
                 else:
                     # the schedule is most of the page's weight: render it as richly as fits what the rest leaves
-                    bar0 = self.film_bar(lang, days); self._sheets.pop()   # measured, then drawn for real below
-                    fixed = len((hero + tabs + bar0).encode()) + len(self.sheet("sheet-fopts", FILM_T["opts"], "", lang).encode())
+                    bar0 = self.film_bar(lang, days); sheet0 = self._sheets.pop()   # measured (bar and its «⋯» sheet), drawn for real below
+                    fixed = len((hero + tabs + bar0 + sheet0).encode())
                     # the ticket as it will be drawn (measured, where this used to reserve 4.5 KB), the page's wrappers
                     tk0 = len((self.ticket(nxt, lang) if nxt else self.ticket_shell()).encode())
                     left = PAGE_TARGET - CHROME - fixed - self.ld_size(graph) - tk0 - len((empty + dock).encode()) - 1200
@@ -675,12 +679,13 @@ class CorePages(Pages):
         the card; the hall rows here are what a visitor with no script reads."""
         days = [(self.today, ("اليوم", "Today"))] + ([(self.tomorrow, ("بكرة", "Tomorrow"))] if mode in ("full", "compact") else [])
         out = []
-        for city in cities:
+        # Dubai (the script's default city) first, as the script will show it: no city moves above it at start-up (CLS)
+        for city in sorted(cities, key=lambda c: c != "dubai"):
             cs = [s for s in shows if self.cinemas[s["cinema"]].get("city") == city and s["date"] in (d for d, _ in days)]
             if not cs: continue
             cids = list(dict.fromkeys(s["cinema"] for s in cs))
             n = ar_count(len(cids), FILM_T["n_cin"][0]) if lang == "ar" else f'{len(cids)} {FILM_T["n_cin"][1][len(cids) != 1]}'
-            out.append(f'<details class="fcity" data-city="{city}"{" open" if city == "dubai" else ""}><summary><h2>{esc(L(CITY[city], lang))}</h2>'
+            out.append(f'<details class="fcity{" here" if city == "dubai" else ""}" data-city="{city}"{" open" if city == "dubai" else ""}><summary><h2>{esc(L(CITY[city], lang))}</h2>'
                        f'<span class="fc-n">{esc(n)}</span></summary>')
             for cid in cids:
                 chain = self.cinemas[cid]["chain"]
