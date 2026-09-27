@@ -1,0 +1,9 @@
+/* people_index (phase 3, task A5): /people/ + /en/people/. Same tokens as people.css (pp-*): no radius, no
+   shadows, no cards; logical properties only. */
+.pi h2{font-family:var(--display);font-weight:var(--dw);font-size:24px;margin-block-end:10px}
+.pi+.pi{margin-block-start:8px}
+.pi-l{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:14px 10px}
+.pi-l a{display:flex;flex-direction:column;gap:6px;color:var(--screen);text-decoration:none;font-size:14px;line-height:1.3}
+.pi-l img,.pi-i{display:block;inline-size:64px;block-size:80px;object-fit:cover;background:var(--tint)}
+@media (max-width:560px){.pi-l{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}}

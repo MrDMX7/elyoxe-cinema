@@ -1,0 +1,31 @@
+/* search (phase 3, task A5): the header button src/js/search.js injects into .top-in (no PLUGINS.md
+   hook for one yet), and the search panel it opens. «هـ»: no radius, no shadows, no cards; gold for the
+   active option only; logical properties throughout. */
+.srch-btn{min-block-size:44px;min-inline-size:44px;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--line-2);background:transparent;color:var(--screen);cursor:pointer;margin-inline-end:6px}
+.srch-btn::before{content:"";inline-size:16px;block-size:16px;border:2px solid currentColor;border-radius:50%;
+  box-shadow:6px 6px 0 -3px currentColor;margin-inline-end:2px}
+html.srch-open{overflow:hidden}
+.srch{position:fixed;inset:0;background:rgba(15,11,12,.85);display:flex;align-items:flex-start;
+  justify-content:center;padding:10vh 16px 16px;z-index:50}
+.srch-box{background:var(--night);border:1px solid var(--line-2);inline-size:min(560px,100%);max-block-size:70vh;
+  display:flex;flex-direction:column;overflow:hidden}
+.srch-in{display:flex;align-items:center;border-block-end:1px solid var(--line)}
+.srch-in input{flex:1;background:transparent;border:0;color:var(--screen);font-family:var(--body);font-size:16px;
+  padding:14px 16px}
+.srch-in input::placeholder{color:var(--dim)}
+.srch-in input:focus{outline:none}
+.srch-x{min-block-size:44px;min-inline-size:44px;background:transparent;border:0;color:var(--dim);cursor:pointer}
+.srch-x::before{content:"×";font-size:22px}
+.srch-list{list-style:none;margin:0;padding:0 0 8px;overflow-y:auto}
+.srch-g{padding:10px 16px 6px;font-size:12px;color:var(--seat);font-weight:600}
+.srch-r a{display:flex;align-items:center;gap:10px;padding:6px 16px;color:var(--screen);text-decoration:none}
+.srch-r[aria-selected="true"] a,.srch-r a:hover{background:var(--tint);color:var(--gold-hi)}
+.srch-r img,.srch-i{display:block;flex:0 0 auto;inline-size:32px;block-size:40px;object-fit:cover;background:var(--tile)}
+.srch-i{position:relative}
+.srch-i::before{content:"";position:absolute;inset:0;margin:auto;inline-size:14px;block-size:14px;
+  border:2px solid var(--seat)}
+.srch-i-c::before,.srch-i-m::before{border-radius:0 0 6px 6px;block-size:10px;inset-block-start:auto;inset-block-end:0}
+.srch-i-p::before{border-radius:50%}
+.srch-empty{margin:0;padding:0 16px 14px;color:var(--dim);font-size:13px}
+@media (max-width:560px){.srch{padding-block-start:6vh}}
