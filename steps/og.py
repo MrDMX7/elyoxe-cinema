@@ -3,19 +3,32 @@
 For a showing film: poster at the reading-start side (right for ar, left for en), the film's title,
 a price line — «من {price} درهم الليلة في {city}» (ar) / "From AED {price} tonight in {city}" (en)
 — and the date, plus the «سينما»/"Cinema" wordmark. Every number drawn is read from `data`, never
-invented: `price` is the lowest confirmed ticket price (no card applied) across today's shows for
-that film; `city` is whichever UAE city has the most of today's shows for it (ties: CITY_ORDER,
-Dubai first). An archived film gets the variant without a price/city line (poster, title, wordmark
-only) — its inputs hold still, so it is never re-rendered once written.
+invented, AND the two numbers on the price line describe the SAME place: `city` is picked first
+(whichever UAE city has the most of today's shows for the film, ties: CITY_ORDER, Dubai first), then
+`price` is the lowest confirmed no-card price among THAT city's shows only — never the globally
+cheapest price with a city named that doesn't actually have it (review fix round 1: a 3-show
+Dubai-100/90 + Sharjah-20 case used to render "من 20 درهم الليلة في دبي", a price Dubai never had).
+A city with no priced show today drops the price line entirely rather than ever naming an
+unavailable price. An archived film gets the variant without a price/city line (poster, title,
+wordmark only) — its inputs hold still, so it is never re-rendered once written.
+
+Fonts: every subset woff2 under src/fonts/ covers ONE script only — Arabic glyphs XOR digits/Latin
+(fontTools cmap check; confirmed neither `*-arabic.woff2` has any digit, nor `*-latin.woff2` any
+Arabic codepoint). A line that mixes them (the Arabic price/date lines always do: Western numerals
+inside Arabic text) is split into same-script runs and each run drawn with its own font, in logical
+order (`_runs`/`draw_line`) — review fix round 1 for the missing-glyph boxes a single-font draw used
+to produce on every Arabic image with a price or a date.
 
 Cache: data/og/ (gitignored, mirrors data/posters/) holds every PNG this step has rendered, named
-"<fid>-<lang>-<hash>.png" where <hash> is a sha1 of exactly what was drawn (title, price, city,
-today's date, the poster file's size+mtime) — unchanged inputs are never re-rendered; a build just
-reuses the file already on disk. data["films"][fid]["og"] = {"ar": "<name>.png", "en": "<name>.png"}
-for every film this step could render, read by pages/og.py (a build-time plugin) which copies
-whichever files are still current into out/og/ and points that film's og:image/twitter:image there
-(both read the same tag: docs/PLUGINS.md's phase-1 page has no separate twitter:image, and Twitter
-falls back to og:image under summary_large_image).
+"<fid>-<lang>-<hash>.png" where <hash> is a sha1 of exactly what was drawn (RENDER_VERSION, title,
+price, city, today's date, the poster file's size+mtime) — unchanged inputs are never re-rendered; a
+build just reuses the file already on disk. RENDER_VERSION is bumped whenever `_card()`'s own output
+changes independently of the data (as in this fix round), so a stale pre-fix render is never reused.
+data["films"][fid]["og"] = {"ar": "<name>.png", "en": "<name>.png"} for every film this step could
+render, read by pages/og.py (a build-time plugin) which copies whichever files are still current into
+out/og/ and points that film's og:image/twitter:image there (both read the same tag: docs/PLUGINS.md's
+phase-1 page has no separate twitter:image, and Twitter falls back to og:image under
+summary_large_image).
 
 A film with no local poster file yet (posters.py has not mirrored it), or when Pillow/the shaping
 libraries are unavailable, is simply skipped for this run — never a crash, never a broken image; its
@@ -36,6 +49,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 import site_kit as sk  # noqa: E402  (CITY names, human_date — plain strings, no HTML)
 
+RENDER_VERSION = "v2"  # bump whenever _card()'s output changes independently of the data (font-coverage fix)
 W, H = 1200, 630
 NIGHT, VELVET, GOLD, SCREEN, SEAT = (15, 11, 12), (122, 22, 38), (226, 182, 89), (241, 234, 224), (168, 156, 142)
 CITY_ORDER = [c for c, _, _ in sk.CITIES]
@@ -50,22 +64,27 @@ def _today(now_iso) -> str:
 
 
 def _cheapest_and_city(shows, cinemas, fid, today):
-    """The lowest confirmed no-card price and the city with the most of today's shows, for one film."""
+    """The city with the most of today's shows for this film, and — WITHIN THAT CITY ONLY — its
+    cheapest confirmed no-card price. The two numbers must describe the same place: picking the
+    global cheapest price across every city independently of which city gets named would let a
+    price only available in city X get attached to city Y's name (review fix, roadmap #206). No
+    priced show in the chosen city -> price is None and the caller drops the price line entirely,
+    rather than ever naming a price the chosen city doesn't actually have."""
     todays = [s for s in shows if s.get("film") == fid and s.get("date") == today]
     if not todays:
         return None, None
-    prices = [p["aed"] for s in todays for p in (s.get("prices") or []) if (p.get("aed") or 0) > 0]
-    if not prices:
-        return None, None
-    by_city: dict[str, int] = {}
+    by_city: dict[str, list] = {}
     for s in todays:
         city = (cinemas.get(s.get("cinema")) or {}).get("city")
         if city:
-            by_city[city] = by_city.get(city, 0) + 1
+            by_city.setdefault(city, []).append(s)
     if not by_city:
         return None, None
-    best = max(by_city.values())
-    city = next((c for c in CITY_ORDER if by_city.get(c) == best), max(by_city, key=lambda c: by_city[c]))
+    best = max(len(v) for v in by_city.values())
+    city = next((c for c in CITY_ORDER if len(by_city.get(c, ())) == best), max(by_city, key=lambda c: len(by_city[c])))
+    prices = [p["aed"] for s in by_city[city] for p in (s.get("prices") or []) if (p.get("aed") or 0) > 0]
+    if not prices:
+        return None, city               # this city has no priced show today: no price line, ever
     price = int(min(prices)) if float(min(prices)).is_integer() else round(min(prices), 2)
     return price, city
 
@@ -82,12 +101,32 @@ def _hash(*parts) -> str:
     return hashlib.sha1("|".join(str(p) for p in parts).encode("utf-8")).hexdigest()[:12]
 
 
+def _is_arabic_letter(ch: str) -> bool:
+    return 0x0600 <= ord(ch) <= 0x06FF
+
+
+def _runs(text: str):
+    """Split `text` (logical order) into (is_arabic, substring) runs — every one of the site's own
+    subset fonts covers EITHER Arabic letters OR digits/Latin/punctuation, never both (fontTools
+    cmap check, review fix): a line mixing an Arabic word and a Western-numeral price/date needs a
+    font switch at the script boundary, not a shared font neither subset actually has."""
+    if not text:
+        return []
+    out, cur, buf = [], _is_arabic_letter(text[0]), [text[0]]
+    for ch in text[1:]:
+        ar = _is_arabic_letter(ch)
+        if ar == cur:
+            buf.append(ch)
+        else:
+            out.append((cur, "".join(buf))); cur, buf = ar, [ch]
+    out.append((cur, "".join(buf)))
+    return out
+
+
 def _card(lang, title, price, city_label, day, poster_path, wordmark):
     """Build one 1200x630 PNG (bytes). Raises on any Pillow/font failure — the caller decides what a
     failure means (skip that film/lang, never abort the whole step)."""
     from PIL import Image, ImageDraw, ImageFilter, ImageFont, features
-    import arabic_reshaper
-    from bidi.algorithm import get_display
     from fontTools.ttLib import TTFont
 
     fonts_dir = ROOT / "src" / "fonts"
@@ -99,11 +138,20 @@ def _card(lang, title, price, city_label, day, poster_path, wordmark):
         b = io.BytesIO(); t.save(b); b.seek(0)
         return ImageFont.truetype(b, size)
 
-    def shaped(s):
-        # with raqm the subset font shapes correctly on its own; without it, reshaper+bidi (docs/PLUGINS.md
-        # notes the subset has no presentation forms — acceptable degradation for a background share image,
-        # never a crash: src/og_make.py accepts the same trade-off)
-        return s if (lang != "ar" or raqm) else get_display(arabic_reshaper.reshape(s))
+    def draw_line(d, x, y, text, ar_font, other_font, fill, right_anchor):
+        """One line, right- or left-anchored at x: each run drawn with the font that actually has its
+        glyphs (ar_font for Arabic letters, other_font — always Latin, which covers digits — for
+        everything else), positioned in logical/reading order so digits inside Arabic text still read
+        left-to-right at their place in the sentence, exactly as the un-split line used to (when every
+        glyph existed in one font)."""
+        runs = _runs(text) if lang == "ar" else [(False, text)]
+        fonts = [ar_font if ar else other_font for ar, _ in runs]
+        widths = [f.getlength(t) for f, (_, t) in zip(fonts, runs)]
+        total = sum(widths)
+        cx = (x - total) if right_anchor else x
+        for f, (ar, t), w in zip(fonts, runs, widths):
+            d.text((cx, y), t, font=f, fill=fill, anchor="lm", direction="rtl" if (ar and raqm) else None)
+            cx += w
 
     is_ar = lang == "ar"
     poster_side_right = is_ar  # reading-start side: right for ar, left for en
@@ -135,21 +183,31 @@ def _card(lang, title, price, city_label, day, poster_path, wordmark):
 
     text_right = not poster_side_right  # the text block sits on the side opposite the poster
     tx = W - 90 if text_right else (POSTER_W + 90 if poster_path else 90)
-    anchor = "rm" if text_right else "lm"
 
-    mark = font("markazi-700-arabic.woff2" if is_ar else "readex-latin.woff2", 150 if is_ar else 120)
-    title_f = font("markazi-700-arabic.woff2" if is_ar else "readex-latin.woff2", 74 if is_ar else 62)
-    body_f = font("readex-arabic.woff2" if is_ar else "readex-latin.woff2", 36)
-    small_f = font("readex-latin.woff2", 28)
+    # every subset font here covers ONE script only (fontTools cmap, review fix): the Arabic display/body
+    # fonts have no digits, the Latin ones have no Arabic — so an Arabic line pairs its own font with a
+    # same-family, same-size Latin companion for whatever draw_line's run-split hands it (a digit inside
+    # a price or a date), never a single font asked to draw a glyph it doesn't have.
+    body_ar, body_lat = font("readex-arabic.woff2", 36), font("readex-latin.woff2", 36)
+    small_ar, small_lat = font("readex-arabic.woff2", 28), font("readex-latin.woff2", 28)
+    # the display face differs by language (Markazi for ar, Readex for en — src/og_make.py's own split),
+    # so wordmark/title need their own ar/other pair per language rather than reusing body/small's
+    if is_ar:
+        wm_ar, wm_other = font("markazi-700-arabic.woff2", 150), font("markazi-700-latin.woff2", 150)
+        tt_ar, tt_other = font("markazi-700-arabic.woff2", 74), font("markazi-700-latin.woff2", 74)
+    else:
+        wm_ar, wm_other = None, font("readex-latin.woff2", 120)
+        tt_ar, tt_other = None, font("readex-latin.woff2", 62)
+    right = text_right
 
-    d.text((tx, 130), shaped(wordmark), font=mark, fill=GOLD, anchor=anchor, direction="rtl" if (is_ar and raqm) else None)
-    d.text((tx, 300), shaped(title[:60]), font=title_f, fill=SCREEN, anchor=anchor, direction="rtl" if (is_ar and raqm) else None)
+    draw_line(d, tx, 130, wordmark[:60], wm_ar, wm_other, GOLD, right)
+    draw_line(d, tx, 300, title[:60], tt_ar, tt_other, SCREEN, right)
     y = 400
     if price is not None and city_label:
         line = f"من {price} درهم الليلة في {city_label}" if is_ar else f"From AED {price} tonight in {city_label}"
-        d.text((tx, y), shaped(line), font=body_f, fill=GOLD, anchor=anchor, direction="rtl" if (is_ar and raqm) else None)
+        draw_line(d, tx, y, line, body_ar, body_lat, GOLD, right)
         y += 55
-    d.text((tx, y), day, font=small_f, fill=SEAT, anchor=anchor)
+    draw_line(d, tx, y, day, small_ar, small_lat, SEAT, right)
 
     import io as _io
     buf = _io.BytesIO()
@@ -185,7 +243,7 @@ def run(data: dict, ctx: dict) -> dict | None:
             price_here = None if archived else price
             city_here = None if archived else (city_label[0] if lang == "ar" and city_label else
                                                  city_label[1] if city_label else None)
-            h = _hash(fid, lang, "archived" if archived else "live", title, price_here, city_here,
+            h = _hash(RENDER_VERSION, fid, lang, "archived" if archived else "live", title, price_here, city_here,
                       day if not archived else "", st.st_size, st.st_mtime_ns)
             name = f"{fid}-{lang}-{h}.png"
             keep.add(name)

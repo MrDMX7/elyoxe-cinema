@@ -1,15 +1,21 @@
 /* src/js/share.js — roadmap #82: a share link (the ticket's own, plus the film/cinema ones pages/og.py
    adds) carries the sharer's ?city=&card=; opening one applies them only when nothing is saved yet or
    the saved values already agree, and otherwise asks — it never silently overwrites what the visitor
-   already had. Main bundle (pages/og.py's JS): concatenated with core.js into one scope (build.js_files),
-   so `shareParams` below is hoisted and callable from core.js's own state block even though this file's
-   text sits after it. */
+   already had. An unknown city/card (not in C.cities/C.cards) is dropped at the source in shareParams()
+   itself, so neither the immediate-apply path nor the deferred "Yes" click (both read from the same
+   validated sc/scard) can ever store or apply one (review fix round 1). Main bundle (pages/og.py's JS):
+   concatenated with core.js into one scope (build.js_files), so `shareParams` below is hoisted and
+   callable from core.js's own state block even though this file's text sits after it. */
 
 var pendingShare = null;
 
 /* called once, from core.js, before `city`/`card` are read for the first time */
 function shareParams() {
   var sc = param("city"), scard = param("card");
+  /* an unknown value (a stale, malformed or tampered share link) is dropped right here, at the source —
+     never stored, never queued in pendingShare, so the deferred "Yes" click (below) can't apply it either */
+  if (sc != null && C.cities && !C.cities[sc]) sc = null;
+  if (scard && C.cards && !C.cards[scard]) scard = null;   // "" (explicitly no card) is always valid
   if (sc == null && scard == null) return;
   var savedCity = get("city"), savedCard = get("card");
   var hasSaved = savedCity != null || (savedCard != null && savedCard !== "");

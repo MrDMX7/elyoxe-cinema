@@ -103,6 +103,71 @@ def test_archived_film_gets_the_no_price_variant(cache):
     assert "test-film" not in r["cities"]         # an archived film never gets a price/city line
 
 
+def _data_price_city_mismatch(today="2026-09-27"):
+    """2 of 3 shows (the loudest city) are in Dubai at 100/90 AED; the single cheapest show of all
+    (20 AED) is in Sharjah. Review counter-example: the card must say Dubai's own cheapest (90),
+    never Sharjah's 20 attached to Dubai's name."""
+    return {
+        "generated": f"{today}T12:00:00+04:00",
+        "cinemas": {"c1": {"chain": "vox", "city": "dubai"}, "c2": {"chain": "vox", "city": "dubai"},
+                    "c3": {"chain": "vox", "city": "sharjah"}},
+        "films": {"test-film": {"title": "Test Film", "title_ar": "فيلم تجربة", "status": "showing"}},
+        "shows": [
+            {"film": "test-film", "cinema": "c1", "date": today, "time": "19:00", "prices": [{"seat": "Regular", "aed": 100}]},
+            {"film": "test-film", "cinema": "c2", "date": today, "time": "21:00", "prices": [{"seat": "Regular", "aed": 90}]},
+            {"film": "test-film", "cinema": "c3", "date": today, "time": "20:00", "prices": [{"seat": "Regular", "aed": 20}]},
+        ],
+    }
+
+
+def test_price_is_the_chosen_citys_own_cheapest_never_a_cheaper_other_citys():
+    d = _data_price_city_mismatch()
+    price, city = og_step._cheapest_and_city(d["shows"], d["cinemas"], "test-film", "2026-09-27")
+    assert city == "dubai"          # 2 of 3 shows
+    assert price == 90              # Dubai's OWN cheapest -- never Sharjah's 20
+
+
+def test_no_priced_show_in_the_loudest_city_drops_the_price_not_the_city():
+    today = "2026-09-27"
+    shows = [
+        {"film": "test-film", "cinema": "c1", "date": today, "time": "19:00", "prices": []},
+        {"film": "test-film", "cinema": "c2", "date": today, "time": "21:00", "prices": [{"seat": "Regular", "aed": 0}]},
+        {"film": "test-film", "cinema": "c3", "date": today, "time": "20:00", "prices": [{"seat": "Regular", "aed": 20}]},
+    ]
+    cinemas = {"c1": {"city": "dubai"}, "c2": {"city": "dubai"}, "c3": {"city": "sharjah"}}
+    price, city = og_step._cheapest_and_city(shows, cinemas, "test-film", today)
+    assert city == "dubai" and price is None   # never falls back to Sharjah's 20
+
+
+def _cmap(name):
+    from fontTools.ttLib import TTFont
+    return set(TTFont(os.path.join(ROOT, "src", "fonts", name)).getBestCmap())
+
+
+def test_every_glyph_the_renderer_draws_exists_in_the_font_it_picks_for_it():
+    """The exact fontTools cmap check the review asked for: for every line _card() actually draws in
+    Arabic, run it through the real `_runs()` script-splitter and confirm the font `draw_line()` would
+    pick for each run has every character it is asked to draw -- catches the missing-glyph-box bug
+    (Arabic-subset fonts have no digits, Latin-subset fonts have no Arabic) without needing to OCR a
+    rendered PNG."""
+    import site_kit as sk
+    cmaps = {n: _cmap(n) for n in ("markazi-700-arabic.woff2", "markazi-700-latin.woff2",
+                                    "readex-arabic.woff2", "readex-latin.woff2")}
+    lines = [
+        ("wordmark", "سينما", "markazi-700-arabic.woff2", "markazi-700-latin.woff2"),
+        ("title", "فيلم تجربة", "markazi-700-arabic.woff2", "markazi-700-latin.woff2"),
+        ("price (has a Western-numeral price inside Arabic text)",
+         "من 90 درهم الليلة في دبي", "readex-arabic.woff2", "readex-latin.woff2"),
+        ("date (Arabic month name with Western-numeral day/year)",
+         sk.human_date("2026-09-27", "ar"), "readex-arabic.woff2", "readex-latin.woff2"),
+    ]
+    for label, text, ar_name, other_name in lines:
+        for is_ar, run_text in og_step._runs(text):
+            cmap = cmaps[ar_name if is_ar else other_name]
+            missing = [ch for ch in run_text if not ch.isspace() and ord(ch) not in cmap]
+            assert not missing, f"{label}: {ar_name if is_ar else other_name} has no glyph for {missing!r} in {run_text!r}"
+
+
 def test_missing_poster_is_skipped_not_crashed(tmp_path):
     data = _data()
     r = og_step.run(data, {"data_dir": str(tmp_path / "data"), "now": data["generated"]})
@@ -194,3 +259,46 @@ process.stdout.write(JSON.stringify([shareURL("https://cinema.elyoxe.com/film/x/
 """)
     assert got == ["https://cinema.elyoxe.com/film/x/?city=al-ain",
                    "https://cinema.elyoxe.com/film/x/?y=1&city=al-ain"]
+
+
+@pytest.mark.skipif(not NODE, reason="node not installed")
+def test_unknown_city_is_dropped_before_it_is_ever_stored(tmp_path):
+    """An unknown ?city= (stale/malformed/tampered link) is never applied -- not queued as a prompt
+    either, since C.cities doesn't know it (review fix: validate before storing OR queuing)."""
+    got = _node(tmp_path, "?city=narnia", """
+shareParams();
+process.stdout.write(JSON.stringify({ city: get("city"), pending: pendingShare }));
+""")
+    assert got == {"city": None, "pending": None}
+
+
+@pytest.mark.skipif(not NODE, reason="node not installed")
+def test_unknown_card_is_dropped_while_a_valid_city_in_the_same_link_still_applies(tmp_path):
+    got = _node(tmp_path, "?city=dubai&card=goldcard", """
+shareParams();
+process.stdout.write(JSON.stringify({ city: get("city"), card: get("card"), pending: pendingShare }));
+""")
+    assert got == {"city": "dubai", "card": None, "pending": None}
+
+
+@pytest.mark.skipif(not NODE, reason="node not installed")
+def test_unknown_value_is_dropped_even_on_the_deferred_yes_click_path(tmp_path):
+    """A saved choice differs (so this would normally queue a prompt) but the shared value itself is
+    unknown -- it must never reach `pendingShare`, so a "Yes" click has nothing bad to apply."""
+    got = _node(tmp_path, "?city=narnia", """
+STORE["city"] = "abu-dhabi";
+shareParams();
+process.stdout.write(JSON.stringify({ city: get("city"), pending: pendingShare }));
+""")
+    assert got == {"city": "abu-dhabi", "pending": None}   # untouched AND nothing queued to ask about
+
+
+@pytest.mark.skipif(not NODE, reason="node not installed")
+def test_a_link_with_no_card_param_does_not_touch_card(tmp_path):
+    """No `card=` at all (param() returns null, never "") -- the validation guard (`scard && ...`) must
+    not misfire on that null, and a link carrying only a city must never clear an unrelated saved card."""
+    got = _node(tmp_path, "?city=dubai", """
+shareParams();
+process.stdout.write(JSON.stringify({ city: get("city"), card: get("card") }));
+""")
+    assert got == {"city": "dubai", "card": None}
