@@ -6,8 +6,8 @@
    Pass: the variant's median p95 frame time stays inside the control's own spread (its min…max over the rounds), and no
    long animation frame over 200 ms after FCP.
 
-     node tools/perf_fx.cjs --out CONTROL [--variant-out VARIANT | --variant-css FILE] [--port 8111] [--size 390x844]
-                            [--rounds 5] [--page /] [--now ISO] [--assert] [--json FILE]
+     node tools/perf_fx.cjs --out CONTROL [--variant-out VARIANT | --variant-css FILE] [--port 8111] [--size 360x740,390x844]
+                            [--rounds 5] [--page /] [--now ISO] [--assert] [--json FILE]   (sizes: 360x740,390x844 by default)
 
    The variant build is served on the same port (serve.py --alt-out answers Host: localhost:<port>): one port per
    package, two origins, no shared cache. With neither variant flag it runs the control against itself (A/A: how much
@@ -61,7 +61,6 @@ async function measure(browser, url, size, when, css) {
 
 (async () => {
   const o = K.args(null);
-  if (!process.argv.includes("--size")) o.sizes = ["390x844"];
   const rounds = +o.get("rounds", 5), pagePath = o.get("page", "/"), assert = o.has("assert");
   const vOut = o.get("variant-out", null), vCss = o.get("variant-css", null);
   if (vOut) o.altOut = require("path").resolve(vOut);
