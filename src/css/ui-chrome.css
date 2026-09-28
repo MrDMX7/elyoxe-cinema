@@ -1,12 +1,21 @@
 /* the chrome: the header (mark, pills, search), the network city note, the footer, the install line (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
 /* ------------------------------------------------ the chrome (UI redesign Task 2): one header line, a phone tab bar,
    the footer, and the sheets the header's pills open */
-/* the header: solid night with a rule; over a hero (data-hero) it starts as a gradient and turns solid once the
-   page has moved 40 px (src/js/sheet.js, an IntersectionObserver sentinel). No script: always solid. */
+/* the header: solid night with a 1 px rule. Over a screen (data-hero) it starts clear and turns solid over the first
+   56 px of scroll, on a scroll timeline (W2-P5, MASTER-PLAN §2.0: no listener, no sentinel): the night and its rule are a
+   layer under the header's content whose opacity follows the page's scroll. A browser without scroll timelines keeps
+   the solid header, as with no script; under reduced motion the light changes at once, at 56 px */
 .top{position:sticky;inset-block-start:0;z-index:30;background:var(--night);border-block-end:1px solid var(--line)}
-.js body[data-hero] .top:not(.solid){background:linear-gradient(rgba(15,11,12,.85),rgba(15,11,12,0)) border-box;border-block-end-color:transparent}
+@supports (animation-timeline:scroll()){
+  body[data-hero] .top{background:linear-gradient(rgba(15,11,12,.85),rgba(15,11,12,0)) border-box;border-block-end-color:transparent}
+  body[data-hero] .top::before{content:"";position:absolute;inset:0 0 -1px;z-index:-1;background:var(--night);border-block-end:1px solid var(--line);
+    opacity:0;animation:top-solid linear both;animation-timeline:scroll(root);animation-range:0 56px}
+}
+@keyframes top-solid{to{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  body[data-hero] .top::before{animation-timing-function:steps(1,end)}
+}
 .top-in{display:flex;align-items:center;gap:12px;block-size:var(--head)}
-.top-sent{position:absolute;inset-block-start:0;inset-inline-start:0;inline-size:1px;block-size:40px;visibility:hidden;pointer-events:none}
 /* the wordmark: «سينما» in Markazi gold on every page, /en/ too (owner default D7: an Arabic logotype, read as «Cinema»);
    32 px, the h1 step's floor, header and footer alike */
 .mark{font-family:var(--display);font-weight:700;font-size:32px;line-height:1;color:var(--gold);text-decoration:none;flex:0 0 auto}
@@ -54,7 +63,17 @@
   .nav a[aria-current]{color:var(--screen);font-weight:500}
   .alt{display:inline-flex;align-items:center;min-block-size:40px;margin-inline-start:4px}
 }
-.inst{position:fixed;z-index:30;inset-inline:12px;inset-block-end:calc(72px + env(safe-area-inset-bottom));display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;padding:12px 16px;background:var(--night);border-block-start:2px solid var(--velvet);font-size:var(--fs-body)}
+/* the lines that float over the foot of the screen (the install line; the shared-link prompt of src/css/og.css, which
+   sat under the film page's dock) sit on whatever fixed chrome is there now (--chrome-b, src/js/chrome.js: the tab bar,
+   or the dock or stub above it), never under it, and step down with the tab bar. Both are drawn by script; until
+   chrome.js has measured, they sit on the tab bar's 61 px */
+.inst{position:fixed;z-index:30;inset-inline:12px;inset-block-end:12px;transform:translateY(calc(-1 * max(var(--chrome-b,61px),env(safe-area-inset-bottom))));
+  transition:transform .22s var(--ease-sheet);display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;padding:12px 16px;background:var(--night);border-block-start:2px solid var(--velvet);font-size:var(--fs-body)}
+html .shareask{inset-block-end:0;transform:translateY(calc(-1 * max(var(--chrome-b,61px),env(safe-area-inset-bottom))));transition:transform .22s var(--ease-sheet)}
+@media (prefers-reduced-motion:reduce){
+  .inst,html .shareask{transition:none}
+}
 @media (min-width:1024px){
-  .inst{inset-inline:auto 24px;inset-block-end:24px}
+  .inst{inset-inline:auto 24px;inset-block-end:24px;transform:none}
+  html .shareask{transform:none}
 }

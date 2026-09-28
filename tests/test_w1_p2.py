@@ -207,6 +207,8 @@ GOLD_RULES = {
     ".opt[aria-pressed=true],.opt[aria-current],.sheet .chip[aria-pressed=true]", ".dy[aria-pressed=true] b",
     # a card's offer and the price after it, on the card pages
     ".crd .off", ".ex b", ".matrix td b",
+    # the card sheet: each card's best number («فزعة 20%», MASTER-PLAN §2.0; W2-P5): what that card gives you
+    ".opt .best",
 }
 
 

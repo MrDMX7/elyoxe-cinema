@@ -253,7 +253,8 @@ def test_all_films_grid_and_its_sheets(full):
         assert 'data-sheet-open="sheet-filter"' in grid and 'data-sheet-open="sheet-sort"' in grid and "data-fcount hidden" in grid
         assert '<div class="grid" data-films>' in grid and "data-empty" in grid and "data-kids-late" in grid
         after = h[h.index("</main>"):]
-        fs = re.search(r'<div class="sheet" id="sheet-filter" role="dialog" aria-modal="true" aria-labelledby="sheet-filter-t" hidden>.*?data-fn-live aria-live="polite"></p></div></div>', after, re.S).group(0)
+        # W2-P5's sheet(): a sticky head (.sheet-t, drag.js's handle) and data-detents on the sheets that stop part-way
+        fs = re.search(r'<div class="sheet" id="sheet-filter" role="dialog" aria-modal="true" aria-labelledby="sheet-filter-t" data-detents="60 92" hidden>.*?data-fn-live aria-live="polite"></p></div></div>', after, re.S).group(0)
         # the one question on top (W2-P4, MASTER-PLAN §2.0), then every control the list had above it: genre (all,
         # «يستاهل», genres), ends-before, sort, the prayer switch, plus the language when the films have more than one,
         # «مسح» and «اعرض N»
@@ -284,8 +285,9 @@ def test_home_no_longer_carries_the_cities_cards_or_freshness(out):
 
 
 def test_search_tab_falls_back_to_all_films(out):
+    from kit.chrome import ME_TAB   # D2 (W2-P5): the fourth tab is «قائمتي»; search stays the header's icon
     tabs = re.search(r'<nav class="tabs".*?</nav>', read(out), re.S).group(0)
-    assert re.search(r'<a href="/#all" data-search', tabs)
+    assert bool(re.search(r'<a href="/#all" data-search', tabs)) is not ME_TAB
 
 
 def test_filters_js_reads_the_sheet(out):
