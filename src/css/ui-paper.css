@@ -1,1 +1,21 @@
-/* paper: the stub's material (W1-P2 fills it; an empty stub until then) (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
+/* paper: the stub's material (W1-P2; MASTER-PLAN §1.1, §1.5). One family for the stub, the pick's stub, the dock, the
+   ticket and the Thursday marquee: screen light as the sheet, ink as the words, a --rule perforation with square
+   notches, and the one call to act on it in velvet (screen light on velvet 8.9:1). Gold never goes on paper (1.6:1):
+   on paper a list price is ink, yours (after a card) velvet (8.9:1), the struck one ink-2 (7.1:1). No radius, no card
+   shadow: paper is a flat sheet in the hall's light. */
+.paper{background:var(--screen);color:var(--ink)}
+.paper small{color:var(--ink-2)}
+.paper .p .num,.paper .p b{color:var(--ink)}
+.paper .p:has(s) b{color:var(--velvet)}
+.paper .p s.num{color:var(--ink-2)}
+.paper :focus-visible{outline-color:var(--ink)}
+.paper .btn.velvet:focus-visible{outline:2px solid var(--screen);outline-offset:-4px}
+/* the marquee's paper is lit from inside (the one place the paper-light gradient is used; a band ≤ 240 px on a phone) */
+.paper.lit{background:linear-gradient(180deg,var(--paper-hi),var(--screen) 55%,var(--paper-lo))}
+/* the stub: its body, the perforation, the tear-off */
+.stub{display:grid;grid-template-columns:minmax(0,1fr) 1px 104px}
+/* the perforation: a dashed rule with a 12×12 square notch cut at each end in the ground's colour (--notch, night) */
+.perf{position:relative;inline-size:1px;background:repeating-linear-gradient(180deg,var(--rule) 0 6px,transparent 6px 12px)}
+.perf::before,.perf::after{content:"";position:absolute;inset-inline-start:-6px;inline-size:12px;block-size:12px;background:var(--notch,var(--night))}
+.perf::before{inset-block-start:-6px}
+.perf::after{inset-block-end:-6px}

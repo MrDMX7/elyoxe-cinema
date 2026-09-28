@@ -1,64 +1,61 @@
 /* places: city and cinema pages, /cinemas/, the halls and price tables (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
 /* ------------------------------------------------ cinema page: films at this cinema */
 .split{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
-.day > h2{font-size:26px;padding-block-end:6px;border-block-end:1px solid var(--line)}
-.cf{display:grid;grid-template-columns:72px minmax(0,1fr);gap:14px;padding-block:14px;border-block-end:1px solid rgba(241,234,224,.1)}
-.pst.sm{padding:6px}
-.pst.sm .pst-t{font-size:14px}
-.cf-b h3{font-size:22px}
+.day > h2{font-size:var(--fs-h2);padding-block-end:8px;border-block-end:1px solid var(--line)}
+.cf{display:grid;grid-template-columns:72px minmax(0,1fr);gap:16px;padding-block:16px;border-block-end:1px solid rgba(241,234,224,.1)}
+.pst.sm{padding:8px}
+.pst.sm .pst-t{font-size:var(--fs-meta)}
+.cf-b h3{font-family:var(--body);font-weight:500;font-size:var(--fs-title);line-height:1.35}
 .cf-b h3 a{text-decoration:none}
-.cf-m{display:flex;gap:10px;font-size:12px;color:var(--seat)}
+.cf-m{display:flex;gap:12px;font-size:var(--fs-meta);color:var(--seat)}
 .cf .hl{display:block}
-.cf .hn{font-size:12px;color:var(--dim)}
-/* ------------------------------------------------ lists: cities, cards, sources, rows */
+.cf .hn{font-size:var(--fs-meta);color:var(--dim)}
+/* ------------------------------------------------ lists: cities, cards, sources, rows. A name in a list (a cinema, a city,
+   a card, a film's line on a city or cinema page) is a title, Readex 500 16 as on the board (§1.4); Markazi stays for
+   the heads, the hero titles, the wordmark and the verdict word */
 .clist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(13rem,100%),1fr));column-gap:32px}
 .clist li{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-block:12px;border-block-end:1px solid var(--line)}
-.clist a{font-family:var(--display);font-weight:var(--dw);font-size:22px;text-decoration:none}
-.clist .n{color:var(--seat);font-size:13px}
+.clist a{font-weight:500;font-size:var(--fs-title);text-decoration:none}
+.clist .n{color:var(--seat);font-size:var(--fs-meta)}
 .rows{display:grid}
-.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm val" "sub val";column-gap:20px;row-gap:2px;padding-block:14px;border-block-end:1px solid var(--line)}
-.row .nm{grid-area:nm;font-family:var(--display);font-weight:var(--dw);font-size:22px;line-height:1.2;text-decoration:none}
-.row .sub{grid-area:sub;color:var(--seat);font-size:12px;display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline}
-.row .from,.row .val{grid-area:val;align-self:center;text-align:end;font-size:13px;color:var(--seat)}
-.row .from .p .num,.row .from .p b{font-size:20px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm val" "sub val";column-gap:20px;row-gap:2px;padding-block:16px;border-block-end:1px solid var(--line)}
+.row .nm{grid-area:nm;font-weight:500;font-size:var(--fs-title);line-height:1.35;text-decoration:none}
+.row .sub{grid-area:sub;color:var(--seat);font-size:var(--fs-meta);display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline}
+.row .from,.row .val{grid-area:val;align-self:center;text-align:end;font-size:var(--fs-meta);color:var(--seat)}
+.row .from .p .num,.row .from .p b{font-size:var(--fs-time)}
 /* schedules on a city page: film → cinemas → times */
 .sched{display:grid}
-.srow{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding-block:14px;border-block-end:1px solid var(--line)}
+.srow{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding-block:16px;border-block-end:1px solid var(--line)}
 .sf{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .sf a{text-decoration:none}
-.sf .t{font-family:var(--display);font-weight:var(--dw);font-size:22px;line-height:1.2}
-.sf .vw{font-size:12px}
-.scin{margin-block-start:6px}
-.scin .cn{font-size:13px;color:var(--dim);text-decoration:none}
+.sf .t{font-weight:500;font-size:var(--fs-title);line-height:1.35}
+.sf .vw{font-size:var(--fs-meta)}
+.scin{margin-block-start:8px}
+.scin .cn{font-size:var(--fs-meta);color:var(--dim);text-decoration:none}
 .scin .times{margin-block-start:4px}
 /* halls explained + price tables */
 .halls{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(20rem,100%),1fr));column-gap:40px}
-.hall{padding-block:14px 16px;border-block-end:1px solid var(--line)}
-.hall h3{font-size:22px;margin-block-end:4px}
-[lang=ar] .hall h3[lang=en]{font-family:var(--body);font-weight:600;font-size:17px}
-.hall p{margin-block-end:8px;color:var(--dim);font-size:13px;line-height:1.7;max-inline-size:62ch}
-.hall .rng{color:var(--seat)}
-.hall .rng .num{color:var(--gold);font-weight:600}
-.hall .where{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px}
+.hall{padding-block:16px;border-block-end:1px solid var(--line)}
+.hall h3{font-family:var(--body);font-weight:500;font-size:var(--fs-title);line-height:1.35;margin-block-end:4px}
+.hall p{margin-block-end:8px;color:var(--dim);font-size:var(--fs-body);line-height:var(--lh-body);max-inline-size:62ch}
+.hall .rng{color:var(--seat);font-size:var(--fs-meta);line-height:1.5}
+.hall .rng .num{color:var(--screen);font-weight:600}
+.hall .where{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:var(--fs-meta)}
 .hall .where a{color:var(--dim);text-decoration:none;border-block-end:1px solid var(--line-2)}
-table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
+table.prices{inline-size:100%;border-collapse:collapse;font-size:var(--fs-body)}
 .prices th,.prices td{padding:8px 0;border-block-end:1px solid var(--line);text-align:start;font-weight:400}
-.prices thead th{color:var(--seat);font-size:12px}
+.prices thead th{color:var(--seat);font-size:var(--fs-meta)}
 .prices td,.prices thead th:last-child{text-align:end}
 .prices td .p{justify-content:flex-end}
-.prices td .p .num,.prices td .p b{font-size:17px}
+.prices td .p .num,.prices td .p b{font-size:var(--fs-time)}
 @media (min-width:1024px){
-  .clist a{font-size:26px}
   .srow{grid-template-columns:minmax(12rem,20rem) minmax(0,1fr);gap:8px 40px}
   .sf{flex-direction:column;justify-content:flex-start}
-  .sf .t{font-size:26px}
-  .row .nm{font-size:26px}
-  .split{grid-template-columns:minmax(0,1fr) 360px;gap:56px;align-items:start;margin-block-start:10px}
+  .split{grid-template-columns:minmax(0,1fr) 360px;gap:56px;align-items:start;margin-block-start:12px}
   .split .ticket{margin-block-start:36px}
   .cf{grid-template-columns:96px minmax(0,1fr);gap:20px}
-  .cf-b h3{font-size:28px}
 }
-.cin-h{padding-block:18px 0}
+.cin-h{padding-block:16px 0}
 /* long schedules: a row far below the fold is not laid out or painted until it comes near (Lighthouse's
    main-thread time was two thirds style + layout on a busy cinema page). Paint containment clips at the
    padding box, so each row gets 4 px of inline padding back from a negative margin: a time button's focus

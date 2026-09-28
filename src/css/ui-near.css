@@ -1,49 +1,48 @@
 /* «الحين» and «يبدأ قريب منك»: the near line, the flip tiles, the near row's cards (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
 /* ------------------------------------------------ what is left of «أنا في … وعندي» (Kit.me): the near line and «الحين» */
-.me{position:relative;display:flex;flex-direction:column;gap:8px;padding-block-start:10px}
-.me .near-m{font-size:13px;color:var(--seat)}
-/* «الحين»: the nearest show starting soon, its time on flip tiles */
-.now{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;margin-block-start:6px;background:var(--tint);text-decoration:none;color:var(--screen)}
+.me{position:relative;display:flex;flex-direction:column;gap:8px;padding-block-start:8px}
+.me .near-m{font-size:var(--fs-meta);color:var(--seat)}
+/* «الحين»: the nearest show starting soon, its time on flip tiles (20 px, 2 px night gaps; the colon is the dull part) */
+.now{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;margin-block-start:8px;background:var(--tint);text-decoration:none;color:var(--screen)}
 /* with script, the slot is laid out (invisible) before the city's shows arrive: no shift when it fills */
 .js .now[data-now][hidden]{display:flex;visibility:hidden}
 .now.quiet .now-l{color:var(--seat)}
 .now-tx{display:flex;flex-direction:column;gap:2px;min-inline-size:0}
-.now-l{font-size:12px;color:var(--live)}
-.now-f{font-size:14px;font-weight:500}
-.now-w{font-size:12px;color:var(--seat)}
+.now-l{font-size:var(--fs-meta);color:var(--live)}
+.now-f{font-size:var(--fs-title);font-weight:500}
+.now-w{font-size:var(--fs-meta);color:var(--seat)}
 .now-f,.now-w{min-block-size:1.6em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* one line each: a fixed-height slot */
-.flip{display:flex;gap:3px;flex:0 0 auto}
-.flip .d{min-inline-size:22px;block-size:34px;display:flex;align-items:center;justify-content:center;background:var(--tile);color:var(--screen);font-weight:600;font-size:19px;
+.flip{display:flex;gap:2px;flex:0 0 auto}
+.flip .d{min-inline-size:22px;block-size:34px;display:flex;align-items:center;justify-content:center;background:var(--tile);color:var(--screen);font-weight:600;font-size:20px;
   background-image:linear-gradient(transparent 49%,rgba(0,0,0,.95) 50%,transparent 51%)}
-.flip .c{color:var(--gold);font-weight:600;font-size:19px;align-self:center}
-.flip .d.go{animation:flip .45s var(--ease)}
+.flip .c{color:var(--seat);font-weight:600;font-size:20px;align-self:center}
+.flip .d.go{animation:flip .36s steps(4,end)}
 @media (min-width:1024px){
-  .now-f{font-size:14px;font-weight:400}
-  .flip .d{min-inline-size:24px;block-size:38px;font-size:21px}
-  .flip .c{font-size:21px}
-  .me-city{flex-direction:row;flex-wrap:wrap;align-items:center;gap:14px 20px}
+  .now-f{font-weight:400}
+  .flip .d{min-inline-size:24px;block-size:38px}
+  .me-city{flex-direction:row;flex-wrap:wrap;align-items:center;gap:16px 20px}
   .me-city .now{margin:0;margin-inline-start:auto}
 }
 @media (prefers-reduced-motion:reduce){
   .flip .d.go{animation:none}
 }
-.near{align-items:baseline;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--seat)}
-.near .lnk{min-block-size:44px;font-size:14px}
+.near{align-items:baseline;flex-wrap:wrap;gap:4px 12px;font-size:var(--fs-meta);color:var(--seat)}
+.near .lnk{min-block-size:44px}
 .near-m:empty{display:none}
 /* «يبدأ قريب منك»: small poster, the time with «بعد N» in live green, the film, the cinema and how far */
-.nr{inline-size:250px;display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:center;padding:10px;background:var(--tint);text-decoration:none;color:var(--screen)}
+.nr{inline-size:250px;display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;align-items:center;padding:12px;background:var(--tint);text-decoration:none;color:var(--screen)}
 .nr-p{display:block;aspect-ratio:2/3;background:#1D1517;overflow:hidden}
 .nr-p img{display:block;inline-size:100%;block-size:100%;object-fit:cover}
 .nr-b{display:flex;flex-direction:column;min-inline-size:0}
-.nr-tm{display:flex;align-items:baseline;gap:6px}
-.nr-tm b{font-size:22px;font-weight:500;line-height:1.1}
-.nr-tm small{font-size:12px;color:var(--live)}
-.nr-t{font-size:13px;margin-block-start:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nr-tm{display:flex;align-items:baseline;gap:8px}
+.nr-tm b{font-size:20px;font-weight:500;line-height:1.1}
+.nr-tm small{font-size:var(--fs-meta);color:var(--live)}
+.nr-t{font-size:var(--fs-meta);margin-block-start:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* an English title or cinema on the Arabic page: its own direction (the ellipsis at its end), lined up at the start */
 :root[dir=rtl] .nr-t{text-align:right}
 .nr-c bdi{unicode-bidi:isolate}
-.nr-c,.nr-pr{font-size:12px;color:var(--seat);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nr-pr .num{color:var(--gold);font-weight:500}
+.nr-c,.nr-pr{font-size:var(--fs-meta);color:var(--seat);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nr-pr .num{color:var(--screen);font-weight:600}
 @media (min-width:1024px){
   .nr{inline-size:250px}
 }

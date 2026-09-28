@@ -11,7 +11,6 @@ function set(k, v) { try { if (v === "" || v == null) window.localStorage.remove
 function qa(s, r) { return [].slice.call((r || document).querySelectorAll(s)); }
 function q(s, r) { return (r || document).querySelector(s); }
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
-function fmt(n) { return (Math.round(n * 100) / 100).toFixed(2); }
 function sub(s, o) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return o[k] != null ? o[k] : m; }); }
 function uae(s) { return new Date(s.length <= 16 ? s + ":00+04:00" : s); }
 function day(d) { return new Date(d.getTime() + 4 * 3600e3).toISOString().slice(0, 10); }

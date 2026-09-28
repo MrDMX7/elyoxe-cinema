@@ -80,6 +80,10 @@ class ChromeKit:
         """The header's tools (search, the city and card pills), the phone's tab bar, the footer's links and
         the two sheets the pills open. No script: the pills are links (the cinemas index, the cards page)."""
         city = page_city or "dubai"
+        # the wordmark is «سينما» in both languages (owner default D7, MASTER-PLAN §1.4): on /en/ an Arabic logotype read
+        # out as «Cinema»; og:site_name and the JSON-LD keep each language's own name (UI s_mark)
+        vals["mark"] = esc(UI["s_mark"][0])
+        vals["mark_attrs"] = f' lang="ar" aria-label="{esc(UI["s_mark"][1])}"' if lang == "en" else ""
         vals["city_name"] = esc(L(CITY[city], lang))
         vals["card_name"] = esc(L(CHROME_T["mycard"], lang))
         vals["cinemas_page"], vals["icon_search"] = P(lang, "cinemas"), icon("search")

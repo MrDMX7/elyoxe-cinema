@@ -181,7 +181,7 @@ function renderFrom(go) {
     if (b) {
       var was = pe.getAttribute("data-shown");
       pe.removeAttribute("data-aed"); pe.removeAttribute("data-wait"); pe.setAttribute("data-shown", fmt(b.pay));
-      pe.innerHTML = "<b>" + payHTML(b, go, was) + "</b>" + (b.off ? '<s class="num">' + fmt(b.aed) + "</s>" : "") + ppNote(b.r);
+      pe.innerHTML = payCell(b, go, was);
     } else if (pe.hasAttribute("data-wait")) { pe.removeAttribute("data-wait"); pe.innerHTML = priceHTML(pe, go); }
   });
 }
@@ -243,10 +243,11 @@ function renderHome(go) {
     if (!pool.length) { box.innerHTML = '<span class="fw">' + esc(sub(C.not_in_city, { city: cn })) + "</span>"; return; }
     if (!b) { box.innerHTML = '<span class="na">' + esc(C.box) + "</span>"; return; }
     var pe = q(".p", box), was = pe && pe.getAttribute("data-shown");
-    var cell = '<span class="p" data-shown="' + fmt(b.pay) + '"><b>' + payHTML(b, go, was) + "</b>" + (b.off ? '<s class="num">' + fmt(b.aed) + "</s>" : "") + ppNote(b.r) + "</span>";
+    var cell = '<span class="p" data-shown="' + fmt(b.pay) + '">' + payCell(b, go, was) + "</span>";
     box.innerHTML = AR ? esc(TX.from) + " " + cell + " " + esc(C.aed) + asofNote(b.s.asof) : esc(TX.from) + " " + esc(C.aed) + " " + cell + asofNote(b.s.asof);
   });
   renderFrom(go);
   sortRows(count);
   applyFilters();
+  lows();
 }

@@ -11,7 +11,7 @@
   plug-in types Page, Emit, NavItem, Plugin — what a module's register(site) returns (docs/PLUGINS.md)
 
 build.py (the loader) is `class Site(Kit)`; page modules never import build."""
-import colorsys, datetime as dt, hashlib, html, json, os, re, shutil, sys
+import colorsys, datetime as dt, hashlib, html, json, math, os, re, shutil, sys, unicodedata
 from dataclasses import dataclass, field
 from typing import Callable
 from urllib.parse import quote
@@ -230,7 +230,14 @@ def dates(h):
 
 
 def money(x):
-    return f"{float(x):.2f}"
+    """A price as the site prints it (MASTER-PLAN §1.4): «42» for whole dirhams, «33.60» only when there are fils (a
+    card's percentage makes them real). Rounded to the fils half up, exactly as src/js/pure.js fmt() rounds
+    (Math.round), so a price the build wrote and one the browser rewrote after a card always read the same
+    (tests/test_w1_p2.py holds the twins equal). Used for the data-aed attributes too: the script reads them as numbers."""
+    v = float(x) * 100
+    k = math.floor(v)
+    if v - k >= 0.5: k += 1
+    return str(k // 100) if k % 100 == 0 else f"{k / 100:.2f}"
 
 
 def num(x, cls="num"):
@@ -627,6 +634,16 @@ class Kit(MediaKit, TileKit, SchedKit, TicketKit, ChromeKit, FiltersKit):
     def show_key_of(self, s):
         """Kit.show_key for a show as the data has it (its hall key from Kit.hkey)."""
         return self.show_key(s["cinema"], s["date"], s["time"], self.hkey(s))
+
+    @staticmethod
+    def tsize(title):
+        """A display title's size by its length (MASTER-PLAN §1.4), in px: ≤ 12 characters 64, ≤ 20 48, ≤ 30 38, else 32.
+        Titles are sized, never clamped: the page sets it as style="--tsize:64px" on the billboard's and the film
+        hero's title (W2-P1, W2-P3), and the stylesheet caps it by the width (min(var(--tsize), 16vw); ×1.5 up to 96
+        on a desktop), so a title of 12 characters stays on one line on a 360 px phone and on a 320 px page.
+        Characters are what a reader counts: marks (harakat, the shadda) and the joiners add nothing."""
+        n = sum(1 for ch in str(title or "").strip() if unicodedata.category(ch) not in ("Mn", "Me", "Cf"))
+        return 64 if n <= 12 else 48 if n <= 20 else 38 if n <= 30 else 32
 
     @staticmethod
     def week_phase(now):

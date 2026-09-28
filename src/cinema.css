@@ -1,26 +1,47 @@
-/* «سينما» — design «هـ»: the night of a cinema hall. Night ground, a velvet glow behind headlines, marquee gold
-   for prices, the verdict word and the selected state ONLY, screen light for text and ticket paper, seat grey
-   for what is secondary, live green for «starting now» and switches that are on — nothing else.
-   Markazi Text 700 sets Arabic display; Readex Pro sets body, English, every number and time.
-   Brief: no rounded boxes, no drop-shadow cards (one exception: the hero poster's velvet glow), no all-caps,
-   no numbered eyebrows, no arrows glued to links, no middle-dot fact strings. Logical properties only. */
-@font-face{font-family:"Markazi Text";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/markazi-700-arabic.woff2) format("woff2");unicode-range:U+0020,U+00A0,U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
-@font-face{font-family:"Markazi Text";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/markazi-700-latin.woff2) format("woff2");unicode-range:U+0000-001F,U+0021-009F,U+00A1-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
-@font-face{font-family:"Readex Pro";font-style:normal;font-weight:300 600;font-display:swap;src:url(fonts/readex-arabic.woff2) format("woff2");unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
-@font-face{font-family:"Readex Pro";font-style:normal;font-weight:300 600;font-display:swap;src:url(fonts/readex-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+/* «سينما» — a cinema hall at night (MASTER-PLAN §1). Every colour is a light in the hall: night is the ground, screen
+   light the text, seat grey what is secondary, velvet the seats and the curtain («احجز», the active tab, a pressed
+   time), live green only "now", and gold the usher's torch: it lights only what is YOURS (your price after a card,
+   with no card the one cheapest price of a row or table, «يستاهل», what you chose, the wordmark). Colons in times
+   are the dull part (seat grey). Paper (ui-paper.css) is the stub's material: ink on screen light.
+   Markazi Text 700 sets Arabic display only; Readex Pro sets body, English and every number, always tabular and
+   lining. Seven type steps (--fs-*), a 4-pt space grid (--s*), three curves (--ease-*).
+   Brief: no rounded boxes, no drop-shadow cards (one exception: the lit poster's glow in its own colour), no all-caps,
+   no numbered eyebrows, no middle-dot fact strings, no letter-spacing on Arabic. Logical properties only. */
+@font-face{font-family:"Markazi Text";font-weight:700;font-display:swap;src:url(fonts/markazi-700-arabic.woff2) format("woff2");unicode-range:U+0020,U+00A0,U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+/* Markazi draws numerals only at display size, from its own ~1 KB face (0–9 and the colon, tools/subset_digits.py):
+   a rank numeral, the Thursday date, the leader. Its Latin face is never set: a Latin title, a verdict's full stop
+   and every other Latin character in a Markazi run fall to Readex (already loaded for every price), so a Latin title
+   on an Arabic page is Readex 600 and the 15.7 KB Latin face never loads on an Arabic page (§1.4, §7.1) */
+@font-face{font-family:"Markazi Text";font-weight:700;font-display:swap;src:url(fonts/markazi-700-digits.woff2) format("woff2");unicode-range:U+0030-003A}
+/* the Arabic wordmark on /en/ (owner default D7): its five letters only */
+@font-face{font-family:"Markazi Mark";font-weight:700;font-display:swap;src:url(fonts/markazi-700-mark.woff2) format("woff2");unicode-range:U+0627,U+0633,U+0645,U+0646,U+064A}
+@font-face{font-family:"Readex Pro";font-weight:300 600;font-display:swap;src:url(fonts/readex-arabic.woff2) format("woff2");unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+0890-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:"Readex Pro";font-weight:300 600;font-display:swap;src:url(fonts/readex-latin.woff2) format("woff2");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
 :root{
-  --night:#0F0B0C; --velvet:#7A1626; --gold:#E2B659; --gold-hi:#F3D38A; --screen:#F1EAE0; --seat:#A89C8E;
-  --live:#5FC9A0; --ink:#1A1206; --rule-t:#B9A987; --paper-2:#E6DBC9; --ink-2:#5C4F3E; --ink-3:#8C7F6A; --rule-p:#DCCFB8;
-  --dim:#C9BDAE; --line:rgba(241,234,224,.12); --line-2:rgba(241,234,224,.22); --tint:rgba(241,234,224,.06); --tile:#070506;
+  --night:#0F0B0C; --velvet:#7A1626; --gold:#E2B659; --gold-hi:#F3D38A; --screen:#F1EAE0; --seat:#A89C8E; --dim:#C9BDAE;
+  --live:#5FC9A0; --tile:#070506; --vnight:#140B0D;
+  --line:rgba(241,234,224,.12); --line-2:rgba(241,234,224,.22); --tint:rgba(241,234,224,.06);
+  /* paper: ink on screen light, a rule for perforations and frames, the marquee's lit-from-inside ends */
+  --ink:#1A1206; --ink-2:#5A4A33; --ink-3:#8C7F6A; --rule:#B9A987; --rule-t:var(--rule); --rule-p:#DCCFB8; --paper-2:#E6DBC9;
+  --paper-hi:#FFF9EF; --paper-lo:#E7DCCB;
+  /* type: seven steps (§1.4). Titles are set by length (--tsize from Kit.tsize), capped by the width, never clamped */
+  --fs-hero:clamp(38px,12vw,64px); --fs-h1:clamp(32px,8vw,48px); --fs-h2:28px; --fs-title:16px; --fs-body:16px; --fs-meta:13px; --fs-time:17px;
+  --lh-body:1.75;
   --display:"Markazi Text","Readex Pro",serif; --dw:700; --body:"Readex Pro","Segoe UI",system-ui,sans-serif;
-  --gut:20px; --max:1440px; --head:58px; --ease:cubic-bezier(.2,.7,.2,1);
+  /* space: a 4-pt grid; a phone's gutter is 16 */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
+  --gut:16px; --max:1440px; --head:56px;
+  /* motion (§1.3): arriving, sheets, light */
+  --ease-out:cubic-bezier(.19,1,.22,1); --ease-sheet:cubic-bezier(.32,.72,0,1); --ease-house:cubic-bezier(.65,0,.35,1); --ease:var(--ease-out);
   color-scheme:dark;
 }
-:root[lang=en]{--display:"Readex Pro","Segoe UI",sans-serif; --dw:600}
+:root[lang=en]{--display:"Readex Pro","Segoe UI",sans-serif; --dw:600; --lh-body:1.55}
+/* a screen that shows more than sRGB: the same two lights, a little richer (gold on night stays 10:1) */
+@media (color-gamut:p3){:root{--gold:color(display-p3 .86 .71 .36); --velvet:color(display-p3 .44 .09 .13)}}
 *,*::before,*::after{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
-body{margin:0;background:var(--night);color:var(--screen);font-family:var(--body);font-weight:400;font-size:15px;line-height:1.6;
-  min-block-size:100vh;overflow-x:clip;position:relative;padding-block-end:calc(60px + env(safe-area-inset-bottom))}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--night);color:var(--screen);font-family:var(--body);font-weight:400;font-size:var(--fs-body);line-height:1.5;
+  font-variant-numeric:tabular-nums lining-nums;min-block-size:100vh;overflow-x:clip;position:relative;padding-block-end:calc(60px + env(safe-area-inset-bottom))}
 /* the velvet glow: drawn inside the page's width (an overhanging box would widen a phone's layout viewport) */
 body::before{content:"";position:absolute;inset-block-start:0;inset-inline:0;block-size:320px;
   background:radial-gradient(280px 220px at var(--gx) 100px,rgba(122,22,38,.6),rgba(15,11,12,0));pointer-events:none;z-index:0}
@@ -34,12 +55,15 @@ a{color:inherit;text-decoration-color:var(--seat);text-decoration-thickness:1px;
 a:hover{text-decoration-color:var(--screen)}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 button{font:inherit;color:inherit}
-h1,h2,h3{margin:0;font-weight:var(--dw);font-family:var(--display);line-height:1.15}
+h1,h2,h3{margin:0;font-weight:var(--dw);font-family:var(--display);line-height:1.15;text-wrap:balance}
 p{margin:0}
-.num{font-family:var(--body);font-variant-numeric:tabular-nums}
+.num{font-family:var(--body)}
 span.num[dir=ltr],bdi.num{unicode-bidi:isolate}
+/* an English run on an Arabic page (a Latin title, a hall's name) is set whole in Readex: in a Markazi title it draws at
+   600, Readex's heaviest, and neither Markazi's space nor its colon (the digits face) gets into it (§1.4) */
+:root[lang=ar] [lang=en]{font-family:var(--body)}
 .vh{position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.skip{position:absolute;inset-inline-start:8px;inset-block-start:-60px;z-index:50;background:var(--screen);color:var(--night);padding:10px 14px;text-decoration:none}
+.skip{position:absolute;inset-inline-start:8px;inset-block-start:-60px;z-index:50;background:var(--screen);color:var(--night);padding:8px 16px;text-decoration:none}
 .skip:focus{inset-block-start:8px}
 /* [hidden] means hidden, whatever display a component's own rule sets (W1-P1: this one rule replaces 21 one-off
    «X[hidden]{display:none}» patches). A slot the script fills later keeps its place instead: data-hold lays it out
@@ -47,68 +71,78 @@ span.num[dir=ltr],bdi.num{unicode-bidi:isolate}
 :where([hidden]:not([data-hold])),:where(:root:not(.js) [hidden]){display:none!important}
 .js-only{display:none!important}
 .js .js-only{display:flex!important}
-.nojs{margin-block-start:10px;font-size:14px}
 .wrap{max-inline-size:var(--max);margin-inline:auto;padding-inline:var(--gut)}
 [lang=en] .pst-t,[lang=en] .ft{letter-spacing:-.01em}
 /* ------------------------------------------------ buttons and chips */
-.btn{min-block-size:52px;padding-inline:22px;display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-size:16px;border:0}
+.btn{min-block-size:52px;padding-inline:24px;display:inline-flex;align-items:center;gap:12px;text-decoration:none;font-size:var(--fs-body);border:0}
 .btn.light{background:var(--screen);color:var(--night);font-weight:600}
 .btn.light .from{font-weight:400}
 .btn.light .p .num,.btn.light .p b{color:var(--night)}
 .btn.ghost{background:rgba(241,234,224,.12);color:var(--screen)}
-.chips{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}
+/* «احجز» and every call to act: velvet, screen light on it (8.9:1); a price on it stays screen light, gold once it is
+   yours (5.6:1), and the struck one is paragraph light (seat grey would be 4:1 there) */
+.btn.velvet{background:var(--velvet);color:var(--screen);font-weight:500;justify-content:center}
+.btn.velvet .p s.num{color:var(--dim)}
+.chips{display:flex;gap:8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;overscroll-behavior-x:contain}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:0 0 auto;min-block-size:40px;padding-inline:12px;display:inline-flex;align-items:center;background:transparent;color:var(--screen);
-  border:1px solid var(--line-2);font-family:inherit;font-size:13px;white-space:nowrap;cursor:pointer}
+  border:1px solid var(--line-2);font-family:inherit;font-size:var(--fs-meta);white-space:nowrap;cursor:pointer}
+/* a chip steps one shade while pressed; a chosen one keeps its light (the rule after this one wins) */
+.chip:active{background:var(--tint)}
 .chip[aria-pressed=true]{background:var(--screen);color:var(--night);border-color:var(--screen);font-weight:600}
 .filters .chip{border:0;padding-inline:0;min-block-size:36px;color:var(--seat);background:none}
 .filters .chip[aria-pressed=true]{color:var(--screen);font-weight:400;background:none}
-.filters{gap:14px}
-/* a price digit that changed with the card turns over, one after another */
-.fd{display:inline-block;animation:flip .5s var(--ease) both;animation-delay:calc(var(--i) * 45ms);transform-origin:50% 50%}
+.filters{gap:16px}
+/* press (§1.3): what the thumb touches most goes down to .97 at once and comes back in 140 ms, never sliding; a
+   chip steps one shade, a time fills velvet (ui-sched.css). Colour and press only: days, times, chips and tabs never move; under
+   reduced motion nothing scales (the colour still changes) */
+.btn,.chip,.opt,.tm,.tp,.film .pst,.dk-b{transition:transform .14s var(--ease-out)}   /* a tab's own: ui-tabs.css */
+@media (prefers-reduced-motion:no-preference){:is(.btn,.chip,.opt,.tm,.tabs a,.dk-b):active,.tile:active .tp,.film:active .pst{transform:scale(.97);transition-duration:0s}}
+@media (hover:none){.tile:active .tp,.film:active .pst{opacity:.85}}
+/* a price digit that changed with the card rolls over, one after another (the savings flip) */
+.fd{display:inline-block;animation:flip .35s var(--ease-out) both;animation-delay:calc(var(--i) * 20ms);transform-origin:50% 50%}
 @keyframes flip{0%{transform:rotateX(90deg)}100%{transform:none}}
-/* prices: gold is the price you pay; the old one is struck in seat grey */
-.p{display:inline-flex;align-items:baseline;flex-wrap:wrap;gap:0 6px;white-space:nowrap}
-.p .num,.p b,.pv .num{color:var(--gold);font-weight:600;font-family:var(--body)}
-.p s{color:var(--seat);font-size:.7em;font-weight:400;order:2}
-.p small{flex-basis:100%;color:var(--seat);font-size:11px;font-weight:400;white-space:normal}
-.per,.asof{color:var(--seat);font-size:11px;font-weight:400}
-.na{color:var(--seat);font-size:13px}
+/* prices (§1.5): a list price is screen light, 600, its currency seat grey; gold is YOURS: the price after your card
+   (a cell with a struck list price) or, with no card, the one cheapest price of a row or table (.lo: kit/tile.py for
+   the first paint, prices.js lows() after every repricing). The struck price comes after, with a gap, never glued, and
+   always the dull part: s.num outranks .p .num wherever a price sits */
+.p{display:inline-flex;align-items:baseline;flex-wrap:wrap;gap:0 8px;white-space:nowrap}
+.p .num,.p b,.pv .num{color:var(--screen);font-weight:600;font-family:var(--body)}
+.p:has(s) b,.p.lo .num,.p.lo b{color:var(--gold)}
+.p s.num{color:var(--seat);font-size:var(--fs-meta);font-weight:400;order:2}
+.p small{flex-basis:100%;color:var(--seat);font-size:var(--fs-meta);font-weight:400;white-space:normal}
+.per,.asof,.na,.fw{color:var(--seat);font-size:var(--fs-meta);font-weight:400}
 /* ------------------------------------------------ page heads (city, cinema, cards, halls) */
-.head{padding-block:18px 6px}
-.crumbs{font-size:12px;color:var(--seat);margin-block-end:8px}
+.head{padding-block:16px 8px}
+.crumbs{font-size:var(--fs-meta);color:var(--seat);margin-block-end:8px}
 .crumbs a{color:var(--seat);text-decoration:none}
 .crumbs a:hover{color:var(--screen)}
-.pt{font-size:40px;line-height:1.1;max-inline-size:20ch}
-[lang=en] .pt{font-size:32px;letter-spacing:-.02em}
-.lead{color:var(--dim);font-size:15px;max-inline-size:62ch;margin-block-start:10px}
-.head .meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--seat);margin-block-start:10px}
+.pt{font-size:var(--fs-h1);line-height:1.1;max-inline-size:20ch}
+[lang=en] .pt{letter-spacing:-.02em}
+.lead{color:var(--dim);font-size:var(--fs-body);line-height:var(--lh-body);max-inline-size:62ch;margin-block-start:12px}
+.head .meta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:var(--fs-meta);color:var(--seat);margin-block-start:12px}
 .go a{color:var(--screen)}
-.hint{color:var(--seat);font-size:13px;margin-block-start:10px}
-main > section:not(.bill):not(.rail):not(.all):not(.head):not(.fhero):not(.fsched),main > .wrap > section,.split .main > section{margin-block-start:36px}
-main > section:not(.fsched) > h2,.main > section > h2,.cities > h2,.srcs > h2{font-size:26px;padding-block-end:10px;margin-block-end:4px;border-block-end:1px solid var(--line)}
-h2 small{font-family:var(--body);font-weight:400;font-size:13px;color:var(--seat)}
+.hint{color:var(--seat);font-size:var(--fs-meta);margin-block-start:12px}
+main > section:not(.bill):not(.rail):not(.all):not(.head):not(.fhero):not(.fsched),main > .wrap > section,.split .main > section{margin-block-start:var(--s6)}
+main > section:not(.fsched) > h2,.main > section > h2,.cities > h2,.srcs > h2{font-size:var(--fs-h2);padding-block-end:12px;margin-block-end:4px;border-block-end:1px solid var(--line)}
+h2 small{font-family:var(--body);font-weight:400;font-size:var(--fs-meta);color:var(--seat)}
 /* the 404's head (before the desktop block below, whose .head padding wins there, as it always did) */
-.nf{padding-block:60px}
-.prayer{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--seat);margin-inline-start:auto}
-.switch{inline-size:50px;block-size:28px;padding:3px;border:0;display:flex;justify-content:flex-start;background:rgba(241,234,224,.2);cursor:pointer}
-.switch i{display:block;inline-size:22px;block-size:22px;background:var(--night)}
+.nf{padding-block:64px}
+.prayer{display:flex;align-items:center;gap:12px;font-size:var(--fs-meta);color:var(--seat);margin-inline-start:auto}
+.switch{inline-size:48px;block-size:28px;padding:4px;border:0;display:flex;justify-content:flex-start;background:rgba(241,234,224,.2);cursor:pointer}
+.switch i{display:block;inline-size:20px;block-size:20px;background:var(--night)}
 .switch[aria-checked=true]{background:var(--live);justify-content:flex-end}
 /* small text links still get a 24 px target (WCAG 2.5.8) */
 a.src,.crumbs a,.hall .where a{display:inline-flex;align-items:center;min-block-size:24px}
 @media (min-width:1024px){
 /* ------------------------------------------------ desktop (E-Desk-*) */
   :root{--gut:64px;--head:70px}
-  body{font-size:16px;padding-block-end:0}
+  body{padding-block-end:0}
   body::before{block-size:400px;background:radial-gradient(400px 260px at var(--gx) 120px,rgba(122,22,38,.55),rgba(15,11,12,0))}
   :root[dir=rtl]{--gx:calc(100% - 300px)}
   :root[dir=ltr]{--gx:300px}
-  .pt{font-size:64px;line-height:1}
-  [lang=en] .pt{font-size:52px}
-  .head{padding-block:34px 10px}
-  .lead{font-size:16px}
-  main > section:not(.fsched) > h2,.main > section > h2,.cities > h2,.srcs > h2,.day > h2{font-size:34px}
-  .prayer{font-size:14px}
+  .pt{line-height:1}
+  .head{padding-block:32px 12px}
 }
 :root[dir=rtl]{--to-end:left;--gx-end:20%}
 :root[dir=ltr]{--to-end:right;--gx-end:80%}
@@ -119,9 +153,9 @@ a.src,.crumbs a,.hall .where a{display:inline-flex;align-items:center;min-block-
 .x{display:none!important}
 .lnk{background:none;border:0;padding:0;color:var(--screen);text-decoration:underline;text-decoration-color:var(--seat);text-underline-offset:.2em;cursor:pointer;font:inherit}
 .lnk:hover{text-decoration-color:var(--screen)}
-.btn.main{background:var(--screen);color:var(--night);font-weight:500;min-block-size:48px;font-size:15px;justify-content:center}
-.btn.main .from{display:inline-flex;align-items:baseline;gap:6px;margin-inline-start:6px;color:var(--velvet);font-weight:600}
+.btn.main{background:var(--screen);color:var(--night);font-weight:500;min-block-size:48px;font-size:var(--fs-body);justify-content:center}
+.btn.main .from{display:inline-flex;align-items:baseline;gap:8px;margin-inline-start:8px;color:var(--velvet);font-weight:600}
 .btn.main .p .num,.btn.main .p b{color:var(--velvet)}
-.btn.main .p s{color:var(--ink-3)}
+.btn.main .p s.num{color:var(--ink-2)}
 .btn.main .p small{display:none}
 .btn svg{flex:0 0 auto}

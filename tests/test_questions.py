@@ -118,7 +118,7 @@ def test_price_answer_above_the_floor(out):
     h = read(out, "q", "cinema-ticket-price-dubai", "index.html")
     assert "كم سعر تذكرة السينما العادية في دبي؟" in h
     a = faq(h)["acceptedAnswer"]["text"]
-    assert f"{want:.2f}" in a and build.human_date(day, "ar") in a
+    assert build.money(want) in a and build.human_date(day, "ar") in a       # «45», not «45.00» (W1-P2)
     assert 'href="/prices/"' in h and re.search(r'href="/dubai/[a-z0-9-]+/"', h) and 'data-aed="' in h
     en = read(out, "en", "q", "cinema-ticket-price-dubai", "index.html")
     assert "How much is a cinema ticket in Dubai?" in en and build.human_date(day, "en") in faq(en)["acceptedAnswer"]["text"]

@@ -1,0 +1,99 @@
+<!doctype html>
+<!-- The FINAL first screen of home on a phone (MASTER-PLAN §2.1, §1.5, §7.3 #8): the header, «الشاشة» (billboard, lit case
+     track empty), the board's head and its 3 rows, as Wave 2 draws them (W2-P1, W2-P2). W1-P2 gates gold against it from
+     the start: tools/check_w1_p2.cjs serves it beside a build, so every colour here comes from THAT build's stylesheet
+     (/assets/cinema.css). The inline <style> below lays the stand-in parts out with the tokens; it never sets gold.
+     Designed: 3 gold text nodes with no card (the wordmark, «يستاهل.», the board's single cheapest price), 6 with Fazaa
+     (+ the CTA's after-card price and the three rows' after-card prices); 0 gold colons. ?card=fazaa shows the second.
+     Data: real shows of Sunday 27 September 2026, 20:40, Dubai. -->
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>first screen (fixture)</title>
+<link rel="stylesheet" href="/assets/cinema.css">
+<style>
+  .fx-bill{block-size:clamp(440px,72svh,640px);display:grid;grid-template-rows:minmax(120px,1fr) auto}
+  .fx-case{align-self:end;justify-self:center;inline-size:auto;block-size:clamp(180px,27svh,240px);aspect-ratio:2/3}
+  .fx-door{display:flex;align-items:center;min-block-size:44px;font-size:var(--fs-meta);color:var(--seat)}
+  .fx-board-h{display:flex;justify-content:space-between;align-items:flex-start;block-size:56px}
+  .fx-board-h h2{line-height:1}
+  .fx-sub{display:flex;align-items:center;gap:8px;font-size:var(--fs-meta);color:var(--seat)}
+  .fx-sq{inline-size:6px;block-size:6px;background:var(--live)}
+  .fx-rows{block-size:168px;overflow:hidden}
+  .fx-row{text-decoration:none;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;block-size:56px;border-block-end:1px solid var(--line)}
+  .fx-row .flip .d{block-size:28px;min-inline-size:16px}
+  .fx-m{display:flex;flex-direction:column;min-inline-size:0}
+  .fx-f{font-size:var(--fs-title);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fx-c{font-size:var(--fs-meta);color:var(--seat);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fx-e{display:flex;flex-direction:column;align-items:flex-end}
+  .fx-e .p{font-size:var(--fs-time)}
+  .fx-soon{font-size:var(--fs-meta);color:var(--live)}
+</style>
+<script>
+  /* ?card=fazaa: the same screen after the visitor chose Fazaa */
+  document.documentElement.setAttribute("data-card", /[?&]card=fazaa/.test(location.search) ? "fazaa" : "");
+</script>
+</head>
+<body data-page="home" data-hero>
+<header class="top"><div class="wrap top-in">
+  <a class="mark" href="/">سينما</a>
+  <div class="tools">
+    <button type="button" class="icon srch-b" aria-label="بحث"></button>
+    <a class="pill" href="/cinemas/"><span>دبي</span></a>
+    <a class="pill" href="/cards/"><span data-v="nocard">بطاقتي</span><span data-v="fazaa">فزعة</span></a>
+  </div>
+</div></header>
+<main id="main">
+  <section class="fx-bill" aria-label="الشاشة" style="margin-block-start:calc(-1 * var(--head))">
+    <div class="fx-case pst" style="--pc:#2C3A25"></div>
+    <div class="wrap">
+      <p class="eyebrow" style="font-size:var(--fs-meta);color:var(--seat)">الأكثر عرضاً الليلة</p>
+      <h2 class="bill-t" style="--tsize:64px"><a href="/film/heart-of-the-beast/">قلب الوحش</a></h2>
+      <p class="bill-v"><b class="v-yes">يستاهل.</b> براد بيت مع كلبه أودين في رحلة نجاة بأدغال ألاسكا، وقلب الوحش ياب بتقييم نقاد عالي.</p>
+      <div class="cta">
+        <a class="btn velvet" href="/film/heart-of-the-beast/">الأوقات والأسعار
+          <span class="from">من <span class="p" data-v="nocard"><span class="num">42</span></span><span class="p" data-v="fazaa"><b>33.60</b> <s class="num">42</s></span></span></a>
+        <a class="btn ghost" href="#" aria-label="الإعلان"></a>
+      </div>
+      <p class="fx-door"><span data-v="nocard">السعر بدون بطاقة</span><span data-v="fazaa">السعر بعد خصم فزعة</span></p>
+    </div>
+  </section>
+  <section class="wrap" id="now" aria-labelledby="board-h" style="margin-block-start:0">
+    <div class="fx-board-h">
+      <div>
+        <h2 id="board-h">يبدأ قريب منك</h2>
+        <p class="fx-sub"><i class="fx-sq"></i>دبي، الحين <span class="flip" dir="ltr"><span class="d">2</span><span class="d">0</span><span class="c">:</span><span class="d">4</span><span class="d">0</span></span></p>
+      </div>
+      <button type="button" class="btn ghost">اختار لي</button>
+    </div>
+    <div class="fx-rows" data-lo>
+      <a class="fx-row" href="/film/resident-evil/#s-1a2b3c">
+        <span class="flip" dir="ltr"><span class="d">2</span><span class="d">0</span><span class="c">:</span><span class="d">4</span><span class="d">5</span></span>
+        <span class="fx-m"><bdi class="fx-f">ريزدنت ايفل</bdi><span class="fx-c">ستار مركز الغرير، 2.1 كم</span></span>
+        <span class="fx-e"><span class="fx-soon">بعد 5 د</span>
+          <span class="p" data-v="nocard"><span class="num">52.50</span></span><span class="p" data-v="fazaa"><b>42</b> <s class="num">52.50</s></span></span>
+      </a>
+      <a class="fx-row" href="/film/heart-of-the-beast/#s-2b3c4d">
+        <span class="flip" dir="ltr"><span class="d">2</span><span class="d">0</span><span class="c">:</span><span class="d">5</span><span class="d">0</span></span>
+        <span class="fx-m"><bdi class="fx-f">قلب الوحش</bdi><span class="fx-c">فوكس سيتي سنتر مردف، 4.8 كم</span></span>
+        <span class="fx-e"><span class="fx-soon">بعد 10 د</span>
+          <span class="p lo" data-v="nocard"><span class="num">42</span></span><span class="p" data-v="fazaa"><b>33.60</b> <s class="num">42</s></span></span>
+      </a>
+      <a class="fx-row" href="/film/the-paradise/#s-3c4d5e">
+        <span class="flip" dir="ltr"><span class="d">2</span><span class="d">1</span><span class="c">:</span><span class="d">0</span><span class="d">0</span></span>
+        <span class="fx-m"><bdi class="fx-f" dir="ltr">The Paradise</bdi><span class="fx-c">فوكس برجمان، 6.3 كم</span></span>
+        <span class="fx-e"><span class="fx-soon">بعد 20 د</span>
+          <span class="p" data-v="nocard"><span class="num">47</span></span><span class="p" data-v="fazaa"><b>37.60</b> <s class="num">47</s></span></span>
+      </a>
+    </div>
+  </section>
+</main>
+<nav class="tabs" aria-label="الأقسام"><a href="/" aria-current="page"><span>الرئيسية</span></a><a href="/cinemas/"><span>السينمات</span></a><a href="/coming/"><span>نازل قريب</span></a><a href="#"><span>بحث</span></a></nav>
+<script>
+  /* one variant at a time: the other's nodes leave the page */
+  var v = document.documentElement.getAttribute("data-card") ? "nocard" : "fazaa";
+  [].forEach.call(document.querySelectorAll('[data-v="' + v + '"]'), function (el) { el.remove(); });
+</script>
+</body>
+</html>

@@ -4,6 +4,9 @@ they were by W1-P1). Owner: W1-P2, then W2-P4 (MASTER-PLAN §6.2).
 A mixin of site_kit.Kit: `self` is the site. Imported by site_kit after its helpers are defined."""
 from site_kit import *  # noqa: F401,F403  (the helpers these methods were written against)
 
+# a row's price cells as Kit.pcell writes them (before any card: the list price)
+LO_CELL = re.compile(r'<span class="p" data-aed="([0-9.]+)"')
+
 
 class TileKit:
     def film_tile(self, fid, lang, shows, big=False, i=99, live=False, row=False, tag=None):
@@ -73,6 +76,17 @@ class TileKit:
         return (f'<section class="all wrap"{sec}>{head}<div class="grid" data-films>{tiles}</div>'
                 f'<p class="empty" data-empty hidden></p></section>')
 
+    @staticmethod
+    def lo(cells):
+        """Gold is yours (MASTER-PLAN §1.5): with no card, the one cheapest price of a row is lit (class «lo»), the rest
+        are screen light. The build lights it for the first paint and for a reader with no script; src/js/prices.js
+        lows() lights it again after every repricing ([data-lo]), and a chosen card turns the after-card prices gold
+        instead. A tie lights the first, as lows() does."""
+        best = min(((float(m.group(1)), m.start()) for m in LO_CELL.finditer(cells)), default=None)
+        if best is None: return cells
+        i = best[1] + len('<span class="p')
+        return cells[:i] + " lo" + cells[i:]
+
     def rail(self, lang, key, title, tiles, sub="", more=None, attrs=""):
         """A home row (UI redesign Task 3): its heading, an optional line beside it, «الكل» when there is somewhere
         to go, and — on a desktop pointer — two arrow buttons that page the strip. The strip scrolls sideways
@@ -82,4 +96,4 @@ class TileKit:
         return (f'<section class="rail" aria-labelledby="r-{key}"{attrs}><div class="rail-h wrap"><h2 id="r-{key}">{esc(title)}</h2>'
                 + (f'<span class="sub">{sub}</span>' if sub else "")
                 + (f'<a class="all-l" href="{esc(more)}">{esc(L(HOME_T["all"], lang))}</a>' if more else "")
-                + f'{arrows}</div><div class="strip" data-strip>{tiles}</div></section>')
+                + f'{arrows}</div><div class="strip" data-strip data-lo>{self.lo(tiles)}</div></section>')

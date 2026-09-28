@@ -3,24 +3,25 @@
 html.sheet-open{overflow:hidden}
 .sh-scrim{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6)}
 .sheet{position:fixed;z-index:41;inset-inline:0;inset-block-end:0;max-block-size:86vh;overflow-y:auto;overscroll-behavior:contain;
-  background:#17100F;border-block-start:1px solid var(--line-2);padding:10px var(--gut) calc(20px + env(safe-area-inset-bottom));animation:sheet-up .28s var(--ease)}
+  background:#17100F;border-block-start:1px solid var(--line-2);padding:12px var(--gut) calc(20px + env(safe-area-inset-bottom));animation:sheet-up .28s var(--ease-sheet)}
 @keyframes sheet-up{from{transform:translateY(24px);opacity:0}}
-.grab{inline-size:40px;block-size:4px;background:var(--line-2);margin:0 auto 14px}
+.grab{inline-size:40px;block-size:4px;background:var(--line-2);margin:0 auto 12px}
 .sheet-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.sheet-h h2{font-size:24px}
+.sheet-h h2{font-size:var(--fs-h2)}
 .sheet-x{position:relative;inline-size:44px;block-size:44px;flex:0 0 auto;border:0;background:transparent;color:var(--screen);cursor:pointer;margin-inline-end:-12px}
 .sheet-x::before,.sheet-x::after{content:"";position:absolute;inset-inline-start:13px;inset-block-start:21px;inline-size:18px;block-size:2px;background:currentColor;transform:rotate(45deg)}
 .sheet-x::after{transform:rotate(-45deg)}
-.sheet .sec{padding-block:14px;border-block-end:1px solid var(--line)}
+.sheet .sec{padding-block:16px;border-block-end:1px solid var(--line)}
 .sheet .sec:last-of-type{border:0}
-.sheet .l{font-family:var(--body);font-weight:400;font-size:13px;color:var(--seat);margin-block-end:10px}
+.sheet .l{font-family:var(--body);font-weight:400;font-size:var(--fs-meta);color:var(--seat);margin-block-end:12px}
 .opts{display:flex;flex-wrap:wrap;gap:8px}
-.opt{min-block-size:40px;padding-inline:14px;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);background:transparent;
-  color:var(--screen);font:inherit;font-size:14px;text-decoration:none;cursor:pointer}
-.opt[aria-pressed=true],.opt[aria-current]{background:var(--screen);color:var(--night);border-color:var(--screen);font-weight:600}
+.opt{min-block-size:40px;padding-inline:16px;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);background:transparent;
+  color:var(--screen);font:inherit;font-size:var(--fs-title);text-decoration:none;cursor:pointer}
+/* what you chose, inside a sheet: a 1 px gold outline and gold words (gold is yours, §1.5) */
+.opt[aria-pressed=true],.opt[aria-current],.sheet .chip[aria-pressed=true]{background:none;color:var(--gold);border-color:var(--gold);font-weight:600}
 .opt svg{inline-size:18px;block-size:18px}
-.sheet .near-m{margin-block-start:10px;font-size:13px;color:var(--dim)}
-.sheet-more{padding-block-start:6px;font-size:13px}
+.sheet .near-m{margin-block-start:12px;font-size:var(--fs-meta);color:var(--dim)}
+.sheet-more{padding-block-start:8px;font-size:var(--fs-meta)}
 .sheet-more a{color:var(--dim)}
 @media (min-width:1024px){
   .sheet{inset-block:0;inset-inline:auto 0;inline-size:420px;max-block-size:none;border:0;border-inline-start:1px solid var(--line-2);
