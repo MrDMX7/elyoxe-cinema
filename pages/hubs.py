@@ -25,8 +25,9 @@ to add a third exemption there (the file already exempts the unconfirmed-discoun
 same way, one line with a comment), not to revert the page. That exemption is now in place.
 """
 import os
+import re
 
-from site_kit import NOINDEX, L, NavItem, P, Page, Pages, Plugin, esc
+from site_kit import NOINDEX, L, NavItem, P, Page, Pages, Plugin, esc, human_date
 
 TITLE_AR = ("عربي وخليجي", "Arabic & Gulf")
 TITLE_EV = ("فعاليات", "Events")
@@ -35,6 +36,11 @@ LAZY_JS = ()
 DIRS = ("arabic", "events")
 
 _ARABIC_LANGS = {"arabic", "ar"}
+
+
+def _latin_lang(text, lang):
+    """` lang="en"` for a chain's own Latin title on an Arabic page (as site_kit's hall_html marks one)."""
+    return ' lang="en"' if lang == "ar" and re.search(r"[A-Za-z]", text or "") else ""
 
 
 def register(site):
@@ -73,7 +79,21 @@ class HubPages(Pages):
         only the fids that are still real film pages (film_fid on a raw title always matches a
         real data["films"] entry once that film is merged -- see steps/events.py's docstring --
         but this stays defensive rather than assuming it)."""
-        return [ev for ev in (self.d.get("events") or []) if any(fid in self.films for fid in ev.get("fids") or [])]
+        return [ev for ev in (self.d.get("events") or [])
+                if any(fid in self.films for fid in ev.get("fids") or []) or self.event_sessions(ev["label"])]
+
+    def event_sessions(self, label):
+        """data["event_shows"] (normalize.py, W0-P4 / legend §4.1 #32): sessions of a not-a-film event
+        (Roxy's «Immersive Dining»), which are never films, so they never have a film page. Upcoming only,
+        grouped by cinema and day: [(cid, date, title, book, [times])]."""
+        out = {}
+        for e in self.d.get("event_shows") or []:
+            if e.get("event") != label or e.get("cinema") not in self.cinemas or self.is_past(e):
+                continue
+            key = (e["cinema"], e["date"])
+            row = out.setdefault(key, [e["cinema"], e["date"], e.get("title") or label, e.get("book"), []])
+            row[4].append(e["time"])
+        return [tuple(r[:4]) + (sorted(r[4]),) for _, r in sorted(out.items(), key=lambda kv: (kv[0][1], kv[0][0]))]
 
     def events_page(self, lang):
         title = L(TITLE_EV, lang)
@@ -89,6 +109,12 @@ class HubPages(Pages):
                 rows = "".join(
                     f'<div class="row"><a class="nm" href="{P(lang, "film", fid)}">{esc(self.ftitle(fid, lang))}</a></div>'
                     for fid in ev.get("fids") or [] if fid in self.films)
+                rows += "".join(
+                    f'<div class="row"><a class="nm" href="{esc(book or self.book_url({"cinema": cid}))}" '
+                    f'rel="noopener nofollow" target="_blank"><bdi{_latin_lang(t, lang)}>{esc(t)}</bdi></a><span class="sub">'
+                    f'<span>{self.cname_html(cid, lang)}</span><span>{esc(human_date(d, lang))}</span>'
+                    f'<span>{" ".join(esc(x) for x in times)}</span></span></div>'
+                    for cid, d, t, book, times in self.event_sessions(ev["label"]))
                 sections.append(f'<section class="wrap ev-block"><h2>{esc(name)}</h2><div class="rows">{rows}</div></section>')
             body = head + "".join(sections)
             graph = [self.breadcrumb_ld(lang, (title, P(lang, "events")))]
