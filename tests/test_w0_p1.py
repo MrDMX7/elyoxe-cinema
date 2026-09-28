@@ -169,8 +169,8 @@ def test_no_page_preloads_the_bundle(out):
 
 # ------------------------------------------------------------------ #7 «كل ساعة»
 def test_where_the_prices_come_from_says_every_hour(out):
-    assert "من نظام الحجز عند كل سينما، كل ساعة." in read(out, "index.html")
-    assert "From each chain’s booking system, every hour." in read(out, "en", "index.html")
+    assert "من نظام الحجز عند كل سينما: المواعيد كل ساعة، والسعر مرة باليوم لكل قاعة." in read(out, "index.html")
+    assert "From each chain’s booking system: showtimes every hour, prices once a day per hall." in read(out, "en", "index.html")
     for p in pages(out):
         h = open(p, encoding="utf-8").read()
         assert "ثلاث مرات باليوم" not in h and "three times a day" not in h, p

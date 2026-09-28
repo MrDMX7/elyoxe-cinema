@@ -90,7 +90,7 @@ class CorePages(Pages):
                         + (f'<span class="age" data-at="{esc(ch["at"])}">{esc(L(T["updated"], lang))} {esc(ago(at, self.now, lang))}</span>' if at else "")
                         + state + '</li>')
         return (f'<section class="wrap srcs"><h2>{"من وين الأسعار" if lang == "ar" else "Where the prices come from"}</h2>'
-                f'<p class="hint">{"من نظام الحجز عند كل سينما، كل ساعة. إذا ما حصلنا السعر نكتب «السعر في الشباك»، وما نخمّن." if lang == "ar" else "From each chain’s booking system, every hour. When we can’t read a price we say «price at the box office» — we never guess."}</p>'
+                f'<p class="hint">{"من نظام الحجز عند كل سينما: المواعيد كل ساعة، والسعر مرة باليوم لكل قاعة. إذا ما حصلنا السعر نكتب «السعر في الشباك»، وما نخمّن." if lang == "ar" else "From each chain’s booking system: showtimes every hour, prices once a day per hall. When we can’t read a price we say «price at the box office» — we never guess."}</p>'
                 f'<ul class="chains">{"".join(rows)}</ul></section>')
 
     # -------------------------------------------------- city

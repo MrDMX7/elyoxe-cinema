@@ -51,8 +51,8 @@ _FILM = {"فيلم واحد": 1, "فيلمين": 2}
 _n = lambda w, words: words.get(w) or int(w.split()[0])
 TRUST_HTML = [
     (re.compile(r'<a class="now" id="now" href='), '<a class="now" href='),
-    (re.compile(r"، كل ساعة\. إذا ما حصلنا"), "، ثلاث مرات باليوم. إذا ما حصلنا"),
-    (re.compile(r"booking system, every hour\."), "booking system, three times a day."),
+    (re.compile(r": المواعيد كل ساعة، والسعر مرة باليوم لكل قاعة\. إذا ما حصلنا"), "، ثلاث مرات باليوم. إذا ما حصلنا"),
+    (re.compile(r"booking system: showtimes every hour, prices once a day per hall\."), "booking system, three times a day."),
     (re.compile(r'<span class="n">(سينما وحدة|سينمتين)</span>'),
      lambda m: f'<span class="n"><span class="num">{_CIN[m.group(1)]}</span> سينما</span>'),
     (re.compile(r'(<span class="n"><span class="num">\d+</span>) سينمات</span>'), r"\1 سينما</span>"),
