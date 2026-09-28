@@ -169,6 +169,66 @@ def test_the_server_binds_its_port_alone_and_stamps_every_answer(tmp_path):
         a.kill(); a.wait()
 
 
+def stamps(port, hosts):
+    """X-Served-By at each loopback address, read in a child process (this suite's network guard knows 127.0.0.1 and
+    ::1 by name only)."""
+    js = ("import json, sys, urllib.request\nout = {}\nfor h in sys.argv[2:]:\n"
+          "    u = 'http://' + ('[' + h + ']' if ':' in h else h) + ':' + sys.argv[1] + '/'\n"
+          "    try: out[h] = urllib.request.urlopen(u, timeout=10).headers.get('X-Served-By')\n"
+          "    except Exception as e: out[h] = 'error ' + type(e).__name__\n"
+          "print(json.dumps(out))\n")
+    r = subprocess.run([sys.executable, "-c", js, str(port)] + list(hosts), capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0, r.stderr
+    return json.loads(r.stdout)
+
+
+def can_bind(host):
+    try:
+        with socket.socket(socket.AF_INET6 if ":" in host else socket.AF_INET) as s:
+            s.bind((host, 0))
+        return True
+    except OSError:
+        return False
+
+
+def test_a_server_already_on_the_wildcard_makes_ours_refuse(tmp_path):
+    """Review M2: an exclusive bind on 127.0.0.1 does not see a server on the wildcard (python -m http.server's default)
+    on Windows, and `localhost` then reached the other server. serve.py asks the port first: anything answering there
+    and it refuses (exit 3), whichever address the other server took."""
+    out = tmp_path / "o"; out.mkdir(); (out / "index.html").write_text("<p>hi</p>", encoding="utf-8")
+    port = free_port()
+    other = socket.socket(); other.bind(("0.0.0.0", port)); other.listen(5)
+    try:
+        b = subprocess.run([sys.executable, os.path.join(ROOT, "tools", "serve.py"), "--out", str(out), "--port", str(port), "--name", "late"],
+                           capture_output=True, text=True, timeout=30)
+        assert b.returncode == 3 and "taken" in b.stderr and "serving" not in b.stdout, (b.returncode, b.stdout, b.stderr)
+    finally:
+        other.close()
+
+
+@pytest.mark.skipif(not can_bind("127.0.0.2"), reason="no 127.0.0.2 on this machine")
+def test_the_alt_build_answers_on_a_second_loopback_literal(tmp_path):
+    """perf_fx's variant: same port, a second origin at 127.0.0.2 (never the name localhost, which another agent's
+    wildcard server could answer); the main build answers on 127.0.0.1 and on [::1] where the machine has IPv6."""
+    out, alt = tmp_path / "o", tmp_path / "a"
+    for d in (out, alt):
+        d.mkdir(); (d / "index.html").write_text("<p>hi</p>", encoding="utf-8")
+    port = free_port()
+    p = subprocess.Popen([sys.executable, os.path.join(ROOT, "tools", "serve.py"), "--out", str(out), "--alt-out", str(alt), "--port", str(port),
+                          "--name", "w1-test", "--no-proxy", "--sha", "abc1234"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    try:
+        line = p.stdout.readline()
+        assert "serving" in line and f"http://127.0.0.2:{port} as w1-test-abc1234-alt" in line, line
+        hosts = ["127.0.0.1", "127.0.0.2"] + (["::1"] if f"[::1]:{port}" in line else [])
+        got = stamps(port, hosts)
+        assert got["127.0.0.1"] == "w1-test-abc1234" and got["127.0.0.2"] == "w1-test-abc1234-alt"
+        assert got.get("::1", "w1-test-abc1234") == "w1-test-abc1234"
+        assert "http://127.0.0.2:" in Path(ROOT, "tools", "pw_kit.cjs").read_text(encoding="utf-8")
+        assert "localhost" not in re.sub(r"/\*.*?\*/", "", Path(ROOT, "tools", "pw_kit.cjs").read_text(encoding="utf-8"), flags=re.S)
+    finally:
+        p.kill(); p.wait()
+
+
 @needs_node
 def test_a_check_pointed_at_another_server_stops_on_x_served_by(tmp_path):
     out = tmp_path / "o"; out.mkdir(); (out / "index.html").write_text("<p>hi</p>", encoding="utf-8")
@@ -217,3 +277,25 @@ def test_a_stale_lock_is_taken_over(tmp_path):
     r = subprocess.run([NODE, os.path.join(ROOT, "tools", "perf_lock.cjs"), "run", "--pkg", "next", "--", NODE, "-e", "console.log('ran')"],
                        env=env, capture_output=True, text=True, timeout=60)
     assert r.returncode == 0 and "ran" in r.stdout and "stale" in r.stderr
+
+
+@needs_node
+def test_a_waiter_that_judged_an_old_lock_stale_never_removes_a_fresh_one(tmp_path):
+    """Two waiters can judge the same crashed lock stale (review note). The first takes it over and makes its own; the
+    second, still acting on the old judgement, must not delete the fresh lock: it moves the folder aside atomically,
+    sees another owner in it, and puts it back."""
+    lockdir = tmp_path / "perf.lock"
+    stale = {"pkg": "gone", "pid": 999999, "at": "2026-01-01T00:00:00Z"}
+    fresh = {"pkg": "first", "pid": os.getpid(), "at": dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+    env = dict(os.environ, CINEMA_PERF_LOCK=str(lockdir))
+    js = ("const L = require(" + json.dumps(os.path.join(ROOT, "tools", "perf_lock.cjs")) + ");"
+          "console.log(JSON.stringify(L.takeOver(JSON.parse(process.argv[1]))));")
+    lockdir.mkdir(); (lockdir / "owner.json").write_text(json.dumps(fresh), encoding="utf-8")
+    r = subprocess.run([NODE, "-e", js, json.dumps(stale)], env=env, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0 and r.stdout.strip() == "false", r.stderr
+    assert json.loads((lockdir / "owner.json").read_text(encoding="utf-8")) == fresh      # the fresh lock stands
+    assert sorted(x.name for x in tmp_path.iterdir()) == ["perf.lock"]                       # nothing left aside
+    (lockdir / "owner.json").write_text(json.dumps(stale), encoding="utf-8")
+    r = subprocess.run([NODE, "-e", js, json.dumps(stale)], env=env, capture_output=True, text=True, timeout=60)
+    assert r.returncode == 0 and r.stdout.strip() == "true", r.stderr
+    assert list(tmp_path.iterdir()) == []                                                     # the stale one is gone, and only it

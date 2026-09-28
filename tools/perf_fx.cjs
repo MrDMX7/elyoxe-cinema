@@ -9,9 +9,9 @@
      node tools/perf_fx.cjs --out CONTROL [--variant-out VARIANT | --variant-css FILE] [--port 8111] [--size 360x740,390x844]
                             [--rounds 5] [--page /] [--now ISO] [--assert] [--json FILE]   (sizes: 360x740,390x844 by default)
 
-   The variant build is served on the same port (serve.py --alt-out answers Host: localhost:<port>): one port per
-   package, two origins, no shared cache. With neither variant flag it runs the control against itself (A/A: how much
-   the laptop moves). Takes the perf lock, reports the wait and the load, asserts X-Served-By on both builds. */
+   The variant build is served on the same port at a second loopback address (serve.py --alt-out answers
+   127.0.0.2:<port>): one port per package, two origins, no shared cache. With neither variant flag it runs the
+   control against itself (A/A: how much the laptop moves). Takes the perf lock, reports the wait and the load, asserts X-Served-By on both builds. */
 "use strict";
 const fs = require("fs");
 const K = require("./pw_kit.cjs");

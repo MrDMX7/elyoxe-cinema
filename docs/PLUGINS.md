@@ -280,8 +280,10 @@ was 32.6 KB gz at R0, 32.8 after W1-P1; the shared sheet 13.9). Past the warning
 before merging. No top-level name may be declared twice in the bundle (`tests/test_film.py`), and no page may carry
 a duplicate `id` (`tests/test_showkey.py`).
 
-**Measuring (§5.0 #6):** every local check serves the build with `tools/serve.py` (an exclusive port, the
-package's own, and `X-Served-By: <package>-<sha>` asserted on the document and an asset), and the perf tools
+**Measuring (§5.0 #6):** every local check serves the build with `tools/serve.py` (the package's own port, bound
+exclusively on 127.0.0.1 and [::1]; it refuses to start when anything already answers there, a wildcard server
+included; `X-Served-By: <package>-<sha>` is asserted on the document and an asset; a second build for `perf_fx.cjs`
+answers at 127.0.0.2 on the same port, never at the name `localhost`), and the perf tools
 (`tools/lh_gate.sh`, `perf_fx.cjs`, `ttb_bench.cjs`, `idle_check.cjs`) take the laptop's one perf lock
 (`tools/perf_lock.cjs`).
 

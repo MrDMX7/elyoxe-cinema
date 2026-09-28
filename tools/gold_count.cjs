@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /* Gold text nodes on the first phone screen (W1-P1 tool; MASTER-PLAN §1.2 #9, §1.5, §7.3 #8). Gold is the usher's torch:
-   it lights only what is *yours*. This counts the text nodes drawn in --gold (#E2B659) inside the first viewport of a
-   page (home by default), board included, with no card and with one, at each size; and the gold colons, which must
-   be 0 (a board's separator is the dull part). W1-P2 writes the gate against a fixture of the final first screen; it
-   binds at the W2 merge after W2-P2a and in W2-QA. Until then it records.
+   it lights only what is *yours*. This counts the text nodes drawn in a gold token (--gold, --gold-hi) inside the first
+   viewport of a page (home by default), board included, with no card and with one, at each size; and the gold colons,
+   which must be 0 (a board's separator is the dull part). The tokens are resolved in the page itself, so the P3 gold
+   W1-P2 gives under @media (color-gamut:p3), or any new value of a token, still counts as gold (review M3). W1-P2
+   writes the gate against a fixture of the final first screen; it binds at the W2 merge after W2-P2a and in W2-QA.
+   Until then it records.
 
      node tools/gold_count.cjs --out out [--port 8111] [--size 360x740,390x844] [--page /] [--card fazaa]
                                [--max 8] [--no-gold-colons] [--json FILE]
@@ -13,11 +15,18 @@
 const fs = require("fs");
 const K = require("./pw_kit.cjs");
 
-const GOLD = "rgb(226, 182, 89)";
+const TOKENS = ["--gold", "--gold-hi"];
 
 async function count(page) {
-  return page.evaluate((GOLD) => {
+  return page.evaluate((TOKENS) => {
     const vh = innerHeight, vw = innerWidth, out = [];
+    /* each token as this page, on this screen, computes it: a probe drawn in var(--gold) reads what gold text reads */
+    const gold = new Set(TOKENS.map((t) => {
+      const i = document.createElement("i"); i.style.color = "var(" + t + ")"; document.body.appendChild(i);
+      const c = getComputedStyle(i).color; i.remove(); return c;
+    }));
+    const plain = getComputedStyle(document.body).color;
+    gold.delete(plain);                 /* an undefined token falls back to the inherited colour: never count that */
     const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     for (let n = walk.nextNode(); n; n = walk.nextNode()) {
       const t = n.textContent.trim();
@@ -25,7 +34,7 @@ async function count(page) {
       const el = n.parentElement;
       if (!el || !el.checkVisibility || !el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true })) continue;
       const cs = getComputedStyle(el);
-      if (cs.color !== GOLD) continue;
+      if (!gold.has(cs.color)) continue;
       const r = document.createRange(); r.selectNodeContents(n);
       const box = [...r.getClientRects()].find((b) => b.width > 0 && b.height > 0 && b.bottom > 0 && b.top < vh && b.right > 0 && b.left < vw);
       if (!box) continue;
@@ -33,10 +42,12 @@ async function count(page) {
       out.push({ el: el.tagName.toLowerCase() + cls, text: t.slice(0, 40), colon: /^[:：]$/.test(t) || (t.includes(":") && /^[\d: ]+$/.test(t)), y: Math.round(box.top) });
     }
     return out;
-  }, GOLD);
+  }, TOKENS);
 }
 
-(async () => {
+module.exports = { count, TOKENS };
+
+if (require.main === module) (async () => {
   const o = K.args();
   const pagePath = o.get("page", "/"), card = o.get("card", "fazaa"), max = o.get("max", null), noColons = o.has("no-gold-colons");
   const R = K.results();

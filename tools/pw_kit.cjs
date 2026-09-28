@@ -31,10 +31,14 @@ function sha() {
   try { return cp.execSync("git rev-parse --short HEAD", { cwd: ROOT }).toString().trim(); } catch (e) { return "nogit"; }
 }
 
+/* the alt build's origin (serve.py --alt-out): a second loopback literal, never "localhost", which another agent's
+   wildcard server could answer on [::1] (review M2) */
+const ALT = "http://127.0.0.2:";
+
 /* start tools/serve.py on the port; resolves once it listens. It refuses a taken port (another agent's server) */
 function serve(o) {
   const stamp = o.name + "-" + sha();
-  if (!o.serve) return Promise.resolve({ base: "http://127.0.0.1:" + o.port, alt: o.altOut ? "http://localhost:" + o.port : null, stamp, stop() {} });
+  if (!o.serve) return Promise.resolve({ base: "http://127.0.0.1:" + o.port, alt: o.altOut ? ALT + o.port : null, stamp, stop() {} });
   return new Promise((resolve, reject) => {
     const a = [path.join(ROOT, "tools", "serve.py"), "--out", o.out, "--port", String(o.port), "--name", o.name];
     if (o.altOut) a.push("--alt-out", o.altOut);
@@ -43,7 +47,7 @@ function serve(o) {
     let err = "", done = false;
     s.stderr.on("data", (d) => { err += d; });
     s.stdout.on("data", (d) => {
-      if (!done && String(d).includes("serving")) { done = true; resolve({ base: "http://127.0.0.1:" + o.port, alt: o.altOut ? "http://localhost:" + o.port : null, stamp, stop: () => s.kill() }); }
+      if (!done && String(d).includes("serving")) { done = true; resolve({ base: "http://127.0.0.1:" + o.port, alt: o.altOut ? ALT + o.port : null, stamp, stop: () => s.kill() }); }
     });
     s.on("exit", (c) => { if (!done) reject(new Error("serve.py exited " + c + ": " + err.trim())); });
     process.once("exit", () => { try { s.kill(); } catch (e) {} });

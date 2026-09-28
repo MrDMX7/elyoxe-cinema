@@ -30,10 +30,27 @@ function tryTake(pkg) {
   fs.writeFileSync(path.join(LOCK, "owner.json"), JSON.stringify({ pkg, pid: process.pid, host: os.hostname(), at: new Date().toISOString() }));
   return true;
 }
-function stale() {
-  const o = owner();
+function stale(o) {
+  if (o === undefined) o = owner();
   const old = o ? Date.now() - Date.parse(o.at) > STALE_MS : age() > STALE_MS;
   return old && !(o && alive(o.pid));
+}
+/* Take over the stale lock judged from owner `judged` (null: a folder with no owner file), never a fresh one. Two
+   waiters can judge the same stale lock; removing it in place would let the second delete the lock the first has just
+   made. So the lock is moved aside (rename is atomic, only one mover wins), and a mover that finds it moved a lock
+   other than the one it judged puts it back. True when the stale lock is gone. */
+function takeOver(judged) {
+  const grave = LOCK + ".stale-" + process.pid + "-" + Date.now();
+  try { fs.renameSync(LOCK, grave); } catch (e) { return false; }    /* gone already, or busy: look again */
+  let moved = null;
+  try { moved = JSON.parse(fs.readFileSync(path.join(grave, "owner.json"), "utf-8")); } catch (e) {}
+  const same = judged ? !!moved && moved.pid === judged.pid && moved.at === judged.at : !moved;
+  if (!same) {
+    try { fs.renameSync(grave, LOCK); } catch (e) {}                  /* a third took the name meanwhile: leave both, never delete */
+    return false;
+  }
+  try { fs.rmSync(grave, { recursive: true, force: true }); } catch (e) {}
+  return true;
 }
 
 /* resolves with {release, waitedMs, owner} once this process holds the lock */
@@ -43,10 +60,10 @@ async function acquire(pkg, opts) {
   let said = false;
   for (;;) {
     if (tryTake(pkg)) break;
-    if (stale()) {
-      const o = owner();
-      log(`perf lock: taking over a stale lock (${o ? o.pkg + " pid " + o.pid + " since " + o.at : "no owner file"})`);
-      try { fs.rmSync(LOCK, { recursive: true, force: true }); } catch (e) {}
+    const seen = owner();
+    if (stale(seen)) {
+      log(`perf lock: taking over a stale lock (${seen ? seen.pkg + " pid " + seen.pid + " since " + seen.at : "no owner file"})`);
+      takeOver(seen);
       continue;
     }
     if (!said) { const o = owner(); log(`perf lock: waiting for ${o ? o.pkg + " (pid " + o.pid + ", since " + o.at + ")" : "another run"}`); said = true; }
@@ -76,7 +93,7 @@ async function load() {
   return { cpuBusyPct: Math.round(100 * (1 - idle / total)), loadavg: os.loadavg().map((x) => +x.toFixed(2)), cpus: os.cpus().length };
 }
 
-module.exports = { acquire, load, LOCK, STALE_MS };
+module.exports = { acquire, load, takeOver, LOCK, STALE_MS };
 
 if (require.main === module) {
   const argv = process.argv.slice(2);
