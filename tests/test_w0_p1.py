@@ -157,7 +157,7 @@ def test_the_manifest_has_no_mine_shortcut_and_now_has_a_target(out):
     for parts in ((), ("en",)):
         h = read(out, *parts, "index.html")
         # legend: home's «الحين» is the row «يبدأ قريب منك» (UI redesign Task 3; the board takes the id in W2-P2)
-        assert h.count('id="now"') == 1 and '<section class="rail" aria-labelledby="r-near" id="now" data-near-row hidden>' in h
+        assert h.count('id="now"') == 1 and '<section class="rail" aria-labelledby="r-near" id="now" data-near-row data-hold hidden>' in h
     assert 'id="now"' not in read(out, "dubai", "index.html")                     # home only: one target
     # hidden until the city's slice is in, the row still holds its place, so /#now scrolls to it at once
     assert ".js .rail[data-near-row][hidden]{display:block;visibility:hidden}" in read(out, "assets", "cinema.css")

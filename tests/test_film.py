@@ -282,7 +282,7 @@ def test_unknown_verdict_and_the_hero_without_any_picture(out):
         h = read(out, *parts)
         assert '<section class="fhero np">' in h
         assert re.search(r'<div class="dock"[^>]*hidden>.*?data-dk-open[^>]*>[^<]+</button></div><p class="vh" data-dk-live aria-live="polite"></p>', h)
-    css = open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
+    css = build.css_source()
     assert ".fhero.np .fhero-in{padding-block-start:calc(var(--head) + 24px + min(30vw,130px) * 1.5 + 24px)}" in css
     # I1: the «المزيد» rules outrank .lnk (the button no longer carries it); M4: one .cg-m
     assert ".fv-w .fv-m{position:absolute;" in css and css.count(".cg-m{") == 1
@@ -291,5 +291,5 @@ def test_unknown_verdict_and_the_hero_without_any_picture(out):
 
 def test_the_options_sheet_counts_in_the_budget():
     """M3: the schedule's budget subtracts the bar AND its «⋯» sheet as drawn, not an empty sheet."""
-    src = open(os.path.join(ROOT, "pages", "core.py"), encoding="utf-8").read()
-    assert "bar0 = self.film_bar(lang, days); sheet0 = self._sheets.pop()" in src and "len((hero + tabs + bar0 + sheet0).encode())" in src
+    src = open(os.path.join(ROOT, "pages", "_core", "film.py"), encoding="utf-8").read()   # pages/core.py's film family (W1-P1)
+    assert "bar0 = self.film_bar(lang, days); sheet0 = self._sheets.pop()" in src and "len((hero + first + tabs + bar0 + sheet0).encode())" in src   # W1-P1: the film.first slot counts too

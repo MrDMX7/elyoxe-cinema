@@ -1,0 +1,66 @@
+/* places: city and cinema pages, /cinemas/, the halls and price tables (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
+/* ------------------------------------------------ cinema page: films at this cinema */
+.split{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.day > h2{font-size:26px;padding-block-end:6px;border-block-end:1px solid var(--line)}
+.cf{display:grid;grid-template-columns:72px minmax(0,1fr);gap:14px;padding-block:14px;border-block-end:1px solid rgba(241,234,224,.1)}
+.pst.sm{padding:6px}
+.pst.sm .pst-t{font-size:14px}
+.cf-b h3{font-size:22px}
+.cf-b h3 a{text-decoration:none}
+.cf-m{display:flex;gap:10px;font-size:12px;color:var(--seat)}
+.cf .hl{display:block}
+.cf .hn{font-size:12px;color:var(--dim)}
+/* ------------------------------------------------ lists: cities, cards, sources, rows */
+.clist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(13rem,100%),1fr));column-gap:32px}
+.clist li{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-block:12px;border-block-end:1px solid var(--line)}
+.clist a{font-family:var(--display);font-weight:var(--dw);font-size:22px;text-decoration:none}
+.clist .n{color:var(--seat);font-size:13px}
+.rows{display:grid}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm val" "sub val";column-gap:20px;row-gap:2px;padding-block:14px;border-block-end:1px solid var(--line)}
+.row .nm{grid-area:nm;font-family:var(--display);font-weight:var(--dw);font-size:22px;line-height:1.2;text-decoration:none}
+.row .sub{grid-area:sub;color:var(--seat);font-size:12px;display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline}
+.row .from,.row .val{grid-area:val;align-self:center;text-align:end;font-size:13px;color:var(--seat)}
+.row .from .p .num,.row .from .p b{font-size:20px}
+/* schedules on a city page: film → cinemas → times */
+.sched{display:grid}
+.srow{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding-block:14px;border-block-end:1px solid var(--line)}
+.sf{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.sf a{text-decoration:none}
+.sf .t{font-family:var(--display);font-weight:var(--dw);font-size:22px;line-height:1.2}
+.sf .vw{font-size:12px}
+.scin{margin-block-start:6px}
+.scin .cn{font-size:13px;color:var(--dim);text-decoration:none}
+.scin .times{margin-block-start:4px}
+/* halls explained + price tables */
+.halls{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(20rem,100%),1fr));column-gap:40px}
+.hall{padding-block:14px 16px;border-block-end:1px solid var(--line)}
+.hall h3{font-size:22px;margin-block-end:4px}
+[lang=ar] .hall h3[lang=en]{font-family:var(--body);font-weight:600;font-size:17px}
+.hall p{margin-block-end:8px;color:var(--dim);font-size:13px;line-height:1.7;max-inline-size:62ch}
+.hall .rng{color:var(--seat)}
+.hall .rng .num{color:var(--gold);font-weight:600}
+.hall .where{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px}
+.hall .where a{color:var(--dim);text-decoration:none;border-block-end:1px solid var(--line-2)}
+table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
+.prices th,.prices td{padding:8px 0;border-block-end:1px solid var(--line);text-align:start;font-weight:400}
+.prices thead th{color:var(--seat);font-size:12px}
+.prices td,.prices thead th:last-child{text-align:end}
+.prices td .p{justify-content:flex-end}
+.prices td .p .num,.prices td .p b{font-size:17px}
+@media (min-width:1024px){
+  .clist a{font-size:26px}
+  .srow{grid-template-columns:minmax(12rem,20rem) minmax(0,1fr);gap:8px 40px}
+  .sf{flex-direction:column;justify-content:flex-start}
+  .sf .t{font-size:26px}
+  .row .nm{font-size:26px}
+  .split{grid-template-columns:minmax(0,1fr) 360px;gap:56px;align-items:start;margin-block-start:10px}
+  .split .ticket{margin-block-start:36px}
+  .cf{grid-template-columns:96px minmax(0,1fr);gap:20px}
+  .cf-b h3{font-size:28px}
+}
+.cin-h{padding-block:18px 0}
+/* long schedules: a row far below the fold is not laid out or painted until it comes near (Lighthouse's
+   main-thread time was two thirds style + layout on a busy cinema page). Paint containment clips at the
+   padding box, so each row gets 4 px of inline padding back from a negative margin: a time button's focus
+   ring at the row's edge is not cut off. Not on poster tiles: the big tile's velvet glow would be clipped. */
+.cf,.srow,.hall,.row{content-visibility:auto;contain-intrinsic-size:auto 200px;padding-inline:4px;margin-inline:-4px}

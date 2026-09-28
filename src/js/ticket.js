@@ -61,16 +61,7 @@ function renderBook(chain) {
   }
 }
 
-/* the show link: /film/<fid>/#s-<key>. key = FNV-1a 32-bit over the UTF-8 of «cinema|date|time|hall key»,
-   base36, at least 6 characters; stable across the hourly builds because every input is. A fragment, never
-   ?s=: no crawlable URLs, one service-worker entry per film page, prerender stays eligible (plan §2.2).
-   W1-P1 moves it to core.js beside a Python twin (Kit.show_key) that must hash the same four fields. */
-function showKey(cin, d, t, hk) {
-  var s = unescape(encodeURIComponent([cin, d, t, hk || "Standard"].join("|"))), h = 0x811c9dc5;
-  for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
-  var k = h.toString(36);
-  return k.length < 6 ? ("00000" + k).slice(-6) : k;
-}
+/* the show link /film/<fid>/#s-<key>: showKey() is in core.js since W1-P1, beside its Python twin Kit.show_key */
 /* a time button's cinema, date, time and hall key, read where the ticket reads them */
 function showOf(b) {
   var g = b.closest("[data-cin]"), box = b.closest("[data-d]"), hl = b.closest("[data-hk]");

@@ -1,0 +1,85 @@
+/* schedules: the film page's cities, cinemas and halls, time buttons, compact times (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
+/* the schedule: per city a disclosure (the visitor's open and first), per cinema its name, distance and «الخريطة»,
+   then its times */
+.fsched{position:relative}
+.lay{display:grid;grid-template-columns:minmax(0,1fr);gap:0 48px}
+.cgs{min-inline-size:0}
+.nc{padding-block:16px 0;color:var(--dim);font-size:14px}
+.fcity{border-block-end:1px solid var(--line)}
+.fcity > summary{display:flex;align-items:baseline;gap:10px;min-block-size:52px;padding-block:14px;cursor:pointer;list-style:none}
+.fcity > summary::-webkit-details-marker{display:none}
+.fcity > summary::after{content:"";margin-inline-start:auto;align-self:center;inline-size:7px;block-size:7px;border-right:1.5px solid var(--seat);border-bottom:1.5px solid var(--seat);transform:rotate(45deg)}
+.fcity[open] > summary::after{transform:rotate(-135deg)}
+.fcity > summary h2{font-family:var(--body);font-size:16px;font-weight:500}
+.fc-n{font-size:13px;color:var(--seat)}
+.js .fcity.here{border:0}
+.js .fcity.here > summary{cursor:default;min-block-size:0;padding-block:18px 0}
+.js .fcity.here > summary::after{display:none}
+.cg{padding-block:20px;border-block-end:1px solid var(--line)}
+.cg.more-h{display:none}
+/* below the fold, laid out only when it comes near: a busy film page's cinemas, the tabs' panels and the footer were
+   most of its first layout after the first paint (Lighthouse: ~+2 on the median, same-conditions A/B); each keeps its
+   real size once seen */
+.cgs .cg{content-visibility:auto;contain-intrinsic-block-size:auto 240px}
+/* the first paint already shows what film.js will: the visitor's (server: Dubai's) three first cinemas, the rest folded
+   behind «N سينمات ثانية» — so the 20-odd others are never laid out before the script takes over (data-more) */
+.js .fcity.here:not([data-more]) > .cg:nth-child(n+5):not(:nth-child(5):last-child){display:none}
+.cg-h{display:flex;align-items:baseline;gap:4px 10px;margin-block-end:12px;flex-wrap:wrap}
+.cg-h h3{font-family:var(--body);font-size:16px;font-weight:500}
+.cg-h h3 a{text-decoration:none}
+.cg-m{display:contents;font-size:13px;color:var(--seat)}
+.cg-m [data-dist]{font-size:13px;color:var(--seat)}
+.cg-m .age{font-size:12px;color:var(--seat)}
+.cg-h .map{font-size:13px;color:var(--seat);margin-inline-start:auto;text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:4px;min-block-size:24px;display:inline-flex;align-items:center}
+.more-c{display:flex;min-block-size:44px;align-items:center;margin-block:8px}   /* colour and font from .lnk, which it always carries */
+/* no script: each hall's name and «من» price over its times (the rows the server writes) */
+.hl{margin-block-start:8px}
+.hl-n{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:12px;color:var(--seat)}
+.hl-n .hn{color:var(--dim)}
+/* with script (film.js): one row per day in time order; each button its time, its hall, its price after the card */
+.tx{gap:8px;margin:0}
+.tx .tm{min-inline-size:92px;min-block-size:0;padding:8px 12px;align-items:stretch;justify-content:flex-start;text-align:start;font-weight:400;line-height:1.3}
+.tx .tm .tt{font-size:17px;font-weight:500}
+.tx .tm .hn{font-size:11px;color:var(--seat);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-inline-size:10em}
+.tx .tm .p{font-size:12px;display:block}
+.tx .tm .p .num,.tx .tm .p b{font-size:12px;font-weight:400;color:var(--gold)}
+.tx .tm .p s{display:none}
+/* a price with a note («السعر بتاريخ …», «القاعة مب داخلة في الخصم», «للشخص — بشرط تذكرتين»): the note is read out with the
+   price and stays out of sight; a gold asterisk says there is one, the ticket spells it out (M10) */
+.tx .tm .p small{position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.tx .tm .p.nb::after{content:"*";color:var(--gold);margin-inline-start:2px}
+.tx .tm .sn{font-size:11px;color:var(--live);font-weight:400;margin-inline-start:6px;white-space:nowrap}
+.tx .tm.past{text-decoration:none;opacity:.35;color:var(--screen);border-color:var(--line-2)}
+.tx .tm.old{display:none}
+.tx .tm.on.past{opacity:.75}   /* the chosen time, started: still chosen, its ticket still open (fix round 1, I2) */
+.tx .tm.nowish{border-color:var(--line-2)}
+.tx .tm.on,.tx .tm[aria-current]{background:rgba(226,182,89,.1);border-color:var(--gold);color:var(--screen)}
+.tx .tm.on small.hn,.tx .tm[aria-current] small.hn{color:var(--seat)}
+.tx .tm .lf,.tx .tm .pz{font-size:10px;color:var(--seat);text-align:start;max-inline-size:none}
+.hl-n .pr,.times .pr{font-size:12px}
+.hl-n .p .num,.times .pr .p .num{font-size:14px}
+.times{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-block-start:6px}
+.times .dl{font-size:12px;color:var(--seat);min-inline-size:36px}
+.times .pr{flex-basis:100%;color:var(--seat)}
+.tm{text-decoration:none;min-block-size:44px;min-inline-size:66px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;padding:2px 8px;
+  background:transparent;border:1px solid var(--line-2);color:var(--screen);font-weight:600;font-size:15px;line-height:1.15;cursor:pointer;font-variant-numeric:tabular-nums}
+.tm small{font-size:10px;font-weight:400;color:var(--seat)}
+.tm:hover{border-color:var(--screen)}
+.tm.clash{border-style:dashed;border-color:rgba(241,234,224,.35);color:var(--dim)}
+.tm .pz{font-size:10px;font-weight:400;color:var(--seat);white-space:normal;text-align:center;max-inline-size:9em}
+.tm.on .pz{color:var(--ink)}
+.tm.past{color:rgba(241,234,224,.6);border-color:var(--line);pointer-events:none;text-decoration:line-through;text-decoration-color:rgba(241,234,224,.35)}
+.tm.nowish{border-color:var(--live)}
+.tm.on,.tm[aria-current]{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.tm.on small,.tm[aria-current] small{color:var(--ink)}
+@media (min-width:1024px){
+  .tm{min-inline-size:70px}
+  .lay{grid-template-columns:minmax(0,1fr) 360px}
+  .cg{padding-block:20px}
+  .cg-h h3{font-size:18px}
+  .tx .tm{min-inline-size:92px}
+}
+/* compact schedules: times as text (no script) or buttons drawn by cinema.js */
+.tl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--dim);font-variant-numeric:tabular-nums;word-spacing:.4em}
+.tl small{font-size:11px;color:var(--seat);word-spacing:normal}
+.cg{content-visibility:auto;contain-intrinsic-size:auto 200px;padding-inline:4px;margin-inline:-4px}

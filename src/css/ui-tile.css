@@ -1,0 +1,79 @@
+/* the poster and the film tile (rows, the grid, the archived page's similar films) (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
+.film{flex:0 0 150px;inline-size:150px;display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--screen);scroll-snap-align:start}
+.film.big{flex-basis:220px;inline-size:220px}
+.pst{position:relative;display:flex;flex-direction:column;justify-content:flex-end;aspect-ratio:2/3;background:var(--pc);padding:10px;overflow:hidden}
+.pst img{position:absolute;inset:0;inline-size:100%;block-size:100%;object-fit:cover}
+.pst-t{font-family:var(--display);font-weight:var(--dw);font-size:26px;line-height:1;overflow-wrap:anywhere}
+.pst.img{padding:0}
+.pst.img .pst-t{visibility:hidden}
+.pst img{z-index:1}
+.fn{font-family:var(--display);font-weight:var(--dw);font-size:21px;line-height:1.1;overflow-wrap:anywhere;margin-block-start:2px}
+.film.big .fn{font-size:26px}
+.film .pst:not(.img) + .fn{display:none}
+.film.big .pst{box-shadow:0 24px 60px rgba(122,22,38,.45)}
+.film.big .pst-t{font-size:36px}
+.fm{display:flex;justify-content:space-between;gap:8px;font-size:12px}
+.vw{color:var(--seat);font-weight:500}
+.v-yes .vw,.vw.v-yes{color:var(--gold)}
+.sc{color:var(--seat)}
+.fm .sc .num{color:var(--seat)}
+.film .rr{font-size:11px;color:var(--dim)}
+.cheap{display:flex;flex-direction:column;gap:2px}
+.fp{display:flex;align-items:baseline;gap:6px;font-size:18px;font-weight:600}
+.film.big .fp{font-size:24px}
+.fw{font-size:11px;color:var(--seat);line-height:1.4}
+.film .na{font-size:12px;font-weight:400}
+@media (min-width:1024px){
+  .film,.film.big{inline-size:auto;flex:none;gap:8px}
+  .film.big .pst{box-shadow:none}
+  .film.big .pst-t,.pst-t{font-size:26px}
+  .fm{font-size:13px}
+  .film.big .fp,.fp{font-size:20px}
+  .fw{font-size:12px}
+  .fn{font-size:22px}
+  .film.big .fn{font-size:22px}
+}
+/* poster tiles: on a phone only two of up to 66 sit in view in the sideways row. Their width comes from the
+   row or the grid; the height is remembered once drawn. The big first tile keeps its glow (not contained). */
+.film:not(.big){content-visibility:auto;contain-intrinsic-block-size:auto 340px}
+/* the tile: poster, title on one line, the price (or «السعر في الشباك»); a corner tag; on a desktop pointer a panel
+   over the poster's foot with the verdict word and the next time — over it, so nothing below moves */
+.tile{display:flex;flex-direction:column;min-inline-size:0;text-decoration:none;color:var(--screen);gap:0}
+.strip .tile{inline-size:128px}
+.tp{position:relative;display:block;overflow:hidden;background:#1D1517}
+.tile .pst{padding:8px}
+.tile .pst.img{padding:0}
+.tile .pst-t{font-size:22px}
+.tile .tag{position:absolute;z-index:2;inset-block-start:0;inset-inline-start:0;background:var(--velvet);color:var(--screen);font-size:11px;line-height:1.6;padding:2px 7px}
+.tile .t{font-size:14px;line-height:1.4;margin-block-start:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* an English title on the Arabic page lines up with the Arabic ones (the start of the RTL column), its ellipsis at its own end */
+:root[dir=rtl] .tile .t[dir=ltr]{text-align:right}
+.tile .m{font-size:13px;line-height:1.45;color:var(--seat)}
+.tile .m .p,.tile .m .pv{display:inline;white-space:nowrap}
+.tile .m .p .num,.tile .m .p b,.tile .m .pv .num{font-weight:500}
+.tile .m .p s{font-size:11px;margin-inline-start:4px}
+.tile .m .p small,.tile .m .asof{display:block;font-size:11px}
+.tile .m .fw,.tile .m .na{font-size:12px;color:var(--seat)}
+.tile.off .tp{opacity:.55}
+.tile .hv{display:none}
+.film.tile{gap:0}
+.tile.soon .m{color:var(--dim)}
+@media (min-width:1024px){
+  .strip .tile{inline-size:188px}
+}
+@media (hover:hover) and (min-width:1024px){
+  .tp{transition:transform .25s var(--ease)}
+  .tile:hover .tp,.tile:focus-visible .tp{transform:translateY(-4px)}
+  .tile .hv{display:flex;flex-direction:column;gap:2px;position:absolute;z-index:2;inset-inline:0;inset-block-end:0;padding:36px 10px 10px;
+    background:linear-gradient(rgba(15,11,12,0),rgba(15,11,12,.94) 45%);font-size:12px;line-height:1.4;opacity:0;transform:translateY(8px);
+    transition:opacity .2s,transform .2s var(--ease)}
+  .tile .hv .vw{font-family:var(--display);font-weight:var(--dw);font-size:20px;line-height:1.1;color:var(--screen)}
+  .tile.v-yes .hv .vw{color:var(--gold)}
+  .tile .hv .nx{color:var(--dim)}
+  .tile .hv .nx:empty{display:none}
+  .tile:hover .hv,.tile:focus-visible .hv{opacity:1;transform:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .tp,.tile .hv{transition:none}
+  .tile:hover .tp,.tile:focus-visible .tp{transform:none}
+}

@@ -145,14 +145,14 @@ def test_billboard_pause_button_and_phone_sizes(out):
     assert re.search(r"\.bill-in\{[^}]*min-block-size:430px", css_all()) and ".js .rail[data-near-row][hidden]{display:block;visibility:hidden}" in css_all()
     # stale layers go: every child but the newest
     assert "c !== nu" in show
-    css = open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
+    css = build.css_source()
     assert "rgba(0,0,0,.5)" not in css[css.index("/* ------------------------------------------------ home (UI redesign Task 3)"):]
     assert ".btn.ghost{backdrop-filter" not in css and ".bill .btn.ghost{" in css
     assert css.count(".cta{display:flex") == 1
 
 
 def css_all():
-    return open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
+    return build.css_source()
 
 
 def test_no_duplicate_ids_on_any_page_even_with_summer_open(tmp_path):
@@ -204,7 +204,7 @@ def test_billboard_and_its_island(out):
 def test_near_row_is_drawn_by_the_script_and_hidden_until_then(out):
     h = read(out)
     # id="now": the manifest's «الحين» shortcut lands here (W0-P1, plan §4.1 #5, merged at R0)
-    row = re.search(r'<section class="rail" aria-labelledby="r-near" id="now" data-near-row hidden>.*?</section>', h, re.S).group(0)
+    row = re.search(r'<section class="rail" aria-labelledby="r-near" id="now" data-near-row data-hold hidden>.*?</section>', h, re.S).group(0)
     assert "يبدأ قريب منك" in row and "data-near-sub" in row and "data-near" in row and '<div class="strip" data-strip></div>' in row
     js = open(os.path.join(ROOT, "src", "js", "home.js"), encoding="utf-8").read()
     near = js[js.index("function renderNear("):js.index("function renderFrom(")]

@@ -1,0 +1,61 @@
+/* the chrome: the header (mark, pills, search), the network city note, the footer, the install line (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
+/* ------------------------------------------------ the chrome (UI redesign Task 2): one header line, a phone tab bar,
+   the footer, and the sheets the header's pills open */
+/* the header: solid night with a rule; over a hero (data-hero) it starts as a gradient and turns solid once the
+   page has moved 40 px (src/js/sheet.js, an IntersectionObserver sentinel). No script: always solid. */
+.top{position:sticky;inset-block-start:0;z-index:30;background:var(--night);border-block-end:1px solid var(--line)}
+.js body[data-hero] .top:not(.solid){background:linear-gradient(rgba(15,11,12,.85),rgba(15,11,12,0)) border-box;border-block-end-color:transparent}
+.top-in{display:flex;align-items:center;gap:12px;block-size:var(--head)}
+.top-sent{position:absolute;inset-block-start:0;inset-inline-start:0;inline-size:1px;block-size:40px;visibility:hidden;pointer-events:none}
+.mark{font-family:var(--display);font-weight:700;font-size:32px;line-height:1;color:var(--gold);text-decoration:none;flex:0 0 auto}
+[lang=en] .mark{font-family:var(--display);font-weight:600;font-size:24px;letter-spacing:-.02em}
+.nav{display:none}
+.tools{margin-inline-start:auto;display:flex;align-items:center;gap:8px;min-inline-size:0}
+.icon{inline-size:40px;block-size:40px;display:inline-grid;place-items:center;flex:0 0 auto;background:none;border:0;padding:0;color:var(--screen);cursor:pointer}
+.icon svg{inline-size:20px;block-size:20px}
+.srch-b{display:none}
+.js .srch-b{display:inline-grid}
+.pill{display:inline-flex;align-items:center;gap:6px;min-block-size:36px;min-inline-size:0;padding-inline:12px;border:1px solid var(--line-2);
+  background:rgba(15,11,12,.4);color:var(--screen);font-size:13px;line-height:1.2;text-decoration:none;white-space:nowrap}
+.pill span{overflow:hidden;text-overflow:ellipsis;max-inline-size:8.5em;line-height:1.7}
+/* a down-pointing chevron (▾): direction-independent, so physical borders — logical ones point it sideways in RTL */
+.pill::after{content:"";flex:0 0 auto;inline-size:6px;block-size:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;
+  transform:translateY(-2px) rotate(45deg);opacity:.7}
+.pill[aria-expanded=true]{border-color:var(--screen)}
+.alt{display:none;font-size:13px;color:var(--seat);text-decoration:none}
+.alt:hover{color:var(--screen)}
+/* «اخترنا دبي حسب شبكتك — غيّرها» (geo.js): one line under the header, over the page (nothing moves), dismissible */
+.gnote{position:fixed;inset-block-start:var(--head);inset-inline:0;z-index:29;display:flex;align-items:center;gap:8px;
+  padding-inline:var(--gut) 6px;min-block-size:40px;background:rgba(23,16,15,.96);border-block-end:1px solid var(--line);font-size:13px;color:var(--dim)}
+.gnote p{flex:1 1 auto;min-inline-size:0}
+.gnote .lnk{min-block-size:32px;color:var(--screen)}
+.gnote-x{inline-size:36px;block-size:36px;flex:0 0 auto;border:0;background:none;cursor:pointer;position:relative;color:var(--dim)}
+.gnote-x::before,.gnote-x::after{content:"";position:absolute;inset-inline-start:11px;inset-block-start:17px;inline-size:14px;block-size:1.5px;background:currentColor;transform:rotate(45deg)}
+.gnote-x::after{transform:rotate(-45deg)}
+.foot{content-visibility:auto;contain-intrinsic-block-size:auto 480px}
+/* footer: the mark, then the site's links; the credit line under them */
+.foot{margin-block-start:60px;border-block-start:1px solid var(--line);padding-block:28px 40px;color:var(--seat);font-size:13px}
+.foot-in{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px}
+.foot .mark{font-size:24px;margin-inline-end:auto;color:var(--gold)}
+[lang=en] .foot .mark{font-size:20px}
+.foot-l{display:flex;flex-wrap:wrap;gap:4px 22px}
+/* the footer carries the sections the four-tab bar has no place for (W0-P1, plan §4.1 #1): full-height tap targets */
+.foot-l a{min-block-size:44px;display:inline-flex;align-items:center}
+.foot-l a[aria-current]{color:var(--screen)}
+.foot-s{flex-basis:100%;font-size:12px}
+.foot a{color:var(--dim);text-decoration:none}
+.foot a:hover{color:var(--screen)}
+@media (min-width:1024px){
+  .top-in{gap:28px}
+  .mark{font-size:36px}
+  [lang=en] .mark{font-size:28px}
+  .nav{display:flex;gap:22px}
+  .nav a{min-block-size:44px;display:inline-flex;align-items:center;font-size:14px;color:var(--seat);text-decoration:none}
+  .nav a:hover{color:var(--screen)}
+  .nav a[aria-current]{color:var(--screen);font-weight:500}
+  .alt{display:inline-flex;align-items:center;min-block-size:40px;margin-inline-start:4px}
+}
+.inst{position:fixed;z-index:30;inset-inline:12px;inset-block-end:calc(70px + env(safe-area-inset-bottom));display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:10px 14px;background:var(--night);border-block-start:2px solid var(--gold);font-size:14px}
+@media (min-width:1024px){
+  .inst{inset-inline:auto 24px;inset-block-end:24px}
+}

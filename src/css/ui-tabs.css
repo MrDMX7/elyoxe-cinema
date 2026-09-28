@@ -1,0 +1,12 @@
+/* the phone's tab bar (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
+/* the phone's tab bar: four places, icon over label */
+.tabs{position:fixed;inset-block-end:0;inset-inline:0;z-index:30;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  background:rgba(15,11,12,.96);border-block-start:1px solid var(--line);padding-block-end:env(safe-area-inset-bottom)}
+.tabs a{min-block-size:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;line-height:1.3;
+  color:var(--seat);text-decoration:none}
+.tabs svg{inline-size:20px;block-size:20px}
+.tabs a[aria-current]{color:var(--screen);font-weight:500}
+.tabs a:focus-visible{outline-offset:-3px}
+@media (min-width:1024px){
+  .tabs{display:none}
+}

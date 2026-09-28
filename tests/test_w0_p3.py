@@ -52,6 +52,12 @@ def node(tmp_path, files, expr, pre=""):
     return json.loads(r.stdout)
 
 
+def show_key_js():
+    """showKey() as core.js declares it (W1-P1 moved it there from ticket.js; core.js itself needs a page to load)."""
+    core = (JS / "core.js").read_text(encoding="utf-8")
+    return re.search(r"^function showKey\(.*?^\}$", core, re.S | re.M).group(0)
+
+
 def py_show_key(cin, d, t, hk):
     """The Python twin W1-P1 will add as Kit.show_key: FNV-1a 32-bit over the UTF-8 of «cinema|date|time|hall
     key», base36, left-padded to 6 characters."""
@@ -100,12 +106,12 @@ def test_show_key_matches_its_python_twin_on_every_show(tmp_path, site):
         d = re.search(r"(\d{4}-\d\d-\d\d)\.json$", f.name).group(1)
         rows += [[j["C"][a[0]][0], d, a[2], j["H"][a[3]][1].split("|", 1)[1]] for a in j["S"]]
     assert len(rows) > 100
-    got = node(tmp_path, ["ticket.js"], "[" + ",".join("showKey(%s)" % json.dumps(r)[1:-1] for r in rows) + "]")
+    got = node(tmp_path, ["ticket.js"], "[" + ",".join("showKey(%s)" % json.dumps(r)[1:-1] for r in rows) + "]", pre=show_key_js())
     assert got == [py_show_key(*r) for r in rows]
     assert all(re.fullmatch(r"[0-9a-z]{6,7}", k) for k in got)
     assert len(set(got)) == len({tuple(r) for r in rows})          # one key per show, no collision in the fixture
     # a non-ASCII hall key hashes its UTF-8 bytes, as the Python twin does
-    assert node(tmp_path, ["ticket.js"], 'showKey("c","2026-09-27","22:10","قاعة")') == py_show_key("c", "2026-09-27", "22:10", "قاعة")
+    assert node(tmp_path, ["ticket.js"], 'showKey("c","2026-09-27","22:10","قاعة")', pre=show_key_js()) == py_show_key("c", "2026-09-27", "22:10", "قاعة")
 
 
 def test_now_links_to_the_show_never_a_query():
@@ -344,7 +350,8 @@ def test_the_minute_moves_the_ticket_and_hides_passed_halls():
     # what the page does each minute is driven in Chrome (check_w0_p3.cjs: hall, desk, late, focus); here only that
     # the minute names them
     main = (JS / "main.js").read_text(encoding="utf-8")
-    tick = re.search(r"setInterval\(function \(\) \{(.*?)\}, 60e3\);", main, re.S)
+    # W1-P1: the minute is one timeout aligned to each UAE :00 (function minute), no longer a free setInterval
+    tick = re.search(r"function minute\(\) \{(.*?)emit\(\"minute\", NOW\);", main, re.S)
     assert tick, "the minute clock"
     for fn in ("marks()", "hidePassed()", "renderNow()", "rollTicket()", "planRefresh()"):
         assert fn in tick.group(1), fn

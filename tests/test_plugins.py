@@ -97,3 +97,76 @@ def test_builtin_nav_repointed_and_unknown_slot_refused(tmp_path):
     bad = types.SimpleNamespace(__name__="bad", register=lambda site: Plugin(slots={"nowhere": lambda s, lang: "x"}))
     with pytest.raises(ValueError, match="unknown slot"):
         build.build(DATA, DISC, str(tmp_path / "b"), noindex=False, modules=build.discover(only=("core",)) + [bad])
+
+
+# ---------------------------------------------------------------- W1-P1: the seams (docs/PLUGINS.md)
+def test_the_core_mixin_package_is_never_discovered():
+    """pages/_core/ holds CorePages' families (W1-P1): a package, not page modules. Discovery still loads exactly the
+    top-level pages/*.py (core first), and nothing from pages/_core registers pages of its own."""
+    top = sorted(f[:-3] for f in os.listdir(os.path.join(ROOT, "pages")) if f.endswith(".py") and not f.startswith("_"))
+    assert sorted(pages.names()) == top and "_core" not in pages.names()
+    mods = build.discover()
+    assert [m.__name__ for m in mods] == ["pages." + n for n in pages.names()]
+    assert not any(m.__name__.startswith("pages._core") for m in mods)
+    from pages.core import CorePages
+    from pages._core import bill, edge, film, home, money, places
+    for mix in (home.HomePages, bill.BillPages, film.FilmPages, places.PlacesPages, money.MoneyPages, edge.EdgePages):
+        assert issubclass(CorePages, mix) and not hasattr(mix, "register")
+
+
+def test_page_scoped_css_reaches_only_its_kind(tmp_path):
+    """PAGE_CSS = {kind: (names…)}: a second small stylesheet, linked only from pages of that kind; never in the shared
+    sheet. An all-comment partial (a stub) links nothing."""
+    (tmp_path / "scoped.css").write_text(".scoped-only{color:var(--gold)}\n", encoding="utf-8")
+    (tmp_path / "stub.css").write_text("/* nothing yet */\n", encoding="utf-8")
+    mod = types.SimpleNamespace(__name__="scoped", ASSET_DIR=str(tmp_path), PAGE_CSS={"film": ("scoped",), "home": ("stub",)})
+    out = str(tmp_path / "o")
+    build.build(DATA, DISC, out, noindex=False, modules=build.discover(only=("core",)) + [mod])
+    film = read(out, "film", "heart-of-the-beast", "index.html")
+    link = re.search(r'<link rel="stylesheet" href="/assets/cinema\.css\?v=[0-9a-f]{10}"><link rel="stylesheet" href="(/assets/page-film\.[0-9a-f]{10}\.css)">', film)
+    assert link and read(out, *link.group(1).strip("/").split("/")) == ".scoped-only{color:var(--gold)}\n"
+    assert "page-film." not in read(out, "index.html") and "page-home." not in read(out, "index.html")
+    assert ".scoped-only" not in read(out, "assets", "cinema.css")
+    assert not [f for f in os.listdir(os.path.join(out, "assets")) if f.startswith("page-home.")]
+    # core's own: the 404's leader sheet (W2-P10's ui-edge.css) is page-scoped, and empty until W2-P10: no link yet
+    assert "page-404." not in read(out, "404.html") and not [f for f in os.listdir(os.path.join(out, "assets")) if f.startswith("page-404.")]
+
+
+def test_wave2_slots_are_declared_and_each_lands_in_its_place(tmp_path):
+    """The ten places Wave 2 fills (W1-P1): declared in Kit.SLOTS, each drawn where docs/PLUGINS.md says, with its ctx."""
+    wave2 = ("head.inline", "home.after_bill", "home.after_board", "film.first", "cinema.top", "city.hero", "notfound.body",
+             "offline.body", "ticket.actions", "sources.body")
+    assert set(wave2) <= set(build.Kit.SLOTS)
+    for later in ("home.personal", "home.because", "film.hero_actions"):     # Wave 3–4 declare their own
+        assert later not in build.Kit.SLOTS
+    seen = {}
+
+    def mark(name):
+        def fn(site, lang, **ctx):
+            seen.setdefault(name, []).append(ctx)
+            return f'<i data-slot="{name}"></i>' if name != "head.inline" else '<script data-slot="head.inline">0</script>'
+        return fn
+    mod = types.SimpleNamespace(__name__="marks", register=lambda site: Plugin(slots={n: mark(n) for n in wave2}))
+    out = str(tmp_path / "o")
+    build.build(DATA, DISC, out, noindex=False, modules=build.discover(only=("core",)) + [mod])
+    home = read(out, "index.html")
+    assert home.index('<script>document.documentElement.classList.add("js")</script><script data-slot="head.inline">') < home.index("</head>")
+    assert home.index("</section>", home.index('<section class="bill"')) < home.index('data-slot="home.after_bill"') \
+        < home.index('data-slot="home.after_board"') < home.index('id="now"') < home.index('id="all"')
+    film = read(out, "film", "heart-of-the-beast", "index.html")
+    assert film.index('<section class="fhero') < film.index('data-slot="film.first"') < film.index('<section class="fsched"')
+    tk = film[film.index('<div class="tk-act">'):film.index("</aside>", film.index('<div class="tk-act">'))]
+    assert tk.index('data-tk-share') < tk.index('data-slot="ticket.actions"')
+    city = read(out, "dubai", "index.html")
+    assert city.index('<h1 class="pt">') < city.index('data-slot="city.hero"') < city.index('data-me')
+    cin = read(out, "dubai", "reel-dubai-mall", "index.html")
+    assert cin.index('<p class="meta">') < cin.index('data-slot="cinema.top"') < cin.index('data-me')
+    assert read(out, "404.html").index('class="head wrap nf"') < read(out, "404.html").index('data-slot="notfound.body"')
+    off = read(out, "offline.html")
+    assert off.index("<h1>") < off.index('data-slot="offline.body"') < off.index('<p lang="en">')
+    src = read(out, "sources", "index.html")
+    assert src.index('<ul class="chains">') < src.index('data-slot="sources.body"')
+    # the context each place passes
+    assert {"kind"} == set(seen["head.inline"][0]) and {x["kind"] for x in seen["head.inline"]} >= {"home", "film", "city", "404"}
+    assert all(set(c) == {"fid"} for c in seen["film.first"]) and all(set(c) == {"city"} for c in seen["city.hero"])
+    assert all(set(c) == {"cid", "city"} for c in seen["cinema.top"]) and all(set(c) == {"show"} and c["show"]["film"] for c in seen["ticket.actions"])

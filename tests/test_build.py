@@ -486,12 +486,12 @@ def test_dates_are_human_and_english_runs_marked(site):
     assert "<small>25 سبتمبر 2026</small>" in cin and "25 September 2026" in read(out, "en", "al-ain", "star-bawadi-mall")
     assert 'lang="en">Google Maps</a>' in cin and 'lang="en">Waze</a>' in cin
     assert '<span class="basis rates">' in read(out, "film", "crawlers") and '<bdi dir="ltr" lang="en">' not in read(out, "film", "crawlers")
-    assert "E0816F" not in open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
+    assert "E0816F" not in build.css_source()
     # font preloads: the Arabic display + body faces (en: the latin body face); the digits' latin subset comes via the stylesheet
     assert 'href="/assets/fonts/readex-arabic.woff2"' in read(out) and 'href="/assets/fonts/markazi-700-arabic.woff2"' in read(out)
     assert read(out).count('as="font"') == 2 and read(out, "en").count('as="font"') == 1
     assert 'href="/assets/fonts/readex-latin.woff2"' in read(out, "en")
-    assert "fonts/readex-latin.woff2" in open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
+    assert "fonts/readex-latin.woff2" in build.css_source()
 
 
 def test_no_poster_hero_is_not_a_colour_field(site):
@@ -502,7 +502,7 @@ def test_no_poster_hero_is_not_a_colour_field(site):
     home = read(out)                                   # the fixture's Dubai top tonight (The Paradise) has no poster
     bill = home[home.index('<section class="bill"'):home.index("</section>", home.index('<section class="bill"'))]
     assert '<div class="bd noimg"' in bill and '<span class="pst bd-t"><span class="pst-t" lang="en" dir="ltr">The Paradise</span>' in bill
-    css = open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
+    css = build.css_source()
     assert not re.search(r"\.bill \.bd-t\{display:none", css)
     rule = re.search(r"\.bill \.bd-t\{([^}]*)\}", css).group(1)
     assert "position:absolute" in rule and "aspect-ratio:2/3" in rule and "opacity:0" not in rule
@@ -634,3 +634,63 @@ def test_mirrored_poster_paths_are_kept_and_made_absolute(tmp_path):
     assert 'content="https://cinema.elyoxe.com/posters/crawlers-0123456789-684.webp"' in film
     re_ = read(out, "film", "resident-evil")
     assert "/etc/passwd" not in re_ and "evil.example" not in re_
+
+
+# ---------------------------------------------------------------- W1-P1: the budgets' guards (MASTER-PLAN §7.3 #9)
+import hashlib  # noqa: E402
+import types  # noqa: E402
+import warnings  # noqa: E402
+
+
+def test_the_fixture_build_is_inside_every_budget(site):
+    b = build.check_budgets(site[0], strict_html=True)
+    assert b["js"] <= build.JS_WARN_GZ and b["css"] <= build.CSS_FAIL_GZ and b["html"] == []
+
+
+def _noise(n):
+    """n characters of hex that gzip cannot squeeze much (sha256 chains): weight a budget can feel."""
+    out, i = [], 0
+    while sum(map(len, out)) < n:
+        out.append(hashlib.sha256(str(i).encode()).hexdigest()); i += 1
+    return "".join(out)[:n]
+
+
+def _padded(tmp_path, kind, target_gz):
+    """A module whose JS (or CSS) brings the core build's bundle (or shared sheet) to about `target_gz` bytes gzipped."""
+    core = build.discover(only=("core",))
+    base = build.bundle_js(modules=core) if kind == "js" else build.minify_css(build.css_source(core))
+    lo, hi = 0, 200_000
+    while hi - lo > 64:                                   # the pad's length that lands on the target
+        mid = (lo + hi) // 2
+        body = f'var PAD = "{_noise(mid)}";' if kind == "js" else f".pad{{--p:'{_noise(mid)}'}}"
+        whole = build.bundle_js(modules=core) + body if kind == "js" else base + body
+        if build.gz(whole.encode()) < target_gz: lo = mid
+        else: hi = mid
+    (tmp_path / f"pad.{kind}").write_text(f'var PAD = "{_noise(hi)}";' if kind == "js" else f".pad{{--p:'{_noise(hi)}'}}", encoding="utf-8")
+    return core + [types.SimpleNamespace(__name__="pad", ASSET_DIR=str(tmp_path), **{kind.upper(): ("pad",)})]
+
+
+def test_the_js_guard_fails_the_build_over_36_kb_and_warns_over_34(tmp_path):
+    with pytest.raises(build.BudgetError, match="initial bundle"):
+        build.build(DATA, DISC, str(tmp_path / "fail"), noindex=False, modules=_padded(tmp_path, "js", build.JS_FAIL_GZ + 1024))
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        build.build(DATA, DISC, str(tmp_path / "warn"), noindex=False, modules=_padded(tmp_path, "js", build.JS_WARN_GZ + 1024))
+    assert any(issubclass(x.category, build.BudgetWarning) and "warning line" in str(x.message) for x in w)
+
+
+def test_the_css_guard_fails_the_build_over_19_kb(tmp_path):
+    with pytest.raises(build.BudgetError, match="shared stylesheet"):
+        build.build(DATA, DISC, str(tmp_path / "fail"), noindex=False, modules=_padded(tmp_path, "css", build.CSS_FAIL_GZ + 1024))
+
+
+def test_the_html_guard_names_a_page_over_150_kb(tmp_path):
+    fat = types.SimpleNamespace(__name__="fat", register=lambda site: [build.Page(("fat",), "ar", lambda: {
+        "title": "t", "desc": "d", "body": f"<p>{_noise(160_000)}</p>", "kind": "fat"})])
+    out = str(tmp_path / "o")
+    with warnings.catch_warnings(record=True) as w:     # the hourly build reports a heavy page and goes on
+        warnings.simplefilter("always")
+        build.build(DATA, DISC, out, noindex=False, modules=build.discover(only=("core",)) + [fat])
+    assert any("fat" in str(x.message) and "over 150000" in str(x.message) for x in w)
+    with pytest.raises(build.BudgetError, match=r"fat.index\.html"):
+        build.check_budgets(out, strict_html=True)       # the tests hold every page to it

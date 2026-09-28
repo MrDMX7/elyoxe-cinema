@@ -51,6 +51,9 @@ SHELL_HTML = [(re.compile(r'(?:<link rel="preload" href="[^"]+" as="script">\n)?
 SHELL_FILES = re.compile(r"^assets/icons/sc-[a-z]+\.png$")
 # UI redesign: the new core pages, and what the redesign rewrites (compared by their own tests, not to phase 1)
 REDESIGN_ADDED = re.compile(r"^(en/)?(cinemas|sources)/index\.html$")
+# W1-P1 (MASTER-PLAN §5.2): core declares Wave 2's lazy stub (drag.js) and page-scoped sheets (page-<kind>.css) — assets
+# only, added, never a page; a page-scoped sheet is written only once its partials hold a rule
+SEAMS_ADDED = re.compile(r"^assets/(drag\.[0-9a-f]{10}\.js|page-[\w-]+\.[0-9a-f]{10}\.css)$")
 REDESIGN_CHANGED = re.compile(r"(\.html|^assets/cinema\.css)$")
 
 
@@ -185,7 +188,7 @@ def test_core_build_is_byte_identical_to_phase1(phase1, tmp_path, name, data, di
     data = live_input(data, tmp_path)
     before = files(run_build(phase1, data, disc, str(tmp_path / "before")))
     after = files(run_build(ROOT, data, disc, str(tmp_path / "after"), "core"))
-    assert sorted(before) == sorted(p for p in after if not REDESIGN_ADDED.match(p))
+    assert sorted(before) == sorted(p for p in after if not REDESIGN_ADDED.match(p) and not SEAMS_ADDED.match(p))
     assert len(before) > 50
     bundle = "assets/cinema.HASH.js"
     diff = [p for p in before if p not in (bundle, "sitemap.xml") and not REDESIGN_CHANGED.search(p) and before[p] != after[p]]

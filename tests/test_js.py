@@ -3,6 +3,7 @@ filters, the prayer overlap, the film filters, the companion presets, the «ال
 and the built bundle parses (a syntax error there would silently disable every client feature)."""
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -116,3 +117,93 @@ def test_language_filter_and_film_count(tmp_path):
 def test_verdict_filter(tmp_path):
     """«يستاهل» in home's filter sheet (fix round 1, M4): only films whose verdict is yes."""
     assert run(tmp_path, '[filmOk({v: "yes"}, "yes"), filmOk({v: "mixed"}, "yes"), filmOk({v: "mixed"}, "all")]') == [True, False, True]
+
+
+# ---------------------------------------------------------------- W1-P1: core.js in node (the clock, the hook bus)
+# what core.js reads at load, and nothing more: a page with no saved state, no ?now= unless given
+CORE_STUB = """
+var window = { CT: {}, console: console, matchMedia: function () { return { matches: false }; },
+  localStorage: { getItem: function () { return null; }, setItem: function () {}, removeItem: function () {} } };
+var document = { documentElement: { lang: "ar" }, body: { getAttribute: function () { return null; } } };
+var location = { search: %s };
+function shareParams() {}
+var __now = %d; Date.now = function () { return __now; };
+"""
+
+
+def core(tmp_path, expr, now_ms, search="", tz=None):
+    """src/js/core.js run in node with Date.now() pinned to `now_ms` (and TZ set, if given), then `expr` printed as JSON."""
+    src = CORE_STUB % (json.dumps(search), now_ms) + open(os.path.join(ROOT, "src", "js", "core.js"), encoding="utf-8").read()
+    (tmp_path / "c.js").write_text(src + "\nprocess.stdout.write(JSON.stringify(" + expr + "));\n", encoding="utf-8")
+    env = dict(os.environ, TZ=tz) if tz else None
+    r = subprocess.run([NODE, str(tmp_path / "c.js")], capture_output=True, text=True, encoding="utf-8", timeout=60, env=env)
+    assert r.returncode == 0, r.stderr
+    return json.loads(r.stdout)
+
+
+def test_the_clock_is_dubais_whatever_the_devices_zone(tmp_path):
+    """MASTER-PLAN §1.3: every timer reads UAE time from core.js (NOW, nowMin, TODAY), never the device's own hours. Run
+    under TZ=America/New_York, where the device's clock says 13:30 on the 27th while Dubai is at 21:30, and at 00:30 on
+    the 28th in Dubai while New York is still on the 27th."""
+    import datetime as dt
+    at = lambda s: int(dt.datetime.fromisoformat(s).timestamp() * 1000)
+    expr = "[TODAY, TOMORROW, nowMin(), hhmm(NOW.getTime()), new Date(Date.now()).getHours()]"
+    got = core(tmp_path, expr, at("2026-09-27T21:30:00+04:00"), tz="America/New_York")
+    assert got[:4] == ["2026-09-27", "2026-09-28", 21 * 60 + 30, "21:30"]
+    assert got[4] == 13                                               # the device's own hour: what a naive timer would read
+    got = core(tmp_path, expr, at("2026-09-28T00:30:00+04:00"), tz="America/New_York")
+    assert got[:4] == ["2026-09-28", "2026-09-29", 30, "00:30"] and got[4] == 16   # New York: 16:30 on the 27th
+    # ?now= pretends it is that UAE time, and the device's zone still does not enter
+    got = core(tmp_path, expr, at("2026-09-27T21:30:00+04:00"), search="?now=2026-09-27T23:50", tz="America/New_York")
+    assert got[:4] == ["2026-09-27", "2026-09-28", 23 * 60 + 50, "23:50"]
+    # and the same instant read in Dubai itself agrees
+    assert core(tmp_path, expr, at("2026-09-27T21:30:00+04:00"), tz="Asia/Dubai")[:4] == ["2026-09-27", "2026-09-28", 1290, "21:30"]
+
+
+def test_the_hook_bus_runs_every_handler_in_order_and_survives_one_that_throws(tmp_path):
+    expr = """(function () {
+      var seen = [];
+      var err = console.error; console.error = function () { seen.push("logged"); };
+      on("card", function (x) { seen.push("a:" + x); });
+      on("card", function () { throw new Error("boom"); });
+      on("card", function (x) { seen.push("c:" + x); });
+      on("minute", function (x) { seen.push("m:" + (x === NOW)); });
+      emit("card", "fazaa"); emit("minute", NOW); emit("nobody-listens", 1);
+      console.error = err;
+      return seen; })()"""
+    assert core(tmp_path, expr, 1790000000000) == ["a:fazaa", "logged", "c:fazaa", "m:true"]
+
+
+def test_main_emits_the_six_events_and_the_minute_is_aligned():
+    """The events main.js promises (docs/PLUGINS.md): ready at the end of start-up, slice when the city's shows are in,
+    card and city when the visitor picks one, day on a day button, minute at each UAE :00 from one aligned timeout."""
+    main = open(os.path.join(ROOT, "src", "js", "main.js"), encoding="utf-8").read()
+    for ev in ("ready", "slice", "card", "city", "day", "minute"):
+        assert f'emit("{ev}"' in main, ev
+    assert "setInterval(" not in main                                 # never a free interval (MASTER-PLAN §1.3)
+    assert "60e3 - (Date.now() + FAKE) % 60e3" in main                # the next :00 of the page's own UAE clock
+    assert main.rstrip().endswith('emit("ready");\n})();')            # the last thing start-up does
+    assert "citySlice()" in main and 'if (S && S.city === city) emit("slice", S)' in main
+
+
+def test_the_minute_clock_survives_a_minute_that_throws(tmp_path):
+    """Review M1: the timeout is set again after the work, so it must be set again when the work throws (a bad tick in
+    rollTicket, fsTick, planRefresh…), else struck times, «الحين» and the desktop ticket freeze for the rest of the visit.
+    main.js's own nextMinute line runs here with a minute() that throws on its first tick."""
+    main = open(os.path.join(ROOT, "src", "js", "main.js"), encoding="utf-8").read()
+    line = re.search(r"^\s*\(function nextMinute\(\) \{.*\}\)\(\);$", main, re.M).group(0)
+    js = """var FAKE = 0, ticks = 0, armed = [], thrown = 0, t = Date.UTC(2026, 8, 27, 17, 30, 12, 500);
+      Date.now = function () { return t; };
+      function setTimeout(fn, ms) { armed.push([fn, ms]); }
+      function minute() { ticks++; if (ticks === 1) throw new Error("a bad tick"); }
+      """ + line + """
+      function fire(i) { t += armed[i][1]; try { armed[i][0](); } catch (e) { thrown++; } }
+      fire(0); fire(1); fire(2);
+      process.stdout.write(JSON.stringify({ticks: ticks, thrown: thrown, armed: armed.map(function (a) { return a[1]; }), sec: new Date(t).getUTCSeconds(), ms: new Date(t).getUTCMilliseconds()}));"""
+    (tmp_path / "m.js").write_text(js, encoding="utf-8")
+    r = subprocess.run([NODE, str(tmp_path / "m.js")], capture_output=True, text=True, encoding="utf-8", timeout=60)
+    assert r.returncode == 0, r.stderr
+    got = json.loads(r.stdout)
+    assert got["thrown"] == 1 and got["ticks"] == 3            # the throw still reaches the page's error handler; the clock goes on
+    assert got["armed"] == [47520, 60000, 60000, 60000]        # first to the next :00 (+20 ms), then a minute each, set again after the throw
+    assert (got["sec"], got["ms"]) == (0, 20)
