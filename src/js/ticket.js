@@ -32,6 +32,146 @@ function renderTerms(chain) {
   var r = card && D ? rule(chain, card) : null;
   el.hidden = !(r && state(r) === "ok");
   if (!el.hidden) el.innerHTML = esc(sub(C.after_card, { card: C.cards[card] })) + " " + offer(r) + terms(r);
+  renderBook(chain);
+}
+/* strings this file adds (the voice table, plan §1.7) */
+var TK = AR ? { gone: "هالعرض بدأ، هذي الأوقات الجاية", box: "الخصم من الشباك بس", pick: "اختار وقت" }
+  : { gone: "That show has started. Here are the next ones.", box: "Discount at the box office only.", pick: "Pick a time" };
+/* a card whose discount is given only at the box office (Star or Cine Royal with Fazaa…): the price the ticket
+   shows is not what the chain's site charges, so the button says so and leads to the cinema, not the site */
+function mapsTo(cin) {
+  var c = G && G[cin];
+  return c ? "https://www.google.com/maps/dir/?api=1&destination=" + c[2] + "," + c[3]
+    : "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent((q("[data-tk-cin]", tk) || {}).textContent || cin);
+}
+function renderBook(chain) {
+  var a = tk && q("[data-tk-book]", tk); if (!a) return;
+  if (!a.hasAttribute("data-bk")) a.setAttribute("data-bk", a.getAttribute("href") || "");
+  var cin = tk.getAttribute("data-cin") || "", r = card && D ? rule(chain, card) : null;
+  var box = !!(r && r.box_office_only && after(100, chain, tk.getAttribute("data-hc"), card, tk.getAttribute("data-hkey"), cin).a != null);
+  var was = a.hasAttribute("data-box");
+  a.toggleAttribute("data-box", box);
+  if (box) {
+    a.textContent = TK.box; a.href = mapsTo(cin);
+    if (!G) geo().then(function () { if (a.hasAttribute("data-box") && tk.getAttribute("data-cin") === cin) a.href = mapsTo(cin); });
+  } else if (was) {   /* back from the box office: the chain's booking link and words again */
+    a.href = a.getAttribute("data-bk"); a.textContent = sub(C.book_at, { chain: chainName(chain) });
+  }
+}
+
+/* the show link: /film/<fid>/#s-<key>. key = FNV-1a 32-bit over the UTF-8 of «cinema|date|time|hall key»,
+   base36, at least 6 characters; stable across the hourly builds because every input is. A fragment, never
+   ?s=: no crawlable URLs, one service-worker entry per film page, prerender stays eligible (plan §2.2).
+   W1-P1 moves it to core.js beside a Python twin (Kit.show_key) that must hash the same four fields. */
+function showKey(cin, d, t, hk) {
+  var s = unescape(encodeURIComponent([cin, d, t, hk || "Standard"].join("|"))), h = 0x811c9dc5;
+  for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  var k = h.toString(36);
+  return k.length < 6 ? ("00000" + k).slice(-6) : k;
+}
+/* a time button's cinema, date, time and hall key, read where the ticket reads them */
+function showOf(b) {
+  var g = b.closest("[data-cin]"), box = b.closest("[data-d]"), hl = b.closest("[data-hk]");
+  return { cin: g && g !== body ? g.getAttribute("data-cin") : body.getAttribute("data-cin") || "",
+    d: box ? box.getAttribute("data-d") : TODAY, t: b.getAttribute("data-start"), hk: hl ? hl.getAttribute("data-hk") : "Standard" };
+}
+function showKeyOf(b) { var s = showOf(b); return showKey(s.cin, s.d, s.t, s.hk); }
+function tmStart(b) { var s = showOf(b); return uae(s.d + "T" + s.t).getTime(); }
+function tmPast(b) { return tmStart(b) < NOW.getTime(); }
+/* the buttons that have not started, soonest first (each start worked out once) */
+function upcoming(bs) {
+  var n = NOW.getTime();
+  return bs.map(function (b) { return [tmStart(b), b]; }).filter(function (x) { return x[0] >= n; })
+    .sort(function (x, y) { return x[0] - y[0]; }).map(function (x) { return x[1]; });
+}
+/* a time button inside a schedule (not a tile, not the ticket), in document order */
+function schedTimes(scope) { return qa(".tm[data-start]", scope || document).filter(function (b) { return !!b.closest(".times[data-d]") && !tk.contains(b); }); }
+/* press the day chip a time belongs to, when the page has day chips and another day is showing */
+function showDay(b) {
+  var d = showOf(b).d, chip = q('[data-day="' + d + '"]');
+  if (chip && chip.getAttribute("aria-pressed") !== "true") chip.click();
+}
+function scrollNear(el) {
+  var go = function () {
+    var top = el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0) - Math.round(window.innerHeight * 0.22);
+    window.scrollTo(0, Math.max(0, top));
+  };
+  go();
+  /* on a cold landing the web fonts swap in after this scroll and push a long schedule's block down, below the
+     fold: once they are in, scroll to it again, unless the visitor has moved the page meanwhile */
+  var f = document.fonts; if (!f || !f.ready) return;
+  var moved = false, evs = ["wheel", "touchstart", "keydown", "mousedown"], mark = function () { moved = true; };
+  evs.forEach(function (e) { window.addEventListener(e, mark, { passive: true, once: true }); });
+  f.ready.then(function () {
+    evs.forEach(function (e) { window.removeEventListener(e, mark); });
+    if (!moved && el.isConnected) go();
+  });
+}
+/* a tap the ticket should treat as the visitor's own (the hash, or a finger), else the page picking for them */
+var tkUser = false, tkAuto = null, tkPicking = false;
+function tapTime(b, user) { tkPicking = !user; try { b.click(); } finally { tkPicking = false; } }
+/* the film page reads #s-<key>: that show's ticket opens (phone: the sheet; desktop: the column). A key whose
+   show has started, or that the page no longer has, says so over that cinema's next times. */
+function showFromHash() {
+  var m = /^#s-([0-9a-z]{1,8})$/.exec(location.hash || "");
+  if (!m || page !== "film" || !tk || !q("[data-tk-rows]", tk)) return false;
+  var old = q("[data-gone]"); if (old) old.parentNode.removeChild(old);
+  var hit = schedTimes(q(".cgs")).filter(function (b) { return showKeyOf(b) === m[1]; })[0] || null;
+  if (hit && !tmPast(hit)) {
+    showDay(hit); tkUser = true; tapTime(hit, true); scrollNear(hit);
+    return true;
+  }
+  var cg = hit && hit.closest(".cg"), next = cg ? upcoming(schedTimes(cg))[0] : null;
+  var p = document.createElement("p");
+  p.className = "hint"; p.setAttribute("data-gone", ""); p.setAttribute("role", "status"); p.textContent = TK.gone;
+  if (next) {
+    showDay(next);
+    var h = q(".cg-h", cg); if (h) h.insertAdjacentElement("afterend", p); else cg.insertAdjacentElement("afterbegin", p);
+    scrollNear(cg);
+  } else {
+    var s = q(".cgs"); if (!s) return false;
+    s.insertAdjacentElement("afterbegin", p); scrollNear(p);
+  }
+  rollTicket();   /* desktop: the column leaves the build's show too if it has started (#27), as without the link */
+  return true;
+}
+/* desktop: the column is never a show that has started. Until the visitor picks a time it follows the next
+   upcoming show in their city (priced first, as the build picks), else it asks for a time. */
+function tkScope() { return page === "film" ? q('.fcity[data-city="' + city + '"]') : q(".cgs, .cfilms, .sched") ? document : null; }
+function nextShow() {
+  var sc = tkScope(); if (!sc) return null;
+  var up = upcoming(schedTimes(sc === document ? null : sc));
+  return up.filter(function (b) { return b.hasAttribute("data-p"); })[0] || up[0] || null;
+}
+function pickState(on) {
+  var el = q("[data-tk-pick]", tk);
+  if (!on) {
+    if (el) el.parentNode.removeChild(el);
+    qa("[data-tk-pk]", tk).forEach(function (c) { c.classList.remove("x"); c.removeAttribute("data-tk-pk"); });
+    return;
+  }
+  if (el) return;
+  [].slice.call(tk.children).forEach(function (c) { if (!c.classList.contains("x")) { c.classList.add("x"); c.setAttribute("data-tk-pk", ""); } });
+  tk.insertAdjacentHTML("afterbegin", '<div class="tk-main" data-tk-pick><p class="tk-cin">' + esc(TK.pick) + "</p></div>");
+  qa(".tm.on").forEach(function (o) { o.classList.remove("on"); o.removeAttribute("aria-current"); });
+}
+function rollTicket() {
+  if (!tk || tkUser || tk.hidden || !desk() || !q("[data-tk-rows]", tk)) return;
+  var sc = tkScope(), cur = tkAuto;
+  if (cur && sc && (sc === document || sc.contains(cur)) && !tmPast(cur)) return;
+  var b = nextShow();
+  tkAuto = b;
+  if (b) tapTime(b, false); else pickState(true);
+}
+/* the ticket the build wrote: its show's hall and its day as the visitor's clock names it */
+function ticketStart() {
+  if (!tk) return;
+  var sid = tk.getAttribute("data-show"), b = sid ? q('.tm[data-show="' + sid + '"]') : null;
+  if (!b || tk.contains(b)) return;
+  tkAuto = b;
+  var hl = b.closest("[data-hall]");
+  if (hl) { tk.setAttribute("data-hc", hl.getAttribute("data-hall") || ""); tk.setAttribute("data-hkey", hl.getAttribute("data-hk") || ""); }
+  tkSet("[data-tk-day]", dayName(showOf(b).d));
 }
 
 /* what the ticket needs about a time: from its own attributes when the page wrote them all (a hall row
@@ -66,6 +206,8 @@ function openTicket(btn) {
 }
 function fillTicket(btn, x) {
   var dname = dayName(x.d), lines = [];
+  pickState(false);
+  tk.setAttribute("data-hc", x.hall || ""); tk.setAttribute("data-hkey", x.hk || "");
   tkSet("[data-tk-cin]", x.cname); tkSet("[data-tk-film]", x.film); tkSet("[data-tk-time]", x.t); tkSet("[data-tk-day]", dname);
   if (x.hk && x.hk !== "Standard" && x.hn) lines.push('<span class="tk-h"><bdi>' + esc(x.hn) + "</bdi></span>");
   if (x.ends) {
@@ -87,7 +229,8 @@ function fillTicket(btn, x) {
   renderTerms(x.chain);
   /* the booking link is this show's, else its chain's site: never the last show's */
   var book = q("[data-tk-book]", tk);
-  if (book && x.book) { book.href = x.book; book.classList.remove("off"); book.textContent = sub(C.book_at, { chain: chainName(x.chain) }); }
+  if (book && x.book) { book.href = x.book; book.setAttribute("data-bk", x.book); book.classList.remove("off"); book.textContent = sub(C.book_at, { chain: chainName(x.chain) }); }
+  renderBook(x.chain);
   var sh = q("[data-tk-share]", tk), msg = sub(TX.share_t, { film: x.film, cin: x.cname, day: dname, t: x.t });
   var link = location.origin + (x.fid ? C.base + "film/" + x.fid + "/" : location.pathname);
   if (sh) { sh.setAttribute("data-share", msg); sh.setAttribute("data-url", link); sh.href = "https://wa.me/?text=" + encodeURIComponent(msg + "\n" + link); }
@@ -124,7 +267,11 @@ function bindTicket() {
   if (desk()) { tk.setAttribute("role", "region"); tk.setAttribute("aria-label", AR ? "التذكرة" : "Ticket"); }
   document.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest(".tm[data-start]");
-    if (b) { if (b.classList.contains("past")) { e.preventDefault(); return; } if (q("[data-tk-rows]", tk)) { e.preventDefault(); tkFrom = b; openTicket(b); } return; }
+    if (b) {
+      if (b.classList.contains("past")) { e.preventDefault(); return; }
+      if (q("[data-tk-rows]", tk)) { e.preventDefault(); tkFrom = b; if (tkPicking) tkAuto = b; else tkUser = true; openTicket(b); }
+      return;
+    }
     if (e.target.closest && e.target.closest("[data-tk-close]")) { closeTicket(); return; }
     var sh = e.target.closest && e.target.closest("[data-tk-share]");
     if (sh && navigator.share) {
@@ -142,4 +289,6 @@ function bindTicket() {
     else if (!e.shiftKey && (document.activeElement === z || !tk.contains(document.activeElement))) { e.preventDefault(); a.focus(); }
   });
   window.addEventListener("popstate", function () { if (tk.classList.contains("open")) { tkPushed = false; closeTicket(true); } });
+  window.addEventListener("hashchange", showFromHash);
+  ticketStart();
 }

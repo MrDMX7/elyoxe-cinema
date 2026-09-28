@@ -1,17 +1,20 @@
 /* main: the control sentence «أنا في [المدينة] وعندي [البطاقة]», showtime marks, the minute clock, start-up. */
 
-/* times already started are struck; those starting within 45 minutes (the «الحين» window) glow */
+/* times already started are struck; those starting within 45 minutes (the «الحين» window) glow. Returns how
+   many times changed state in this call (the minute tick re-judges the halls only then). */
 function marks() {
-  var n = NOW.getTime(), soon = n + 45 * 60e3;
+  var n = NOW.getTime(), soon = n + 45 * 60e3, changed = 0;
   qa(".times[data-d]").forEach(function (box) {
     var d = box.getAttribute("data-d");
     qa("[data-start]", box).forEach(function (a) {
       var t = uae(d + "T" + a.getAttribute("data-start")).getTime();
+      if ((t < n) !== a.classList.contains("past")) changed++;
       a.classList.toggle("past", t < n);
       if (t < n) { a.setAttribute("aria-disabled", "true"); a.setAttribute("tabindex", "-1"); }
       a.classList.toggle("nowish", t >= n && t <= soon);
     });
   });
+  return changed;
 }
 function ago(at) {
   var m = Math.max(1, Math.floor((NOW - new Date(at)) / 60000)), h = Math.floor(m / 60), d = Math.floor(h / 24);
@@ -34,7 +37,7 @@ function pickCity(c) {
   qa("[data-city-name]").forEach(function (el) { el.textContent = C.cities[c] || c; });
   qa("[data-citypick] a[data-city]").forEach(function (a) { if (a.getAttribute("data-city") === c) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
   if (page === "home") loadCity();
-  if (page === "film") { renderFilm(); if (ST.prayer) applyPrayer(); }
+  if (page === "film") { renderFilm(); if (ST.prayer) applyPrayer(); rollTicket(); }
 }
 function markCard() {
   qa("button[data-card]").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-card") === card ? "true" : "false"); });
@@ -115,7 +118,17 @@ function lazyRow() {
     });
   });
   relabelDays();
-  var days = qa("[data-day]"), cur = days.filter(function (b) { return b.getAttribute("data-day") === TODAY; })[0] ||
+  /* the day showing first: today while it still has a time to come, else the next day that has one (a compact
+     schedule's times are still text here: upgradeTimes() runs after, so this click filters text, not buttons) */
+  var hm = hhmm(NOW.getTime()), days = qa("[data-day]"), cur = null, ahead = function (b) {
+    var d = b.getAttribute("data-day");
+    return d >= TODAY && qa('.times[data-d="' + d + '"]').some(function (t) {   /* stops at the first box that has one */
+      var ts = t.textContent.match(/\d\d:\d\d/g) || [];
+      return d > TODAY ? ts.length > 0 : ts.some(function (x) { return x >= hm; });
+    });
+  };
+  for (var i = 0; i < days.length && !cur; i++) if (ahead(days[i])) cur = days[i];
+  cur = cur || days.filter(function (b) { return b.getAttribute("data-day") === TODAY; })[0] ||
     days.filter(function (b) { return b.getAttribute("data-day") > TODAY; })[0] || days[0];
   if (cur) cur.click();
   document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-forget]")) forgetLoc(); });
@@ -134,6 +147,14 @@ function lazyRow() {
     if (tk) renderTerms(tk.getAttribute("data-chain"));
   });
   if (page === "home" || page === "city") loadCity();
-  /* the clock: every minute «الحين», the struck times and the ages move on */
-  setInterval(function () { var d = TODAY; tick(); if (d !== TODAY) relabelDays(); marks(); ages(); renderNow(); }, 60e3);
+  /* a show link (#s-…) opens its ticket; else the desktop column moves off a show that has started */
+  if (!showFromHash()) rollTicket();
+  /* the clock: every minute «الحين», the struck times, the halls whose last time passed, the desktop ticket,
+     the leave-by line and the ages move on */
+  setInterval(function () {
+    var d = TODAY; tick(); if (d !== TODAY) relabelDays();
+    if (marks()) hidePassed();   /* a hall can only run out when one of its times has just changed */
+    ages(); renderNow(); rollTicket();
+    if (typeof planRefresh === "function" && tk && !tk.hidden && (desk() || tk.classList.contains("open"))) planRefresh();
+  }, 60e3);
 })();

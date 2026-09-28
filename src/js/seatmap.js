@@ -105,10 +105,15 @@ function whenFilled(tk, c, fn) {
     if (++n < 60) setTimeout(poll, 50);
   })();
 }
+/* /data/seats/index.json lists the cinemas that have a seats file: only those are asked for (a missing one
+   was a 404 on every ticket tap). A cinema without one still clears the last show's drawing. */
 function forTime(tk, btn, wait) {
   var c = where(btn);
   if (!c.cin || !c.fid) return;
-  K.getJSON("/data/seats/" + encodeURIComponent(c.cin) + ".json").then(function (f) {
+  K.getJSON("/data/seats/index.json").then(function (ix) {
+    var has = !!ix && ix.indexOf && ix.indexOf(c.cin) >= 0;
+    return has ? K.getJSON("/data/seats/" + encodeURIComponent(c.cin) + ".json") : null;
+  }).then(function (f) {
     if (wait) whenFilled(tk, c, function () { drawTicket(tk, c, f); }); else drawTicket(tk, c, f);
   });
 }
@@ -128,7 +133,9 @@ function start() {
     var b = ev.target.closest && ev.target.closest(".tm[data-start]");
     if (b && !b.classList.contains("past")) forTime(tk, b, true);
   });
-  var sid = tk.getAttribute("data-show"), first = sid ? K.q('.tm[data-show="' + sid + '"]') : null;
-  if (first && !tk.hidden) forTime(tk, first, false);
+  /* the time the ticket holds now: the page may already have moved it off the build's show (a started show,
+     a show link), and the selected time carries .on */
+  var sid = tk.getAttribute("data-show"), first = K.q(".tm.on[data-start]") || (sid ? K.q('.tm[data-show="' + sid + '"]') : null);
+  if (first && !tk.hidden && !first.classList.contains("past")) forTime(tk, first, false);
 }
 if (typeof document !== "undefined" && K.q) start();

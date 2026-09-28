@@ -5,6 +5,13 @@ function sliceOf(c, d) { return C.days && C.days.indexOf(d) < 0 ? Promise.resolv
 function slice(d) { return sliceOf(city, d); }
 /* one day's slice as {cinemas, films, shows}; parsed once per URL */
 var PS = {};
+/* «HH:MM» + e minutes, as the UAE wall clock reads it: plain minute arithmetic (no DST there), the same as
+   hhmm(uae(d + "T" + t) + e min) without two Dates per show (a city's day is thousands of shows, and the desktop
+   ticket parses one at start-up to leave a started show) */
+function addMin(t, e) {
+  var m = Math.floor(((+t.slice(0, 2) * 60 + +t.slice(3, 5) + e) % 1440 + 1440) % 1440);
+  return (m < 600 ? "0" : "") + Math.floor(m / 60) + ":" + (m % 60 < 10 ? "0" : "") + (m % 60);
+}
 function parseSlice(j, d) {
   var o = { cinemas: {}, films: {}, shows: [] };
   if (!j) return o;
@@ -14,7 +21,7 @@ function parseSlice(j, d) {
     var h = j.H[a[3]], e = j.E && j.E[n], l = j.Li && j.Li[n] >= 0 ? j.L[j.Li[n]] : null;
     o.shows.push({ c: j.C[a[0]][0], f: j.F[a[1]][0], d: d, t: a[2], h: h[0], k: h[1].slice(h[1].indexOf("|") + 1), hn: AR ? h[2] : h[3],
       p: a[4] >= 0 ? j.P[a[4]] : null, b: a[5] >= 0 ? j.B[a[5]] + a[6] : (a[6] || null), asof: a[7] || null,
-      e: e ? hhmm(uae(d + "T" + a[2]).getTime() + e * 60e3) : null, lg: l && l[0], sb: l && l[1] });
+      e: e ? addMin(a[2], e) : null, lg: l && l[0], sb: l && l[1] });
   });
   return o;
 }
@@ -82,11 +89,22 @@ function start(s) { return uae(s.d + "T" + s.t).getTime(); }
 /* does a show pass the time controls («يخلص قبل», ربعي's late shows)? */
 function showOk(s, rt) { var sp = showSpan(s.t, s.e, rt); return endsOk(sp, ST.before) && lateOk(sp, whoPreset(ST.who).late); }
 
+/* «الحين»: a film worth it («يستاهل» or «بين بين») starting inside the window first, nearest then soonest
+   (pickNow); only when none does, any film. shows = [{at, km, v}] */
+function nowPick(shows, n, win) {
+  return pickNow(shows.filter(function (s) { return s.v === "yes" || s.v === "mixed"; }), n, win) || pickNow(shows, n, win);
+}
+/* a film's verdict as its tile on this page carries it */
+var VD = null;
+function verdictOf(fid) {
+  if (!VD) { VD = {}; qa("[data-fid][data-v]").forEach(function (el) { VD[el.getAttribute("data-fid")] = el.getAttribute("data-v"); }); }
+  return VD[fid] || "unknown";
+}
 function renderNow() {
   var box = q("[data-now]");
   if (!box || !S) return;
   var n = NOW.getTime();
-  var s0 = pickNow(S.shows.map(function (s) { return { at: start(s), km: kmTo(s.c), s: s }; }), n, 45);
+  var s0 = nowPick(S.shows.map(function (s) { return { at: start(s), km: kmTo(s.c), v: verdictOf(s.f), s: s }; }), n, 45);
   /* the slot keeps its height either way (cinema.css reserves it while the slice loads), so nothing under
      it jumps: with no show in the window it says so quietly and points at tonight's times */
   box.hidden = false;
@@ -104,7 +122,8 @@ function renderNow() {
   q("[data-now-film]", box).textContent = sub(C.in_cinema, { film: nm(S.films[s.f]), cinema: nm(S.cinemas[s.c]) });
   q("[data-now-where]", box).innerHTML = bits.join(TX.sep);
   flipTime(q("[data-now-time]", box), s.t);
-  box.href = C.base + "film/" + s.f + "/";
+  /* the show itself: the film page opens this show's ticket from the fragment (ticket.js showFromHash) */
+  box.href = C.base + "film/" + s.f + "/#s-" + showKey(s.c, s.d, s.t, s.k);
 }
 
 function renderHome(go) {
