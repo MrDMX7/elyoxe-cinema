@@ -95,20 +95,25 @@ def test_hidden_means_hidden_one_rule_no_patches(tmp_path):
     held = re.findall(r"<[^>]*\bdata-hold\b[^>]*>", home)
     assert len(held) == 1 and 'id="now" data-near-row data-hold hidden' in held[0]
     city = open(os.path.join(out, "dubai", "index.html"), encoding="utf-8").read()
-    assert '<a class="now" href="#all" data-now data-hold hidden>' in city
+    # W2-P6 (MASTER-PLAN §2.5) replaced the city page's old #all toggle with «اختار لي في {city}» (data-pick),
+    # held invisible the same way until W2-P2b's pick binds it
+    assert '<button type="button" class="btn ghost pl-pick" data-pick="dubai" data-hold hidden>' in city
     # each held slot keeps a «.js …[hidden]» rule that lays it out invisible
     css = open(os.path.join(out, "assets", "cinema.css"), encoding="utf-8").read()
     assert ".js .now[data-now][hidden]{display:flex;visibility:hidden}" in css and ".js .rail[data-near-row][hidden]{display:block;visibility:hidden}" in css
 
 
 def test_the_wave2_stubs_are_declared_and_cost_nothing():
+    # W2-P6 (MASTER-PLAN §2.4, §2.5) filled places.js in (city/cinema pages hand their slice to the lazy
+    # places-live chunk on "ready"); chrome.js and drag.js (lazy) stay the zero-cost stubs the wave declared
     js = list(core.JS)
     assert js[-3:] == ["chrome", "places", "main"] and core.LAZY_JS == ("drag",)
-    for f in ("chrome.js", "places.js", "drag.js"):
+    for f in ("chrome.js", "drag.js"):
         assert build.minify_lite((SRC / "js" / f).read_text(encoding="utf-8")).strip() == "", f
-    without = types.SimpleNamespace(__name__="pages.core", JS=tuple(n for n in core.JS if n not in ("chrome", "places")))
+    assert build.minify_lite((SRC / "js" / "places.js").read_text(encoding="utf-8")).strip() != ""
+    without = types.SimpleNamespace(__name__="pages.core", JS=tuple(n for n in core.JS if n not in ("chrome",)))
     mods = build.discover()
-    assert build.bundle_js(modules=[without] + mods[1:]) == build.bundle_js(modules=mods)   # not one byte in the bundle
+    assert build.bundle_js(modules=[without] + mods[1:]) == build.bundle_js(modules=mods)   # not one byte from chrome.js
 
 
 def test_docs_name_every_seam():

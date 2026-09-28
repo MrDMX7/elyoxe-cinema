@@ -218,7 +218,9 @@ def test_venue_no_longer_fills_the_film_page():
     """The film page's all-cities double feature is deleted (W0-P2, MASTER-PLAN §4.1 #14)."""
     assert not hasattr(venue, "film_double_feature_html")
     plugin = venue.register(types.SimpleNamespace())
-    assert set(plugin.slots) == {"cinema.after_halls"} and plugin.page_js == {"cinema": ["when"]}
+    # W2-P6 (MASTER-PLAN §2.4, §2.5): the redesigned cinema and city pages load the lazy places-live chunk too
+    assert set(plugin.slots) == {"cinema.after_halls"} and plugin.page_js == {
+        "cinema": ["when", "places-live"], "city": ["places-live"]}
 
 
 def test_cinema_page_double_features_are_grouped_bounded_and_written_with_then():
@@ -268,9 +270,11 @@ def read(out_dir, *parts):
 
 
 def test_mall_note_on_a_cinema_we_have_hours_for(out):
-    # reel-dubai-mall is in the sample fixture and in malls.yaml (dubai-mall)
+    # reel-dubai-mall is in the sample fixture and in malls.yaml (dubai-mall). W2-P6 (MASTER-PLAN §2.4) moved
+    # «المول يسكّر HH:MM» out of venue.py's own .mall-note block and into the cinema page's own head .meta
+    # (pages/_core/places.py); mall_section()/mall_note() stay for any other page that still wants the block.
     html = read(out, "dubai", "reel-dubai-mall", "index.html")
-    assert 'class="mall-note"' in html and "المول يسكّر" in html
+    assert 'class="closes"' in html and "المول يسكّر" in html
 
 
 def test_no_mall_note_for_a_cinema_we_never_confirmed():
