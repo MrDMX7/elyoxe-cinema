@@ -156,11 +156,101 @@ def _finish_run() -> None:
 
 
 def _resumable_raw(chain: str, run_id: str):
-    """The chain's raw fetch from the unfinished run `run_id`, or None (the tag is stripped)."""
+    """The chain's raw fetch from the unfinished run `run_id`, or None (the tag is stripped; `_read_at`, the
+    time that fetch finished, stays for the caller to take off)."""
     raw = _load_json(_raw_path(chain))
     if not isinstance(raw, dict) or raw.pop("_run_id", None) != run_id:
         return None
     return raw
+
+
+# ---------------------------------------------------------------- each chain's own read time (W1-D3)
+# data["chains"][chain]["at"] is the time that chain's own read finished, not the run's start: the chains are
+# read one after another (a day's first run takes ~30 min), and a chain resumed from a killed run's raw file was
+# read up to RESUME_WINDOW earlier. A chain that failed keeps its previous "at" (normalize.merge), so the site can
+# say «أسعار ريل من 18:05» on prices older than 2 h (pages/pulse.py) and /sources/ lists seven real times.
+
+def _raw_read_at(raw: dict, run_started: str | None, fallback: str) -> str:
+    """When a resumed raw file was read: its own `_read_at` tag (taken off `raw`), else the unfinished run's start
+    (a raw written before the tag existed was read after that, so the time is never later than the truth)."""
+    at = raw.pop("_read_at", None)
+    try:
+        return datetime.fromisoformat(at).isoformat() if at else (run_started or fallback)
+    except (TypeError, ValueError):
+        return run_started or fallback
+
+
+def apply_read_times(merged: dict, read_at: dict) -> None:
+    """Each chain read this run carries its own read time in data["chains"] (and so in every city slice)."""
+    for chain, at in read_at.items():
+        info = (merged.get("chains") or {}).get(chain)
+        if isinstance(info, dict) and info.get("ok"):
+            info["at"] = at
+
+
+# ---------------------------------------------------------------- published signals (W1-D3)
+
+def attach_first_seen(merged: dict, history: dict) -> None:
+    """film["first_seen"] = film_history.json's own date for every film (read, never recomputed): the site
+    publishes it in /data/pulse.json. Films present at the seeding run all carry the seed date."""
+    for fid, film in (merged.get("films") or {}).items():
+        first = (history.get(fid) or {}).get("first_seen")
+        if first:
+            film["first_seen"] = first
+
+
+def carry_released(merged: dict, previous: dict | None) -> None:
+    """film["released"]: the release date a chain's coming-soon list gave the film before it opened, kept while it
+    shows (the coming step drops a film once it is showing, and normalize.merge rebuilds films each run)."""
+    previous = previous or {}
+    prev_films, prev_coming = previous.get("films") or {}, previous.get("coming") or {}
+    for fid, film in (merged.get("films") or {}).items():
+        if film.get("status") == "archived":
+            continue
+        rel = (prev_films.get(fid) or {}).get("released") or (prev_coming.get(fid) or {}).get("release_date")
+        if isinstance(rel, str) and len(rel) == 10:
+            film["released"] = rel
+
+
+RANK_KEEP_DAYS = 2   # the rank's per-city day reads keep yesterday and later (pages/pulse.py: rank.json)
+
+
+def day_counts(data: dict) -> dict:
+    """{date: {city: {fid: [shows, cinemas]}}} of this read's shows (films only, archived films have none)."""
+    cinemas, films = data.get("cinemas") or {}, data.get("films") or {}
+    acc: dict = {}
+    for s in data.get("shows") or []:
+        c, fid, d = cinemas.get(s.get("cinema")), s.get("film"), s.get("date")
+        if not c or not c.get("city") or fid not in films or not d:
+            continue
+        per = acc.setdefault(str(d), {}).setdefault(c["city"], {}).setdefault(fid, [0, set()])
+        per[0] += 1
+        per[1].add(s["cinema"])
+    return {d: {city: {fid: [n, len(cs)] for fid, (n, cs) in sorted(fs.items())} for city, fs in sorted(cities.items())}
+            for d, cities in sorted(acc.items())}
+
+
+def update_rank_days(merged: dict, previous: dict | None, now: str) -> dict:
+    """merged["rank_days"] = {date: {city: {fid: [shows, cinemas]}}}: per date and city, the fullest read seen so
+    far (the most shows; the first read of a day holds all of it, the hourly runs after it lose the shows already
+    played). Carried run to run in latest.json, dates before yesterday dropped. The per-city counts
+    price_history.jsonl does not keep (its films are UAE-wide), for rank.json's arrows."""
+    keep_from = (_as_time(now).date() - timedelta(days=RANK_KEEP_DAYS - 1)).isoformat()
+    prev = (previous or {}).get("rank_days") or {}
+    out: dict = {}
+    for d, cities in prev.items():
+        if isinstance(d, str) and d >= keep_from and isinstance(cities, dict):
+            out[d] = {c: dict(v) for c, v in cities.items() if isinstance(v, dict)}
+    size = lambda fs: sum(int(v[0]) for v in fs.values())
+    for d, cities in day_counts(merged).items():
+        if d < keep_from:
+            continue
+        slot = out.setdefault(d, {})
+        for city, fs in cities.items():
+            if size(fs) >= size(slot.get(city) or {}):
+                slot[city] = fs
+    merged["rank_days"] = {d: dict(sorted(v.items())) for d, v in sorted(out.items())}
+    return merged["rank_days"]
 
 
 def _fetch_chain(chain: str, days: int, offline: bool, price_cache: dict | None = None):
@@ -499,15 +589,19 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
 
     # C1 (final review): resume an unfinished run from its own raw files, never reuse across runs
     run_id, resuming = _start_run(now, force)
+    run_started = None
     if resuming:
         summaries.append(f"resuming unfinished run {run_id}")
+        run_started = (_load_json(_run_marker_path()) or {}).get("started")
     reused: set[str] = set()
+    read_at: dict[str, str] = {}   # chain -> when its own read finished (W1-D3)
 
     for chain in chains:
         cached = _resumable_raw(chain, run_id) if resuming else None
         if cached is not None:
             raw, ok, error, seconds = cached, True, None, 0.0
             reused.add(chain)
+            read_at[chain] = _raw_read_at(raw, run_started, now)
         else:
             # fix round 1 (concurrency): hand the reader its OWN copy, never the dict this
             # function later serializes -- an abandoned timeout thread can keep mutating this
@@ -518,7 +612,8 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
                                   price_cache=private_cache)
             ok, error, seconds, raw = outcome["ok"], outcome["error"], outcome["seconds"], outcome["result"]
             if ok:
-                _write_json_atomic(_raw_path(chain), {**raw, "_run_id": run_id})
+                read_at[chain] = now_iso()
+                _write_json_atomic(_raw_path(chain), {**raw, "_run_id": run_id, "_read_at": read_at[chain]})
                 if private_cache is not None:
                     # only a chain that actually finished within its timeout gets to update the
                     # persisted cache -- an abandoned/timed-out attempt's copy is simply dropped
@@ -549,7 +644,7 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             degraded = bool(attempted > 0 and (priced / attempted) < PRICES_DEGRADED_THRESHOLD)
 
             results[chain] = raw
-            health[chain] = {"ok": True, "at": now, "error": None, "shows": total,
+            health[chain] = {"ok": True, "at": read_at.get(chain, now), "error": None, "shows": total,
                               "prices_degraded": degraded}
             if carried:
                 health[chain]["carried_today"] = carried
@@ -585,6 +680,8 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
                        {c: {today: dict(v)} for c, v in chain_price_caches.items() if v})
 
     merged = normalize.merge(results, previous, now)
+    apply_read_times(merged, read_at)       # W1-D3: each chain's own read time, not the run's start
+    carry_released(merged, previous)
 
     # W0-P4 (legend §4.1 #31): films whose chains disagree on the runtime by more than
     # normalize.RUNTIME_GAP_MIN minutes -- the film uses the chains' median; the gap is only reported
@@ -698,6 +795,7 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
     new_history, new_films = update_film_history(merged, history, now, fresh_chains=fresh,
                                                  aliases=static_aliases)
     _write_state_json(FILM_HISTORY_PATH, FILM_HISTORY_BACKUP_PATH, new_history)
+    attach_first_seen(merged, new_history)   # W1-D3: published in /data/pulse.json, never recomputed
     _write_json_atomic(NEW_FILMS_PATH, new_films if history_existed else [])
     if new_films:
         summaries.append(
@@ -705,6 +803,10 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             + ", ".join(f"{f['title']} ({f['cinemas']} سينما)" for f in new_films)
         )
 
+    try:
+        update_rank_days(merged, previous, now)   # W1-D3: per-city day reads for /data/rank.json
+    except Exception as e:  # noqa: BLE001 - the rank is a bonus; it must never abort the publish
+        print(f"refresh: rank days failed: {e}", file=sys.stderr)
     _write_json_atomic(LATEST_PATH, merged)
     for city, city_data in normalize.city_slices(merged).items():
         _write_json_atomic(DATA_DIR / f"{city}.json", city_data)
