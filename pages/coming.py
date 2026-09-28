@@ -27,9 +27,11 @@ DIRS = ("coming",)
 
 
 def _thursday_of(iso_date: str) -> str:
-    """The Thursday of the ISO week `iso_date` falls in (UAE releases land on Thursdays)."""
+    """The Thursday that opens the release week `iso_date` falls in (UAE releases land on Thursdays): Monday to
+    Wednesday belong to the coming Thursday, Thursday to itself, and Friday to Sunday to the Thursday before --
+    a Friday 2 October release opened with the 1 October slate, not the 8 October one."""
     d = dt.date.fromisoformat(iso_date)
-    return (d + dt.timedelta(days=(3 - d.weekday()) % 7)).isoformat()
+    return (d + dt.timedelta(days=3 - d.weekday())).isoformat()
 
 
 _RERELEASE = re.compile(r"-?re-?release$")
@@ -141,13 +143,11 @@ class ComingPages(Pages):
         trailer = (f'<a class="cs-yt" href="https://www.youtube-nocookie.com/embed/{esc(f["trailer"])}" '
                    f'data-trailer="{esc(f["trailer"])}" rel="noopener" target="_blank">'
                    f'{"العرض الترويجي" if lang == "ar" else "Trailer"}</a>') if f.get("trailer") else ""
-        notify = (f'<button type="button" class="btn ghost cs-notify" disabled>'
-                  f'{"نبّهني" if lang == "ar" else "Notify me"}</button>')
         return (f'<li class="cs-card">{img}<div class="cs-info">{titles}'
                 + (f'<span class="cs-meta">{esc(meta)}</span>' if meta else "")
                 + f'<span class="cs-cd">{esc(cd)}</span>'
                 + (f'<span class="cs-chains">{esc(chains)}</span>' if chains else "")
-                + f'<div class="cs-act">{trailer}{notify}</div></div></li>')
+                + (f'<div class="cs-act">{trailer}</div>' if trailer else "") + '</div></li>')
 
     def coming_page(self, lang):
         title = L(TITLE, lang)

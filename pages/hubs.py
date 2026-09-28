@@ -1,6 +1,7 @@
 """pages/hubs.py (Task 2, design spec A): /arabic/ (Gulf & Arabic films) + /events/ (chain-labelled
-special events), and the «آخر فرصة» strip on home + city pages (Kit.SLOTS: home.after_tonight,
-city.after_tonight -- the extension hooks PLUGINS.md offers; no new hook was needed).
+special events). The «آخر فرصة» strip that sat in home.after_tonight / city.after_tonight is deleted
+(W0-P2, MASTER-PLAN §4.1 #13): steps/last_chance.py is switched off until a real signal exists, and a strip
+brought back then is built on that signal, not on this one.
 
 /arabic/: films from `site.showing` whose `lang` is Arabic (data's own film-level `lang`, the
 same field core.py's ticket already reads -- never guessed at from title or chain). "Produced in
@@ -22,11 +23,6 @@ pre-existing, project-wide "no page is noindex outside its own named exemptions"
 would fail against `fixtures/sample_latest.json`'s empty `events` data -- true, but the fix was
 to add a third exemption there (the file already exempts the unconfirmed-discount-card URL the
 same way, one line with a comment), not to revert the page. That exemption is now in place.
-
-«آخر فرصة» strip: steps/last_chance.py's data["last_chance"][city] -> the same site.film_tile()
-core.py's own posters row uses, so a last-chance film looks and behaves exactly like any other
-tile (same poster, price, verdict word, link to its film page -- these are always currently-
-showing films, never coming-soon ones).
 """
 import os
 
@@ -47,8 +43,7 @@ def register(site):
         pages=[Page(("arabic",), lang, lambda lang=lang: p.arabic_page(lang)) for lang in ("ar", "en")]
         + [Page(("events",), lang, lambda lang=lang: p.events_page(lang)) for lang in ("ar", "en")],
         nav=[NavItem("arabic", href=lambda lang: P(lang, "arabic"), label=TITLE_AR),
-             NavItem("events", href=lambda lang: P(lang, "events"), label=TITLE_EV)],
-        slots={"home.after_tonight": last_chance_strip, "city.after_tonight": last_chance_strip})
+             NavItem("events", href=lambda lang: P(lang, "events"), label=TITLE_EV)])
 
 
 class HubPages(Pages):
@@ -109,20 +104,3 @@ class HubPages(Pages):
         return {"title": title, "desc": desc, "body": body, "kind": "events", "nav": "events", "graph": graph,
                 "robots": NOINDEX,
                 "path": os.path.join(self.out, *(["en"] if lang == "en" else []), "events", "index.html")}
-
-# -------------------------------------------------------------- last-chance strip (slot)
-# A plain fn(site, lang, **ctx) as PLUGINS.md's slot contract asks for -- NOT a Pages/HubPages
-# method: the framework calls slot functions with the site itself as the first argument, so a
-# bound method here would double up on that first positional argument.
-def last_chance_strip(site, lang, city=None):
-    last_chance = site.d.get("last_chance") or {}
-    if city:
-        fids = [fid for fid in last_chance.get(city, []) if fid in site.films]
-    else:
-        fids = list(dict.fromkeys(fid for fids in last_chance.values() for fid in fids if fid in site.films))
-    if not fids:
-        return ""
-    heading = "آخر فرصة" if lang == "ar" else "Last chance"
-    tiles = "".join(site.film_tile(fid, lang, site.shows, i=i) for i, fid in enumerate(fids[:8]))
-    return (f'<section class="tonight wrap last-chance"><div class="sec-h"><h2>{esc(heading)}</h2></div>'
-            f'<div class="posters">{tiles}</div></section>')

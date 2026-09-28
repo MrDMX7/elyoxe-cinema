@@ -3,6 +3,10 @@
 .pi h2,.ph h2,.pt-w h2,.bo-w h2,.cmp h2,.sim h2,.qa h2{margin-block:28px 8px}
 .pidx td b,.pt-w td b{color:var(--gold);font-weight:600}
 .pidx td,.pidx th{vertical-align:baseline}
+.pidx .pi-ch th{color:var(--screen);font-weight:600;font-size:15px;padding-block:16px 6px}
+.pidx tbody th[scope=row]{font-weight:400}
+/* a phone keeps two columns, the hall and its median; the range and the show count come back on a wider screen */
+@media (max-width:600px){.pidx th:nth-child(n+3),.pidx td:nth-child(n+3){display:none}}
 .chart{margin:12px 0 0;max-inline-size:760px}
 .chart svg{display:block;inline-size:100%;block-size:auto}
 .chart .ln{fill:none;stroke:var(--screen);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}

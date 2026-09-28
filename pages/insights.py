@@ -5,7 +5,13 @@ the page says so); /data/compare.json + the lazy chunk compare.js (two films sid
 /boxoffice/); «شي يشبه» on a showing film's page (similar.py).
 
 History: price_history.jsonl (steps/history.py writes it on the runner; CINEMA_PRICE_HISTORY overrides the
-path). The build never needs it: with none, the pages show today only."""
+path). The build never needs it: with none, the pages show today only.
+
+W0-P2 (MASTER-PLAN §4.1 #17, #18, #20, #37): /prices/ is dated the day it was read (a late-night index built from
+tomorrow's shows says so instead of carrying tomorrow's date) and its table is two columns on a phone; compare
+reads the next times from the city's own day slices on the client (compare.json kept six per city from the build,
+so after about 21:30 every film had «ما في عروض باقية»), drops the IMDb row (no OMDb key: always empty), and
+takes critics and audience from the same place the film page does (film_rates)."""
 import datetime as dt
 import os
 import re
@@ -29,6 +35,21 @@ PART = {"morning": ("الصبح (قبل 12)", "morning (before 12)"), "afternoon
 AED = ("درهم", "AED")
 QID = re.compile(r"^Q[0-9]+$")
 DAYS = ("يوم واحد", "يومين", "أيام", "يوم")
+# the verdict's basis, when a film has no rt block: «RT 96% (249 ناقد)، الجمهور 91%» (pages/core.py film_pages)
+BASIS_RATES = (("critics", re.compile(r"\bRT (\d{1,3})%")), ("audience", re.compile(r"(?:الجمهور|[Aa]udience) (\d{1,3})%")))
+
+
+def film_rates(f):
+    """(critics, audience) exactly as the film page prints them: the rt block's numbers, else — only when the rt
+    block has neither — the ones the verdict's basis carries. None where there is no number."""
+    rt = f.get("rt") or {}
+    got = {k: rt.get(k) for k in ("critics", "audience")}
+    if got["critics"] is None and got["audience"] is None:
+        basis = str((f.get("verdict") or {}).get("basis") or "")
+        for k, rx in BASIS_RATES:
+            m = rx.search(basis)
+            if m: got[k] = int(m.group(1))
+    return got["critics"], got["audience"]
 
 
 history_path = ph.history_path
@@ -95,14 +116,15 @@ class Insights(Pages):
         body += self.index_section(lang)
         body += self.history_section(lang)
         body += self.time_section(lang)
-        # from the data: the index's own day (a late-night build reads tomorrow's) and the chains it has
-        day = human_date(self.idx_date, lang) if self.idx_date else None
+        # the day the prices were read (the build's own day), even when a late-night index is built from tomorrow's
+        # shows (index_section says so); and the chains it has
+        day = human_date(self.today, lang) if self.idx_date else None
         names = sorted({self.chain(r[0], lang) for r in (self.now_snap[self.idx_date]["prices"] if self.idx_date else [])})
         names = ("، ".join(names[:-1]) + " و" + names[-1] if len(names) > 1 else "".join(names)) if ar else                 (", ".join(names[:-1]) + " and " + names[-1] if len(names) > 1 else "".join(names))
         title = ((f"أسعار تذاكر السينما في الإمارات، {day} — لكل سلسلة وقاعة" if day else "أسعار تذاكر السينما في الإمارات — لكل سلسلة وقاعة") if ar
                  else (f"UAE cinema ticket prices, {day} — per chain and hall" if day else "UAE cinema ticket prices — per chain and hall"))
-        desc = ((f"وسيط سعر التذكرة يوم {day} في {names}، لكل قاعة، من أنظمة الحجز نفسها." if day else "أسعار تذاكر السينما في الإمارات من أنظمة الحجز نفسها.") if ar
-                else (f"The median ticket price on {day} at {names}, per hall, from their own booking systems." if day else "UAE cinema ticket prices from the chains' own booking systems."))
+        desc = ((f"وسيط سعر التذكرة في {names}، لكل قاعة، من أنظمة الحجز نفسها. آخر تحديث {day}." if day else "أسعار تذاكر السينما في الإمارات من أنظمة الحجز نفسها.") if ar
+                else (f"The median ticket price at {names}, per hall, from their own booking systems. Updated {day}." if day else "UAE cinema ticket prices from the chains' own booking systems."))
         return {"title": title, "desc": desc, "body": body, "kind": "prices", "nav": "prices",
                 "graph": [self.breadcrumb_ld(lang, (L(PRICES, lang), P(lang, "prices")))]}
 
@@ -113,17 +135,23 @@ class Insights(Pages):
         line = self.now_snap[self.idx_date]
         rows = [r for r in line["prices"] if r[2] == ""]
         chains = sorted({r[0] for r in rows}, key=lambda c: self.chain(c, lang))
-        th = ("السلسلة", "القاعة", "الوسيط", "أرخص", "أغلى", "العروض") if ar else ("Chain", "Hall", "Median", "Lowest", "Highest", "Shows")
+        # the chain is a row of its own over its halls, so a phone keeps two columns (hall, median) and hides the rest
+        th = ("القاعة", "الوسيط", "أرخص", "أغلى", "العروض") if ar else ("Hall", "Median", "Lowest", "Highest", "Shows")
         tb = ""
         for ch in chains:
             rs = sorted((r for r in rows if r[0] == ch), key=lambda r: (r[1] != "Standard", r[3]))
-            for i, (_, key, _, med, lo, hi, n) in enumerate(rs):
-                name = f'<th scope="row">{esc(self.chain(ch, lang))}</th>' if i == 0 else '<td></td>'
-                tb += (f'<tr data-k="{esc(ch)}|{esc(key)}">{name}<td><bdi>{esc(self.hall(ch, key, lang))}</bdi></td>'
+            tb += f'<tr class="pi-ch"><th colspan="{len(th)}" scope="colgroup">{esc(self.chain(ch, lang))}</th></tr>'
+            for _, key, _, med, lo, hi, n in rs:
+                tb += (f'<tr data-k="{esc(ch)}|{esc(key)}"><th scope="row"><bdi>{esc(self.hall(ch, key, lang))}</bdi></th>'
                        f'<td><b>{num(money(med))}</b></td><td>{num(money(lo))}</td><td>{num(money(hi))}</td><td>{num(n)}</td></tr>')
-        when = human_date(self.idx_date, lang)
+        when = human_date(self.today, lang)   # the day we read them
+        hint = ("الرقم هو الوسيط لسعر أرخص مقعد في كل عرض قريناه من نظام حجز السينما، بالدرهم وقبل أي خصم بطاقة. نصف العروض أرخص منه ونصفها أغلى." if ar
+                else "The median of the cheapest seat of every show we read from the chain's booking system, in AED before any card discount: half the shows cost less, half more.")
+        if self.idx_date != self.today:   # a late-night read: most of tonight's shows are over, so tomorrow's make the index
+            hint += (" الأرقام من عروض بكرة." if ar else " The numbers are from tomorrow’s shows.") if self.idx_date == self.tomorrow else \
+                    (f" الأرقام من عروض {human_date(self.idx_date, lang)}." if ar else f" The numbers are from the shows of {human_date(self.idx_date, lang)}.")
         return (f'<section class="wrap pi"><h2>{("مؤشر الأسعار، " + when) if ar else "Price index, " + when}</h2>'
-                f'<p class="hint">{esc("الرقم هو الوسيط لسعر أرخص مقعد في كل عرض قريناه من نظام حجز السينما، بالدرهم وقبل أي خصم بطاقة. نصف العروض أرخص منه ونصفها أغلى." if ar else "The median of the cheapest seat of every show we read from the chain's booking system, in AED before any card discount: half the shows cost less, half more.")}</p>'
+                f'<p class="hint">{esc(hint)}</p>'
                 f'<div class="xwrap"><table class="matrix pidx"><thead><tr>{"".join(f"<th>{esc(x)}</th>" for x in th)}</tr></thead>'
                 f'<tbody>{tb}</tbody></table></div>'
                 f'<p class="links more"><a href="{P(lang, "halls")}">{"شو الفرق بين القاعات؟" if ar else "What is in each hall?"}</a> '
@@ -139,7 +167,7 @@ class Insights(Pages):
         n = len(ph.days(self.all, self.idx_date or self.today))
         if n < CHART_DAYS:
             if not n: return ""
-            first = human_date(ph.days(self.all, self.idx_date or self.today)[0], lang)
+            first = human_date(min(ph.days(self.all, self.idx_date or self.today)[0], self.today), lang)   # never a day not yet come
             say = (f"نسجّل الأسعار من {first}، وعندنا الحين أسعار {ar_count(n, DAYS)}. الرسم وتغيّر السعر يطلعون هني لما يصير عندنا {CHART_DAYS} يوم."
                    if ar else f"We have recorded prices since {first}: {n} day{'s' if n != 1 else ''} so far. The chart and the 30-day change appear here once there are {CHART_DAYS}.")
             return f'<section class="wrap"><p class="hint hist-n">{esc(say)}</p></section>'
@@ -278,22 +306,20 @@ class Insights(Pages):
                 f'<div data-cmp-ui></div><div data-cmp-out></div></section>')
 
     def compare_data(self):
-        """{t: today, f: {fid: [ar, en, verdict, critics, audience, imdb, runtime, rating]}, p: {fid: {city: [cheapest,
-        {card: cheapest after it}]}}, n: {fid: {city: [[date, time, cid] × ≤6, from the build's time]}}}"""
-        hhmm = self.now.strftime("%H:%M")
-        f_, p_, n_ = {}, {}, {}
+        """{t: today, f: {fid: [ar, en, verdict, critics, audience, runtime, rating]}, p: {fid: {city: [cheapest,
+        {card: cheapest after it}]}}}. The next times are not here: compare.js reads them from the city's day
+        slices (/data/<city>-<date>.json), which the visitor's clock filters, so they never run out at night."""
+        f_, p_ = {}, {}
         cards = [c["id"] for c in self.cards]
         for fid in self.showing:
             ss = [s for s in self._by_film.get(fid, []) if s["date"] >= self.today]
             if not ss: continue
-            f = self.films[fid]; rt = f.get("rt") or {}
-            f_[fid] = [self.ftitle(fid, "ar"), self.ftitle(fid, "en"), self.vword(fid, "en")[0], rt.get("critics"), rt.get("audience"),
-                       f.get("imdb_score"), f.get("runtime"), f.get("rating")]
-            best, soon = {}, {}
+            f = self.films[fid]
+            f_[fid] = [self.ftitle(fid, "ar"), self.ftitle(fid, "en"), self.vword(fid, "en")[0], *film_rates(f),
+                       f.get("runtime"), f.get("rating")]
+            best = {}
             for s in ss:
                 c = self.cinemas[s["cinema"]]; city = c.get("city")
-                if (s["date"], s["time"]) >= (self.today, hhmm):
-                    soon.setdefault(city, []).append([s["date"], s["time"], s["cinema"]])
                 code, _ = self.hall_code_label(s); hk = self.hkey(s)
                 for p in s.get("prices") or []:
                     a = p.get("aed") or 0
@@ -306,8 +332,7 @@ class Insights(Pages):
             for city, b in best.items():   # a card only where it beats the plain cheapest ticket
                 b[1] = {k: round(v, 2) for k, v in sorted(b[1].items()) if v < b[0]}
             p_[fid] = {c: [round(b[0], 2), b[1]] for c, b in sorted(best.items())}
-            n_[fid] = {c: sorted(v)[:6] for c, v in sorted(soon.items())}   # the page shows 3 still to come
-        return {"t": self.today, "f": f_, "p": p_, "n": n_}
+        return {"t": self.today, "f": f_, "p": p_}
 
     # -------------------------------------------------- slots
     def film_slot(self, site, lang, fid):

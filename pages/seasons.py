@@ -2,6 +2,11 @@
 Ramadan/Eid mode and kids/summer presets. Owns /eid/, /kids/, /summer/ and the Ramadan iftar
 line slotted into home + city pages (Kit.SLOTS "home.after_tonight" / "city.after_tonight").
 
+W0-P2 (MASTER-PLAN §4.1 #21, #22): /kids/ carries this morning and tomorrow morning, and src/js/when.js
+(pages/venue.py's lazy chunk) swaps them at 14:00 on the visitor's clock, so the page is never empty
+after 2 PM. /summer/ is built only in July and August: the out-of-season placeholder is deleted, and
+"summer" stays in DIRS so every build clears a folder an older build left behind.
+
 Hijri dates (per docs/PLUGINS.md, page modules never call the network or invent numbers):
 research the same as saas/tools/src/tools/holidays/tool.js's UAE-holidays table (copied below
 with attribution, not re-derived) for the two years the site's data window realistically spans.
@@ -22,15 +27,15 @@ a minute or two -- fine for a line already labelled «تقريباً».
 from __future__ import annotations
 
 import math
-import os
 from datetime import date, timedelta
 
-from site_kit import CITIES, NOINDEX, L, NavItem, P, Page, Plugin, esc, film_flags, num
+from site_kit import CITIES, L, NavItem, P, Page, Plugin, esc, film_flags, num
 
 ASSET_DIR = None
 CSS = ("seasons",)
-LAZY_JS = ()
+LAZY_JS = ("when",)   # src/js/when.js, the same chunk pages/venue.py declares: /kids/ needs it with or without venue
 DIRS = ("eid", "kids", "summer")
+KIDS_CUTOFF = "14:00"   # «قبل الساعة 2 الظهر»: the kids preset's morning ends here
 
 TITLES = {"eid": ("إصدارات العيد", "Eid releases"), "kids": ("صباح العيال", "Kids"),
           "summer": ("سينما الصيف", "Summer")}
@@ -151,18 +156,19 @@ def taraweeh_note(city: str, d: date, lang: str) -> str | None:
 
 
 # --------------------------------------------------------------------------------- kids/summer
-def kids_shows(site, before_hour: int | None = 14, flag_index: int = 1):
-    """{city: [(fid, [shows today, optionally before `before_hour`])]} for films matching
-    `film_flags(f)[flag_index]` (0 = family, 1 = kids — G/PG + animation/family), today only,
-    non-empty groups only.
+def kids_shows(site, before_hour: int | None = 14, flag_index: int = 1, day: str | None = None):
+    """{city: [(fid, [shows on `day` (default today), optionally before `before_hour`])]} for films matching
+    `film_flags(f)[flag_index]` (0 = family, 1 = kids — G/PG + animation/family), one day only,
+    non-empty groups only. A show that had started when the build ran is left out.
 
     `before_hour=None` drops the time cutoff entirely — the design brief (section E) states the
     "before 14:00" rule for the *kids* preset only ("a kids preset (G/PG + animation/family,
     starting before 14:00) and a summer page in July–August"), not for /summer/, so build_summer
     calls this with `before_hour=None, flag_index=0` rather than duplicating this loop."""
+    day = day or site.today
     out: dict = {}
     for s in site.shows:
-        if s["date"] != site.today:
+        if s["date"] != day or site.is_past(s):
             continue
         if before_hour is not None and s["time"] >= f"{before_hour:02d}:00":
             continue
@@ -191,7 +197,8 @@ def register(site):
     pages = []
     for lang in ("ar", "en"):
         pages.append(Page(("kids",), lang, (lambda lang=lang: p.build_kids(lang))))
-        pages.append(Page(("summer",), lang, (lambda lang=lang: p.build_summer(lang, in_summer))))
+        if in_summer:
+            pages.append(Page(("summer",), lang, (lambda lang=lang: p.build_summer(lang))))
         if eid:
             pages.append(Page(("eid",), lang, (lambda lang=lang, eid=eid: p.build_eid(lang, eid))))
 
@@ -224,7 +231,7 @@ class SeasonsPages:
         tara = taraweeh_note(city, today_d, lang)
         if not iftar:
             return ""
-        bits = esc(iftar) + (f" · {esc(tara)}" if tara else "")
+        bits = esc(iftar) + ((("، " if lang == "ar" else ", ") + esc(tara)) if tara else "")
         return f'<p class="wrap iftar">{bits}</p>'
 
     # ---- /eid/ ---------------------------------------------------------------------------
@@ -253,34 +260,43 @@ class SeasonsPages:
 
     # ---- /kids/ ----------------------------------------------------------------------------
     def build_kids(self, lang):
-        groups = kids_shows(self.site)
+        """This morning until 14:00, then tomorrow morning. Both are in the page (the one not yet due is
+        `hidden`), each marked for src/js/when.js; this morning is left out once the build ran after 14:00."""
         title = L(TITLES["kids"], lang)
         body = f'<section class="head wrap">{self.crumbs(lang, (title, None))}<h1 class="pt">{esc(title)}</h1>'
         body += (f'<p class="lead">{"أفلام مناسبة للعيال، قبل الساعة 2 الظهر، حسب المدينة." if lang == "ar" else "Films suited for kids, before 2pm, by city."}</p></section>')
-        if not groups:
-            body += f'<p class="wrap empty">{"ما فيه عروض عيال قبل الظهر اليوم" if lang == "ar" else "No kids-hours shows today"}</p>'
-        else:
-            for city, ar, en in CITIES:
-                if city not in groups:
-                    continue
-                body += f'<section class="wrap"><h2>{esc(L((ar, en), lang))}</h2><div class="rows">'
-                for fid, shows in groups[city]:
-                    times = " ".join(sorted({s["time"] for s in shows}))
-                    body += (f'<div class="row"><a href="{P(lang, "film", fid)}">{esc(self.ftitle(fid, lang))}</a>'
-                             f'<span class="sub">{num(times)}</span></div>')
-                body += '</div></section>'
-        return {"title": title, "desc": title, "body": body, "kind": "kids", "nav": "kids",
+        cut = f"{self.today}T{KIDS_CUTOFF}"
+        past = self.now.strftime("%H:%M") >= KIDS_CUTOFF
+        if not past:
+            body += self.kids_morning(lang, self.today, f'data-until="{cut}"')
+        body += self.kids_morning(lang, self.tomorrow, f'data-from="{cut}"' + ("" if past else " hidden"))
+        return {"title": title, "desc": title, "body": body, "kind": "kids", "nav": "kids", "js": ("when",),
                 "graph": [self.breadcrumb_ld(lang, (title, P(lang, "kids")))]}
 
-    # ---- /summer/ ----------------------------------------------------------------------------
-    def build_summer(self, lang, in_summer):
+    def kids_morning(self, lang, day, attrs):
+        today = day == self.today
+        groups = kids_shows(self.site, day=day)
+        head = ("اليوم الصبح" if today else "بكرة الصبح") if lang == "ar" else ("This morning" if today else "Tomorrow morning")
+        out = f'<section class="wrap kids-day" {attrs}><h2>{esc(head)}</h2>'
+        if not groups:
+            empty = (("ما فيه عروض عيال قبل الظهر اليوم" if today else "ما عندنا عروض عيال بكرة الصبح للحين") if lang == "ar"
+                     else ("No kids-hours shows today" if today else "No kids-hours shows tomorrow morning yet"))
+            return out + f'<p class="empty">{esc(empty)}</p></section>'
+        for city, ar, en in CITIES:
+            if city not in groups:
+                continue
+            out += f'<h3>{esc(L((ar, en), lang))}</h3><div class="rows">'
+            for fid, shows in groups[city]:
+                times = " ".join(sorted({s["time"] for s in shows}))
+                out += (f'<div class="row"><a href="{P(lang, "film", fid)}">{esc(self.ftitle(fid, lang))}</a>'
+                        f'<span class="sub">{num(times)}</span></div>')
+            out += '</div>'
+        return out + '</section>'
+
+    # ---- /summer/ (July and August only) -----------------------------------------------------
+    def build_summer(self, lang):
         title = L(TITLES["summer"], lang)
         body = f'<section class="head wrap">{self.crumbs(lang, (title, None))}<h1 class="pt">{esc(title)}</h1>'
-        if not in_summer:
-            body += (f'<p class="lead">{"صفحة الصيف تفتح يوليو وأغسطس. رجعوا وقتها." if lang == "ar" else "The summer page opens in July and August. Come back then."}</p></section>')
-            # path=: written at its normal place but kept out of the sitemap while noindex (final review I2)
-            return {"title": title, "desc": title, "body": body, "kind": "summer", "robots": NOINDEX,
-                    "path": os.path.join(self.out, *(["en"] if lang == "en" else []), "summer", "index.html")}
         # family films (film_flags index 0), any time of day -- no "before 14:00" cutoff: the
         # brief states that restriction for the kids preset only, not for /summer/ (kids_shows()
         # docstring). Reuses kids_shows() rather than repeating its filter/group loop here.

@@ -1,8 +1,10 @@
 /* compare (pages/insights.py): two films side by side, from /data/compare.json — verdict, ratings, runtime, the
-   cheapest ticket in the visitor's city after their card, and the nearest times still to come. A lazy chunk:
-   K is window.CINEMA. The box is [data-cmp] (its value the film already chosen, on a film page), hidden
-   until this runs: with no script there is nothing half-drawn. */
+   cheapest ticket in the visitor's city after their card — and the nearest times still to come, read from the
+   city's own day slices (/data/<city>-<date>.json, the ones home and city pages use), so they follow the
+   visitor's clock instead of the build's. A lazy chunk: K is window.CINEMA. The box is [data-cmp] (its value
+   the film already chosen, on a film page), hidden until this runs: with no script there is nothing half-drawn. */
 var boxes = K.qa("[data-cmp]"), draws = [];
+function redraw() { setTimeout(function () { draws.forEach(function (d) { d(); }); }, 0); }
 if (boxes.length) {
   K.getJSON("/data/compare.json").then(function (J) {
     if (!J || !J.f) return;
@@ -10,16 +12,15 @@ if (boxes.length) {
   });
   /* the card changes in the page's own controls: redraw every box once the core has taken the choice (one pair
      of listeners for the page, not one per box) */
-  var redraw = function () { setTimeout(function () { draws.forEach(function (d) { d(); }); }, 0); };
   document.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-card]")) redraw(); });
   document.addEventListener("change", function (e) { if (e.target.matches && e.target.matches("select[data-card]")) redraw(); });
 }
 var W = K.AR ? {
-  a: "الفيلم الأول", b: "الفيلم الثاني", pick: "اختار فيلم", verdict: "الحكم", critics: "النقاد", aud: "الجمهور", imdb: "IMDb",
+  a: "الفيلم الأول", b: "الفيلم الثاني", pick: "اختار فيلم", verdict: "الحكم", critics: "النقاد", aud: "الجمهور",
   runtime: "المدة", min: "دقيقة", cheap: "أرخص تذكرة في {city}", card: "ببطاقة {card}", aed: "درهم", box: "السعر في الشباك",
   soon: "أقرب الأوقات في {city}", none: "ما في عروض باقية", today: "اليوم", tomorrow: "باكر", rating: "التصنيف"
 } : {
-  a: "First film", b: "Second film", pick: "Pick a film", verdict: "Verdict", critics: "Critics", aud: "Audience", imdb: "IMDb",
+  a: "First film", b: "Second film", pick: "Pick a film", verdict: "Verdict", critics: "Critics", aud: "Audience",
   runtime: "Runtime", min: "min", cheap: "Cheapest ticket in {city}", card: "with {card}", aed: "AED", box: "Price at the box office",
   soon: "Next times in {city}", none: "No shows left", today: "Today", tomorrow: "Tomorrow", rating: "Rating"
 };
@@ -57,14 +58,42 @@ function cheapest(J, id) {
   if (card && p[1][card] != null) h += " <small>" + K.esc(K.sub(W.card, { card: (K.C.cards || {})[card] || card })) + "</small>";
   return h;
 }
+/* the city's start times per film, from today's and tomorrow's slices: {fid: ["2026-09-28T22:25", …]}. Loaded
+   once per city; undefined while loading, null when no slice could be read (offline): a fetch that failed never
+   reads as «ما في عروض باقية». */
+var NEXT = {};
+function ymd(ms) { return new Date(ms + 4 * 3600e3).toISOString().slice(0, 10); }
+function nextTimes(city) {
+  if (city in NEXT) return NEXT[city];
+  NEXT[city] = undefined;
+  var now = K.now().getTime(), want = [ymd(now), ymd(now + 864e5)];
+  var days = want.filter(function (d) { return !K.C.days || K.C.days.indexOf(d) >= 0; });
+  Promise.all(days.map(function (d) {
+    return K.getJSON("/data/" + city + "-" + d + ".json").then(function (j) { return [d, j]; });
+  })).then(function (rs) {
+    var by = {}, read = 0;
+    rs.forEach(function (r) {
+      var d = r[0], j = r[1];
+      if (!j || !j.S || !j.F) return;
+      read++;
+      j.S.forEach(function (a) { var fid = j.F[a[1]][0]; (by[fid] = by[fid] || []).push(d + "T" + a[2]); });
+    });
+    /* one entry per start time: three cinemas at 22:00 read as «22:00» once, not three times */
+    Object.keys(by).forEach(function (k) { by[k] = by[k].sort().filter(function (x, i, a) { return !i || x !== a[i - 1]; }); });
+    NEXT[city] = read || !days.length ? by : null;
+    redraw();
+  });
+  return undefined;
+}
 function soon(J, id) {
-  var city = K.city(), now = K.now(), list = ((J.n[id] || {})[city] || []).filter(function (x) { return K.uae(x[0] + "T" + x[1]) >= now; });
-  if (!list.length) return K.esc(W.none);
-  var day = function (ms) { return new Date(ms + 4 * 3600e3).toISOString().slice(0, 10); };
-  var t0 = day(now.getTime()), t1 = day(now.getTime() + 864e5);
-  return list.slice(0, 3).map(function (x) {
-    var d = x[0] === t0 ? W.today : x[0] === t1 ? W.tomorrow : x[0];
-    return '<span class="num">' + K.esc(x[1]) + "</span> <small>" + K.esc(d) + "</small>";
+  var list = nextTimes(K.city());
+  if (list === undefined || list === null) return "";
+  var now = K.now(), t0 = ymd(now.getTime()), t1 = ymd(now.getTime() + 864e5);
+  var ahead = (list[id] || []).filter(function (x) { return K.uae(x) >= now; });
+  if (!ahead.length) return K.esc(W.none);
+  return ahead.slice(0, 3).map(function (x) {
+    var d = x.slice(0, 10), t = x.slice(11, 16);
+    return '<span class="num">' + K.esc(t) + "</span> <small>" + K.esc(d === t0 ? W.today : d === t1 ? W.tomorrow : d) + "</small>";
   }).join("<br>");
 }
 function table(J, pair) {
@@ -73,9 +102,8 @@ function table(J, pair) {
     [W.verdict, function (f) { return '<span class="vw v-' + K.esc(f[2]) + '">' + K.esc((K.C.v || {})[f[2]] || "") + "</span>"; }],
     [W.critics, function (f) { return pct(f[3]); }],
     [W.aud, function (f) { return pct(f[4]); }],
-    [W.imdb, function (f) { return f[5] == null ? "" : '<span class="num">' + K.esc(f[5]) + "</span>"; }],
-    [W.runtime, function (f) { return f[6] ? '<span class="num">' + K.esc(f[6]) + "</span> " + K.esc(W.min) : ""; }],
-    [W.rating, function (f) { return f[7] ? '<bdi class="num" dir="ltr">' + K.esc(f[7]) + "</bdi>" : ""; }],
+    [W.runtime, function (f) { return f[5] ? '<span class="num">' + K.esc(f[5]) + "</span> " + K.esc(W.min) : ""; }],
+    [W.rating, function (f) { return f[6] ? '<bdi class="num" dir="ltr">' + K.esc(f[6]) + "</bdi>" : ""; }],
     [K.sub(W.cheap, { city: cityName }), function (f, id) { return cheapest(J, id); }],
     [K.sub(W.soon, { city: cityName }), function (f, id) { return soon(J, id); }]
   ];
