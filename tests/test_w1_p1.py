@@ -104,9 +104,10 @@ def test_hidden_means_hidden_one_rule_no_patches(tmp_path):
 def test_the_wave2_stubs_are_declared_and_cost_nothing():
     js = list(core.JS)
     assert js[-3:] == ["chrome", "places", "main"] and core.LAZY_JS == ("drag",)
-    for f in ("chrome.js", "places.js", "drag.js"):
+    # chrome.js and drag.js are filled since W2-P5 (tests/test_w2_p5.py holds them); the others stay empty until theirs
+    for f in ("places.js",):
         assert build.minify_lite((SRC / "js" / f).read_text(encoding="utf-8")).strip() == "", f
-    without = types.SimpleNamespace(__name__="pages.core", JS=tuple(n for n in core.JS if n not in ("chrome", "places")))
+    without = types.SimpleNamespace(__name__="pages.core", JS=tuple(n for n in core.JS if n not in ("places",)))
     mods = build.discover()
     assert build.bundle_js(modules=[without] + mods[1:]) == build.bundle_js(modules=mods)   # not one byte in the bundle
 

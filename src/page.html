@@ -58,7 +58,7 @@
   <p class="foot-s">{{s_footer}} <a href="https://elyoxe.com/">{{s_studio}}</a></p>
 </div></footer>
 <nav class="tabs" aria-label="{{s_tabs}}">{{tabs}}</nav>
-<div class="sh-scrim" data-sheet-scrim hidden></div>
+<div class="sh-scrim" data-sheet-scrim data-drag-js="{{drag_js}}" hidden></div>
 {{sheets}}
 <script>window.CT = {{strings}};</script>
 <script id="boot">(function(u,d){function go(){var s=d.createElement("script"),late=d.readyState==="complete";s.src=u;if(late)s.onload=function(){var w=navigator.serviceWorker;if(w)w.register("/sw.js").catch(function(){})};d.body.appendChild(s)}if(d.prerendering)d.addEventListener("prerenderingchange",go,{once:true});else go()})("{{js}}",document)</script>

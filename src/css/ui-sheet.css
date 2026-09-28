@@ -1,12 +1,15 @@
 /* sheets (phone: from the bottom; desktop: a panel at the inline end), their options and the scrim (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
-/* sheets: phone = from the bottom, desktop = a panel at the inline end; the scrim under them */
+/* sheets: phone = from the bottom, desktop = a panel at the inline end; the scrim under them. W2-P5 (§2.0): the sheet rises
+   from the screen's edge (280 ms --ease-sheet) and its head stays put while the body scrolls: the grabber (a 44 px
+   hit area, the bar drawn in it) and the title row are what src/js/drag.js drags */
 html.sheet-open{overflow:hidden}
-.sh-scrim{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6)}
+.sh-scrim{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);animation:sheet-in .28s var(--ease-sheet)}
 .sheet{position:fixed;z-index:41;inset-inline:0;inset-block-end:0;max-block-size:86vh;overflow-y:auto;overscroll-behavior:contain;
-  background:#17100F;border-block-start:1px solid var(--line-2);padding:12px var(--gut) calc(20px + env(safe-area-inset-bottom));animation:sheet-up .28s var(--ease-sheet)}
-@keyframes sheet-up{from{transform:translateY(24px);opacity:0}}
-.grab{inline-size:40px;block-size:4px;background:var(--line-2);margin:0 auto 12px}
-.sheet-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  background:#17100F;border-block-start:1px solid var(--line-2);padding:0 var(--gut) calc(var(--dt,0px) + 20px + env(safe-area-inset-bottom));animation:sheet-up .28s var(--ease-sheet)}
+@keyframes sheet-up{from{transform:translateY(100%)}}
+.sheet-t{position:sticky;inset-block-start:0;z-index:1;background:#17100F;touch-action:none}
+.grab{block-size:44px;margin-block-end:-20px;background:linear-gradient(var(--line-2),var(--line-2)) 50% 12px/40px 4px no-repeat}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative}
 .sheet-h h2{font-size:var(--fs-h2)}
 .sheet-x{position:relative;inline-size:44px;block-size:44px;flex:0 0 auto;border:0;background:transparent;color:var(--screen);cursor:pointer;margin-inline-end:-12px}
 .sheet-x::before,.sheet-x::after{content:"";position:absolute;inset-inline-start:13px;inset-block-start:21px;inline-size:18px;block-size:2px;background:currentColor;transform:rotate(45deg)}
@@ -20,15 +23,33 @@ html.sheet-open{overflow:hidden}
 /* what you chose, inside a sheet: a 1 px gold outline and gold words (gold is yours, §1.5) */
 .opt[aria-pressed=true],.opt[aria-current],.sheet .chip[aria-pressed=true]{background:none;color:var(--gold);border-color:var(--gold);font-weight:600}
 .opt svg{inline-size:18px;block-size:18px}
+/* «قريب مني» and «بدون بطاقة»: the first row, full width (§2.0); a city's cinema count, a card's best number (gold: what
+   the card gives you) */
+.opt.wide{display:flex;inline-size:100%;min-block-size:48px}
+.opt .n{font-size:var(--fs-meta);font-weight:400;color:var(--seat)}
+.opt .best{font-weight:600;color:var(--gold)}
+/* «قائمتي» (D2) until /me/: two rows that open the city and card sheets, where they are kept, the clear */
+.me-rows{display:grid;gap:8px}
+.opt.dr{justify-content:space-between}
+.opt.dr b{font-weight:600;margin-inline-start:auto}
+/* each row's ▾: physical borders, as the pills' (a down chevron is the same in both directions) */
+.opt.dr::after{content:"";flex:0 0 auto;inline-size:6px;block-size:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;
+  transform:translateY(-2px) rotate(45deg);opacity:.7}
+.me-n{padding-block:4px 16px;font-size:var(--fs-meta);color:var(--dim)}
+.me-clear{inline-size:100%;justify-content:center}
 .sheet .near-m{margin-block-start:12px;font-size:var(--fs-meta);color:var(--dim)}
 .sheet-more{padding-block-start:8px;font-size:var(--fs-meta)}
 .sheet-more a{color:var(--dim)}
+/* iPhone's native switch (drag.js, where the browser has <input switch>): on is the EXIT light */
+.sw{accent-color:var(--live);margin:0}
 @media (min-width:1024px){
   .sheet{inset-block:0;inset-inline:auto 0;inline-size:420px;max-block-size:none;border:0;border-inline-start:1px solid var(--line-2);
-    padding-block:24px;animation-name:sheet-in}
+    padding-block:0 24px;animation-name:sheet-in}
   .grab{display:none}
+  .sheet-t{padding-block-start:24px;touch-action:auto}
 }
 @keyframes sheet-in{from{opacity:0}}
+/* reduced motion: no rise, no fade, and a released sheet lands at once (drag.js's inline settle loses to this) */
 @media (prefers-reduced-motion:reduce){
-  .sheet{animation:none}
+  .sheet,.sh-scrim{animation:none;transition:none!important}
 }

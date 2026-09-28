@@ -174,8 +174,9 @@ def test_header_and_tab_bar_carry_the_search_triggers(out):
     """Since the UI redesign's Task 2 the chrome renders the triggers itself (the header's search button and the
     phone tab bar's «بحث», both [data-search]); the chunk binds them, and injects its own button into .top-in only
     on a page that has none."""
+    from kit.chrome import ME_TAB   # D2 (W2-P5): with «قائمتي» as the fourth tab, the header's button is the one trigger
     home = read(out, "index.html")
-    assert home.count("data-search") == 2 and 'class="icon srch-b" data-search' in home
+    assert home.count("data-search") == (1 if ME_TAB else 2) and 'class="icon srch-b" data-search' in home
     chunk_url = ct(home)["chunks"]["search"]
     chunk = read(out, *chunk_url.strip("/").split("/"))
     assert '"[data-search]"' in chunk and "srch-btn" in chunk and ".top-in" in chunk

@@ -1,13 +1,19 @@
 /* the phone's tab bar (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
 /* the phone's tab bar: four places, icon over label; the active one carries a 2 px velvet bar (the curtain's colour),
-   and a tab only changes colour (180 ms) and presses, never slides (§1.3) */
-.tabs{position:fixed;inset-block-end:0;inset-inline:0;z-index:30;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
-  background:rgba(15,11,12,.96);border-block-start:1px solid var(--line);padding-block-end:env(safe-area-inset-bottom)}
-.tabs a{min-block-size:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:var(--fs-meta);line-height:1.3;
+   and a tab only changes colour (180 ms) and presses, never slides (§1.3). W2-P5 (§2.0): opaque night; it steps down
+   out of the way on the way down a page and on the stub (html.tabs-away, src/js/chrome.js: 220 ms --ease-sheet) and
+   comes back when focus reaches it. With no script the «قائمتي» tab is not drawn and the other three share the width */
+.tabs{position:fixed;inset-block-end:0;inset-inline:0;z-index:30;display:flex;
+  background:var(--night);border-block-start:1px solid var(--line);padding-block-end:env(safe-area-inset-bottom);transition:transform .22s var(--ease-sheet)}
+.tabs a{min-block-size:60px;flex:1 1 0;min-inline-size:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:var(--fs-meta);line-height:1.3;
   color:var(--seat);text-decoration:none;border-block-start:2px solid transparent;transition:color .18s,transform .14s var(--ease-out)}
 .tabs svg{inline-size:20px;block-size:20px}
 .tabs a[aria-current]{color:var(--screen);font-weight:500;border-block-start-color:var(--velvet)}
 .tabs a:focus-visible{outline-offset:-3px}
+.tabs-away .tabs:not(:focus-within){transform:translateY(100%)}
+@media (prefers-reduced-motion:reduce){
+  .tabs{transition:none}
+}
 @media (min-width:1024px){
   .tabs{display:none}
 }

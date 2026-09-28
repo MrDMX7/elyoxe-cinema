@@ -1,6 +1,7 @@
-"""The chrome every page shares (UI redesign Task 2): one header with the city and card pills, the phone's tab
-bar of four, the footer's links, and the two sheets the pills open — on every page, in both languages, with no
-duplicate ids. With no script the pills are plain links and the sheets stay hidden."""
+"""The chrome every page shares (UI redesign Task 2; W2-P5): one header with the city and card pills, the phone's tab
+bar of four, the footer's links, and the sheets the pills and the «قائمتي» tab open — on every page, in both languages,
+with no duplicate ids. With no script the pills are plain links and the sheets stay hidden. W2-P5's own contract is in
+tests/test_w2_p5.py."""
 import collections
 import os
 import re
@@ -13,6 +14,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 import build  # noqa: E402
 from site_kit import CITIES  # noqa: E402
+from kit.chrome import ME_TAB  # noqa: E402
 
 DATA = os.path.join(ROOT, "fixtures", "sample_latest.json")
 DISC = os.path.join(ROOT, "fixtures", "sample_discounts.yaml")
@@ -64,7 +66,7 @@ def test_every_page_has_one_header_one_tab_bar_of_four_the_pills_and_no_duplicat
         assert tabs.count("<a ") == 4, rel
         assert h.count('<footer class="foot">') == 1, rel
         p = Ids(); p.feed(h)
-        for i in ("pill-city", "pill-card", "sheet-city", "sheet-card", "main"):
+        for i in ("pill-city", "pill-card", "sheet-city", "sheet-card", "main") + (("sheet-me",) if ME_TAB else ()):
             assert p.ids[i] == 1, (rel, i)
         assert "{{" not in h, rel                                        # no template placeholder left
         dup = [k for k, n in p.ids.items() if n > 1]
@@ -97,13 +99,14 @@ def test_city_sheet_lists_every_city_and_near_me(out):
         assert f'href="/{c}/" data-city="{c}"' in sheet and ar in sheet
     assert "data-citypick" in sheet and 'data-near>' in sheet and "قريب مني" in sheet and "data-near-msg" in sheet
     assert '<a class="opt" href="/dubai/" data-city="dubai" aria-current="true">' in sheet
+    assert sheet.index("data-near>") < sheet.index("data-citypick")                 # «قريب مني» first (W2-P5, §2.0)
 
 
 def test_card_sheet_replaces_the_bank_select(out):
     h = read(out, "index.html")
     assert "<select data-card" not in h and "chips cards" not in h
     sheet = between(h, '<div class="sheet" id="sheet-card"', "</p></div></div>")
-    assert '<button type="button" class="opt" data-card="" aria-pressed="true">بدون بطاقة</button>' in sheet
+    assert '<button type="button" class="opt wide" data-card="" aria-pressed="true">بدون بطاقة</button>' in sheet   # first, full width (W2-P5)
     assert "حكومية" in sheet and 'data-card="fazaa"' in sheet
     assert sheet.index("حكومية") < sheet.index('data-card="fazaa"')
     # one choice per confirmed card, none twice anywhere on the page
@@ -114,11 +117,14 @@ def test_card_sheet_replaces_the_bank_select(out):
 def test_tab_bar_marks_where_you_are_and_search_opens_the_overlay(out):
     home = between(read(out, "index.html"), '<nav class="tabs"', "</nav>")
     assert re.search(r'<a href="/" aria-current="page">', home)
-    assert 'data-search aria-haspopup="dialog"' in home and "بحث" in home
+    # D2 (owner, yes): the fourth tab is «قائمتي»; search is the header's icon on every page (W2-P5). The flag off puts
+    # «بحث» back: tests/test_w2_p5.py builds both
+    fourth = ("قائمتي", "My list") if ME_TAB else ("بحث", "Search")
+    assert fourth[0] in home and ('data-search aria-haspopup="dialog"' in home) is not ME_TAB
     city = between(read(out, "dubai", "index.html"), '<nav class="tabs"', "</nav>")
     assert re.search(r'<a href="/cinemas/" aria-current="page">', city)
     en = between(read(out, "en", "index.html"), '<nav class="tabs"', "</nav>")
-    assert all(w in en for w in ("Home", "Cinemas", "Coming soon", "Search"))
+    assert all(w in en for w in ("Home", "Cinemas", "Coming soon", fourth[1]))
     head = between(read(out, "index.html"), '<header class="top">', "</header>")
     assert 'class="icon srch-b" data-search aria-haspopup="dialog"' in head
 
@@ -163,7 +169,8 @@ def test_sheet_js_is_in_the_main_bundle(out):
     # the bundle as the boot loader names it (W0-P1 dropped its preload: a repeat visit fetched it twice; merged at R0)
     js = re.search(r'"/assets/(cinema\.[0-9a-f]{10}\.js)"', read(out, "index.html")).group(1)
     b = read(out, "assets", js)
-    assert "function sheetOpen(" in b and "function bindSheets(" in b and "IntersectionObserver" in b
+    assert "function sheetOpen(" in b and "function bindSheets(" in b and "function chAway(" in b
+    assert "function bindTop(" not in b and "top-sent" not in b     # the header's sentinel: a scroll timeline now (W2-P5)
     assert b.index("function sheetOpen(") < b.index("(function init()")
 
 
