@@ -40,16 +40,7 @@ function filmOf(href) {
     return m ? decodeURIComponent(m[1]) : null;
   } catch (e) { return null; }
 }
-/* the «الحين» shortcut (manifest) opens /#now: the box shows once the city's slice is in, then it comes into view */
-feature(function () {
-  var box = q("[data-now]");
-  if (!box || page !== "home" || location.hash !== "#now") return;
-  box.id = "now";
-  function go() { box.scrollIntoView({ block: "start", behavior: "instant" }); }
-  if (!box.hidden) { go(); return; }
-  var mo = new MutationObserver(function () { if (!box.hidden) { mo.disconnect(); go(); } });
-  mo.observe(box, { attributes: true, attributeFilter: ["hidden"] });
-});
+/* (the «الحين» shortcut, /#now, needs no script: the board is id="now" and in the first paint, W2-P2a) */
 var vtTapped = null, vtNamed = [];
 function vtName(el, n) { el.style.viewTransitionName = n; vtNamed.push(el); }
 function vtClear() { vtNamed.forEach(function (el) { el.style.viewTransitionName = ""; }); vtNamed = []; }
