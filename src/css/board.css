@@ -1,0 +1,61 @@
+/* «اللوحة», the board (legend W2-P2a; MASTER-PLAN §1.1, §1.3–1.5, §2.1): dark split-flap tiles in the lobby. Rows are
+   56 px in a fixed box, so the minute's changes never move the page. Gold only where prices.js lights it (.p.lo, the
+   price after your card): nothing here draws gold. Motion: a passed row leaves and the next comes in (240 ms,
+   transform and opacity only, inside the box), the clock's digits turn over; all of it off under reduced motion. */
+.board{position:relative;scroll-margin-block-start:calc(var(--head) + 8px)}
+.bh{display:flex;flex-direction:column;justify-content:center;min-block-size:56px}
+.bh h2{margin:0;font-size:var(--fs-h2);line-height:1.15}
+.bh-s{display:flex;align-items:center;gap:8px;margin:0;font-size:var(--fs-meta);line-height:1.5;color:var(--seat)}
+.bh-l{display:inline-block;inline-size:6px;block-size:6px;background:var(--live)}
+.bh-n{display:none}
+.bk .bt{gap:1px;font-size:var(--fs-meta)}
+.bk .bt i{inline-size:12px;block-size:20px}
+/* the rows' box: its height is the rows', whatever they say («جاري التحديث…» too) */
+[data-brs]{position:relative;block-size:calc(var(--bn) * 56px);overflow:hidden;margin-block-start:8px}
+.br{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;block-size:56px;box-sizing:border-box;
+  border-block-end:1px solid var(--line);color:var(--screen);text-decoration:none;transition:transform .24s var(--ease-out),opacity .24s var(--ease-out)}
+.br:active{background:var(--tint)}
+/* split-flap tiles: one per digit, a 2 px night gap, square; the colon is the dull part */
+.bt{display:inline-flex;align-items:center;gap:2px;direction:ltr;font-size:20px;font-weight:600;line-height:1}
+.bt i{display:inline-grid;place-items:center;inline-size:16px;block-size:28px;position:relative;background:var(--tile);color:var(--screen);font-style:normal}
+.bt i::after{content:"";position:absolute;inset-inline:0;inset-block-start:50%;block-size:1px;background:var(--night)}
+.bt b{inline-size:8px;text-align:center;color:var(--seat)}
+.bm{display:flex;flex-direction:column;min-inline-size:0}
+.bf,.bc{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.bf{font-size:var(--fs-title);font-weight:500;line-height:1.35}
+.bc{font-size:var(--fs-meta);line-height:1.5;color:var(--seat)}
+/* an English title on the Arabic page keeps its own direction (the ellipsis at its end) and lines up at the start */
+:root[dir=rtl] .bf[dir=ltr]{text-align:right}
+.be{display:flex;flex-direction:column;align-items:end;gap:4px;text-align:end}
+.bs{font-size:var(--fs-meta);line-height:1.2;color:var(--live);white-space:nowrap}
+.br .p{flex-wrap:nowrap;font-size:var(--fs-time);line-height:1.2}
+.br .p small{display:none}
+.bw{display:flex;align-items:center;block-size:56px;margin:0;font-size:var(--fs-meta);color:var(--seat)}
+/* the minute: a passed row leaves upward, the rows below follow, a new one comes in from below */
+.br.out{transform:translateY(-100%);opacity:0}
+.br.in{animation:b-in .24s var(--ease-out) both}
+.br.mv{animation:b-mv .24s var(--ease-out) both}
+@keyframes b-in{from{transform:translateY(100%);opacity:0}}
+@keyframes b-mv{from{transform:translateY(calc(var(--dy) * 100%))}}
+.bt i.go{animation:flip .36s steps(4,end) both;animation-delay:calc(var(--i) * 40ms)}
+/* «اللوحة كاملة ▾»: a 44 px ghost row that opens the next rows in place */
+.bmore summary{display:flex;align-items:center;gap:8px;min-block-size:44px;font-size:var(--fs-meta);color:var(--dim);cursor:pointer;list-style:none}
+.bmore summary::-webkit-details-marker{display:none}
+.bmore summary::after{content:"▾"}
+.bmore[open] summary::after{content:"▴"}
+/* a first visit: the box and its head hold their place (visibility, never display) until /geo names the city */
+.geo-wait .bh-c,.geo-wait [data-brs],.geo-wait .bmore{visibility:hidden}
+/* «أقرب عرض لك» on a film page: laid out before the first paint when the visitor's city has this film (no shift) */
+.js .bff.hold[hidden]{display:block;visibility:hidden;block-size:56px}
+.bff{margin-block:8px}
+@media (min-width:1024px){
+  .bh{flex-direction:row;align-items:center;justify-content:start;gap:24px}
+  .bh-n{display:inline;margin-inline-start:8px}
+  /* two columns of rows, in time order down the first then the second (a column layout: the box keeps its height) */
+  .b-home [data-brs],.b-city [data-brs]{column-count:2;column-gap:32px;column-fill:auto}
+  .b-home .br,.b-city .br{break-inside:avoid}
+  .b-city [data-brs]{block-size:224px}
+}
+@media (prefers-reduced-motion:reduce){
+  .br,.br.in,.br.mv,.bt i.go{animation:none;transition:none}
+}
