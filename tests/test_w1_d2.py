@@ -49,29 +49,63 @@ def _titles_file(tmp_path, entries):
 
 
 # ------------------------------------------------------------------ titles_ar.yaml, as the owner edits it
-def test_titles_ar_yaml_is_well_formed():
-    raw = yaml.safe_load(open(TITLES, encoding="utf-8"))
-    assert isinstance(raw, dict) and isinstance(raw.get("titles"), dict) and raw["titles"]
-    for fid, e in raw["titles"].items():
-        assert re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", fid), fid
-        assert isinstance(e, dict), fid
-        ar = e.get("ar")
-        assert isinstance(ar, str) and ARABIC.search(ar), fid
-        assert not re.search(r"[٠-٩۰-۹·]", ar) and ar == " ".join(ar.split()), fid   # Western digits, no middle dots
-        assert enrich_mod.clean_ar(ar) == ar, fid
-        assert isinstance(e.get("review", False), bool) and isinstance(e.get("pin", False), bool), fid
+def test_the_live_titles_ar_yaml_parses():
+    """The Fold runs this suite before every hourly deploy, and the owner edits this file every week (D12), so the
+    live file is held only to what enrich cannot use at all: it parses, and `titles` is a mapping (or empty). Every
+    other slip (an Eastern digit, a double space, «(فيلم)», `review: "no"`, an empty `ar`, a film that left) is
+    cleaned or left out by enrich and named in its report: test_owner_slips_never_raise_and_are_named."""
+    raw = yaml.safe_load(open(TITLES, encoding="utf-8")) or {}
+    assert isinstance(raw, dict) and isinstance(raw.get("titles") or {}, dict)
 
 
-def test_every_film_of_the_real_day_has_a_title_or_an_entry():
-    """The review list covered the day: enrich's own report on the real data of 2026-09-28 (65 films, the fixture's
-    `titles_ar`, a snapshot, so the owner's later edits of titles_ar.yaml never decide this test) has no film
-    without a sourced title or an entry, and sourced + awaiting review reaches the plan's 60."""
+def test_owner_slips_never_raise_and_are_named(tmp_path):
+    p = tmp_path / "titles_ar.yaml"
+    p.write_text("""titles:
+  jhingedaaw-2: {ar: "جينقيداو  ٢ (فيلم)", en: "Jhingedaaw-2"}
+  vibe: {ar: "فايب", en: "Vibe", review: "no"}
+  aaram: {ar: "آرام", pin: "yes"}
+  b: {ar: "", en: "B"}
+  runner: {ar: "Runner"}
+  Old Film: {ar: "قديم"}
+  x: [1, 2]
+  y: {qid: q12, ar: "واي"}
+  z: {qid: Q5}
+""", encoding="utf-8")
+    problems = []
+    got = enrich_mod.load_titles_ar(str(p), problems)
+    assert got["jhingedaaw-2"]["ar"] == "جينقيداو 2" and got["jhingedaaw-2"]["review"] is False    # cleaned, not refused
+    assert got["vibe"]["review"] is True and got["aaram"]["pin"] is False                        # the safe side
+    assert got["Old Film"]["ar"] == "قديم"                                                        # harmless: no film has that id
+    assert got["y"]["qid"] is None and got["z"] == {**got["z"], "ar": None, "qid": "Q5"}
+    assert not {"b", "runner", "x"} & set(got)
+    named = {r["fid"]: r["why"] for r in problems}
+    assert set(named) == {"vibe", "aaram", "b", "runner", "x", "y"} and "awaiting review" in named["vibe"]
+    for text in ("titles: [a, b]\n", "titles:\n  a: {ar: \"x\"\n", "titles: {a: {ar: 'unclosed}}\n"):
+        p.write_text(text, encoding="utf-8")
+        problems = []
+        assert enrich_mod.load_titles_ar(str(p), problems) == {} and problems[0]["fid"] == "*"
+    p.write_text("titles:\n", encoding="utf-8")
+    assert enrich_mod.load_titles_ar(str(p), problems := []) == {} and problems == []           # an empty list is fine
+    data = {"films": {"vibe": {"title": "Vibe"}}}
+    p.write_text("titles:\n  vibe: {ar: \"فايب\", review: \"no\"}\n", encoding="utf-8")
+    enrich_mod.enrich(data, cache_path=str(tmp_path / "c.json"), offline=True, titles_path=str(p))
+    assert data["films"]["vibe"]["title_ar"] is None and data["titles_ar"]["invalid"][0]["fid"] == "vibe"
+
+
+def test_the_real_day_is_sourced_or_on_the_review_list():
+    """Coverage of the review list, NOT the plan's acceptance line (>= 60 of 66 reviewed or sourced on `/`): on the
+    real data of 2026-09-28 (65 films; the fixture's `titles_ar`, a snapshot, so the owner's later edits never
+    decide this test) 31 films have a sourced Arabic title, every other film has an entry awaiting the owner, and
+    none has neither. The plan's line is met only once he approves the list (D12 keeps transliterations back)."""
     d = json.load(open(REAL, encoding="utf-8"))
     films, rep = d["films"], d["titles_ar"]
-    assert len(films) == 65 and rep["missing"] == []
-    sourced = sum(1 for f in films.values() if f.get("title_ar"))
-    assert sourced == 30                                  # 28 before this package, +«شيش دو» +«إكسهوما»
-    assert sourced + sum(1 for r in rep["review"] if not r["pin"]) >= 60
+    assert len(films) == 65 and rep["missing"] == [] and rep["invalid"] == []
+    sourced = {fid for fid, f in films.items() if f.get("title_ar")}
+    assert len(sourced) == 31              # 28 before this package, +«شيش دو» +«إكسهوما» +«المنتقمون: نهاية اللعبة»
+    waiting = {r["fid"] for r in rep["review"] if not r["pin"]}
+    assert waiting | sourced == set(films) and not waiting & sourced
+    assert {r["fid"] for r in rep["review"] if r["pin"]} <= sourced
+    assert {r["kind"] for r in rep["review"]} == {"transliteration", "translation"}
 
 
 # ------------------------------------------------------------------ the resolution order
@@ -121,9 +155,12 @@ def test_enrich_publishes_reviewed_holds_unreviewed_and_reports_both(tmp_path):
     assert rep["sources"] == {"latin": 2, "list": 1, "list-unreviewed": 1, "chain": 1}
 
 
-def test_shish_dou_renders_in_arabic_from_the_real_list(tmp_path):
+def test_a_sourced_entry_for_an_arabic_film_renders(tmp_path):
+    """«شيش دو» the way titles_ar.yaml carries it (sourced from elCinema, so no `review`), from a tmp list: the owner
+    may drop the line once the film leaves cinemas."""
+    path = _titles_file(tmp_path, {"shish-dou": {"ar": "شيش دو", "en": "Shish Dou", "source": "https://elcinema.com/work/2099939/"}})
     data = {"films": {"shish-dou": {"title": "Shish Dou", "lang": "Arabic"}}}
-    film = enrich_mod.enrich(data, cache_path=str(tmp_path / "c.json"), offline=True)["films"]["shish-dou"]
+    film = enrich_mod.enrich(data, cache_path=str(tmp_path / "c.json"), offline=True, titles_path=path)["films"]["shish-dou"]
     assert film["title_ar"] == "شيش دو" and film["title_ar_src"] == "list"
 
 
@@ -150,7 +187,7 @@ def test_arabic_labels_and_aliases_are_read_in_one_batch_and_kept_for_ar_ttl(tmp
     assert films["crawlers"]["title_ar"] == "كرولرز" and films["crawlers"]["aka_ar"] == ["الزواحف"]
     assert films["moana"]["title_ar"] == "موانا"                            # missing from the answer: kept
     saved = json.loads(cache.read_text(encoding="utf-8"))
-    assert saved["crawlers"]["ar"]["label"] == "كرولرز" and "ar" not in saved["moana"]
+    assert saved["crawlers"]["ar"]["label"] == "كرولرز" and "label" not in saved["moana"]["ar"]   # stamped, title kept
     enrich_mod.enrich({"films": {"crawlers": {"title": "Crawlers"}}}, cache_path=str(cache), titles_path=titles)
     assert len(calls) == 1                                                    # Q1 is fresh: never asked again
     saved["crawlers"]["ar"]["at"] = (datetime.now(timezone.utc) - timedelta(days=4)).isoformat()
@@ -158,6 +195,57 @@ def test_arabic_labels_and_aliases_are_read_in_one_batch_and_kept_for_ar_ttl(tmp
     calls.clear()
     enrich_mod.enrich({"films": {"crawlers": {"title": "Crawlers"}}}, cache_path=str(cache), titles_path=titles)
     assert calls == [(["Q1"], "labels|aliases")]                             # re-read after AR_TTL
+
+
+def test_a_listed_qid_brings_that_items_arabic_names_and_nothing_else(tmp_path, monkeypatch):
+    """«Avengers Endgame: Encore» finds nothing on Wikidata by its listing title; titles_ar.yaml names the 2019 film's
+    item. Its Arabic label is the title (a source: no review), its aliases are search keys, the owner's Gulf
+    proposal waits as an unreviewed pin, and only the Arabic names are read (never RT, cast or synopsis)."""
+    cache = tmp_path / "c.json"
+    cache.write_text(json.dumps({"ae": {"ids": {}, "ids_status": "not_found", "lookup_v": 2,
+                                        "ids_checked_at": datetime.now(timezone.utc).isoformat()}}), encoding="utf-8")
+    titles = _titles_file(tmp_path, {"ae": {"qid": "Q23781155", "ar": "أفنجرز إند قيم: إنكور", "source": "proposed",
+                                            "pin": True, "review": True}})
+    calls = []
+
+    def fake_entities(ids, props="labels|claims"):
+        calls.append((list(ids), props))
+        return {"Q23781155": {"labels": {"ar": {"value": "المنتقمون: نهاية اللعبة"}},
+                              "aliases": {"ar": [{"value": "نهاية اللعبة"}, {"value": "المنتقمون 4"}]}}}
+    monkeypatch.setattr(enrich_mod, "_wikidata_entities", fake_entities)
+    data = {"films": {"ae": {"title": "Avengers Endgame: Encore", "lang": "English"}}}
+    offline = enrich_mod.enrich(json.loads(json.dumps(data)), cache_path=str(cache), offline=True, titles_path=titles)
+    assert offline["films"]["ae"]["title_ar"] is None and calls == []            # before the first read: Latin
+    film = enrich_mod.enrich(data, cache_path=str(cache), titles_path=titles)["films"]["ae"]
+    assert calls == [(["Q23781155"], "labels|aliases")]
+    assert (film["title_ar"], film["title_ar_src"]) == ("المنتقمون: نهاية اللعبة", "wikidata")
+    assert film["aka_ar"] == ["نهاية اللعبة", "المنتقمون 4"]                    # the proposal is not a key
+    assert data["titles_ar"]["review"][0]["now"] == "المنتقمون: نهاية اللعبة"
+    assert json.loads(cache.read_text(encoding="utf-8"))["ae"]["ids"] == {}      # the match, RT, cast: untouched
+
+
+def test_the_cached_read_is_tied_to_its_item_and_a_gone_item_keeps_its_names(tmp_path, monkeypatch):
+    """w1-d2-review.md M7: a changed qid is read again at once (never three days under the old item's name), and
+    an item the answer no longer has is stamped too (asked again after AR_TTL, not every hour)."""
+    cache = tmp_path / "c.json"
+    cache.write_text(json.dumps({"x": _found("Q1")}), encoding="utf-8")
+    answers = {"Q1": {"labels": {"ar": {"value": "واحد"}}}, "Q2": {"labels": {"ar": {"value": "اثنين"}}}}
+    calls = []
+
+    def fake_entities(ids, props="labels|claims"):
+        calls.append(list(ids))
+        return {q: answers[q] for q in ids if q in answers}
+    monkeypatch.setattr(enrich_mod, "_wikidata_entities", fake_entities)
+    run = lambda t: enrich_mod.enrich({"films": {"x": {"title": "X"}}}, cache_path=str(cache), titles_path=t)["films"]["x"]
+    assert run(_titles_file(tmp_path, {}))["title_ar"] == "واحد"
+    assert run(_titles_file(tmp_path, {"x": {"qid": "Q2"}}))["title_ar"] == "اثنين" and calls == [["Q1"], ["Q2"]]
+    answers.pop("Q2")
+    saved = json.loads(cache.read_text(encoding="utf-8"))
+    saved["x"]["ar"]["at"] = (datetime.now(timezone.utc) - timedelta(days=4)).isoformat()
+    cache.write_text(json.dumps(saved), encoding="utf-8")
+    t = _titles_file(tmp_path, {"x": {"qid": "Q2"}})
+    assert run(t)["title_ar"] == "اثنين" and calls[-1] == ["Q2"]                # gone: what we had stays
+    assert run(t)["title_ar"] == "اثنين" and len(calls) == 3                     # and it is not asked again this hour
 
 
 def test_a_label_wikidata_removed_is_followed_and_a_failed_read_keeps_the_title(tmp_path, monkeypatch):
@@ -186,17 +274,28 @@ def test_offline_never_asks_for_arabic_labels(tmp_path, monkeypatch):
     assert film["title_ar"] == "عنوان"
 
 
-def test_titles_cli_lists_what_waits_busiest_first(tmp_path, capsys):
+def test_titles_cli_lists_what_waits_busiest_first_and_a_paste_of_it_is_inert(tmp_path, capsys):
+    """w1-d2-review.md I2: every line the CLI prints is a YAML comment, so pasting its output into titles_ar.yaml
+    changes nothing (it used to print `b: {ar: "", …}`, which a strict test refused, holding every deploy)."""
     data = {"films": {"a": {"title": "A", "lang": "Hindi"}, "b": {"title": "B"}, "c": {"title": "C", "title_ar": "سي"}},
-            "titles_ar": {"review": [{"fid": "a", "title": "A", "lang": "Hindi", "shows": 9, "ar": "إيه", "pin": False, "now": None}],
-                          "missing": [{"fid": "b", "title": "B", "lang": None, "shows": 1}], "sources": {}}}
+            "titles_ar": {"review": [{"fid": "a", "title": "A", "lang": "Hindi", "shows": 9, "ar": "إيه", "pin": False,
+                                      "kind": "transliteration", "now": None}],
+                          "missing": [{"fid": "b", "title": "B", "lang": None, "shows": 1}],
+                          "invalid": [{"fid": "z", "why": "`ar` is not written in Arabic: left out"}], "sources": {}}}
     p = tmp_path / "latest.json"
     p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     assert enrich_mod.main(["titles", str(p)]) == 0
-    out = capsys.readouterr().out.splitlines()
-    assert out[0].startswith("# awaiting review (1)") and out[1].startswith('  a: {ar: "إيه", en: "A", review: true}')
-    assert "9 shows, Hindi" in out[1] and out[2].startswith("# no Arabic title and no entry (1)")
-    assert out[3].startswith('  b: {ar: "", en: "B", review: true}')
+    printed = capsys.readouterr().out
+    out = printed.splitlines()
+    assert out[0].startswith("# awaiting review (1)") and out[1].startswith('  # a: {ar: "إيه", en: "A", review: true}')
+    assert "transliteration, 9 shows, Hindi" in out[1] and out[2].startswith("# no Arabic title and no entry (1)")
+    assert out[3].startswith('  # b: {ar: "", en: "B"}') and "review" not in out[3]
+    assert out[4].startswith("# entries enrich could not use (1)") and "z:" in out[5]
+    assert all(line.lstrip().startswith("#") for line in out)
+    pasted = tmp_path / "titles_ar.yaml"
+    pasted.write_text("titles:\n  c: {ar: \"سي\"}\n" + printed, encoding="utf-8")
+    problems = []
+    assert set(enrich_mod.load_titles_ar(str(pasted), problems)) == {"c"} and problems == []
     assert enrich_mod.main([]) == 2
 
 
@@ -234,7 +333,7 @@ def test_every_film_page_on_root_keeps_its_latin_title(site):
             assert f["title_ar"] in title and title.index(f["title_ar"]) < title.index(f["title"]), fid
             fte = re.search(r'<p class="fte"><bdi lang="en" dir="ltr">(.*?)</bdi>', h)       # the hero's secondary line
             assert fte and html.unescape(fte.group(1)) == f["title"], fid
-    assert arabic >= 30
+    assert arabic == 31
 
 
 def test_shish_dou_page_is_arabic(site):
@@ -255,6 +354,8 @@ def test_index_names_all_66_cinemas_in_arabic_and_learns_cities_formats_chains(i
     assert all(e["p"] == "halls" or e["p"].startswith("q/") for e in fmts.values())
     chains = {e["a"] for e in index if e["t"] == "n"}
     assert chains == {"فوكس", "ريل", "نوفو", "روكسي", "ستار", "سينما سيتي", "سيني رويال"}
+    assert not any(e["t"] == "m" for e in index)                                 # a mall is a key of its cinemas
+    assert search.normalize("دبي مول") in cin["cinemacity-fountain-views"]["k"]
 
 
 def test_film_entries_carry_every_sourced_name_and_the_skeleton(index):
@@ -263,16 +364,23 @@ def test_film_entries_carry_every_sourced_name_and_the_skeleton(index):
     assert search.normalize("سبايدر-مان: يوم جديد") in sp["k"] and search.normalize("سبايدرمان 4") in sp["k"]
     assert sp["s"] == "sbdr mn brnd n d"
     assert films["film/the-odyssey"]["s"] == "t ads"
-    assert films["film/avengers-endgame-encore"]["a"] is None      # unreviewed: its Arabic is nowhere in the index
-    assert "افنجرز" not in json.dumps(films["film/avengers-endgame-encore"], ensure_ascii=False)
+    ae = films["film/avengers-endgame-encore"]
+    assert ae["a"] == "المنتقمون: نهاية اللعبة" and search.normalize("نهاية اللعبة") in ae["k"]   # its item's names
+    assert films["film/crawlers"]["a"] is None                     # unreviewed: its Arabic is nowhere in the index
+    names, keys = {e["a"] for e in index}, {k for e in index for k in e["k"]}
+    for r in json.load(open(REAL, encoding="utf-8"))["titles_ar"]["review"]:
+        if not r["pin"]:                   # a pin can equal a sourced name (Reel's «توي ستوري 5»): that one is a key anyway
+            assert r["ar"] not in names and search.normalize(r["ar"]) not in keys, r["fid"]
 
 
 def test_search_json_grows_by_at_most_6_kb_gz(index):
-    """What W1-D2 adds (cities, formats, chains, the skeletons, the extra keys) costs <= 6 KB gz."""
+    """What W1-D2 adds (cities, formats, chains, the skeletons, the extra keys) costs <= 6 KB gz. The "before" is
+    rebuilt from today's rows without the additions, and without the 19 mall rows the fix round folded into their
+    cinemas, so it is smaller than the real before and the growth measured here is an upper bound."""
     def gz(x):
         return len(gzip.compress(json.dumps(x, ensure_ascii=False, separators=(",", ":")).encode("utf-8"), 9))
     before = [{**{k: v for k, v in e.items() if k != "s"}, "k": sorted({search.normalize(e["a"]), search.normalize(e["e"])} - {""})}
-              for e in index if e["t"] in ("f", "c", "m", "p")]
+              for e in index if e["t"] in ("f", "c", "p")]
     assert gz(index) - gz(before) <= 6 * 1024
 
 
@@ -331,21 +439,29 @@ def test_js_finds_the_right_target_over_the_real_index(index, tmp_path):
     """The package's acceptance: «أفنجرز», «سبايدر», «اوديسا», «فوكس», «imax», «فوكس مول الامارات» and «دبي مول»
     (both cinemas), typed into the real client over the index built from the day's real data."""
     queries = ["أفنجرز", "سبايدر", "اوديسا", "فوكس", "imax", "فوكس مول الامارات", "دبي مول", "ايماكس", "vox", "العين",
-               "ڤوكس", "توي ستوري", "شيش دو"]
-    tail = ("DATA = " + json.dumps(index, ensure_ascii=False) + ";\nvar out = {};\n"
+               "ڤوكس", "توي ستوري", "شيش دو", "المنتقمون", "نهاية اللعبة", "ستار", "الغرير", "voxx"]
+    tail = ("DATA = " + json.dumps(index, ensure_ascii=False) + ";\nvar out = {}, blank = {};\n"   # not `empty`: search.js's
             + json.dumps(queries, ensure_ascii=False) + ".forEach(function (qq) { R['#srch-input'].value = qq; "
             "R['#srch-input'].fire('input'); var ps = []; R['#srch-list'].innerHTML.replace(/data-p=\"([^\"]+)\"/g, "
-            "function (m, p) { ps.push(p); }); out[qq] = ps; });\nconsole.log(JSON.stringify(out));")
-    got = _node(tmp_path, tail)
+            "function (m, p) { ps.push(p); }); out[qq] = ps; blank[qq] = R['#srch-empty'].textContent; });\n"
+            "console.log(JSON.stringify({out: out, blank: blank}));")
+    res = _node(tmp_path, tail)
+    got, blank = res["out"], res["blank"]
     films = lambda q: [p for p in got[q] if p.startswith("film/")]
     places = lambda q: [p for p in got[q] if not p.startswith(("film/", "people/"))]
     assert films("أفنجرز")[0] == "film/avengers-endgame-encore"
+    assert films("المنتقمون") == films("نهاية اللعبة") == ["film/avengers-endgame-encore"]
     assert films("سبايدر")[0] == "film/spider-man-brand-new-day" and "film/spider-island" in films("سبايدر")
+    # w1-d2-review.md M2: the skeleton only when no place or person matched directly, one row per page, no blank panel
+    assert films("ستار") == [] and places("ستار") and all("/star-" in p for p in places("ستار"))
+    assert films("الغرير") == [] and places("الغرير")
+    assert got["voxx"] == [] and blank["voxx"].startswith("ما لقينا")
+    assert all(len(v) == len(set(v)) for v in got.values())
     assert films("اوديسا")[0] == "film/the-odyssey"
     assert len(places("فوكس")) == 8 and all(p.split("/")[-1].startswith("vox-") for p in places("فوكس"))
     assert places("imax")[0] == "q/where-imax" and places("ايماكس")[0] == "q/where-imax"
     assert places("فوكس مول الامارات")[0] == "dubai/vox-mall-of-the-emirates"
-    assert {"dubai/reel-dubai-mall", "dubai/cinemacity-fountain-views"} <= set(places("دبي مول"))
+    assert sorted(places("دبي مول")) == ["dubai/cinemacity-fountain-views", "dubai/reel-dubai-mall"]
     assert all(p.split("/")[-1].startswith("vox-") for p in places("vox"))
     assert places("العين")[0] == "al-ain"
     assert places("ڤوكس") == places("فوكس")

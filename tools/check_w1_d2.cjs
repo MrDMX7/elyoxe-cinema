@@ -9,8 +9,10 @@
    Per size (default 360x740 and 390x844; isMobile, hasTouch, channel chrome, service workers blocked):
      - home: no horizontal scroll, no page error;
      - the search panel: opened from the header icon, each query typed, the result paths read, the panel held inside the
-       width; a screenshot with «أفنجرز» and with «دبي مول»;
-     - /film/shish-dou/ and /film/heart-of-the-beast/: the h1 and document.title (the Latin title stays in <title>).
+       width; a screenshot with «أفنجرز», «دبي مول» and «ستار» (fix round: «ستار» lists Star's cinemas, not a film
+       that sounds like it; «دبي مول» lists each cinema once; «voxx» shows the «ما لقينا» line, not a blank panel);
+     - /film/shish-dou/, /film/heart-of-the-beast/ and /film/avengers-endgame-encore/: the h1 and document.title (the
+       Latin title stays in <title>).
    --expect asserts the package's acceptance targets (the "after" build); without it the run only records (the "before").
    Exit 1 on a failed assertion, a page error, horizontal scroll or a wrong X-Served-By. */
 const fs = require("fs"), path = require("path"), http = require("http"), net = require("net"), { execSync } = require("child_process");
@@ -33,7 +35,7 @@ const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", "
   ".svg": "image/svg+xml", ".webp": "image/webp", ".png": "image/png", ".woff2": "font/woff2", ".xml": "application/xml",
   ".webmanifest": "application/manifest+json", ".ics": "text/calendar" };
 
-const QUERIES = ["أفنجرز", "سبايدر", "اوديسا", "فوكس", "imax", "فوكس مول الامارات", "دبي مول"];
+const QUERIES = ["أفنجرز", "سبايدر", "اوديسا", "فوكس", "imax", "فوكس مول الامارات", "دبي مول", "ستار", "voxx", "المنتقمون"];
 const EXPECTED = {   // the package's acceptance: the first film, or the first place, a query must land on
   "أفنجرز": (r) => r.films[0] === "film/avengers-endgame-encore",
   "سبايدر": (r) => r.films[0] === "film/spider-man-brand-new-day",
@@ -41,7 +43,10 @@ const EXPECTED = {   // the package's acceptance: the first film, or the first p
   "فوكس": (r) => r.places.length > 0 && r.places.every((p) => /\/vox-/.test(p)),
   "imax": (r) => r.places[0] === "q/where-imax",
   "فوكس مول الامارات": (r) => r.places[0] === "dubai/vox-mall-of-the-emirates",
-  "دبي مول": (r) => r.places.includes("dubai/reel-dubai-mall") && r.places.includes("dubai/cinemacity-fountain-views"),
+  "دبي مول": (r) => r.places.length === 2 && r.places.includes("dubai/reel-dubai-mall") && r.places.includes("dubai/cinemacity-fountain-views"),
+  "ستار": (r) => r.films.length === 0 && r.places.length > 0 && /\/star-/.test(r.places[0]),
+  "voxx": (r) => r.films.length + r.places.length === 0 && /ما لقينا/.test(r.empty),
+  "المنتقمون": (r) => r.films[0] === "film/avengers-endgame-encore",
 };
 
 function portTaken(port) {
@@ -106,17 +111,17 @@ async function main() {
           || (document.getElementById("srch-empty") || {}).textContent, null, { timeout: 15000 }).catch(() => {});
         const paths = await page.$$eval("#srch-list [role=option]", (els) => els.map((e) => e.getAttribute("data-p")));
         const names = await page.$$eval("#srch-list [role=option] a > span", (els) => els.map((e) => e.textContent));
-        const res = { films: paths.filter((p) => p.startsWith("film/")), places: paths.filter((p) => !/^(film|people)\//.test(p)), names };
+        const empty = await page.$eval("#srch-empty", (e) => e.textContent).catch(() => "");
+        const res = { films: paths.filter((p) => p.startsWith("film/")), places: paths.filter((p) => !/^(film|people)\//.test(p)), names, empty };
         res.box = await page.evaluate(() => { const b = document.querySelector(".srch-box"); return b ? { sw: b.scrollWidth, cw: b.clientWidth } : null; });
         r.search[q] = res;
         if (EXPECT && EXPECTED[q] && !EXPECTED[q](res)) fails.push(`${sz.name} «${q}» -> ${JSON.stringify(res)}`);
         if (res.box && res.box.sw > res.box.cw) fails.push(`${sz.name} search panel overflows with «${q}»: ${JSON.stringify(res.box)}`);
-        if (SHOTS && (q === "أفنجرز" || q === "دبي مول") && sz.w >= 360) {
-          await page.screenshot({ path: path.join(SHOTS, `${LABEL}-${sz.w}-search-${q === "أفنجرز" ? "avengers" : "dubaimall"}.png`) });
-        }
+        const shot = { "أفنجرز": "avengers", "دبي مول": "dubaimall", "ستار": "star" }[q];
+        if (SHOTS && shot && sz.w >= 360) await page.screenshot({ path: path.join(SHOTS, `${LABEL}-${sz.w}-search-${shot}.png`) });
       }
       r.pages.search_open = await overflow(page);
-      for (const fid of ["shish-dou", "heart-of-the-beast"]) {
+      for (const fid of ["shish-dou", "heart-of-the-beast", "avengers-endgame-encore"]) {
         await page.goto(`${base}/film/${fid}/`, { waitUntil: "load" });
         const head = await page.evaluate(() => ({ title: document.title, h1: (document.querySelector("h1") || {}).textContent || "",
           fte: (document.querySelector(".fte") || {}).textContent || "" }));
@@ -126,6 +131,8 @@ async function main() {
       if (EXPECT) {
         if (!/شيش دو/.test(r.pages["shish-dou"].h1) || !/Shish Dou/.test(r.pages["shish-dou"].title)) fails.push(`${sz.name} shish-dou head ${JSON.stringify(r.pages["shish-dou"])}`);
         if (!/Heart of the Beast/.test(r.pages["heart-of-the-beast"].title)) fails.push(`${sz.name} heart-of-the-beast <title> lost its Latin`);
+        const ae = r.pages["avengers-endgame-encore"];
+        if (!/المنتقمون: نهاية اللعبة/.test(ae.h1) || !/Avengers Endgame: Encore/.test(ae.title)) fails.push(`${sz.name} avengers head ${JSON.stringify(ae)}`);
       }
       for (const [k, v] of Object.entries(r.pages)) if (v.scrollWidth > v.clientWidth) fails.push(`${sz.name} ${k} scrolls sideways ${v.scrollWidth}>${v.clientWidth}`);
       if (errors.length) fails.push(`${sz.name} page errors: ${errors.join(" | ")}`);

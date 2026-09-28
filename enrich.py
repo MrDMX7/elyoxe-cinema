@@ -58,15 +58,18 @@ title_ar (W1-D2, MASTER-PLAN §5.2): resolve_title_ar() below, in this order, ne
   0. an entry in titles_ar.yaml the owner reviewed and pinned (`pin: true`): his word is final;
   1. an Arabic-language film is always Arabic: the first of the sources below, and for such a film a
      titles_ar.yaml entry is used even before its review (its Latin is itself a transliteration);
-  2. the matched Wikidata item's own Arabic label (never its English label), re-read every AR_TTL
-     with its Arabic aliases (a new film's label often lands on Wikidata days after release);
+  2. the Wikidata item's own Arabic label (never its English label), re-read every AR_TTL with its Arabic
+     aliases (a new film's label often lands on Wikidata days after release). The item is the film's own match,
+     or the one its titles_ar.yaml entry names (`qid:`) when the match cannot find it: a re-release listed under
+     another name («Avengers Endgame: Encore» is Q23781155). Only that item's Arabic names are used;
   3. one of those Arabic aliases, when the item has no label;
   4. the Arabic title a chain publishes (Reel's TitleAlt, Novo's movie_title_ar);
   5. a titles_ar.yaml entry the owner reviewed (`review: true` = not yet: never published).
 Every other sourced Arabic name (the label, the aliases, the chain's, a reviewed entry) is kept in
 film["aka_ar"] as a search key only. film["title_ar_src"] says where the title came from, and
-data["titles_ar"] carries the review list (entries awaiting review, films with no Arabic title at all);
-`python enrich.py titles` prints it for the weekly look (owner default D12).
+data["titles_ar"] carries the review list (entries awaiting review, films with no Arabic title at all, and the
+entries it could not use); `python enrich.py titles` prints it for the weekly look (owner default D12). An owner's
+edit of titles_ar.yaml never stops the hourly run: what cannot be used is left out and named, never raised.
 """
 import json
 import os
@@ -99,6 +102,7 @@ _ARABIC = re.compile(r"[\u0600-\u06ff]")
 TITLES_AR_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "titles_ar.yaml")
 AR_TTL = timedelta(days=3)       # the matched item's Arabic label and aliases are re-read this often
 _EAST_DIGITS = str.maketrans("\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669\u06f0\u06f1\u06f2\u06f3\u06f4\u06f5\u06f6\u06f7\u06f8\u06f9", "01234567890123456789")
+_QID = re.compile(r"Q[1-9][0-9]*")
 _FILM_SUFFIX = re.compile(r"\s*[(\uff08]\s*(?:\u0641\u064a\u0644\u0645|film)[^)\uff09]*[)\uff09]\s*$", re.IGNORECASE)
 
 _last_call = [0.0]
@@ -227,9 +231,9 @@ def clean_ar(s):
 
 
 def _wikidata_ar(qids):
-    """{qid: {"label": str|None, "aliases": [str]}} — each item's own Arabic label and Arabic aliases, 50 ids
-    a call. An id missing from the answer is left out (a merged or deleted item keeps what we had).
-    May raise LookupFailed."""
+    """{qid: {"label": str|None, "aliases": [str]} or None} — each item's own Arabic label and Arabic aliases,
+    50 ids a call; None for an id the answer has no item for (merged or deleted: the caller keeps what it had,
+    and asks again only after AR_TTL). May raise LookupFailed."""
     qids = [q for q in dict.fromkeys(qids) if q]
     out = {}
     for i in range(0, len(qids), 50):
@@ -238,6 +242,7 @@ def _wikidata_ar(qids):
         for q in batch:
             e = ents.get(q)
             if not isinstance(e, dict) or "missing" in e:
+                out[q] = None
                 continue
             label = clean_ar(((e.get("labels") or {}).get("ar") or {}).get("value"))
             aliases = [clean_ar(a.get("value")) for a in ((e.get("aliases") or {}).get("ar") or []) if isinstance(a, dict)]
@@ -247,27 +252,52 @@ def _wikidata_ar(qids):
 
 # ---------- titles_ar.yaml: the reviewed list (owner-editable) ----------
 
-def load_titles_ar(path=None):
-    """titles_ar.yaml -> {fid: {"ar", "review", "pin", "source", "en"}}. An entry whose `ar` is not Arabic
-    script is dropped (never published); a file that cannot be read gives {} and says so (the hourly run
-    must not stop on it; tests/test_w1_d2.py fails the build on a malformed file instead)."""
+def load_titles_ar(path=None, problems=None):
+    """titles_ar.yaml -> {fid: {"ar", "review", "pin", "qid", "kind", "source", "en"}}. It never stops the hourly
+    run, whatever the owner typed: a file that cannot be read gives {}, an entry it cannot use is left out, a
+    `review`/`pin` that is not true or false keeps its safe side (awaiting review, not pinned), and each of these
+    is named on stderr and in `problems` (a list, when given; enrich puts it in data["titles_ar"]["invalid"]).
+    Eastern digits, double spaces and a trailing «(فيلم)» are simply cleaned (clean_ar)."""
     path = path or TITLES_AR_PATH
+
+    def bad(fid, why):
+        print(f"enrich: titles_ar.yaml {fid}: {why}", file=sys.stderr)
+        if problems is not None:
+            problems.append({"fid": str(fid), "why": why})
     try:
         with open(path, encoding="utf-8") as f:
             raw = yaml.safe_load(f) or {}
     except (OSError, yaml.YAMLError) as e:
-        print(f"enrich: {path} unreadable: {e}", file=sys.stderr)
+        bad("*", f"unreadable, every entry left out: {e}")
+        return {}
+    titles = raw.get("titles") if isinstance(raw, dict) else None
+    if not isinstance(titles, (dict, type(None))):
+        bad("*", "`titles` is not a list of film ids: every entry left out")
         return {}
     out = {}
-    for fid, e in ((raw.get("titles") if isinstance(raw, dict) else None) or {}).items():
+    for fid, e in (titles or {}).items():
         if isinstance(e, str):
             e = {"ar": e}
         if not isinstance(e, dict):
+            bad(fid, "not an entry like {ar: ...}: left out")
             continue
-        ar = clean_ar(e.get("ar"))
-        if ar:
-            out[str(fid)] = {"ar": ar, "review": bool(e.get("review")), "pin": bool(e.get("pin")),
-                             "source": e.get("source"), "en": e.get("en")}
+        ar, qid = clean_ar(e.get("ar")), str(e.get("qid") or "").strip() or None
+        if qid and not _QID.fullmatch(qid):
+            bad(fid, f"qid {qid!r} is not a Wikidata id like Q23781155: ignored")
+            qid = None
+        if not ar and (e.get("ar") or not qid):
+            bad(fid, "`ar` is not written in Arabic: " + ("only its qid is used" if qid else "left out"))
+            if not qid:
+                continue
+        review, pin = e.get("review", False), e.get("pin", False)
+        if not isinstance(review, bool):
+            bad(fid, "`review` is not true or false: kept awaiting review")
+            review = True
+        if not isinstance(pin, bool):
+            bad(fid, "`pin` is not true or false: not pinned")
+            pin = False
+        out[str(fid)] = {"ar": ar, "review": review, "pin": pin, "qid": qid, "kind": e.get("kind"),
+                         "source": e.get("source"), "en": e.get("en")}
     return out
 
 
@@ -291,10 +321,11 @@ def resolve_title_ar(film, wd_label=None, wd_aliases=(), listed=None):
     return title, src, aka
 
 
-def titles_report(films, listed, shows=None):
-    """The weekly look (D12): {"review": [...], "missing": [...], "sources": {src: n}}. `review` is every
-    titles_ar.yaml entry still awaiting the owner (with the title it would replace), `missing` every film
-    with no Arabic title and no entry at all — both busiest first."""
+def titles_report(films, listed, shows=None, invalid=None):
+    """The weekly look (D12): {"review": [...], "missing": [...], "invalid": [...], "sources": {src: n}}. `review`
+    is every titles_ar.yaml entry still awaiting the owner (with the title it would replace, and whether it
+    spells the sounds or translates words), `missing` every film with no Arabic title and no entry at all, both
+    busiest first; `invalid` the entries load_titles_ar() could not use."""
     count = {}
     for s in shows or ():
         f = s.get("film") if isinstance(s, dict) else None
@@ -307,11 +338,13 @@ def titles_report(films, listed, shows=None):
         sources[src or "latin"] = sources.get(src or "latin", 0) + 1
         e = listed.get(fid)
         row = {"fid": fid, "title": film.get("title") or fid, "lang": film.get("lang"), "shows": count.get(fid, 0)}
-        if e and e.get("review"):
-            review.append({**row, "ar": e["ar"], "pin": e.get("pin", False), "now": film.get("title_ar")})
+        if e and e.get("review") and e.get("ar"):
+            kind = e.get("kind") or ("transliteration" if e.get("source") == "proposed" else None)
+            review.append({**row, "ar": e["ar"], "pin": e.get("pin", False), "kind": kind, "now": film.get("title_ar")})
         elif not film.get("title_ar"):
             missing.append(row)
-    return {"review": sorted(review, key=by), "missing": sorted(missing, key=by), "sources": sources}
+    return {"review": sorted(review, key=by), "missing": sorted(missing, key=by), "invalid": list(invalid or ()),
+            "sources": sources}
 
 
 def _norm_title(t):
@@ -760,9 +793,15 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
 
         cache[fid] = entry
 
-    # the matched items' Arabic labels and aliases, re-read every AR_TTL in one batched call (W1-D2)
-    due = {fid: (cache.get(fid, {}).get("ids") or {}).get("qid") for fid in films}
-    due = {fid: q for fid, q in due.items() if q and not _fresh((cache[fid].get("ar") or {}).get("at"), AR_TTL)}
+    # each film's Wikidata item (its own match, or the one titles_ar.yaml names): its Arabic label and aliases,
+    # re-read every AR_TTL in one batched call (W1-D2). The cached read is tied to its qid, so a changed item is
+    # read again at once, never shown under the old item's name.
+    problems = []
+    listed = load_titles_ar(titles_path, problems)
+    qids = {fid: (listed.get(fid) or {}).get("qid") or ((cache.get(fid) or {}).get("ids") or {}).get("qid") for fid in films}
+    qids = {fid: q for fid, q in qids.items() if q}
+    due = {fid: q for fid, q in qids.items()
+           if ((cache.get(fid) or {}).get("ar") or {}).get("qid") != q or not _fresh(cache[fid]["ar"].get("at"), AR_TTL)}
     if due and not offline:
         try:
             got = _wikidata_ar(due.values())
@@ -771,19 +810,20 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
             got = {}
         at = datetime.now(timezone.utc).isoformat()
         for fid, q in due.items():
-            if q in got:
-                cache[fid]["ar"] = {**got[q], "at": at}
+            if q in got:   # an item gone from Wikidata keeps what we had, and is asked again after AR_TTL
+                old = (cache.get(fid) or {}).get("ar") or {}
+                cache.setdefault(fid, {})["ar"] = {**(old if old.get("qid") == q else {}), **(got[q] or {}), "qid": q, "at": at}
                 dirty = True
 
-    listed = load_titles_ar(titles_path)
     for fid, film in films.items():
-        entry = cache.get(fid, {})
-        ids = entry.get("ids") or {}
-        ar = entry.get("ar") if ids.get("qid") else None
-        label = ar.get("label") if ar else ids.get("title_ar")   # a fresh read wins, even an empty one
-        title, src, aka = resolve_title_ar(film, label, (ar or {}).get("aliases") or (), listed.get(fid))
+        entry = cache.get(fid) or {}
+        ids, q = entry.get("ids") or {}, qids.get(fid)
+        ar = entry.get("ar") if q and (entry.get("ar") or {}).get("qid") == q else {}
+        # a read of the item wins, even an empty one; before the first read, the label its own match stored
+        label = ar["label"] if "label" in ar else (ids.get("title_ar") if not q or q == ids.get("qid") else None)
+        title, src, aka = resolve_title_ar(film, label, ar.get("aliases") or (), listed.get(fid))
         film["title_ar"], film["title_ar_src"], film["aka_ar"] = title, src, aka
-    data["titles_ar"] = titles_report(films, listed, data.get("shows"))
+    data["titles_ar"] = titles_report(films, listed, data.get("shows"), problems)
 
     if dirty and not offline:
         _save_cache(cache_path, cache)
@@ -820,14 +860,17 @@ def post_credits_for(qid: str | None) -> dict | None:  # pragma: no cover - stub
 # ---------------------------------------------------------------------------------------------
 # The weekly look (owner default D12): `python enrich.py titles [data/latest.json]`
 
-def _yaml_line(fid, ar, en, note, pin=False):
-    q = lambda s: json.dumps(s or "", ensure_ascii=False)
-    return f"  {fid}: {{ar: {q(ar)}, en: {q(en)},{' pin: true,' if pin else ''} review: true}}   # {note}"
+def _yaml_line(fid, ar, en, note, pin=False, review=True):
+    q = lambda x: json.dumps(x or "", ensure_ascii=False)
+    parts = [f"ar: {q(ar)}", f"en: {q(en)}"] + ["pin: true"] * bool(pin) + ["review: true"] * bool(review)
+    return f"  # {fid}: {{{', '.join(parts)}}}   # {note}"
 
 
 def main(argv=None):
-    """Prints every titles_ar.yaml entry still awaiting review and every film with no Arabic title at all,
-    busiest first, as lines ready for titles_ar.yaml. Approving one = deleting its `review: true`."""
+    """Prints every titles_ar.yaml entry still awaiting review, every film with no Arabic title at all and every
+    entry enrich could not use, busiest first. Every line is a YAML comment, so pasting the output into
+    titles_ar.yaml changes nothing until the owner acts: approve = delete `review: true` from that film's line in
+    the file; a film with no entry = write its Arabic and remove the leading "# "."""
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv or argv[0] != "titles":
         print("usage: python enrich.py titles [data/latest.json]", file=sys.stderr)
@@ -836,15 +879,22 @@ def main(argv=None):
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
     films = data.get("films") or {}
-    rep = data.get("titles_ar") or titles_report(films, load_titles_ar(), data.get("shows"))
-    say = lambda r: f"{r['shows']} shows, {r.get('lang') or 'language unknown'}"
-    print(f"# awaiting review ({len(rep['review'])}): delete `review: true` to publish")
+    rep = data.get("titles_ar")
+    if not rep:
+        problems = []
+        rep = titles_report(films, load_titles_ar(problems=problems), data.get("shows"), problems)
+    say = lambda r: ", ".join(x for x in (r.get("kind"), f"{r['shows']} shows", r.get("lang") or "language unknown") if x)
+    print(f"# awaiting review ({len(rep['review'])}): in titles_ar.yaml, delete `review: true` from a line to publish it")
     for r in rep["review"]:
         now = f", replaces «{r['now']}»" if r.get("now") else ""
         print(_yaml_line(r["fid"], r["ar"], r["title"], say(r) + now, r.get("pin")))
-    print(f"# no Arabic title and no entry ({len(rep['missing'])}): write the Arabic, then delete `review: true`")
+    print(f"# no Arabic title and no entry ({len(rep['missing'])}): write the Arabic, then remove the leading \"# \"")
     for r in rep["missing"]:
-        print(_yaml_line(r["fid"], "", r["title"], say(r)))
+        print(_yaml_line(r["fid"], "", r["title"], say(r), review=False))
+    if rep.get("invalid"):
+        print(f"# entries enrich could not use ({len(rep['invalid'])}):")
+        for r in rep["invalid"]:
+            print(f"#   {r['fid']}: {r['why']}")
     return 0
 
 
