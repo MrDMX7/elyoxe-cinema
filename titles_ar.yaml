@@ -1,0 +1,70 @@
+# titles_ar.yaml — the Arabic title of a film that no source gives in Arabic (W1-D2, MASTER-PLAN §5.2).
+#
+# enrich.py resolves every film's Arabic title in this order (never machine-translated):
+#   pin (an entry here the owner reviewed, with `pin: true`) → Wikidata's Arabic label → its Arabic
+#   aliases → the chain's own Arabic (Reel, Novo) → an entry here the owner reviewed.
+# `qid:` names the film's Wikidata item when enrich cannot find it by the listing's title (a re-release listed
+# under another name). It is a source, used at once (whatever `review` says): only that item's Arabic label and
+# aliases are read, every 3 days, and nothing else about the film changes.
+# An Arabic-language film is always shown in Arabic, so for one of those an entry is used even before review.
+#
+# `review: true` means NOT reviewed yet: the entry is never published, and the film keeps its Latin title on
+# `/` (owner default D12). To approve one, delete `review: true` (or set it to false). To correct a title a
+# source gives, add `pin: true` and approve it. `python enrich.py titles` lists what is waiting, busiest first.
+#
+# One line per film id (the /film/<id>/ slug). `ar`: Arabic script (Eastern digits, double spaces and a trailing
+# «(فيلم)» are cleaned on their own). `en`: the Latin title, to read the file by. `source`: where a non-proposed
+# title comes from (a URL), else `proposed` (written here). A slip in a value never stops a deploy: enrich leaves
+# out what it cannot use and lists it under "invalid" in `python enrich.py titles`. A broken line (a missing `}`,
+# `{` or quote) does stop the hourly deploy until it is fixed, as in every other YAML file of the site.
+# Style of the proposals: the name as people say it at the box office (hard g as ق, v as ف, "the" as ذا).
+# `kind: translation` marks a proposal that translates words (all or some) instead of spelling the sounds:
+# the site's rule is never machine-translated, so read those rows twice.
+
+titles:
+  # sourced: need no review
+  shish-dou:                               {ar: "شيش دو", en: "Shish Dou", source: "https://elcinema.com/work/2099939/"}
+  exhuma:                                  {qid: Q117322466, ar: "إكسهوما", en: "Exhuma", source: "https://www.wikidata.org/wiki/Q117322466"}   # a 2024 film: the match's year guard skips it
+
+  # proposed 2026-09-28, awaiting the owner (busiest first on that day)
+  the-smurfs-timeless-adventure-volume-2:  {ar: "السنافر: مغامرة خالدة، الجزء 2", en: "The Smurfs Timeless Adventure Volume 2", source: proposed, kind: translation, review: true}
+  crawlers:                                {ar: "كرولرز", en: "Crawlers", source: proposed, review: true}
+  the-vvaan-force-of-the-forest:           {ar: "ذا فان: قوة الغابة", en: "The Vvaan: Force of the Forest", source: proposed, kind: translation, review: true}
+  pradhama-drishtya-kuttakkar:             {ar: "براداما دريشتيا كوتاكار", en: "Pradhama Drishtya Kuttakkar", source: proposed, review: true}
+  sacrifice:                               {ar: "ساكريفايس", en: "Sacrifice", source: proposed, review: true}
+  the-paradise:                            {ar: "ذا بارادايس", en: "The Paradise", source: proposed, review: true}
+  dhoomakethu:                             {ar: "دوماكيتو", en: "Dhoomakethu", source: proposed, review: true}
+  meesaya-murukku-2:                       {ar: "ميسايا موروكو 2", en: "Meesaya Murukku 2", source: proposed, review: true}
+  hanuman-ansh:                            {ar: "هانومان أنش", en: "Hanuman Ansh", source: proposed, review: true}
+  aaram:                                   {ar: "آرام", en: "Aaram", source: proposed, review: true}
+  bethlehem-kudumba-unit:                  {ar: "بيت لحم كودومبا يونت", en: "Bethlehem Kudumba Unit", source: proposed, kind: translation, review: true}
+  pressure:                                {ar: "بريشر", en: "Pressure", source: proposed, review: true}
+  runner:                                  {ar: "رانر", en: "Runner", source: proposed, review: true}
+  bloody-tennis:                           {ar: "بلودي تنس", en: "Bloody Tennis", source: proposed, review: true}
+  mirzapur-the-movie:                      {ar: "ميرزابور: الفيلم", en: "Mirzapur: The Movie", source: proposed, kind: translation, review: true}
+  tutt-paini-english-ne:                   {ar: "توت بايني إنقلش ني", en: "Tutt Paini English Ne", source: proposed, review: true}
+  vibe:                                    {ar: "فايب", en: "Vibe", source: proposed, review: true}
+  life-after-you:                          {ar: "لايف آفتر يو", en: "Life After You", source: proposed, review: true}
+  pension-patta:                           {ar: "بنشن باتا", en: "Pension Patta", source: proposed, review: true}
+  mandaadi:                                {ar: "مندادي", en: "Mandaadi", source: proposed, review: true}
+  daayra:                                  {ar: "دايرا", en: "Daayra", source: proposed, review: true}
+  jhingedaaw-2:                            {ar: "جينقيداو 2", en: "Jhingedaaw-2", source: proposed, review: true}
+  cats-in-the-museum-2-treasures-of-egypt: {ar: "القطط في المتحف 2: كنوز مصر", en: "Cats in The Museum 2: Treasures of Egypt", source: proposed, kind: translation, review: true}
+  moana:                                   {ar: "موانا", en: "Moana", source: proposed, review: true}
+  spider-island:                           {ar: "سبايدر آيلاند", en: "Spider Island", source: proposed, review: true}
+  enna-vilai:                              {ar: "إنا فيلاي", en: "Enna Vilai", source: proposed, review: true}
+  im-game:                                 {ar: "آيم قيم", en: "I'm Game", source: proposed, review: true}
+  lenin-pandiyan:                          {ar: "لينين بانديان", en: "Lenin Pandiyan", source: proposed, review: true}
+  aasha:                                   {ar: "آشا", en: "Aasha", source: proposed, review: true}
+  mitti-de-putt:                           {ar: "ميتي دي بت", en: "Mitti De Putt", source: proposed, review: true}
+  revolver:                                {ar: "ريفولفر", en: "Revolver", source: proposed, review: true}
+  haiwaan:                                 {ar: "حيوان", en: "Haiwaan", source: proposed, kind: translation, review: true}
+  it-ends:                                 {ar: "إت إندز", en: "It Ends", source: proposed, review: true}
+  it-s-a-medical-miracle:                  {ar: "إتس أ ميديكل ميراكل", en: "It's A Medical Miracle", source: proposed, review: true}
+
+  # proposed corrections of a sourced title (pin), awaiting the owner
+  avengers-endgame-encore:                 {qid: Q23781155, ar: "أفنجرز إند قيم: إنكور", en: "Avengers Endgame: Encore", source: proposed, pin: true, review: true}   # the 2019 film re-released: Wikidata «المنتقمون: نهاية اللعبة», published now
+  the-weight:                              {ar: "ذا ويت", en: "The Weight", source: proposed, pin: true, review: true}                # Reel writes «ذا ويدت»
+  toy-story-5:                             {ar: "توي ستوري 5", en: "Toy Story 5", source: proposed, pin: true, review: true}          # Wikidata «حكاية لعبة 5», Reel «توي ستوري 5»
+  spider-man-brand-new-day:                {ar: "سبايدر مان: يوم جديد", en: "Spider-Man: Brand New Day", source: proposed, kind: translation, pin: true, review: true}   # Wikidata «الرجل العنكبوت: يوم جديد»
+  tad-and-the-magic-lamp:                  {ar: "تاد والمصباح السحري", en: "Tad and the Magic Lamp", source: proposed, kind: translation, pin: true, review: true}     # Reel «تاد آند ذا ماجيك لامب»

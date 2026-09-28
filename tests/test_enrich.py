@@ -25,6 +25,16 @@ def _no_wikidata_trailer_lookup(monkeypatch):
     monkeypatch.setattr(enrich_mod, "_wikidata_trailer", lambda qid: None)
 
 
+@pytest.fixture(autouse=True)
+def _no_arabic_label_lookup_and_no_reviewed_list(monkeypatch, tmp_path):
+    """W1-D2: the Arabic label refresh is a live lookup too (stubbed; tests/test_w1_d2.py tests it), and the
+    owner-editable titles_ar.yaml must never decide a test here: an empty list stands in for it."""
+    monkeypatch.setattr(enrich_mod, "_wikidata_ar", lambda qids: {})
+    empty = tmp_path / "titles_ar.yaml"
+    empty.write_text("titles: {}\n", encoding="utf-8")
+    monkeypatch.setattr(enrich_mod, "TITLES_AR_PATH", str(empty))
+
+
 def _raise(*a, **kw):
     raise AssertionError("network was called when the cache should have been used")
 

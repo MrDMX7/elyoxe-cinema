@@ -176,6 +176,9 @@ class FilmPages:
             cities = [c for c, _, _ in CITIES if any(self.cinemas[s["cinema"]].get("city") == c for s in shows)]
             for lang in ("ar", "en"):
                 t = self.ftitle(fid, lang)
+                # W1-D2: on `/` a film shown by its Arabic title keeps its Latin one in <title> and the description,
+                # so a Latin-script search for an Indian or Hollywood title still finds the page
+                tl = f"{t} ({f['title']})" if lang == "ar" and f.get("title_ar") and f.get("title") and f["title"] != t else t
                 rates = self.film_rates(fid, lang)
                 panels = {"about": self.film_about(fid, lang, [] if archived else shows, rates),
                           "cast": self.slot("film.cast", lang, fid=fid),
@@ -185,8 +188,8 @@ class FilmPages:
                 tabs = self.film_tabs(fid, lang, panels)
                 vword = L(VERDICT.get(v, VERDICT["unknown"]), lang)
                 if archived:
-                    title = (f"فيلم {t} — انتهى عرضه في سينما الإمارات، ويستاهل؟" if lang == "ar" else f"{t} — no longer in UAE cinemas; was it worth it?")
-                    desc = (f"{t}: {vword}. التقييمات والمعلومات، ومتى عُرض في سينمات الإمارات، وشو المعروض الحين." if lang == "ar"
+                    title = (f"فيلم {tl} — انتهى عرضه في سينما الإمارات، ويستاهل؟" if lang == "ar" else f"{t} — no longer in UAE cinemas; was it worth it?")
+                    desc = (f"{tl}: {vword}. التقييمات والمعلومات، ومتى عُرض في سينمات الإمارات، وشو المعروض الحين." if lang == "ar"
                             else f"{t}: {vword}. Ratings, facts, when it showed in UAE cinemas, and what is showing now.")
                     self.page(lang, ("film", fid), title, desc, hero + tabs, [self.movie_ld(fid, lang), self.breadcrumb_ld(lang, (t, P(lang, "film", fid)))],
                               "film", f' data-fid="{esc(fid)}" data-archived="1"', og_image=f.get("poster_2x") or f.get("poster"))
@@ -228,8 +231,8 @@ class FilmPages:
                 body = (hero + first + f'<section class="fsched" id="times" aria-labelledby="times-h"><h2 class="vh" id="times-h">{esc(L(FILM_T["times"], lang))}</h2>'
                         f'{bar}<div class="wrap lay"><div class="cgs"><p class="nc" data-nc hidden></p>{sched}<p class="empty" data-empty hidden></p></div>'
                         f'<div class="tkcol">{empty}{ticket}</div></div></section>{tabs}{dock}')
-                title = (f"فيلم {t} في سينما الإمارات — المواعيد والأسعار، ويستاهل؟" if lang == "ar" else f"{t} in UAE cinemas — showtimes, prices and is it worth it?")
-                desc = (f"{t}: {vword}. مواعيد العرض في سينمات الإمارات اليوم وبكرة، سعر التذكرة لكل قاعة، والسعر بعد خصم بطاقتك." if lang == "ar"
+                title = (f"فيلم {tl} في سينما الإمارات — المواعيد والأسعار، ويستاهل؟" if lang == "ar" else f"{t} in UAE cinemas — showtimes, prices and is it worth it?")
+                desc = (f"{tl}: {vword}. مواعيد العرض في سينمات الإمارات اليوم وبكرة، سعر التذكرة لكل قاعة، والسعر بعد خصم بطاقتك." if lang == "ar"
                         else f"{t}: {vword}. Showtimes in UAE cinemas today and tomorrow, ticket prices per hall, and the price after your card discount.")
                 self.page(lang, ("film", fid), title, desc, body, graph, "film",
                           f' data-fid="{esc(fid)}" data-chains="{" ".join(sorted({self.cinemas[s["cinema"]]["chain"] for s in shows}))}"'

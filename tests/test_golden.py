@@ -49,6 +49,9 @@ SHELL_HTML = [(re.compile(r'(?:<link rel="preload" href="[^"]+" as="script">\n)?
               (re.compile(r'<script id="boot">\(function\(u,d\)\{.*?\}\)\("([^"]+)",document\)</script>'),
                r'<script src="\1" defer></script>')]
 SHELL_FILES = re.compile(r"^assets/icons/sc-[a-z]+\.png$")
+# W1-D2 (MASTER-PLAN §5.2): on `/` a film shown by its Arabic title keeps its Latin one in <title> and the description,
+# «فيلم قلب الوحش (Heart of the Beast) في سينما الإمارات …» (tests/test_w1_d2.py covers it); undone before comparing
+W1D2_LATIN = re.compile(r" \([A-Za-z0-9][^()<>\"]*\)(?= في سينما الإمارات| — انتهى عرضه|: )")
 # UI redesign: the new core pages, and what the redesign rewrites (compared by their own tests, not to phase 1)
 REDESIGN_ADDED = re.compile(r"^(en/)?(cinemas|sources)/index\.html$")
 # W1-P1 (MASTER-PLAN §5.2): core declares Wave 2's lazy stub (drag.js) and page-scoped sheets (page-<kind>.css) — assets
@@ -76,15 +79,16 @@ def inv(b):
     hreflang links, title, description, robots, JSON-LD, and — inside <main> — the multisets of price cells
     (data-aed / data-chain / data-hall) and of showtimes (data-show)."""
     h = b.decode("utf-8")
-    one = lambda rx: re.findall(rx, h, re.S)
+    one = lambda rx, s=h: re.findall(rx, s, re.S)
+    lat = W1D2_LATIN.sub("", h)
     m = h[h.index("<main"):h.index("</main>")] if "<main" in h else ""
     # the home's featured «من X درهم» (data-from) is left out on purpose: UI redesign Task 3 made the featured film
     # the default city's (Dubai's) most shown tonight, priced from its cheapest ticket THERE, where phase 1 took the
     # country's most shown and its cheapest ticket anywhere — the same kind of cell, a different film and show
     m = re.sub(r'(data-from="[^"]*"[^>]*>[^<]*<span class="p") data-aed="[^"]*" data-chain="[^"]*" data-hall="[^"]*"', r"\1", m)
     cells = lambda attr: sorted(re.findall(r'\sdata-' + attr + r'="([^"]*)"', m))
-    return {"links": one(r'<link rel="(?:canonical|alternate)"[^>]*>'), "title": one(r"<title>(.*?)</title>"),
-            "desc": one(r'<meta name="description"[^>]*>'), "robots": one(r'<meta name="robots"[^>]*>'),
+    return {"links": one(r'<link rel="(?:canonical|alternate)"[^>]*>'), "title": one(r"<title>(.*?)</title>", lat),
+            "desc": one(r'<meta name="description"[^>]*>', lat), "robots": one(r'<meta name="robots"[^>]*>'),
             "ld": [films20(x) for x in one(r'<script type="application/ld\+json">(.*?)</script>')],
             "aed": cells("aed"), "chain": cells("chain"), "hall": cells("hall"), "show": cells("show")}
 

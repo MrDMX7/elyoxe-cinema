@@ -62,20 +62,33 @@ def test_films_and_cinemas_indexed_with_rule_generated_keys(index):
     films = {e["p"]: e for e in index if e["t"] == "f"}
     assert "film/spider-man-brand-new-day" in films
     e = films["film/spider-man-brand-new-day"]
-    assert e["a"] and e["e"] and set(e["k"]) == {search.normalize(e["a"]), search.normalize(e["e"])}
+    # W1-D2: the keys are the two names' plus every other sourced Arabic name the film carries (aka_ar)
+    names = [e["a"], e["e"], *json.load(open(DATA, encoding="utf-8"))["films"]["spider-man-brand-new-day"].get("aka_ar", [])]
+    assert e["a"] and e["e"] and set(e["k"]) == {search.normalize(n) for n in names}
     assert "spidermanbrandnewday" in e["k"]
     cinemas = {e["p"] for e in index if e["t"] == "c"}
     assert "dubai/reel-dubai-mall" in cinemas
 
 
-def test_malls_link_to_one_of_their_own_cinemas(index):
-    data = json.load(open(DATA, encoding="utf-8"))
-    cinemas = data["cinemas"]
-    for e in index:
-        if e["t"] != "m":
-            continue
-        city, cid = e["p"].split("/", 1)
-        assert cid in cinemas and cinemas[cid]["city"] == city   # never a guessed path
+def test_a_mall_is_a_key_of_every_cinema_it_lists_not_a_row_of_its_own(index):
+    """W1-D2 fix round (w1-d2-review.md M2): a mall row led to one of its cinemas, and that cinema's own row now
+    carries the mall in its name, so «دبي مول» listed the same page twice. The mall's names are keys of every
+    cinema malls.yaml lists instead (never a guessed one)."""
+    import yaml
+    malls = yaml.safe_load(open(search.MALLS_PATH, encoding="utf-8"))["malls"]
+    cin = {e["p"].split("/", 1)[1]: e for e in index if e["t"] == "c"}
+    assert not any(e["t"] == "m" for e in index)
+    listed = 0
+    for m in malls.values():
+        for cid in m.get("cinemas") or []:
+            if cid in cin:
+                listed += 1
+                assert {search.normalize(m["ar"]), search.normalize(m["en"])} <= set(cin[cid]["k"]), cid
+    assert listed
+    tied = {cid for m in malls.values() for cid in m.get("cinemas") or []}
+    for cid, e in cin.items():
+        if cid not in tied:
+            assert not any(search.normalize(m["en"]) in e["k"] for m in malls.values()), cid
 
 
 def test_no_people_data_means_no_person_entries(index):
@@ -104,23 +117,23 @@ def test_archived_films_are_indexed_and_marked(index):
             assert "x" not in e
 
 
-def test_malls_pick_the_first_cinema_that_has_a_city_not_just_the_first_listed():
-    """Fix round 1 (task-A5-review.md): a mall's `cinemas:` list can name a cinema id first that turns out
-    to have no `city` recorded -- the mall must still resolve to a LATER one that does, not be dropped."""
+def test_a_mall_names_only_cinemas_that_exist():
+    """A mall's `cinemas:` list can name an id that is not a cinema today (and task-A5-review.md's case, one with
+    no `city`, which gets no row of its own at all): every cinema that exists carries the mall's names."""
     cinemas = {"no-city-cinema": {}, "has-city-cinema": {"city": "dubai"}}
     malls_yaml = search.MALLS_PATH
     import yaml
-    raw = {"malls": {"test-mall": {"ar": "تست", "en": "Test", "cinemas": ["no-city-cinema", "has-city-cinema"]}}}
+    raw = {"malls": {"test-mall": {"ar": "تست", "en": "Test", "cinemas": ["gone-cinema", "no-city-cinema", "has-city-cinema"]}}}
     import tempfile, os as _os
     fd, path = tempfile.mkstemp(suffix=".yaml")
     try:
         with _os.fdopen(fd, "w", encoding="utf-8") as fh:
             yaml.safe_dump(raw, fh)
         search.MALLS_PATH = path
-        out = search._malls(cinemas)
+        out = search._mall_names(cinemas)
     finally:
         search.MALLS_PATH = malls_yaml
-    assert out["test-mall"]["path"] == "dubai/has-city-cinema"
+    assert out == {"no-city-cinema": ["تست", "Test"], "has-city-cinema": ["تست", "Test"]}
 
 
 def test_closed_panel_css_guards_the_hidden_attribute(out):
@@ -138,7 +151,7 @@ def test_closed_panel_css_guards_the_hidden_attribute(out):
 
 def test_every_entry_has_a_name_a_path_and_at_least_one_key(index):
     for e in index:
-        assert e["t"] in ("f", "c", "m", "p")
+        assert e["t"] in ("f", "c", "p", "y", "h", "n")   # W1-D2: city, format or hall, chain (a mall is a key)
         assert e["a"] or e["e"]
         assert e["p"] and "//" not in e["p"] and not e["p"].startswith("/") and not e["p"].endswith("/")
         assert e["k"]
