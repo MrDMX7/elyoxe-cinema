@@ -1,4 +1,6 @@
-/* main: the visitor's city and card (the header's pills and their sheets, src/js/sheet.js), showtime marks, the minute clock, start-up. */
+/* main: the visitor's city and card (the header's pills and their sheets, src/js/sheet.js), showtime marks, the minute clock, start-up.
+   It tells the other modules what happened through the hook bus (core.js on/emit, W1-P1): «ready», «slice», «card»,
+   «city», «day», «minute». */
 
 /* times already started are struck; those starting within 45 minutes (the «الحين» window) glow. Returns how
    many times changed state in this call (the minute tick re-judges the halls only then). */
@@ -32,12 +34,15 @@ function renderFilm() {
   if (mine.length) secs[0].parentNode.insertBefore(mine[0], secs[0]);
   fsCities(); fsCheck();
 }
+/* the city's shows: loadCity (home.js) fills S, then «slice» says they are in, for the city still chosen */
+function citySlice() { return loadCity().then(function () { if (S && S.city === city) emit("slice", S); }); }
 function pickCity(c) {
   city = c; set("city", c);
   qa("[data-city-name]").forEach(function (el) { el.textContent = C.cities[c] || c; });
   qa("[data-citypick] a[data-city]").forEach(function (a) { if (a.getAttribute("data-city") === c) a.setAttribute("aria-current", "true"); else a.removeAttribute("aria-current"); });
-  if (page === "home") { loadCity(); billCity(); }
+  if (page === "home") { citySlice(); billCity(); }
   if (page === "film") { renderFilm(); if (ST.prayer) applyPrayer(); }
+  emit("city", c);
 }
 function markCard() {
   qa("button[data-card]").forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-card") === card ? "true" : "false"); });
@@ -50,6 +55,7 @@ function pickCard(c) {
   if (page === "film") fsDock(false);
   if (S) renderHome(true); else applyFilters();
   if (tk) renderTerms(tk.getAttribute("data-chain"));
+  emit("card", c);
 }
 
 /* «اليوم / بكرة» follow the visitor's clock (UAE time), not the build's: a page built last night calls
@@ -141,6 +147,7 @@ function bindRails() {
       qa(".cgs .times[data-d]").forEach(function (t) { t.hidden = t.getAttribute("data-d") !== d; });
       applyFilters();
       if (page === "film") { fsMore(); fsSoon(); fsCheck(); }
+      emit("day", d);
     });
   });
   upgradeTimes(); bindFilm();
@@ -173,13 +180,14 @@ function bindRails() {
     if (S) renderHome(false);
     if (tk) renderTerms(tk.getAttribute("data-chain"));
   });
-  if (page === "home" || page === "city") loadCity();
+  if (page === "home" || page === "city") citySlice();
   /* a show link (#s-…) opens its ticket; else the desktop column moves off a show that has started (on a film page
      film.js's fsStart has chosen already: rollTicket serves the cinema and city pages) */
   if (!showFromHash()) rollTicket();
-  /* the clock: every minute «الحين», the struck times, the halls whose last time passed, the desktop ticket,
-     the leave-by line and the ages move on */
-  setInterval(function () {
+  /* the clock: at each UAE minute's :00 «الحين», the struck times, the halls whose last time passed, the desktop
+     ticket, the leave-by line and the ages move on, then «minute» is emitted. One timeout aligned to the next :00
+     and set again each time (never a free setInterval, which drifts off the minute: MASTER-PLAN §1.3, W1-P1) */
+  function minute() {
     var d = TODAY; tick();
     if (d !== TODAY) {
       relabelDays();
@@ -190,5 +198,8 @@ function bindRails() {
     ages(); renderNow(); renderNear(); rollTicket();
     if (page === "film") { fsSoon(); fsTick(); }
     if (typeof planRefresh === "function" && tk && !tk.hidden && (desk() || tk.classList.contains("open"))) planRefresh();
-  }, 60e3);
+    emit("minute", NOW);
+  }
+  (function nextMinute() { setTimeout(function () { minute(); nextMinute(); }, 60e3 - (Date.now() + FAKE) % 60e3 + 20); })();
+  emit("ready");
 })();

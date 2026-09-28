@@ -24,8 +24,8 @@
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="apple-touch-icon" href="/assets/icons/icon-192.png">
 {{preload}}
-<link rel="stylesheet" href="/assets/cinema.css?v={{v}}">
-<script>document.documentElement.classList.add("js")</script>
+<link rel="stylesheet" href="/assets/cinema.css?v={{v}}">{{page_css}}
+<script>document.documentElement.classList.add("js")</script>{{head_inline}}
 <script type="speculationrules" id="spec">{"prerender":[{"where":{"and":[{"href_matches":["/film/*","/en/film/*","/abu-dhabi/*","/dubai/*","/sharjah/*","/ajman/*","/umm-al-quwain/*","/ras-al-khaimah/*","/fujairah/*","/al-ain/*","/en/abu-dhabi/*","/en/dubai/*","/en/sharjah/*","/en/ajman/*","/en/umm-al-quwain/*","/en/ras-al-khaimah/*","/en/fujairah/*","/en/al-ain/*"]},{"not":{"selector_matches":["[href*='?']","[target]","[download]","[data-nospec]"]}}]},"eagerness":"moderate"}],"prefetch":[{"where":{"and":[{"href_matches":"/*"},{"not":{"href_matches":["/film/*","/en/film/*","/abu-dhabi/*","/dubai/*","/sharjah/*","/ajman/*","/umm-al-quwain/*","/ras-al-khaimah/*","/fujairah/*","/al-ain/*","/en/abu-dhabi/*","/en/dubai/*","/en/sharjah/*","/en/ajman/*","/en/umm-al-quwain/*","/en/ras-al-khaimah/*","/en/fujairah/*","/en/al-ain/*","/data/*","/assets/*","/posters/*","/*.*"]}},{"not":{"selector_matches":["[target]","[download]","[data-nospec]"]}}]},"eagerness":"moderate"}]}</script>
 <script>(function(){var c=navigator.connection,m=window.matchMedia;if(c&&c.saveData||m&&m("(prefers-reduced-data: reduce)").matches){var s=document.getElementById("spec");if(s)s.remove()}addEventListener("pagereveal",function(e){var t=e.viewTransition,a=window.navigation&&navigation.activation;if(t&&t.types&&a&&a.from&&a.entry&&a.navigationType==="traverse"&&a.entry.index<a.from.index)t.types.add("back")})})()</script>
 <script type="application/ld+json">{{jsonld}}</script>

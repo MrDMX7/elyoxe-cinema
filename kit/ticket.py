@@ -45,7 +45,8 @@ class TicketKit:
                 f'<table class="tk-seats"><tbody data-tk-rows>{seats}</tbody></table>'
                 f'<p class="tk-terms" data-tk-terms hidden></p><p class="tk-go" data-tk-go>{self.directions(self.cinemas[cid], lang)}</p>'
                 f'<p class="vh" data-tk-live aria-live="polite"></p>'
-                f'<div class="tk-act">{book}<a class="share" href="{esc(share)}" rel="noopener" target="_blank" data-tk-share data-share="{esc(msg)}">{esc(L(T["share"], lang))}</a></div>'
+                f'<div class="tk-act">{book}<a class="share" href="{esc(share)}" rel="noopener" target="_blank" data-tk-share data-share="{esc(msg)}">{esc(L(T["share"], lang))}</a>'
+                f'{self.slot("ticket.actions", lang, show=s)}</div>'
                 f'<button type="button" class="tk-x js-only" data-tk-close aria-label="{"سكّر" if lang == "ar" else "Close"}"></button></aside>')
 
     def first_city_show(self, shows, cities):

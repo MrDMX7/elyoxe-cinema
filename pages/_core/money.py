@@ -34,7 +34,8 @@ class MoneyPages:
         for lang in ("ar", "en"):
             name = L(UI["s_sources"], lang)
             body = (f'<section class="head wrap">{self.crumbs(lang, (name, None))}<h1 class="pt">{esc(name)}</h1></section>'
-                    + self.sources(lang).replace('<section class="wrap srcs"><h2>', '<section class="wrap srcs"><h2 class="vh">', 1))
+                    + self.sources(lang).replace('<section class="wrap srcs"><h2>', '<section class="wrap srcs"><h2 class="vh">', 1)
+                    + self.slot("sources.body", lang))   # «كيف نختار لك» (W1-P1's slot, W2-P2)
             title = ("من وين أسعار السينما — سينما" if lang == "ar" else "Where the cinema prices come from — Cinema")
             desc = ("الأسعار من نظام الحجز عند كل سينما، ومتى حدّثنا كل سلسلة آخر مرة." if lang == "ar"
                     else "Prices come from each chain’s booking system; when each chain was last refreshed.")

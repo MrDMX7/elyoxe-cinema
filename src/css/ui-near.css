@@ -4,7 +4,6 @@
 .me .near-m{font-size:13px;color:var(--seat)}
 /* «الحين»: the nearest show starting soon, its time on flip tiles */
 .now{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;margin-block-start:6px;background:var(--tint);text-decoration:none;color:var(--screen)}
-.now[hidden]{display:none}
 /* with script, the slot is laid out (invisible) before the city's shows arrive: no shift when it fills */
 .js .now[data-now][hidden]{display:flex;visibility:hidden}
 .now.quiet .now-l{color:var(--seat)}

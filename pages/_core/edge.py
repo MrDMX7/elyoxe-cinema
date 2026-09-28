@@ -11,7 +11,8 @@ class EdgePages:
     def not_found(self):
         body = (f'<section class="head wrap nf"><h1 class="pt">ما لقينا هالصفحة</h1>'
                 f'<p class="lead">يمكن الفيلم نزل من السينما، أو الرابط تغيّر. <a href="/">الأفلام المعروضة اليوم</a>.</p>'
-                f'<p class="lead" lang="en" dir="ltr">We couldn’t find this page. <a href="/en/">Films showing today, in English</a>.</p></section>')
+                f'<p class="lead" lang="en" dir="ltr">We couldn’t find this page. <a href="/en/">Films showing today, in English</a>.</p></section>'
+                + self.slot("notfound.body", "ar"))   # the leader's rows (W1-P1's slot, W2-P2/W2-P10)
         self.page("ar", (), "ما لقينا هالصفحة — سينما", "الصفحة غير موجودة.", body, [], "404",
                   path=os.path.join(self.out, "404.html"), robots='<meta name="robots" content="noindex">')
 
@@ -38,4 +39,6 @@ a{color:#F1EAE0;text-decoration-color:#A89C8E;text-underline-offset:.2em}
 <p lang="en">You are offline. Pages you opened before still work. <a href="/en/">Films today, in English</a>.</p>
 </main></body></html>
 """
+        # the board's cached rows (W1-P1's slot, W2-P2/W2-P10): self-contained markup, before the English line
+        page = page.replace('<p lang="en">', self.slot("offline.body", "ar") + '<p lang="en">', 1)
         self.write(os.path.join(self.out, "offline.html"), page)

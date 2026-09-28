@@ -2,7 +2,6 @@
 /* the dock: the chosen time on paper, over the tab bar; «التفاصيل والحجز» opens the ticket sheet */
 .dock{position:fixed;inset-inline:0;inset-block-end:calc(60px + env(safe-area-inset-bottom));z-index:31;background:var(--screen);color:var(--ink);
   padding:12px var(--gut);display:flex;align-items:center;gap:12px}
-.dock[hidden]{display:none}
 .dk-t{min-inline-size:0;flex:1 1 auto}
 .dk-p{font-size:22px;font-weight:600;line-height:1.1}
 .dk-p .num{font-size:22px}

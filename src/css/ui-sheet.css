@@ -2,7 +2,6 @@
 /* sheets: phone = from the bottom, desktop = a panel at the inline end; the scrim under them */
 html.sheet-open{overflow:hidden}
 .sh-scrim{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6)}
-.sh-scrim[hidden],.sheet[hidden]{display:none}
 .sheet{position:fixed;z-index:41;inset-inline:0;inset-block-end:0;max-block-size:86vh;overflow-y:auto;overscroll-behavior:contain;
   background:#17100F;border-block-start:1px solid var(--line-2);padding:10px var(--gut) calc(20px + env(safe-area-inset-bottom));animation:sheet-up .28s var(--ease)}
 @keyframes sheet-up{from{transform:translateY(24px);opacity:0}}

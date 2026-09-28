@@ -51,6 +51,7 @@ class PlacesPages:
                     counts = (f"{ar_count(nc, CINEMAS_AR)} و{ar_count(nf, FILMS_AR)} اليوم" if lang == "ar" else
                               f"{nc} {'cinema' if nc == 1 else 'cinemas'} and {nf} {'film' if nf == 1 else 'films'} today")
                     body += (f'<p class="lead">{f"{counts}. السعر لكل قاعة من السينما نفسها، وينحسب بعد خصم بطاقتك." if lang == "ar" else f"{counts}. Every hall’s price comes from the cinema itself and is worked out after your card."}</p></section>')
+                    body += self.slot("city.hero", lang, city=city)   # the board's rows (W1-P1's slot, W2-P2); in the budget below
                     body += f'<div class="wrap">{self.me(lang, city, "city")}</div>'
                     if fids: body += self.posters_row(lang, fids, today, "الليلة في " + cn if lang == "ar" else "Tonight in " + cn, prayer=True)
                     body += self.slot("city.after_tonight", lang, city=city)
@@ -125,6 +126,7 @@ class PlacesPages:
                 addr = esc(c.get("address") or ("" if cid in self.names else c.get("mall")) or "")
                 body += (f'<p class="lead">{f"<bdi lang=\"en\">{addr}</bdi>" if addr else ""}</p>'
                          f'<p class="meta">{self.directions(c, lang)} {self.fresh(chain, lang, always=True)}</p></section>')
+                body += self.slot("cinema.top", lang, cid=cid, city=city)   # the board's rows (W1-P1's slot, W2-P2); in the budget below
                 body += f'<div class="wrap">{self.me(lang, city, "cinema")}</div>'
                 body += '<div class="wrap split"><div class="main">'
                 cfids = sorted({s["film"] for s in shows})

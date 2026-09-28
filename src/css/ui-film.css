@@ -6,7 +6,6 @@
 .dbar-in{display:flex;align-items:center;gap:8px;padding-block:10px}
 .days{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;min-inline-size:0}
 .days::-webkit-scrollbar{display:none}
-.dy[hidden]{display:none}
 .dy{flex:0 0 auto;min-block-size:44px;padding-inline:14px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:0;
   font:inherit;font-size:13px;line-height:1.25;color:var(--seat);background:none;border:0;border-block-end:2px solid transparent;cursor:pointer;text-align:start}
 .dy b{font-weight:500;color:var(--screen);font-size:14px}
@@ -27,14 +26,12 @@
 .tpns > .tpn{margin-block-start:0}
 .tpn + .tpn{margin-block-start:40px}
 .js .tpn[role=tabpanel] + .tpn{margin:0}
-.tpn[hidden]{display:none}
 .tpn:focus-visible{outline-offset:6px}
 .tp-h{font-size:26px;margin-block-end:12px}
 /* inside a tab the tab says what it is: the sections' own headings stay for a reader, out of sight */
 .js .tpn[role=tabpanel] > .tp-h,.js .tpn[role=tabpanel] > section > h2:first-child,.js .tpn[role=tabpanel] .sec-h h2{position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .js .tpn[role=tabpanel] .dfeat > summary{display:none}
 .tpn#about{display:grid;gap:22px;max-inline-size:900px}
-.tpn#about[hidden]{display:none}
 .tpn .facts{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px 16px;font-size:14px;margin:0}
 .tpn .facts div{display:contents}
 .tpn .facts dt{color:var(--seat)}

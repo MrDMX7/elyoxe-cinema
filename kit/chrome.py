@@ -52,7 +52,7 @@ class ChromeKit:
         they did, and on home and city pages the «الحين» slot. The page bodies' calls go in Tasks 3–5."""
         now = ""
         if mode in ("home", "city"):
-            now = (f'<a class="now" href="#all" data-now hidden><span class="now-tx"><span class="now-l">{esc(L(T["now_label"], lang))}</span>'
+            now = (f'<a class="now" href="#all" data-now data-hold hidden><span class="now-tx"><span class="now-l">{esc(L(T["now_label"], lang))}</span>'
                    f'<span class="now-f" data-now-film></span><span class="now-w" data-now-where></span></span>'
                    f'<span class="flip" dir="ltr" data-now-time></span></a>')
         return f'<div class="me me-{mode}" data-me><p class="near-m" data-near-msg aria-live="polite"></p>{now}</div>'

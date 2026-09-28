@@ -27,11 +27,13 @@ class HomePages:
             self.site._first_poster = {}   # no tile claims the page's image priority: the billboard's frame is the LCP
             body = self.billboard(lang, tops, today) if films else ""
             body += (f'<h1 class="vh">{"كل سينما في الإمارات، والسعر بعد خصم بطاقتك" if lang == "ar" else "Every cinema in the UAE, priced after your card discount"}</h1>')
+            # Wave 2's places on home (W1-P1): the board under the billboard, then the Thursday band (MASTER-PLAN §1.2 #2)
+            body += self.slot("home.after_bill", lang) + self.slot("home.after_board", lang)
             body += self.rail(lang, "near", L(HOME_T["near"], lang), "",
                               sub=f'<span data-near-sub></span><button type="button" class="lnk near-ask" data-near hidden>{esc(L(CHROME_T["near"], lang))}</button>',
                               # id="now": the manifest's «الحين» shortcut opens /#now here (W0-P1, plan §4.1 #5; the row's slot
                               # is reserved while hidden). At cutover the board carries the id (W2-P2)
-                              attrs=' id="now" data-near-row hidden')
+                              attrs=' id="now" data-near-row data-hold hidden')
             body += self.home_rows(lang, films)
             body += self.slot("home.after_tonight", lang)
             # a film in its last days is tagged in the grid too (the «آخر فرصة» row needs 4 films to be drawn)

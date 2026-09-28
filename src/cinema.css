@@ -41,6 +41,10 @@ span.num[dir=ltr],bdi.num{unicode-bidi:isolate}
 .vh{position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .skip{position:absolute;inset-inline-start:8px;inset-block-start:-60px;z-index:50;background:var(--screen);color:var(--night);padding:10px 14px;text-decoration:none}
 .skip:focus{inset-block-start:8px}
+/* [hidden] means hidden, whatever display a component's own rule sets (W1-P1: this one rule replaces 21 one-off
+   «X[hidden]{display:none}» patches). A slot the script fills later keeps its place instead: data-hold lays it out
+   invisible (its component's «.js …[hidden]» rule), and only while there is a script to fill it (CLS) */
+:where([hidden]:not([data-hold])),:where(:root:not(.js) [hidden]){display:none!important}
 .js-only{display:none!important}
 .js .js-only{display:flex!important}
 .nojs{margin-block-start:10px;font-size:14px}
@@ -120,7 +124,6 @@ a.src,.crumbs a,.hall .where a{display:inline-flex;align-items:center;min-block-
 .lnk:hover{text-decoration-color:var(--screen)}
 .btn.main{background:var(--screen);color:var(--night);font-weight:500;min-block-size:48px;font-size:15px;justify-content:center}
 .btn.main .from{display:inline-flex;align-items:baseline;gap:6px;margin-inline-start:6px;color:var(--velvet);font-weight:600}
-.btn.main .from[hidden]{display:none}
 .btn.main .p .num,.btn.main .p b{color:var(--velvet)}
 .btn.main .p s{color:var(--ink-3)}
 .btn.main .p small{display:none}

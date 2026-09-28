@@ -23,12 +23,35 @@ var JC = {};
 function getJSON(u) { return JC[u] || (JC[u] = fetch(u).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })); }
 function desk() { return !!(window.matchMedia && window.matchMedia("(min-width: 1024px)").matches); }
 
-/* the clock: UAE time, moving; ?now= shifts it */
+/* the clock: UAE time, moving; ?now= shifts it. Every timer reads it (NOW, nowMin, TODAY), never the device's own
+   hours: a visitor whose phone is set to another zone still sees Dubai's clock (tests/test_js.py runs this file under
+   TZ=America/New_York, W1-P1) */
 var FAKE = (function () { var v = param("now"), d = v && uae(v); return d && !isNaN(d) ? d.getTime() - Date.now() : 0; })();
 var NOW, TODAY, TOMORROW;
 function tick() { NOW = new Date(Date.now() + FAKE); TODAY = day(NOW); TOMORROW = day(new Date(NOW.getTime() + 864e5)); }
 tick();
 function nowMin() { var s = hhmm(NOW.getTime()); return +s.slice(0, 2) * 60 + +s.slice(3); }
+
+/* the hook bus (W1-P1, MASTER-PLAN §5.2): a module listens with on(ev, fn); main.js says what happened with emit(ev, x):
+   «ready» (start-up done), «slice» (the city's shows arrived; x = S), «card» (x = the card id, "" for none), «city»
+   (x = the city), «day» (x = the chosen date), «minute» (x = NOW, at each UAE minute's :00). A handler that throws never
+   stops the others. Wave 2 packages emit their own events the same way (board, stub, plan). */
+var HOOKS = {};
+function on(ev, fn) { (HOOKS[ev] = HOOKS[ev] || []).push(fn); }
+function emit(ev, x) {
+  (HOOKS[ev] || []).slice().forEach(function (fn) { try { fn(x); } catch (e) { if (window.console) console.error(e); } });
+}
+
+/* the show link (MASTER-PLAN §2.2): /film/<fid>/#s-<key>. key = FNV-1a 32-bit over the UTF-8 of «cinema|date|time|hall
+   key», base36, left-padded to 6 characters; stable across the hourly builds because every input is. A fragment, never
+   ?s=: no crawlable URLs, one service-worker entry per film page, prerender stays eligible. Its Python twin is
+   site_kit.Kit.show_key (tests/test_showkey.py holds them equal over every show). Moved here from ticket.js by W1-P1. */
+function showKey(cin, d, t, hk) {
+  var s = unescape(encodeURIComponent([cin, d, t, hk || "Standard"].join("|"))), h = 0x811c9dc5;
+  for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  var k = h.toString(36);
+  return k.length < 6 ? ("00000" + k).slice(-6) : k;
+}
 
 /* state: the visitor's choices, remembered (localStorage may be off: every read has a default) */
 /* ?city=&card= from a shared link (src/js/share.js, hoisted: applied here when there is nothing saved
@@ -85,7 +108,8 @@ function feature(fn) { FEAT.push(fn); }
 function startFeatures() {
   FEAT.forEach(function (fn) { try { fn(); } catch (e) { if (window.console) console.error(e); } });
   window.CINEMA = { C: C, lang: lang, AR: AR, page: page, q: q, qa: qa, esc: esc, fmt: fmt, sub: sub, uae: uae, getJSON: getJSON,
-    get: get, set: set, now: function () { return NOW; }, city: function () { return city; }, card: function () { return card; } };
+    get: get, set: set, now: function () { return NOW; }, city: function () { return city; }, card: function () { return card; },
+    on: on, emit: emit, showKey: showKey };
   Object.keys(C.chunks || {}).forEach(function (n) {
     var s = document.createElement("script"); s.src = C.chunks[n]; s.async = true; document.head.appendChild(s);
   });

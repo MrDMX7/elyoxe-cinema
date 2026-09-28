@@ -4,7 +4,6 @@
 .tk-empty{display:none}
 /* ------------------------------------------------ the ticket (phone: bottom sheet; desktop: side panel) */
 .ticket{background:var(--screen);color:var(--ink);display:flex;flex-direction:column;margin-block-start:24px;position:relative}
-.ticket[hidden]{display:none}
 .tk-top{display:flex}
 .tk-main{flex:1 1 auto;padding:12px 16px 10px;display:flex;flex-direction:column;gap:2px;min-inline-size:0}
 .tk-cin{font-family:var(--display);font-weight:var(--dw);font-size:24px;line-height:1.1}
@@ -24,7 +23,6 @@
 .tk-seats .p s{color:var(--ink-2);font-size:12px;order:0}
 .tk-seats .p small,.tk-seats .na,.ticket .per,.ticket .asof{color:var(--ink-2)}
 .tk-terms{padding:8px 16px 0;font-size:12px;color:var(--ink-2)}
-.tk-terms[hidden]{display:none}
 /* the calendar and «when to leave» links (plan.js) on ticket paper: ink, not the night's screen light */
 .ticket .plan-add{padding:8px 16px 0;font-size:13px}
 .ticket .plan-add .lnk{color:var(--ink);text-decoration-color:var(--ink-3)}
@@ -69,7 +67,6 @@
   .tkcol .tk-act{position:sticky;inset-block-end:0;z-index:1}
   .tkcol .ticket{position:static;margin:0}
   .tk-empty{display:flex;flex-direction:column;gap:8px;background:var(--tint);border:1px dashed var(--line-2);padding:22px}
-  .tk-empty[hidden]{display:none}
   .tk-empty .k{font-family:var(--display);font-weight:var(--dw);font-size:30px;line-height:1.1}
   .tk-empty p:not(.k){font-size:14px;color:var(--dim)}
 }

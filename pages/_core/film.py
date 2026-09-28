@@ -202,12 +202,14 @@ class FilmPages:
                         f'</div><p class="vh" data-dk-live aria-live="polite"></p>')   # the live region outside the dock: always rendered (M5)
                 graph = [self.movie_ld(fid, lang)] + [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:30] + [self.breadcrumb_ld(lang, (t, P(lang, "film", fid)))]
                 none = f'<p class="lead">{esc(L(FILM_T["none"], lang))}</p>'
+                # «أقرب عرض لك» between the hero and the day bar (W1-P1's slot, W2-P2 fills it); it counts in the budget
+                first = self.slot("film.first", lang, fid=fid)
                 if not cities:
                     sched = none
                 else:
                     # the schedule is most of the page's weight: render it as richly as fits what the rest leaves
                     bar0 = self.film_bar(lang, days); sheet0 = self._sheets.pop()   # measured (bar and its «⋯» sheet), drawn for real below
-                    fixed = len((hero + tabs + bar0 + sheet0).encode())
+                    fixed = len((hero + first + tabs + bar0 + sheet0).encode())
                     # the ticket as it will be drawn (measured, where this used to reserve 4.5 KB), the page's wrappers
                     tk0 = len((self.ticket(nxt, lang) if nxt else self.ticket_shell()).encode())
                     left = PAGE_TARGET - CHROME - fixed - self.ld_size(graph) - tk0 - len((empty + dock).encode()) - 1200
@@ -223,7 +225,7 @@ class FilmPages:
                 days = [d for d in days if f'data-d="{d}"' in sched]
                 bar = self.film_bar(lang, days) if cities and days else ""
                 ticket = self.ticket(nxt, lang) if nxt else self.ticket_shell()
-                body = (hero + f'<section class="fsched" id="times" aria-labelledby="times-h"><h2 class="vh" id="times-h">{esc(L(FILM_T["times"], lang))}</h2>'
+                body = (hero + first + f'<section class="fsched" id="times" aria-labelledby="times-h"><h2 class="vh" id="times-h">{esc(L(FILM_T["times"], lang))}</h2>'
                         f'{bar}<div class="wrap lay"><div class="cgs"><p class="nc" data-nc hidden></p>{sched}<p class="empty" data-empty hidden></p></div>'
                         f'<div class="tkcol">{empty}{ticket}</div></div></section>{tabs}{dock}')
                 title = (f"فيلم {t} في سينما الإمارات — المواعيد والأسعار، ويستاهل؟" if lang == "ar" else f"{t} in UAE cinemas — showtimes, prices and is it worth it?")

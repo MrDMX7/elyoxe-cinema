@@ -579,6 +579,8 @@ class Kit(MediaKit, TileKit, SchedKit, TicketKit, ChromeKit, FiltersKit):
     noindex = False   # set by build(): PREVIEW=1
     # filled by the loader (build.Site) from the page modules; empty, the pages are phase 1's to the byte
     nav_items, slots, kind_js, chunk_urls = (), {}, {}, {}
+    # page kind -> /assets/page-<kind>.<hash>.css: a module's PAGE_CSS, a second small stylesheet on that kind only (W1-P1)
+    page_css = {}
     # the places core pages leave for a feature, each fn(site, lang, **ctx) -> html
     SLOTS = {"home.after_tonight": "home, after its rows, before «كل الأفلام»",
              "city.after_tonight": "city page, under its «الليلة» (ctx: city)",
@@ -589,10 +591,53 @@ class Kit(MediaKit, TileKit, SchedKit, TicketKit, ChromeKit, FiltersKit):
              "film.cast": "film page, «الطاقم» tab (ctx: fid)",
              "film.similar": "film page, «شي يشبه» tab (ctx: fid)",
              "film.double": "film page, «فيلمين ورا بعض» tab (ctx: fid); unfilled since W0-P2 (plan §4.1 #14), W2-P6 retires it",
-             "film.compare": "film page, «قارن» tab (ctx: fid); the hero's «قارن» links to it"}
+             "film.compare": "film page, «قارن» tab (ctx: fid); the hero's «قارن» links to it",
+             # Wave 2's places (W1-P1, MASTER-PLAN §5.2): declared before anyone fills them, so no Wave 2 package edits
+             # pages/core.py, pages/_core/* or build.py to get one. A Wave 3–4 slot is declared by the package that fills it
+             "head.inline": "every page's <head>, right after the «js» class script: a small inline script that must run before first paint (ctx: kind)",
+             "home.after_bill": "home, right under the billboard (and its visually hidden h1): the board, W2-P2",
+             "home.after_board": "home, under the board, above the rows: the Thursday band, W2-P7",
+             "film.first": "film page (showing), between the hero and the day bar: «أقرب عرض لك», W2-P2 (ctx: fid)",
+             "cinema.top": "cinema page, under its head (name, address, directions): the board's rows, W2-P2 (ctx: cid, city)",
+             "city.hero": "city page with cinemas, under its head: the board's rows, W2-P2 (ctx: city)",
+             "notfound.body": "the 404, under its head: the leader's rows, W2-P2/W2-P10",
+             "offline.body": "the offline page, before its English line; self-contained markup (no site stylesheet there), W2-P2/W2-P10",
+             "ticket.actions": "the ticket's actions row, after «أرسلها للقروب» (ctx: show, the show's dict), W2-P3",
+             "sources.body": "/sources/, after the chains' list: «كيف نختار لك», W2-P2"}
 
     def slot(self, name, lang, **ctx):
         return "".join(fn(self, lang, **ctx) or "" for fn in self.slots.get(name, ()))
+
+    @staticmethod
+    def show_key(cinema, date, time, hall=None):
+        """The show link's key (MASTER-PLAN §2.2, W1-P1): /film/<fid>/#s-<key>. FNV-1a 32-bit over the UTF-8 of
+        «cinema|date|time|hall key» (the hall key Kit.hkey gives: «Standard» when there is none), in base36, left-
+        padded to 6 characters (6–7 in all). Stable across the hourly builds, because every input is. The script's
+        twin is showKey() in src/js/core.js; tests/test_showkey.py holds them equal over every show."""
+        h = 0x811C9DC5
+        for b in "|".join((str(cinema), str(date), str(time), str(hall or "Standard"))).encode("utf-8"):
+            h = ((h ^ b) * 0x01000193) & 0xFFFFFFFF
+        k = ""
+        while True:
+            h, r = divmod(h, 36)
+            k = "0123456789abcdefghijklmnopqrstuvwxyz"[r] + k
+            if not h: break
+        return k.rjust(6, "0")
+
+    def show_key_of(self, s):
+        """Kit.show_key for a show as the data has it (its hall key from Kit.hkey)."""
+        return self.show_key(s["cinema"], s["date"], s["time"], self.hkey(s))
+
+    @staticmethod
+    def week_phase(now):
+        """Where the cinema week stands in UAE time (MASTER-PLAN §1.1, the Thursday band and the rows' eyebrows):
+        «wed-eve» from Wednesday 18:00, «thu-sat» Thursday 00:00 to Saturday 23:59, «rest» otherwise. `now` is an
+        aware datetime (read in UAE time) or a naive one already in UAE time; the build passes site.now."""
+        if now.tzinfo is not None: now = now.astimezone(dt.timezone(dt.timedelta(hours=4)))
+        wd = now.weekday()   # Mon 0 … Sun 6
+        if wd == 2 and now.hour >= 18: return "wed-eve"
+        if wd in (3, 4, 5): return "thu-sat"
+        return "rest"
 
     def __init__(self, data, disc, halls, out):
         self.d, self.disc, self.h, self.out = data, disc, halls, out
@@ -839,6 +884,10 @@ class Kit(MediaKit, TileKit, SchedKit, TicketKit, ChromeKit, FiltersKit):
             "jsonld": json.dumps({"@context": "https://schema.org", "@graph": graph}, ensure_ascii=False).replace("</", "<\\/"),
             "strings": json.dumps(strings, ensure_ascii=False).replace("</", "<\\/"),
             "body": body + pdata, "c_thursday": "",
+            # W1-P1: the page kind's own stylesheet (PAGE_CSS), and the head.inline slot (a pre-paint script); both empty
+            # leave the page byte for byte as it was
+            "page_css": f'<link rel="stylesheet" href="{self.page_css[pagekind]}">' if pagekind in self.page_css else "",
+            "head_inline": self.slot("head.inline", lang, kind=pagekind),
         })
         vals["s_cards"] = esc(L(UI["s_cards_h"], lang))   # the header says «الأسعار والبطاقات»; crumbs keep «البطاقات»
         if pagekind in HERO_KINDS: vals["attrs"] += " data-hero"

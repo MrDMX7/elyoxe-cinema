@@ -15,7 +15,6 @@
 }
 /* rows: a heading line, then a sideways strip from edge to edge (its start in line with the page's text) */
 .rail{margin-block-start:34px}
-.rail[hidden]{display:none}
 /* «يبدأ قريب منك» fills in once the city's shows arrive: with script its place is held (invisible) from the first
    paint, so the rows under it never jump down (it was the page's whole CLS); it gives the place back only when
    nothing starts in the next 3 hours */
@@ -31,7 +30,6 @@
 .rail-h .all-l{margin-inline-start:auto;font-size:13px;color:var(--seat);text-decoration:none;min-block-size:24px;display:inline-flex;align-items:center}
 .rail-h .all-l:hover{color:var(--screen)}
 .rail-h .near-ask{font-size:13px;min-block-size:24px;margin-inline-start:10px}
-.rail-h .near-ask[hidden]{display:none}
 .rail-h .near-m{flex-basis:100%;font-size:12px;color:var(--dim)}
 .js .arr.js-only{display:none!important}
 .strip{--edge:max(var(--gut),calc((100% - var(--max)) / 2 + var(--gut)));display:flex;gap:16px;overflow-x:auto;overscroll-behavior-x:contain;

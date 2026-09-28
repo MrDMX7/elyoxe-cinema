@@ -21,7 +21,7 @@ excluded_halls / included_halls by hall code; valid_until in the past -> no disc
 «ما لقينا خصم» (we found none), never «they refuse it». Only official rules are published, and only cards
 with at least one current official discount appear anywhere (the spec: third-party/unconfirmed stay hidden).
 """
-import argparse, os, sys
+import argparse, gzip, os, re, sys, warnings
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT)
@@ -53,6 +53,16 @@ def js_files(modules=None, src=None):
 
 def css_files(modules):
     return [_asset(m, "css", n) for m in modules for n in getattr(m, "CSS", ())]
+
+
+def page_css_files(modules):
+    """{page kind: [css paths]}: each module's PAGE_CSS = {kind: (names…)}, in module order (W1-P1). A second small
+    stylesheet on that kind of page only (/coming/, /me/, /v/, the 404), never on the shared sheet every page loads."""
+    out = {}
+    for m in modules:
+        for kind, names in (getattr(m, "PAGE_CSS", None) or {}).items():
+            out.setdefault(kind, []).extend(_asset(m, "css", n) for n in names)
+    return out
 
 
 def css_source(modules=None):
@@ -87,6 +97,13 @@ class Site(Kit):
                 js = chunk_js(_asset(m, "js", n))
                 self.chunks[n] = (f"{n}.{hashlib.sha1(js.encode()).hexdigest()[:10]}.js", js)
         self.chunk_urls = {n: "/assets/" + f for n, (f, _) in self.chunks.items()}
+        # page-scoped stylesheets: one per page kind that has any rule (a kind whose partials are still empty gets no link)
+        self.page_sheets = {}
+        for kind, paths in page_css_files(self.modules).items():
+            css = minify_css("\n".join(open(p, encoding="utf-8").read() for p in paths))
+            if css.strip():
+                self.page_sheets[kind] = (f"page-{kind}.{hashlib.sha1(css.encode()).hexdigest()[:10]}.css", css)
+        self.page_css = {k: "/assets/" + f for k, (f, _) in self.page_sheets.items()}
         # every module registers before any page renders: nav items and slots reach the core pages too
         self.plugins = []
         for m in self.modules:
@@ -145,6 +162,8 @@ class Site(Kit):
         self.write(os.path.join(adir, self.js_name), self.js)
         for fname, js in self.chunks.values():
             self.write(os.path.join(adir, fname), js)
+        for fname, css in self.page_sheets.values():
+            self.write(os.path.join(adir, fname), css)
         self.write(os.path.join(adir, self.adhan_name), self.adhan)
         # PWA: the worker must sit at the root to control every page; the manifest names the icons
         self.write(os.path.join(self.out, "sw.js"), open(os.path.join(SRC, "sw.js"), encoding="utf-8").read().replace("__V__", self.v))
@@ -174,6 +193,62 @@ class Site(Kit):
 GENERATED = [c for c, _, _ in CITIES] + ["film", "cards", "halls", "data", "assets", "en", "cinema", "cinemas", "sources"]
 
 
+# ---------------------------------------------------------------- budgets (MASTER-PLAN §7.1 and §7.3 #9, W1-P1)
+# the code's budgets, gzipped as a CDN sends them: every page loads the main bundle and the shared sheet before it
+# can answer a tap. Over the fail line the build stops (the code is wrong, not the day's data); past the warning line
+# it says so, and the package moves code into a lazy chunk or page-scoped CSS before it merges. KB as the plan counts
+# them: 1,000 bytes (its «28.7 KB at 7e787e4» is that bundle's 28,740 bytes at gzip -9).
+JS_WARN_GZ, JS_FAIL_GZ = 34_000, 36_000   # the initial bundle, /assets/cinema.<hash>.js (hard cap 45 KB)
+CSS_FAIL_GZ = 19_000                      # the shared sheet, /assets/cinema.css (render-blocking)
+HTML_MAX = 150_000                        # a page, raw (the spec's rule; Kit.fit keeps schedules under it)
+
+
+class BudgetError(Exception):
+    """A build over a code budget: the bundle or the shared sheet."""
+
+
+class BudgetWarning(UserWarning):
+    """A build past a warning line, or a page over HTML_MAX (the day's data, not the code: reported, the build goes on)."""
+
+
+def gz(b):
+    return len(gzip.compress(b, 9, mtime=0))
+
+
+def budgets(out, js_name=None):
+    """What the guards measure in a built out/: {"js": gz bytes of the main bundle, "css": gz bytes of the shared sheet,
+    "html": [(path, bytes) of every page over HTML_MAX]}. `js_name`: the bundle's file (else the one the home names)."""
+    adir = os.path.join(out, "assets")
+    if not js_name:
+        home = open(os.path.join(out, "index.html"), encoding="utf-8").read()
+        js_name = re.search(r'\("/assets/(cinema\.[0-9a-f]{10}\.js)",document\)', home).group(1)
+    big = []
+    for dp, _, fs in os.walk(out):
+        for f in fs:
+            if f.endswith(".html") and os.path.getsize(os.path.join(dp, f)) > HTML_MAX:
+                big.append((os.path.relpath(os.path.join(dp, f), out), os.path.getsize(os.path.join(dp, f))))
+    return {"js": gz(open(os.path.join(adir, js_name), "rb").read()), "css": gz(open(os.path.join(adir, "cinema.css"), "rb").read()),
+            "html": sorted(big)}
+
+
+def check_budgets(out, js_name=None, strict_html=False):
+    """The guards: raise BudgetError when the bundle is over JS_FAIL_GZ or the shared sheet over CSS_FAIL_GZ (and, with
+    strict_html, when any page is over HTML_MAX, as the tests ask); warn past JS_WARN_GZ and for a page over HTML_MAX
+    (the hourly build keeps going on a heavy day: the tests hold the fixtures and the busiest real day to it)."""
+    b = budgets(out, js_name)
+    kb = lambda n: f"{n / 1000:.1f} KB gz"
+    bad = []
+    if b["js"] > JS_FAIL_GZ: bad.append(f"the initial bundle is {kb(b['js'])}, over the {kb(JS_FAIL_GZ)} guard: move code into a lazy chunk")
+    elif b["js"] > JS_WARN_GZ: warnings.warn(f"the initial bundle is {kb(b['js'])}, past the {kb(JS_WARN_GZ)} warning line", BudgetWarning)
+    if b["css"] > CSS_FAIL_GZ: bad.append(f"the shared stylesheet is {kb(b['css'])}, over the {kb(CSS_FAIL_GZ)} guard: use page-scoped CSS (PAGE_CSS)")
+    if b["html"]:
+        msg = f"{len(b['html'])} page(s) over {HTML_MAX} bytes: " + ", ".join(f"{p} {n}" for p, n in b["html"][:5])
+        if strict_html: bad.append(msg)
+        else: warnings.warn(msg, BudgetWarning)
+    if bad: raise BudgetError("; ".join(bad))
+    return b
+
+
 def preview_mode(env=None):
     """PREVIEW=1 (or true/yes) in the environment: the build is a preview. Every page is noindex,nofollow
     and robots.txt is `Disallow: /` with no Sitemap line. Unset or 0: the normal, indexable site."""
@@ -194,7 +269,9 @@ def build(data_path, discounts_path, out, halls_path=None, preview=False, lastmo
         except FileNotFoundError: pass
     site = Site(data, disc, halls, out, modules); site.lastmod_path = lastmod_path
     site.noindex = preview_mode() if noindex is None else noindex
-    return site.run()
+    n = site.run()
+    check_budgets(out, site.js_name)   # the code's budgets stop the build; a heavy page is reported (W1-P1)
+    return n
 
 
 def main():

@@ -5,7 +5,6 @@
 .lay{display:grid;grid-template-columns:minmax(0,1fr);gap:0 48px}
 .cgs{min-inline-size:0}
 .nc{padding-block:16px 0;color:var(--dim);font-size:14px}
-.nc[hidden]{display:none}
 .fcity{border-block-end:1px solid var(--line)}
 .fcity > summary{display:flex;align-items:baseline;gap:10px;min-block-size:52px;padding-block:14px;cursor:pointer;list-style:none}
 .fcity > summary::-webkit-details-marker{display:none}
@@ -73,7 +72,6 @@
 .tm.nowish{border-color:var(--live)}
 .tm.on,.tm[aria-current]{background:var(--gold);border-color:var(--gold);color:var(--ink)}
 .tm.on small,.tm[aria-current] small{color:var(--ink)}
-.day[hidden],.times[hidden]{display:none}
 @media (min-width:1024px){
   .tm{min-inline-size:70px}
   .lay{grid-template-columns:minmax(0,1fr) 360px}

@@ -1,7 +1,6 @@
 /* the poster and the film tile (rows, the grid, the archived page's similar films) (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
 .film{flex:0 0 150px;inline-size:150px;display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--screen);scroll-snap-align:start}
 .film.big{flex-basis:220px;inline-size:220px}
-.film[hidden]{display:none}
 .pst{position:relative;display:flex;flex-direction:column;justify-content:flex-end;aspect-ratio:2/3;background:var(--pc);padding:10px;overflow:hidden}
 .pst img{position:absolute;inset:0;inline-size:100%;block-size:100%;object-fit:cover}
 .pst-t{font-family:var(--display);font-weight:var(--dw);font-size:26px;line-height:1;overflow-wrap:anywhere}

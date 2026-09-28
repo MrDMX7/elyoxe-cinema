@@ -22,12 +22,18 @@ from pages._core.places import TOMORROW_AT_CINEMA, PlacesPages  # noqa: F401  (p
 # helpers without globals), comments and indentation stripped. pure.js and disc.js are plain function
 # declarations with no page access: tests/test_js.py and tests/test_parity.py run them in node as they are.
 # main.js (start-up) stays last: a feature's main-bundle modules go in just before it (build.js_files).
-JS = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "bill", "ticket", "film", "tabs", "trailer", "pwa", "sheet", "main")
+# chrome.js (W2-P5) and places.js (W2-P6) are empty until Wave 2 fills them: declared here so no Wave 2 package edits
+# this file or build.py to get its module into the bundle (W1-P1)
+JS = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "bill", "ticket", "film", "tabs", "trailer", "pwa", "sheet",
+      "chrome", "places", "main")
 # the shared stylesheet: src/cinema.css (tokens and base), then these partials in this order (W1-P1 split the rest of
 # cinema.css by owner, MASTER-PLAN §6.2), then every feature's src/css/<name>.css in module order
 CSS = ("ui-paper", "ui-chrome", "ui-tabs", "ui-sheet", "ui-near", "ui-bill", "ui-fhero", "ui-lights", "ui-rows", "ui-tile", "ui-grid",
-       "ui-film", "ui-sched", "ui-dock", "ui-ticket", "ui-places", "ui-money", "ui-edge")
-LAZY_JS = ()
+       "ui-film", "ui-sched", "ui-dock", "ui-ticket", "ui-places", "ui-money")
+# page-scoped: a second small stylesheet on that page kind only (build.page_css_files); the 404's leader is W2-P10's
+PAGE_CSS = {"404": ("ui-edge",)}
+# drag.js: the sheets' drag (W2-P5), loaded on idle by the page that asks for it; empty until then
+LAZY_JS = ("drag",)
 DIRS = tuple(c for c, _, _ in CITIES) + ("film", "cards", "halls", "data", "assets", "en", "cinema", "cinemas", "sources")
 
 

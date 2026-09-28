@@ -50,13 +50,11 @@ body[data-page=home]::before{display:none}
 .cta{display:flex;gap:8px;flex-wrap:wrap}
 .cta .btn{min-block-size:48px;font-size:15px;padding-inline:16px}
 .bill .btn.ghost{background:rgba(241,234,224,.14);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.bill .btn.ghost[hidden]{display:none}
 /* the indicators: a line each, inside a 28×24 button */
 .bill-nav{position:absolute;z-index:1;inset-block-end:12px;inset-inline-end:var(--gut);align-items:center;gap:6px}
 .dots{display:flex;gap:2px}
 /* pause / play: two bars, or a triangle once paused */
 .bill-pp{inline-size:32px;block-size:32px;display:grid;place-items:center;padding:0;border:0;background:none;color:var(--screen);cursor:pointer;opacity:.8}
-.bill-pp[hidden]{display:none}
 .bill-pp::before{content:"";inline-size:9px;block-size:11px;border-inline:3px solid currentColor;box-sizing:border-box}
 .bill-pp[aria-pressed=true]::before{inline-size:0;block-size:0;border:0;border-block:6px solid transparent;border-left:10px solid currentColor}
 .bill-pp:hover{opacity:1}
