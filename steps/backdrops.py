@@ -744,7 +744,9 @@ def process_film(fid: str, trailer_id: str, work_dir: Path, out_dir: Path, run=N
             if forced_x is not None:
                 x = forced_x
             else:
-                x, _ = window_x(s["crop"], floor)
+                # on the graded 1280w file, the picture a phone is shown: on the ungraded analysis copy the
+                # highlights the grade rolls off (shish-dou's LED strip) out-voted the lead (Fold, 07:33)
+                x, _ = window_x(land, floor)
             ww = round(land.height * 2 / 3)
             left = round(x * max(0, land.width - ww))
             entry = {"trailer": trailer_id, "w1280": rec["w1280"], "w640": rec["w640"], "w": 1280, "h": h1280,

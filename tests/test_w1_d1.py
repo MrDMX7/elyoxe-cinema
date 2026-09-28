@@ -311,6 +311,22 @@ def test_the_portrait_is_at_most_70_kb(fixture_run):
     assert img is None and why == "over 70000 B even at q60"
 
 
+def test_the_window_goes_to_the_subject_in_focus_not_the_most_colourful_patch():
+    """Left: a soft, saturated glow (fire, a teal wall); right: the textured subject. The colour-ranked window
+    chose the glow on 3 of W1-D1's 13 real frames; detail chooses the subject."""
+    w, h = 1280, 536
+    img = Image.new("RGB", (w, h))
+    d = ImageDraw.Draw(img)
+    for x in range(w // 2):
+        d.line([(x, 0), (x, h)], fill=(230, 120 + x * 80 // (w // 2), 30))
+    img.paste(_scene(w // 2, h, 21).convert("L").convert("RGB"), (w // 2, 0))   # a grey, detailed subject
+    x, detail = bd.window_x(img)
+    assert x >= 0.625 and detail > 0
+    left = bd.score_frame(img.crop((0, 0, 357, h)))
+    right = bd.score_frame(img.crop((w - 357, 0, w, h)))
+    assert left > right   # what the colour ranking would have chosen
+
+
 # -------- sharpness
 
 def test_sharpness_is_the_variance_of_a_two_sided_laplacian():
