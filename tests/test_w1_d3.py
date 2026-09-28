@@ -360,6 +360,12 @@ def test_the_step_hands_the_sampler_only_the_aimed_shows(monkeypatch, tmp_path):
         seen["todo"] = todo
         return {}, {"vox": {"requests": 0, "sampled": 0, "picked": 0, "error": None}}
     monkeypatch.setattr(seats, "sample", fake_sample)
+
+    class _Frozen(datetime):          # the step takes max(ctx now, the wall clock): pin the clock to the fixture hour
+        @classmethod
+        def now(cls, tz=None):
+            return now
+    monkeypatch.setattr(occ, "datetime", _Frozen)
     got = occ.run(data, {"now": now.isoformat(), "data_dir": str(tmp_path), "offline": False})
     per = {c: sum(1 for s in seen["todo"] if s["_chain"] == c) for c in ("vox", "reel", "star")}
     assert per["vox"] == 6 and per["reel"] <= 19 and per["star"] <= 60
