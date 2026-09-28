@@ -14,8 +14,9 @@
 #
 # One line per film id (the /film/<id>/ slug). `ar`: Arabic script (Eastern digits, double spaces and a trailing
 # «(فيلم)» are cleaned on their own). `en`: the Latin title, to read the file by. `source`: where a non-proposed
-# title comes from (a URL), else `proposed` (written here). A typo here never stops the hourly run: enrich leaves
-# out what it cannot use and lists it under "invalid" in `python enrich.py titles`.
+# title comes from (a URL), else `proposed` (written here). A slip in a value never stops a deploy: enrich leaves
+# out what it cannot use and lists it under "invalid" in `python enrich.py titles`. A broken line (a missing `}`,
+# `{` or quote) does stop the hourly deploy until it is fixed, as in every other YAML file of the site.
 # Style of the proposals: the name as people say it at the box office (hard g as ق, v as ف, "the" as ذا).
 # `kind: translation` marks a proposal that translates words (all or some) instead of spelling the sounds:
 # the site's rule is never machine-translated, so read those rows twice.

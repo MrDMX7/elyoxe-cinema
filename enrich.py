@@ -69,7 +69,8 @@ Every other sourced Arabic name (the label, the aliases, the chain's, a reviewed
 film["aka_ar"] as a search key only. film["title_ar_src"] says where the title came from, and
 data["titles_ar"] carries the review list (entries awaiting review, films with no Arabic title at all, and the
 entries it could not use); `python enrich.py titles` prints it for the weekly look (owner default D12). An owner's
-edit of titles_ar.yaml never stops the hourly run: what cannot be used is left out and named, never raised.
+edit of titles_ar.yaml never stops enrich: what cannot be used is left out and named, never raised. Only a line
+that breaks the YAML itself holds the deploy (the suite's parse check), as for every other YAML file.
 """
 import json
 import os
