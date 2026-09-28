@@ -274,6 +274,7 @@ def test_enrich_trailer_from_wikidata_only_when_chain_has_none(tmp_path, monkeyp
         return "dQw4w9WgXcQ"
     monkeypatch.setattr(enrich_mod, "_wikidata_trailer", fake_trailer)
     monkeypatch.setattr(enrich_mod, "_rt_ratings", lambda *a, **k: None)
+    monkeypatch.setattr(enrich_mod, "_wikidata_ar", lambda qids: {})   # W1-D2's Arabic label read: a live lookup too
     data = {"films": {"a": {"title": "A", "genres": ["thriller"]}, "b": {"title": "B", "trailer": "bdPnr4mJoIU"}}}
     enrich_mod.enrich(data, cache_path=str(cache))
     assert data["films"]["a"]["trailer"] == "dQw4w9WgXcQ"

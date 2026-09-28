@@ -52,18 +52,32 @@ Such a film carries film["rerelease"] = True, and its RT page is checked against
 
 Synopsis: only for a film whose Wikidata match was accepted, and only from that item's own
 English Wikipedia sitelink — never a title search (that is how "Dhoomakethu" 2026 got the
-plot of a 1968 Kannada film). title_ar: the item's real Arabic label (never its English label
-as a fallback), else the Arabic title a chain publishes (Reel's TitleAlt, Novo's
-movie_title_ar), else none. Never machine-translated.
+plot of a 1968 Kannada film).
+
+title_ar (W1-D2, MASTER-PLAN §5.2): resolve_title_ar() below, in this order, never machine-translated:
+  0. an entry in titles_ar.yaml the owner reviewed and pinned (`pin: true`): his word is final;
+  1. an Arabic-language film is always Arabic: the first of the sources below, and for such a film a
+     titles_ar.yaml entry is used even before its review (its Latin is itself a transliteration);
+  2. the matched Wikidata item's own Arabic label (never its English label), re-read every AR_TTL
+     with its Arabic aliases (a new film's label often lands on Wikidata days after release);
+  3. one of those Arabic aliases, when the item has no label;
+  4. the Arabic title a chain publishes (Reel's TitleAlt, Novo's movie_title_ar);
+  5. a titles_ar.yaml entry the owner reviewed (`review: true` = not yet: never published).
+Every other sourced Arabic name (the label, the aliases, the chain's, a reviewed entry) is kept in
+film["aka_ar"] as a search key only. film["title_ar_src"] says where the title came from, and
+data["titles_ar"] carries the review list (entries awaiting review, films with no Arabic title at all);
+`python enrich.py titles` prints it for the weekly look (owner default D12).
 """
 import json
 import os
 import re
 import sys
 import time
+import unicodedata
 from datetime import datetime, timedelta, timezone
 
 import requests
+import yaml
 
 from genres import genre_keys, merge_keys
 from readers.common import youtube_id
@@ -82,6 +96,10 @@ LANG_QIDS = {"English": "Q1860", "Arabic": "Q13955", "Hindi": "Q1568", "Malayala
              "Tamil": "Q5885", "Telugu": "Q8097", "Korean": "Q9176", "Japanese": "Q5287",
              "French": "Q150", "Tagalog": "Q34057", "Punjabi": "Q58635"}
 _ARABIC = re.compile(r"[\u0600-\u06ff]")
+TITLES_AR_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "titles_ar.yaml")
+AR_TTL = timedelta(days=3)       # the matched item's Arabic label and aliases are re-read this often
+_EAST_DIGITS = str.maketrans("\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669\u06f0\u06f1\u06f2\u06f3\u06f4\u06f5\u06f6\u06f7\u06f8\u06f9", "01234567890123456789")
+_FILM_SUFFIX = re.compile(r"\s*[(\uff08]\s*(?:\u0641\u064a\u0644\u0645|film)[^)\uff09]*[)\uff09]\s*$", re.IGNORECASE)
 
 _last_call = [0.0]
 
@@ -196,6 +214,104 @@ def _arabic_label(entities, qid):
     """The item's own Arabic label, or None — never the English label standing in for it."""
     v = (entities.get(qid, {}).get("labels", {}).get("ar") or {}).get("value")
     return v if v and _ARABIC.search(v) else None
+
+
+def clean_ar(s):
+    """An Arabic title as the site prints it: Western digits, one space between words, no trailing
+    «(فيلم)» disambiguator; None unless it is written in Arabic script."""
+    if not s or not isinstance(s, str):
+        return None
+    s = unicodedata.normalize("NFC", s).translate(_EAST_DIGITS)
+    s = re.sub(r"\s+", " ", _FILM_SUFFIX.sub("", s)).strip()
+    return s if _ARABIC.search(s) else None
+
+
+def _wikidata_ar(qids):
+    """{qid: {"label": str|None, "aliases": [str]}} — each item's own Arabic label and Arabic aliases, 50 ids
+    a call. An id missing from the answer is left out (a merged or deleted item keeps what we had).
+    May raise LookupFailed."""
+    qids = [q for q in dict.fromkeys(qids) if q]
+    out = {}
+    for i in range(0, len(qids), 50):
+        batch = qids[i:i + 50]
+        ents = _wikidata_entities(batch, props="labels|aliases")
+        for q in batch:
+            e = ents.get(q)
+            if not isinstance(e, dict) or "missing" in e:
+                continue
+            label = clean_ar(((e.get("labels") or {}).get("ar") or {}).get("value"))
+            aliases = [clean_ar(a.get("value")) for a in ((e.get("aliases") or {}).get("ar") or []) if isinstance(a, dict)]
+            out[q] = {"label": label, "aliases": [a for a in dict.fromkeys(aliases) if a and a != label]}
+    return out
+
+
+# ---------- titles_ar.yaml: the reviewed list (owner-editable) ----------
+
+def load_titles_ar(path=None):
+    """titles_ar.yaml -> {fid: {"ar", "review", "pin", "source", "en"}}. An entry whose `ar` is not Arabic
+    script is dropped (never published); a file that cannot be read gives {} and says so (the hourly run
+    must not stop on it; tests/test_w1_d2.py fails the build on a malformed file instead)."""
+    path = path or TITLES_AR_PATH
+    try:
+        with open(path, encoding="utf-8") as f:
+            raw = yaml.safe_load(f) or {}
+    except (OSError, yaml.YAMLError) as e:
+        print(f"enrich: {path} unreadable: {e}", file=sys.stderr)
+        return {}
+    out = {}
+    for fid, e in ((raw.get("titles") if isinstance(raw, dict) else None) or {}).items():
+        if isinstance(e, str):
+            e = {"ar": e}
+        if not isinstance(e, dict):
+            continue
+        ar = clean_ar(e.get("ar"))
+        if ar:
+            out[str(fid)] = {"ar": ar, "review": bool(e.get("review")), "pin": bool(e.get("pin")),
+                             "source": e.get("source"), "en": e.get("en")}
+    return out
+
+
+def resolve_title_ar(film, wd_label=None, wd_aliases=(), listed=None):
+    """(title_ar or None, source, aka_ar) for one film — the order is the module docstring's. `listed` is the
+    film's titles_ar.yaml entry. Sources: pin, wikidata, wikidata-alias, chain, list, list-unreviewed (an
+    Arabic film only). aka_ar: every other sourced Arabic name, for search; an unreviewed entry is never one."""
+    listed = listed or {}
+    reviewed = listed.get("ar") if listed and not listed.get("review") else None
+    label = clean_ar(wd_label)
+    aliases = [a for a in (clean_ar(x) for x in (wd_aliases or ())) if a]
+    chain = clean_ar(film.get("title_ar_chain"))
+    if reviewed and listed.get("pin"):
+        title, src = reviewed, "pin"
+    else:
+        order = [(label, "wikidata"), (aliases[0] if aliases else None, "wikidata-alias"), (chain, "chain"), (reviewed, "list")]
+        if film.get("lang") == "Arabic" and listed.get("ar") and not reviewed:
+            order.append((listed["ar"], "list-unreviewed"))
+        title, src = next(((t, s) for t, s in order if t), (None, None))
+    aka = [a for a in dict.fromkeys([label, *aliases, chain, reviewed]) if a and a != title]
+    return title, src, aka
+
+
+def titles_report(films, listed, shows=None):
+    """The weekly look (D12): {"review": [...], "missing": [...], "sources": {src: n}}. `review` is every
+    titles_ar.yaml entry still awaiting the owner (with the title it would replace), `missing` every film
+    with no Arabic title and no entry at all — both busiest first."""
+    count = {}
+    for s in shows or ():
+        f = s.get("film") if isinstance(s, dict) else None
+        if f:
+            count[f] = count.get(f, 0) + 1
+    by = lambda r: (-r["shows"], r["fid"])
+    review, missing, sources = [], [], {}
+    for fid, film in films.items():
+        src = film.get("title_ar_src")
+        sources[src or "latin"] = sources.get(src or "latin", 0) + 1
+        e = listed.get(fid)
+        row = {"fid": fid, "title": film.get("title") or fid, "lang": film.get("lang"), "shows": count.get(fid, 0)}
+        if e and e.get("review"):
+            review.append({**row, "ar": e["ar"], "pin": e.get("pin", False), "now": film.get("title_ar")})
+        elif not film.get("title_ar"):
+            missing.append(row)
+    return {"review": sorted(review, key=by), "missing": sorted(missing, key=by), "sources": sources}
 
 
 def _norm_title(t):
@@ -500,7 +616,8 @@ def _blank_film_fields(film):
     film.setdefault("post_credits", None)  # see post_credits_for() below — the field + UI slot exist; left empty for now
 
 
-def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool = False) -> dict:
+def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool = False, titles_path: str | None = None) -> dict:
+    """`titles_path`: the reviewed Arabic titles (default titles_ar.yaml beside this file)."""
     films = data.get("films", {})
     cache = _load_cache(cache_path)
     dirty = False
@@ -584,12 +701,7 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
         if not ids.get("qid") and entry.pop("synopsis_en", None) is not None:
             dirty = True  # a synopsis without an accepted match is someone else's plot
 
-        title_ar = ids.get("title_ar")
-        if title_ar and not _ARABIC.search(title_ar):
-            title_ar = None  # an older cache entry holding the English label as "title_ar"
-        title_ar = title_ar or film.get("title_ar_chain")
-        if title_ar:
-            film["title_ar"] = title_ar
+        # title_ar is resolved after this loop (resolve_title_ar), once the Arabic labels are fresh
         film["rerelease"] = bool(ids.get("rerelease"))
         if ids.get("year"):
             film["year"] = ids["year"]
@@ -648,6 +760,31 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
 
         cache[fid] = entry
 
+    # the matched items' Arabic labels and aliases, re-read every AR_TTL in one batched call (W1-D2)
+    due = {fid: (cache.get(fid, {}).get("ids") or {}).get("qid") for fid in films}
+    due = {fid: q for fid, q in due.items() if q and not _fresh((cache[fid].get("ar") or {}).get("at"), AR_TTL)}
+    if due and not offline:
+        try:
+            got = _wikidata_ar(due.values())
+        except Exception as e:  # noqa: BLE001 - retried next run; the titles we had stay
+            print(f"enrich: Wikidata Arabic labels failed: {e}", file=sys.stderr)
+            got = {}
+        at = datetime.now(timezone.utc).isoformat()
+        for fid, q in due.items():
+            if q in got:
+                cache[fid]["ar"] = {**got[q], "at": at}
+                dirty = True
+
+    listed = load_titles_ar(titles_path)
+    for fid, film in films.items():
+        entry = cache.get(fid, {})
+        ids = entry.get("ids") or {}
+        ar = entry.get("ar") if ids.get("qid") else None
+        label = ar.get("label") if ar else ids.get("title_ar")   # a fresh read wins, even an empty one
+        title, src, aka = resolve_title_ar(film, label, (ar or {}).get("aliases") or (), listed.get(fid))
+        film["title_ar"], film["title_ar_src"], film["aka_ar"] = title, src, aka
+    data["titles_ar"] = titles_report(films, listed, data.get("shows"))
+
     if dirty and not offline:
         _save_cache(cache_path, cache)
 
@@ -678,3 +815,38 @@ def post_credits_for(qid: str | None) -> dict | None:  # pragma: no cover - stub
     (unknown, shown as nothing) until then. `qid` (Wikidata id) is the seam a real source hangs
     off of -- unused for now."""
     return None
+
+
+# ---------------------------------------------------------------------------------------------
+# The weekly look (owner default D12): `python enrich.py titles [data/latest.json]`
+
+def _yaml_line(fid, ar, en, note, pin=False):
+    q = lambda s: json.dumps(s or "", ensure_ascii=False)
+    return f"  {fid}: {{ar: {q(ar)}, en: {q(en)},{' pin: true,' if pin else ''} review: true}}   # {note}"
+
+
+def main(argv=None):
+    """Prints every titles_ar.yaml entry still awaiting review and every film with no Arabic title at all,
+    busiest first, as lines ready for titles_ar.yaml. Approving one = deleting its `review: true`."""
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if not argv or argv[0] != "titles":
+        print("usage: python enrich.py titles [data/latest.json]", file=sys.stderr)
+        return 2
+    path = argv[1] if len(argv) > 1 else os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "latest.json")
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    films = data.get("films") or {}
+    rep = data.get("titles_ar") or titles_report(films, load_titles_ar(), data.get("shows"))
+    say = lambda r: f"{r['shows']} shows, {r.get('lang') or 'language unknown'}"
+    print(f"# awaiting review ({len(rep['review'])}): delete `review: true` to publish")
+    for r in rep["review"]:
+        now = f", replaces «{r['now']}»" if r.get("now") else ""
+        print(_yaml_line(r["fid"], r["ar"], r["title"], say(r) + now, r.get("pin")))
+    print(f"# no Arabic title and no entry ({len(rep['missing'])}): write the Arabic, then delete `review: true`")
+    for r in rep["missing"]:
+        print(_yaml_line(r["fid"], "", r["title"], say(r)))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
