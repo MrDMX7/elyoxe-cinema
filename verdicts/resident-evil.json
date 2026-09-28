@@ -1,9 +1,14 @@
 {
-  "ar": "رزدنت إيفل حصل 96% من النقاد على روتن توميتوز، ووايد ناس يقولون أحسن فيلم مقتبس من لعبة فيديو للحين. رعب حقيقي وتحس بنفس أجواء اللعبة وانت تتابعه.",
+  "ar": "ريزدنت ايفل حصل 96% من النقاد على روتن توميتوز، ووايد ناس يقولون إنه أحسن فيلم مقتبس من لعبة فيديو للحين. رعب حقيقي وتحس بنفس أجواء اللعبة وانت تشوفه.",
   "basis": "RT 96% (249 ناقد) · الجمهور 91%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 96,
+    "rt_count": 249
+  },
   "by": "claude",
   "en": "Resident Evil scored 96% with critics on Rotten Tomatoes and is being called the best-reviewed video-game movie yet. It delivers real horror and recreates the feel of playing the game.",
   "fid": "resident-evil",
   "verdict": "yes",
-  "written": "2026-09-26"
+  "written": "2026-09-28"
 }
