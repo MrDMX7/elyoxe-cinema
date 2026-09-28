@@ -1,8 +1,9 @@
 """The show key (MASTER-PLAN §2.2, W1-P1): /film/<fid>/#s-<key>, key = FNV-1a 32-bit over the UTF-8 of «cinema|date|
 time|hall key», base36, left-padded to 6. Its two twins, site_kit.Kit.show_key and showKey() in src/js/core.js, must give
-the same key for every show; the key names one show; and no page carries a duplicate id (the film page's time links will
-carry id="s-<key>", W2-P3). Node parts skip without node, as tests/test_js.py does (the Fold may not have it)."""
-import json, os, re, shutil, subprocess, sys
+the same key for every show; the key names one show (asserted on the fixture; on the day's real data a same-film twin
+only warns, so the hourly deploy never stops on chance); and no page carries a duplicate id (the film page's time links
+will carry id="s-<key>", W2-P3). Node parts skip without node, as tests/test_js.py does (the Fold may not have it)."""
+import json, os, re, shutil, subprocess, sys, warnings
 from collections import Counter
 from pathlib import Path
 
@@ -68,16 +69,45 @@ def test_python_and_js_agree_on_every_show_of_the_fixture(tmp_path):
     assert js_show_key(tmp_path, odd) == [Kit.show_key(*r) for r in odd]
 
 
+def same_film_twins(films, rows, key=Kit.show_key):
+    """Distinct shows of one film that share a key: [(film, key, [show, show…])]. The key only lives under
+    /film/<fid>/#s-<key>, so a key shared across two films names nothing twice; inside one film it would."""
+    by = {}
+    for f, r in zip(films, rows):
+        by.setdefault((f, key(*r)), set()).add(tuple(r))
+    return [(f, k, sorted(s)) for (f, k), s in by.items() if len(s) > 1]
+
+
+def test_a_same_film_twin_is_found_and_a_cross_film_one_is_not():
+    rows = [["a", "2026-09-28", "21:30", "IMAX"], ["b", "2026-09-28", "22:00", "Standard"], ["a", "2026-09-28", "21:30", "IMAX"]]
+    one = lambda *r: "000000"                     # every show on one key: the only way to force a 32-bit collision
+    assert same_film_twins(["f1", "f2", "f1"], rows, one) == []                      # across films, and a repeated row
+    assert same_film_twins(["f1", "f1", "f1"], rows, one) == [("f1", "000000", sorted({tuple(rows[0]), tuple(rows[1])}))]
+    assert same_film_twins(["f1", "f1"], rows[:2]) == []                             # the real key keeps them apart
+
+
 @needs_node
 @pytest.mark.skipif(not os.path.exists(REAL), reason="no data/latest.json")
 def test_python_and_js_agree_on_every_real_show(tmp_path):
+    """Parity over every show of data/latest.json: a property of the code, so it asserts whatever the day's data.
+
+    Uniqueness is a property of the data, so it only warns (review I1). The Fold runs `pytest -x` before every hourly
+    deploy, and a 32-bit key over the Fold's 5,087 distinct shows (2026-09-28) meets a twin by chance: 1 day's data in
+    ~330 across films (harmless: the key lives under one film's page) and 1 in ~3,800 inside one film (0.026 %; the
+    busiest film has 903 shows). A
+    failing assertion here would stop every deploy for as long as the two shows stay in the data. No page prints the key
+    yet; the page that will (W2-P3's time links, id="s-<key>") resolves a same-film twin at build time (docs/PLUGINS.md).
+    The fixture's shows are fixed, so there uniqueness is asserted (test above)."""
+    d = json.load(open(REAL, encoding="utf-8"))
     rows = shows_of(REAL)
+    films = [s.get("film") for s in d["shows"] if s.get("cinema") in d["cinemas"]]
+    assert len(films) == len(rows)
     py = [Kit.show_key(*r) for r in rows]
     assert js_show_key(tmp_path, rows) == py
-    dup = [k for k, n in Counter(py).items() if n > 1]
-    uniq = {tuple(r) for r in rows}
-    # a collision would make two shows share a link: none among the real data's shows (distinct four-field tuples)
-    assert len(set(py)) == len(uniq), dup[:5]
+    twins = same_film_twins(films, rows)
+    if twins:
+        warnings.warn(f"show key: {len(twins)} same-film twin(s) in data/latest.json, first {twins[:2]}; the film page must "
+                      "resolve them at build time (W2-P3)", UserWarning)
 
 
 def test_the_key_only_reads_the_four_fields():

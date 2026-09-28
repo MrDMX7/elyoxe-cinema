@@ -200,6 +200,7 @@ function bindRails() {
     if (typeof planRefresh === "function" && tk && !tk.hidden && (desk() || tk.classList.contains("open"))) planRefresh();
     emit("minute", NOW);
   }
-  (function nextMinute() { setTimeout(function () { minute(); nextMinute(); }, 60e3 - (Date.now() + FAKE) % 60e3 + 20); })();
+  /* set again even when a minute's work throws: one bad tick must not stop the page's clock for the rest of the visit */
+  (function nextMinute() { setTimeout(function () { try { minute(); } finally { nextMinute(); } }, 60e3 - (Date.now() + FAKE) % 60e3 + 20); })();
   emit("ready");
 })();

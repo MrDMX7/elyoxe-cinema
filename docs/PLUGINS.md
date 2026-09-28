@@ -139,7 +139,10 @@ Feature modules import from `site_kit` only (never `build`):
 - **the show key** (W1-P1): `Kit.show_key(cinema, date, time, hall)` and `site.show_key_of(show)`: the key of the
   show link `/film/<fid>/#s-<key>` (MASTER-PLAN §2.2), FNV-1a 32-bit over the UTF-8 of «cinema|date|time|hall key»
   (the hall key Kit.hkey gives, «Standard» when none), base36, left-padded to 6. `showKey()` in `src/js/core.js`
-  is its twin; `tests/test_showkey.py` holds them equal over every show.
+  is its twin; `tests/test_showkey.py` holds them equal over every show. The key is 32 bits, so two shows of one film
+  can share it by chance (about 1 day's data in 3,800 at 5,000 shows); the page that prints `id="s-<key>"` (W2-P3)
+  must find such a twin at build time and keep both reachable, never ship two equal ids. The test only warns on real
+  data: the hourly deploy never stops on the day's data.
 - **`Kit.week_phase(now)`** (W1-P1): `"wed-eve"` from Wednesday 18:00 UAE, `"thu-sat"` Thursday to Saturday 23:59,
   `"rest"` otherwise; the Thursday band and the rows read it (build with `site.now`).
 
@@ -164,7 +167,7 @@ Feature modules import from `site_kit` only (never `build`):
   | `card` | the visitor picked a card («بدون بطاقة» too) | the card id, `""` for none |
   | `city` | the visitor picked a city | the city |
   | `day` | a day button was chosen | the date |
-  | `minute` | at each UAE minute's :00, from one timeout aligned to it (never a free `setInterval`) | `NOW` |
+  | `minute` | at each UAE minute's :00, from one timeout aligned to it and set again even when a minute's work throws (never a free `setInterval`) | `NOW` |
 
   Wave 2 emits its own the same way (`board`, `stub`, `plan`). A lazy chunk reaches the bus as `K.on` / `K.emit`.
 - **UAE time in every timer:** read `NOW`, `nowMin()`, `TODAY` from core.js, never `new Date().getHours()` (a phone

@@ -3,6 +3,7 @@ filters, the prayer overlap, the film filters, the companion presets, the «ال
 and the built bundle parses (a syntax error there would silently disable every client feature)."""
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -183,3 +184,26 @@ def test_main_emits_the_six_events_and_the_minute_is_aligned():
     assert "60e3 - (Date.now() + FAKE) % 60e3" in main                # the next :00 of the page's own UAE clock
     assert main.rstrip().endswith('emit("ready");\n})();')            # the last thing start-up does
     assert "citySlice()" in main and 'if (S && S.city === city) emit("slice", S)' in main
+
+
+def test_the_minute_clock_survives_a_minute_that_throws(tmp_path):
+    """Review M1: the timeout is set again after the work, so it must be set again when the work throws (a bad tick in
+    rollTicket, fsTick, planRefresh…), else struck times, «الحين» and the desktop ticket freeze for the rest of the visit.
+    main.js's own nextMinute line runs here with a minute() that throws on its first tick."""
+    main = open(os.path.join(ROOT, "src", "js", "main.js"), encoding="utf-8").read()
+    line = re.search(r"^\s*\(function nextMinute\(\) \{.*\}\)\(\);$", main, re.M).group(0)
+    js = """var FAKE = 0, ticks = 0, armed = [], thrown = 0, t = Date.UTC(2026, 8, 27, 17, 30, 12, 500);
+      Date.now = function () { return t; };
+      function setTimeout(fn, ms) { armed.push([fn, ms]); }
+      function minute() { ticks++; if (ticks === 1) throw new Error("a bad tick"); }
+      """ + line + """
+      function fire(i) { t += armed[i][1]; try { armed[i][0](); } catch (e) { thrown++; } }
+      fire(0); fire(1); fire(2);
+      process.stdout.write(JSON.stringify({ticks: ticks, thrown: thrown, armed: armed.map(function (a) { return a[1]; }), sec: new Date(t).getUTCSeconds(), ms: new Date(t).getUTCMilliseconds()}));"""
+    (tmp_path / "m.js").write_text(js, encoding="utf-8")
+    r = subprocess.run([NODE, str(tmp_path / "m.js")], capture_output=True, text=True, encoding="utf-8", timeout=60)
+    assert r.returncode == 0, r.stderr
+    got = json.loads(r.stdout)
+    assert got["thrown"] == 1 and got["ticks"] == 3            # the throw still reaches the page's error handler; the clock goes on
+    assert got["armed"] == [47520, 60000, 60000, 60000]        # first to the next :00 (+20 ms), then a minute each, set again after the throw
+    assert (got["sec"], got["ms"]) == (0, 20)
