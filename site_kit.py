@@ -3,8 +3,11 @@
   constants     CITIES, CITY, T, UI, VERDICT, LANGS, budgets (PAGE_TARGET, CHROME, SCHED_BUDGET), regexes
   helpers       esc, L, P, dates (ISO dates and percentages isolated for RTL), money, num, human_date, span_dates,
                 genre_*, film_flags, hue, ago, parse_iso, discounts (after, rule_*), Halls, clean_label, minify_*
-  Kit           the site's state (films, cinemas, shows, cards, rules) and its markup: price cells, time
-                buttons, fit() to a byte budget, posters and tiles, the ticket, crumbs, JSON-LD, page() and write()
+  Kit           the site's state (films, cinemas, shows, cards, rules) and its markup: names, price cells, fit() to
+                a byte budget, crumbs, JSON-LD, the slots, page() and write(); since W1-P1 its helper families are
+                mixins in kit/ (media: posters and frames; tile: tiles, rows, the grid; sched: time buttons;
+                ticket: the ticket; chrome: header, tab bar, footer, sheets; filters: the filter sheet's content),
+                one Wave 2 owner each (MASTER-PLAN §6.2)
   plug-in types Page, Emit, NavItem, Plugin — what a module's register(site) returns (docs/PLUGINS.md)
 
 build.py (the loader) is `class Site(Kit)`; page modules never import build."""
@@ -563,7 +566,16 @@ class Pages:
         return getattr(self.site, k)
 
 
-class Kit:
+# the Kit's helper families (W1-P1): mixins in kit/, imported here once every helper above exists
+from kit.chrome import ChromeKit  # noqa: E402
+from kit.filters import FiltersKit  # noqa: E402
+from kit.media import MediaKit  # noqa: E402
+from kit.sched import SchedKit  # noqa: E402
+from kit.ticket import TicketKit  # noqa: E402
+from kit.tile import TileKit  # noqa: E402
+
+
+class Kit(MediaKit, TileKit, SchedKit, TicketKit, ChromeKit, FiltersKit):
     noindex = False   # set by build(): PREVIEW=1
     # filled by the loader (build.Site) from the page modules; empty, the pages are phase 1's to the byte
     nav_items, slots, kind_js, chunk_urls = (), {}, {}, {}
@@ -737,79 +749,6 @@ class Kit:
         h, m = map(int, s["time"].split(":")); eh, em = map(int, s["ends"].split(":"))
         return (eh * 60 + em - h * 60 - m) % 1440
 
-    # -------- show ids, time buttons and the page's price lists (for the ticket)
-    @staticmethod
-    def sid(s):
-        k = "|".join(str(s.get(x) or "") for x in ("cinema", "film", "date", "time", "hall", "hall_label", "book"))
-        return hashlib.sha1(k.encode()).hexdigest()[:10]
-
-    def pidx(self, s):
-        pr = [[p["seat"], p["aed"]] for p in s.get("prices") or [] if (p.get("aed") or 0) > 0]
-        if not pr: return None
-        k = json.dumps(pr)
-        if k not in self._Pi: self._Pi[k] = len(self._P); self._P.append(pr)
-        return self._Pi[k]
-
-    def book_url(self, s):
-        """The show's booking URL, else the chain's own site (a time always leads somewhere with no script)."""
-        return s.get("book") or CHAIN_SITE.get(self.cinemas[s["cinema"]]["chain"]) or (SITE + P("ar", self.cinemas[s["cinema"]].get("city"), s["cinema"]))
-
-    def is_past(self, s):
-        return (s["date"], s["time"]) < (self.today, self.now.strftime("%H:%M"))
-
-    def tbtn(self, s, lang, links=True, tag=True, on=False):
-        """A showtime is a link to its booking page (works with no script); cinema.js prevents the navigation
-        and opens the ticket instead. data-show is the show's stable id; data-p indexes the page's price lists
-        (#cinema-p), data-book is the booking URL. A show already started when the data was built is plain text."""
-        t = f'<small>{self.hall_html(s, lang)}</small>' if tag and self.hkey(s) != "Standard" else ""
-        if self.is_past(s):
-            return f'<span class="tm past" data-start="{esc(s["time"])}">{esc(s["time"])}{t}</span>'
-        a = [f'data-show="{self.sid(s)}"', f'data-start="{esc(s["time"])}"']
-        if s.get("ends"): a.append(f'data-ends="{esc(s["ends"])}"')
-        if s.get("lang"): a.append(f'data-lang="{esc(s["lang"])}"')
-        if s.get("subs"): a.append(f'data-subs="{esc(s["subs"])}"')
-        if isinstance(s.get("seats_left"), int) and s["seats_left"] > 0: a.append(f'data-left="{s["seats_left"]}"')
-        pi = self.pidx(s)
-        if pi is not None: a.append(f'data-p="{pi}"')
-        if self.table_date(s) and pi is not None: a.append(f'data-asof="{esc(self.table_date(s))}"')
-        # plain (over budget): the chain's site instead of the long per-show URL
-        href = self.book_url(s) if links else (CHAIN_SITE.get(self.cinemas[s["cinema"]]["chain"]) or self.book_url(s))
-        if links and s.get("book"): a.append(f'data-book="{esc(s["book"])}"')
-        return (f'<a class="tm{" on" if on else ""}" href="{esc(href)}" rel="noopener nofollow" target="_blank" {" ".join(a)}'
-                f'{" aria-current=\"true\"" if on else ""}>{esc(s["time"])}{t}</a>')
-
-    def times(self, shows, lang, tag_halls=False, links=True, day_label=True, on=None):
-        """Showtimes, one row per day: <div class="times" data-d="…"><span class="dl">اليوم</span><button…>…"""
-        out = []
-        for d in sorted({s["date"] for s in shows}):
-            lab = f'<span class="dl">{esc(L(T["today"] if d == self.today else T["tomorrow"] if d == self.tomorrow else (d, d), lang))}</span>' if day_label else ""
-            items = "".join(self.tbtn(s, lang, links, tag_halls, on is not None and self.sid(s) == on)
-                            for s in sorted((s for s in shows if s["date"] == d), key=lambda s: s["time"]))
-            out.append(f'<div class="times" data-d="{d}">{lab}{items}</div>')
-        return "".join(out)
-
-    def times_compact(self, shows, lang, tag=False, day_label=True):
-        """The bounded form: per day, the times still to come as text, one run per hall
-        (<span class="tl" data-hk="IMAX"><small>IMAX</small> 13:00 15:30</span>). No script: the cinema's name
-        links to its page, where every time books. cinema.js makes each time a button whose ticket it fills
-        from the city's slice."""
-        out = []
-        for d in sorted({s["date"] for s in shows}):
-            ds = [s for s in shows if s["date"] == d and not self.is_past(s)]
-            if not ds: continue
-            lab = f'<span class="dl">{esc(L(T["today"] if d == self.today else T["tomorrow"] if d == self.tomorrow else (d, d), lang))}</span>' if day_label else ""
-            keys = sorted(dict.fromkeys(self.hkey(s) for s in ds), key=lambda k: k != "Standard")
-            runs = []
-            for k in keys:
-                hs = [s for s in ds if self.hkey(s) == k]
-                ts = " ".join(sorted({s["time"] for s in hs}))
-                if tag and k != "Standard":
-                    runs.append(f'<span class="tl" data-hk="{esc(k)}"><small>{self.hall_html(hs[0], lang)}</small> {ts}</span>')
-                else:
-                    runs.append(f'<span class="tl">{ts}</span>')
-            out.append(f'<div class="times" data-d="{d}">{lab}{"".join(runs)}</div>')
-        return "".join(out)
-
     def fit(self, render, modes, budget):
         """The first mode whose markup (with the page's price lists) fits `budget` bytes; else the last."""
         for mode in modes:
@@ -832,68 +771,6 @@ class Kit:
         n = self.hname(s, lang)
         return f'<bdi lang="en">{esc(n)}</bdi>' if lang == "ar" and re.search(r"[A-Za-z]", n) else esc(n)
 
-    # -------- posters
-    def poster(self, fid, lang, cls="pst", eager=False, size=(342, 513), lazy=True, sizes=None, srcset=True, label=True):
-        """The poster, or — when there is none (or it fails to load) — a typographic tile in the film's colour."""
-        f = self.films[fid]
-        pc = f.get("poster_color") or hue(fid)
-        img = ""
-        if f.get("poster"):
-            first = self._first_poster is None and eager
-            if first: self._first_poster, self._first_sizes = f, sizes or POSTER_SIZES.get(cls, POSTER_SIZES["pst"])
-            # width descriptors + the size the tile is drawn at, so a desktop grid tile or a 72 px list poster
-            # does not fetch the 684 px file on a 1x screen
-            ss = (f' srcset="{esc(rel(f["poster"]))} 342w, {esc(rel(f["poster_2x"]))} 684w" sizes="{sizes or POSTER_SIZES.get(cls, POSTER_SIZES["pst"])}"'
-                  if f.get("poster_2x") and srcset else "")
-            # a real poster carries its own title: the tile's title stays underneath, hidden, and comes back
-            # (the class drops) only if the image fails to load
-            img = (f'<img src="{esc(rel(f["poster"]))}"{ss} width="{size[0]}" height="{size[1]}" alt="" decoding="async"'
-                   + (' fetchpriority="high"' if first else ' loading="lazy"' if lazy else "") + ">")
-            # (a tile names the film under its poster already: `label=False` leaves the hidden copy out)
-            return (f'<span class="{cls} img" style="--pc:{pc}">' + (f'<span class="pst-t" aria-hidden="true"{self.title_attr(fid, lang)}>'
-                    f'{esc(self.ftitle(fid, lang))}</span>' if label else "") + f'{img}</span>')
-        return (f'<span class="{cls}" style="--pc:{pc}"><span class="pst-t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span></span>')
-
-    def backdrop(self, fid, hero=False, sizes="100vw", lang="ar"):
-        """A real frame from the film's trailer (steps/backdrops.py) when one was scored clean, at 640/1280
-        widths, `sizes="100vw"` (it is drawn full-bleed, never at a fixed column like the poster): eager +
-        `fetchpriority="high"` for the hero (the page's largest paint), lazy otherwise. Falls back to the
-        old poster-blurred-over-its-colour treatment when the film has no backdrop entry yet (steps/backdrops.py
-        hasn't reached it, its trailer failed every frame, or Kit's own sanitising in __init__ dropped a
-        malformed entry) -- and to night + the velvet glow + the typographic tile when there is no poster
-        either. Blurred 40 px, its resolution does not show: on a film page the poster-fallback path asks
-        for exactly what the hero poster resolves to (same srcset and sizes, so one download serves both);
-        on the home hero (desktop only, hidden on a phone, so lazy) the 342 px file."""
-        f = self.films[fid]
-        pc = f.get("poster_color") or hue(fid)
-        bd = f.get("backdrop")
-        if isinstance(bd, dict) and bd.get("w1280") and bd.get("w640"):
-            w1280, w640 = esc(rel(bd["w1280"])), esc(rel(bd["w640"]))
-            # int()'d like every other numeric attribute in this file (size[0]/size[1] above) --
-            # never an f-string interpolation of a raw value, even one steps/backdrops.py itself
-            # always writes as a plain int today (fix round 1, review Minor #1).
-            try:
-                w = int(bd.get("w") or 1280)
-            except (TypeError, ValueError):
-                w = 1280
-            try:
-                h = int(bd.get("h") or 720)
-            except (TypeError, ValueError):
-                h = 720
-            attrs = (' fetchpriority="high"' if hero else "") + ("" if hero else ' loading="lazy"')
-            img = (f'<img src="{w1280}" srcset="{w640} 640w, {w1280} 1280w" sizes="{sizes}" width="{w}" height="{h}"'
-                   f' alt="" decoding="async"{attrs} onerror="this.remove()" class="fr">')
-            return f'<div class="bd" style="--pc:{pc}" aria-hidden="true">{img}</div>'
-        if f.get("poster"):
-            ss = (f' srcset="{esc(rel(f["poster"]))} 342w, {esc(rel(f["poster_2x"]))} 684w" sizes="{POSTER_SIZES["pst hero"]}"'
-                  if hero and f.get("poster_2x") else "")
-            lz = "" if hero else ' loading="lazy"'
-            img = f'<img src="{esc(rel(f["poster"]))}"{ss} alt="" width="342" height="513" decoding="async"{lz} onerror="this.remove()">'
-            return f'<div class="bd" style="--pc:{pc}" aria-hidden="true">{img}</div>'
-        # no poster: never a flat colour field — night, the velvet glow, and the film's typographic tile
-        return (f'<div class="bd noimg" style="--pc:{pc}" aria-hidden="true"><span class="pst bd-t">'
-                f'<span class="pst-t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span></span></div>')
-
     def score(self, f, lang):
         rt = f.get("rt") or {}
         if rt.get("critics") is not None: return f'{"النقاد" if lang == "ar" else "Critics"} {num(str(rt["critics"]) + "%")}'
@@ -904,142 +781,6 @@ class Kit:
         v = (self.films[fid].get("verdict") or {}).get("verdict") or "unknown"
         return v, L(VERDICT.get(v, VERDICT["unknown"]), lang)
 
-    # -------- page plumbing
-    def card_chips(self, lang):
-        """The card sheet's choices (UI redesign Task 2): «بدون بطاقة», then the confirmed cards grouped
-        government / banks, every one a toggle button cinema.js drives (main.js pickCard: reprice + persist).
-        The bank <select> of the old control sentence is gone into this list."""
-        gov = [c for c in self.cards if c.get("kind") == "gov"]; bank = [c for c in self.cards if c.get("kind") != "gov"]
-        nm = lambda c: c["name_ar"] if lang == "ar" else c["name_en"]
-        b = lambda cid, label, on=False: (f'<button type="button" class="opt" data-card="{esc(cid)}" aria-pressed="{"true" if on else "false"}">'
-                                          f'{esc(label)}</button>')
-        out = f'<div class="sec"><div class="opts">{b("", L(T["nocard"], lang), True)}</div></div>'
-        for key, cs in (("gov", gov), ("bank", bank)):
-            if cs:
-                out += (f'<div class="sec"><h3 class="l" id="sc-{key}">{esc(L(CHROME_T[key], lang))}</h3>'
-                        f'<div class="opts" role="group" aria-labelledby="sc-{key}">{"".join(b(c["id"], nm(c)) for c in cs)}</div></div>')
-        return out + f'<p class="sheet-more"><a href="{P(lang, "cards")}">{esc(L(CHROME_T["all_cards"], lang))}</a></p>'
-
-    def sheet(self, sid, title, body, lang):
-        """A sheet (src/js/sheet.js): phone = bottom sheet, desktop = side panel; a modal dialog any
-        <button data-sheet-open="ID"> (or a pill link carrying it) opens. Hidden until then — with no
-        script it never shows, and the pill that opens it is a plain link."""
-        t = L(title, lang) if isinstance(title, tuple) else title
-        return (f'<div class="sheet" id="{sid}" role="dialog" aria-modal="true" aria-labelledby="{sid}-t" hidden>'
-                f'<div class="grab" aria-hidden="true"></div><div class="sheet-h"><h2 id="{sid}-t">{esc(t)}</h2>'
-                f'<button type="button" class="sheet-x" data-sheet-close aria-label="{esc(L(CHROME_T["close"], lang))}"></button></div>'
-                f'<div class="sheet-b">{body}</div></div>')
-
-    def sheet_city(self, lang, city="dubai"):
-        """Every city, and «قريب مني» (near.js askNear: the nearest cinema picks the city). Each city is a link
-        to its page; main.js picks it in place where the page follows the city (data-citypick)."""
-        opts = "".join(f'<a class="opt" href="{P(lang, c)}" data-city="{c}"{" aria-current=\"true\"" if c == city else ""}>{esc(L((a, e), lang))}</a>'
-                       for c, a, e in CITIES)
-        body = (f'<div class="sec"><div class="opts" data-citypick>{opts}</div></div>'
-                f'<div class="sec"><button type="button" class="opt near-b" data-near>{icon("pin")}{esc(L(CHROME_T["near"], lang))}</button>'
-                f'<p class="near-m" data-near-msg aria-live="polite"></p></div>'
-                f'<p class="sheet-more"><a href="{P(lang, "cinemas")}">{esc(L(CHROME_T["all_cities"], lang))}</a></p>')
-        return self.sheet("sheet-city", CHROME_T["pick_city"], body, lang)
-
-    def sheet_card(self, lang):
-        return self.sheet("sheet-card", CHROME_T["pick_card"], self.card_chips(lang), lang)
-
-    def me(self, lang, city=None, mode="home"):
-        """What is left of the control sentence «أنا في [المدينة] وعندي [البطاقة]» once the header's pills took
-        the city and the card (UI redesign Task 2): the line where «قريب مني» and the network's city say what
-        they did, and on home and city pages the «الحين» slot. The page bodies' calls go in Tasks 3–5."""
-        now = ""
-        if mode in ("home", "city"):
-            now = (f'<a class="now" href="#all" data-now hidden><span class="now-tx"><span class="now-l">{esc(L(T["now_label"], lang))}</span>'
-                   f'<span class="now-f" data-now-film></span><span class="now-w" data-now-where></span></span>'
-                   f'<span class="flip" dir="ltr" data-now-time></span></a>')
-        return f'<div class="me me-{mode}" data-me><p class="near-m" data-near-msg aria-live="polite"></p>{now}</div>'
-
-    def filters(self, lang, fids):
-        """Genre chips (cinema.js): all, family, kids, and the four genres most films here share."""
-        counts = {}
-        for fid in fids:
-            for k in genre_keys(self.films[fid]): counts[k] = counts.get(k, 0) + 1
-        top = [k for k, _ in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:4]]
-        b = lambda attrs, label, on=False: f'<button type="button" class="chip" {attrs} aria-pressed="{"true" if on else "false"}">{esc(label)}</button>'
-        chips = [b('data-filter="all"', "الكل" if lang == "ar" else "All", True),
-                 b('data-filter="family"', "عائلي" if lang == "ar" else "Family"),
-                 b('data-filter="kids"', "للأطفال" if lang == "ar" else "Kids")]
-        chips += [b(f'data-filter="genre:{esc(k)}"', genre_label(k, lang)) for k in top]
-        return f'<div class="chips filters js-only" role="group" aria-label="{"النوع" if lang == "ar" else "Genre"}">{"".join(chips)}</div>'
-
-    def controls(self, lang, sort=True, prayer=False, who=True):
-        """The second row cinema.js drives: «مع منو رايح؟» presets, «يخلص قبل», the sort, the prayer switch."""
-        ar = lang == "ar"
-        b = lambda attrs, label: f'<button type="button" class="chip" {attrs} aria-pressed="false">{esc(label)}</button>'
-        out = []
-        if who:
-            ws = [("solo", "بروحي", "Just me"), ("friends", "ربعي", "Friends"), ("family", "العائلة", "Family"), ("kids", "العيال", "The kids")]
-            out.append(f'<div class="ctl-g"><span class="ctl-l" id="who-{lang}">{"مع منو رايح؟" if ar else "Going with"}</span>'
-                       f'<div class="chips who" role="group" aria-labelledby="who-{lang}">{"".join(b(f"data-who={chr(34)}{k}{chr(34)}", a if ar else e) for k, a, e in ws)}</div></div>')
-        opts = [("", "أي وقت", "Any time"), ("21:00", "9 بالليل", "9 pm"), ("22:00", "10 بالليل", "10 pm"), ("23:00", "11 بالليل", "11 pm"), ("24:00", "12 بالليل", "Midnight")]
-        out.append(f'<label class="ctl-g ends"><span class="ctl-l">{"يخلص قبل" if ar else "Ends before"}</span>'
-                   f'<select data-ends-before="">{"".join(f"<option value={chr(34)}{v}{chr(34)}>{esc(a if ar else e)}</option>" for v, a, e in opts)}</select></label>')
-        if sort:
-            ss = [("price", "الأرخص لك", "Cheapest for you"), ("time", "الأقرب وقت", "Soonest"), ("verdict", "الأحسن تقييم", "Best reviewed")]
-            out.append(f'<div class="ctl-g"><span class="ctl-l" id="sort-{lang}">{"رتّب" if ar else "Sort"}</span>'
-                       f'<div class="chips sorts" role="group" aria-labelledby="sort-{lang}">{"".join(b(f"data-sort={chr(34)}{k}{chr(34)}", a if ar else e) for k, a, e in ss)}</div></div>')
-        if prayer: out.append(self.prayer_switch(lang))
-        return f'<div class="ctl js-only">{"".join(out)}</div>'
-
-    def prayer_switch(self, lang):
-        """«راعِ أوقات الصلاة» (off by default): cinema.js marks shows overlapping Maghrib / Isha, and can hide them."""
-        ar = lang == "ar"
-        lab = "راعِ أوقات الصلاة" if ar else "Mind prayer times"
-        return (f'<div class="ctl-g prayer"><span id="pr-{lang}">{lab}</span>'
-                f'<button type="button" class="switch" role="switch" aria-checked="false" data-prayer aria-labelledby="pr-{lang}"><i></i></button>'
-                f'<button type="button" class="chip hide-clash" data-hide-clash aria-pressed="false" hidden>{"أخفِ العروض المتقاطعة" if ar else "Hide clashing shows"}</button>'
-                f'<span class="pr-t" data-prayer-times aria-live="polite"></span></div>')
-
-    def film_tile(self, fid, lang, shows, big=False, i=99, live=False, row=False, tag=None):
-        """A film tile (UI redesign Task 3): the poster (2:3), the title on one line, «من X درهم» (the cheapest
-        ticket, which cinema.js reprices after the visitor's card) or «السعر في الشباك», an optional corner tag
-        («الخميس»/«آخر أسبوع»/«إعادة عرض»), and — on a desktop pointer only — a panel over the poster's foot with
-        the verdict word and the next time (cinema.js fills [data-next]), laid over it, so nothing moves.
-        `row`: a tile in a home row — only the id and runtime the price code reads, not the filter attributes
-        (the rows are curated; the filter sheet filters the «كل الأفلام» grid, whose tiles carry them all)."""
-        f = self.films[fid]; v, vw = self.vword(fid, lang)
-        today = [s for s in shows if s["film"] == fid and s["date"] == self.today] or [s for s in shows if s["film"] == fid]
-        mc = self.min_price(today) if live else self.min_cell(today, lang)
-        cell = (f'<span class="pv"><span class="num">{money(mc[0])}</span></span>' if live else mc[0]) if mc else ""   # .pv: cinema.js reprices it
-        ar = lang == "ar"
-        price = (f'{L(HOME_T["from"], lang)} {cell} {esc(L(T["aed"], lang))}' if ar else f'{L(HOME_T["from"], lang)} {esc(L(T["aed"], lang))} {cell}') if mc else self.box(lang)
-        tag = tag or (L(RERELEASE, lang) if f.get("rerelease") else None)
-        attrs = (f' data-fid="{esc(fid)}"' if row else self.film_attrs(fid)) + f' data-v="{v}"'
-        attrs += f' data-runtime="{int(f["runtime"])}"' if f.get("runtime") else ""
-        if not row and f.get("lang"): attrs += f' data-lang="{esc(f["lang"])}"'
-        sizes = POSTER_SIZES["tile row"] if row else POSTER_SIZES["tile"]
-        return (f'<a class="{"tile" if row else "film tile"} v-{v}" href="{P(lang, "film", fid)}"{attrs}>'
-                + f'<span class="tp">{self.poster(fid, lang, eager=not row, lazy=row or i >= 1, sizes=sizes, srcset=not row, label=False)}'
-                + (f'<span class="tag">{esc(tag)}</span>' if tag else "") + '</span>'
-                + f'<span class="t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>'
-                + f'<span class="m" data-cheap>{price}</span></a>')
-
-    def coming_tile(self, fid, f, lang, tag=None):
-        """A tile for a film the chains announced (data["coming"], not in self.films: no film page yet) — it links
-        to «نازل الخميس», and says when instead of a price."""
-        pc = hue(fid)
-        t = (f.get("title_ar") if lang == "ar" else None) or f.get("title") or fid
-        ta = ' lang="en" dir="ltr"' if lang == "ar" and not f.get("title_ar") else ""
-        po = str(f.get("poster") or "")
-        img = (f'<span class="pst img" style="--pc:{pc}"><span class="pst-t" aria-hidden="true"{ta}>{esc(t)}</span><img src="{esc(rel(po))}" width="342" height="513" alt="" decoding="async" loading="lazy"></span>'
-               if SAFE_URL.match(po) or OUR_POSTER.match(po) else
-               f'<span class="pst" style="--pc:{pc}"><span class="pst-t"{ta}>{esc(t)}</span></span>')
-        when = human_date(f["release_date"], lang) if f.get("release_date") else ("قريباً" if lang == "ar" else "Coming soon")
-        return (f'<a class="tile soon" href="{P(lang, "coming")}"><span class="tp">{img}'
-                + (f'<span class="tag">{esc(tag)}</span>' if tag else "") + '</span>'
-                + f'<span class="t"{ta}>{esc(t)}</span><span class="m">{esc(when)}</span></a>')
-
-    def film_attrs(self, fid):
-        """What cinema.js filters a film by: its id, genre keys and the family/kids flags."""
-        f = self.films[fid]; fam, kids = film_flags(f)
-        return f' data-fid="{esc(fid)}" data-genres="{esc(" ".join(genre_keys(f)))}" data-family="{int(fam)}" data-kids="{int(kids)}"'
-
     def crumbs(self, lang, *items):
         parts = [f'<a href="{P(lang)}">{esc(L(UI["s_mark"], lang))}</a>']
         for name, href in items:
@@ -1049,64 +790,6 @@ class Kit:
     def breadcrumb_ld(self, lang, *items):
         chain = [(L(UI["s_mark"], lang), SITE + P(lang))] + [(n, SITE + h) for n, h in items]
         return {"@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "name": n, "item": u} for i, (n, u) in enumerate(chain)]}
-
-    def ticket_shell(self):
-        return '<aside class="ticket" id="ticket" data-ticket hidden></aside>'
-
-    def ticket(self, s, lang, hidden=False):
-        """The ticket for one show, server-rendered (no-script visitors see the prices); cinema.js refills it
-        for whichever time is tapped: phone = bottom sheet, desktop = side panel."""
-        cid, chain = s["cinema"], self.cinemas[s["cinema"]]["chain"]
-        code, _ = self.hall_code_label(s); hk = self.hkey(s); asof = self.table_date(s)
-        hidden = " hidden" if hidden else ""
-        day = L(T["today"] if s["date"] == self.today else T["tomorrow"] if s["date"] == self.tomorrow else (s["date"], s["date"]), lang)
-        lines = []
-        if hk != "Standard": lines.append(f'<span class="tk-h">{self.hall_html(s, lang)}</span>')
-        if s.get("ends"): lines.append(f'<span>{esc(L(T["ends"], lang).format(t=s["ends"]))}</span>')
-        lg = s.get("lang") or self.films[s["film"]].get("lang")
-        if lg:
-            ln = lang_words(lg, lang)
-            sb = lang_words(s["subs"], lang) if s.get("subs") else ""
-            lines.append(f'<span>{esc(ln)}{("، ترجمة " + esc(sb) if lang == "ar" else ", " + esc(sb) + " subtitles") if sb else ""}</span>')
-        seats = "".join(f'<tr><th scope="row"{" lang=\"en\"" if lang == "ar" and not ARABIC.search(p["seat"]) else ""}><bdi>{esc(p["seat"])}</bdi></th>'
-                        f'<td>{self.pcell(p["aed"], chain, code, hk, cid, asof, lang)}</td></tr>'
-                        for p in sorted((p for p in s.get("prices") or [] if (p.get("aed") or 0) > 0), key=lambda p: p["aed"]))
-        seats = seats or f'<tr><td colspan="2">{self.box(lang)}</td></tr>'
-        ftitle, cn = self.ftitle(s["film"], lang), self.cname(cid, lang)
-        msg = f'{L(T["in_cinema"], lang).format(film=ftitle, cinema=cn)}، {day} {s["time"]}' if lang == "ar" else f'{L(T["in_cinema"], lang).format(film=ftitle, cinema=cn)}, {day} {s["time"]}'
-        share = "https://wa.me/?text=" + quote(msg + "\n" + SITE + P(lang, "film", s["film"]), safe="")
-        # the show's own booking page, else the chain's site (never the previous show's link)
-        book = (f'<a class="book" href="{esc(self.book_url(s))}" rel="noopener nofollow" target="_blank" data-tk-book data-book="{esc(s.get("book") or "")}">'
-                f'{esc(L(T["book_at"], lang).format(chain=self.h.chain_name(chain, lang)))}</a>')
-        left = s.get("seats_left")
-        left = f'<p class="tk-left" data-tk-seats>{esc(seats_left(int(left), lang))}</p>' if isinstance(left, int) and left > 0 else '<p class="tk-left" data-tk-seats hidden></p>'
-        return (f'<aside class="ticket" id="ticket" data-ticket data-show="{self.sid(s)}" data-cin="{esc(cid)}" data-chain="{esc(chain)}"'
-                f' role="dialog" aria-labelledby="tk-cin"{hidden}>'
-                f'<div class="tk-top"><div class="tk-main"><p class="tk-cin" id="tk-cin" data-tk-cin>{self.cname_html(cid, lang)}</p>'
-                f'<p class="tk-film" data-tk-film{self.title_attr(s["film"], lang)}>{esc(ftitle)}</p>'
-                f'<p class="tk-when" data-tk-when>{"".join(lines)}</p>{left}</div>'
-                f'<div class="tk-stub"><span data-tk-day>{esc(day)}</span><b dir="ltr" data-tk-time>{esc(s["time"])}</b></div></div>'
-                f'<table class="tk-seats"><tbody data-tk-rows>{seats}</tbody></table>'
-                f'<p class="tk-terms" data-tk-terms hidden></p><p class="tk-go" data-tk-go>{self.directions(self.cinemas[cid], lang)}</p>'
-                f'<p class="vh" data-tk-live aria-live="polite"></p>'
-                f'<div class="tk-act">{book}<a class="share" href="{esc(share)}" rel="noopener" target="_blank" data-tk-share data-share="{esc(msg)}">{esc(L(T["share"], lang))}</a></div>'
-                f'<button type="button" class="tk-x js-only" data-tk-close aria-label="{"سكّر" if lang == "ar" else "Close"}"></button></aside>')
-
-    def first_city_show(self, shows, cities):
-        """The next show in the city the page shows first (Dubai, the script's default, when it is there)."""
-        order = (["dubai"] if "dubai" in cities else []) + [c for c in cities if c != "dubai"]
-        for c in order:
-            n = self.next_show([s for s in shows if self.cinemas[s["cinema"]].get("city") == c])
-            if n: return n
-        return self.next_show(shows)
-
-    def next_show(self, shows):
-        """The first show still to come when the data was built (priced first), else the first at all."""
-        hhmm = self.now.strftime("%H:%M")
-        key = lambda s: (s["date"], s["time"])
-        up = sorted((s for s in shows if (s["date"], s["time"]) >= (self.today, hhmm)), key=key)
-        pool = up or sorted(shows, key=key)
-        return next((s for s in pool if s.get("prices")), pool[0] if pool else None)
 
     def page(self, lang, parts, title, desc, body, graph, pagekind, attrs="", nav="films", og_image=None, path=None, robots="", js=()):
         """Write one page from src/page.html. `js`: lazy chunks (a module's LAZY_JS) this page loads, on top
@@ -1170,151 +853,14 @@ class Kit:
         self._P, self._Pi, self._first_poster = [], {}, None
         self._sheets, self._preload, self._grid = [], "", False
 
-    NAV = {"films": "hub", "cinemas": "cinemas_href", "thursday": "thursday_href", "cards": "cards_href"}
-    # the footer's own order (the spec's): these feature keys come first, right after «من وين الأسعار»
-    FOOT_FIRST = ("q", "people")
-
-    def nav_links(self, vals, lang, nav):
-        """The modules' NavItems: a built-in key re-points that header link (and the tab bar's); any other key
-        is a link in the footer's row (the header keeps its four). Returns [(key, html)] for the footer."""
-        extra = []
-        for it in self.nav_items:
-            href = it.href(lang) if callable(it.href) else it.href
-            cur = ' aria-current="page"' if nav == it.key else ""
-            if it.key in self.NAV:
-                if href: vals[self.NAV[it.key]] = esc(href)
-                if it.label: vals["s_" + it.key] = esc(L(it.label, lang))
-                vals["c_" + it.key] = cur
-            else:
-                extra.append((it.key, f'<a href="{esc(href)}"{cur}>{esc(L(it.label or (it.key, it.key), lang))}</a>'))
-        return extra
-
-    def chrome(self, vals, lang, nav, pagekind, page_city, extra):
-        """The header's tools (search, the city and card pills), the phone's tab bar, the footer's links and
-        the two sheets the pills open. No script: the pills are links (the cinemas index, the cards page)."""
-        city = page_city or "dubai"
-        vals["city_name"] = esc(L(CITY[city], lang))
-        vals["card_name"] = esc(L(CHROME_T["mycard"], lang))
-        vals["cinemas_page"], vals["icon_search"] = P(lang, "cinemas"), icon("search")
-        cur = lambda on: ' aria-current="page"' if on else ""
-        tabs = [(vals["hub"], "home", vals["s_films"], cur(pagekind == "home"), ""),
-                (vals["cinemas_page"], "pin", vals["s_cinemas"], cur(nav == "cinemas"), ""),
-                (vals["thursday_href"], "cal", vals["s_thursday"], cur(nav == "thursday"), ""),
-                # no script: «كل الأفلام» on the home page; with it, the search overlay (src/js/search.js)
-                (P(lang) + "#all", "search", vals["s_search"], "", ' data-search aria-haspopup="dialog"')]
-        vals["tabs"] = "".join(f'<a href="{h}"{c}{x}>{icon(i)}<span>{t}</span></a>' for h, i, t, c, x in tabs)
-        first = [h for k in self.FOOT_FIRST for kk, h in extra if kk == k]
-        rest = [h for k, h in extra if k not in self.FOOT_FIRST]
-        links = [f'<a href="{vals["cinemas_page"]}"{cur(nav == "cinemas" and pagekind == "cinemas")}>{vals["s_cinemas"]}</a>',
-                 f'<a href="{P(lang, "cards")}"{cur(nav == "cards")}>{esc(L(UI["s_cards_f"], lang))}</a>',
-                 f'<a href="{P(lang, "sources")}"{cur(pagekind == "sources")}>{esc(L(UI["s_sources"], lang))}</a>',
-                 *first, *rest,
-                 f'<a href="{vals["halls_href"]}"{cur(pagekind == "halls")}>{vals["s_halls"]}</a>',
-                 f'<a href="{vals["alt"]}" hreflang="{vals["alt_lang"]}" lang="{vals["alt_lang"]}">{vals["s_alt"]}</a>']
-        vals["foot_links"] = "\n    ".join(links)
-        vals["sheets"] = self.sheet_city(lang, city) + self.sheet_card(lang)
-
     def write(self, path, text):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         # the site's digits are Western, always — a hand-typed ٣ in a yaml note is corrected here
         text = text.translate({0x0660 + i: 0x30 + i for i in range(10)} | {0x06F0 + i: 0x30 + i for i in range(10)})
         open(path, "w", encoding="utf-8", newline="\n").write(text)
 
-    def posters_row(self, lang, fids, shows, heading, city_label="", prayer=False, tags=None, yes=False):
-        """«كل الأفلام» (UI redesign Task 3; the home and city pages): every film's tile in a grid (3 columns on
-        a phone, 7 on a desktop) under two chips — «تصفية» (the filter sheet; its badge counts what is filtering)
-        and the sort. The controls that sat in rows over the list (genre, «مع منو رايح؟», «يخلص قبل», the sort,
-        the prayer switch) are in the sheet now, with the language; src/js/filters.js drives them as before.
-        The two sheets go after the footer with the header's (self._sheets, emptied by page()) — once per page,
-        like the section's ids: /summer/ draws one grid per city (fix round 1, I2); the later grids share them."""
-        ar = lang == "ar"
-        first = not self._grid
-        tiles = "".join(self.film_tile(fid, lang, shows, i=i, live=True, tag=(tags or {}).get(fid)) for i, fid in enumerate(fids))
-        hid = ' id="all-h"' if first else ""
-        head = (f'<div class="all-h"><h2{hid}>{esc(heading)}<span class="h-city" data-city-label>{esc(city_label)}</span> '
-                f'<span class="all-n num" data-all-n>{len(fids)}</span></h2>'
-                f'<button type="button" class="chip fchip js-only" data-sheet-open="sheet-filter">{icon("filter")}{esc(L(HOME_T["filter"], lang))}'
-                f'<b class="fbadge num" data-fcount hidden>0</b></button>'
-                f'<button type="button" class="chip js-only" data-sheet-open="sheet-sort">{esc(L(HOME_T["sort"], lang))}:&nbsp;'
-                f'<span data-sort-name>{esc(L(HOME_T["sort_default"], lang))}</span></button></div>')
-        if first: self._sheets.append(self.filter_sheet(lang, fids, prayer, yes) + self.sort_sheet(lang))
-        self._grid = True
-        sec = ' id="all" aria-labelledby="all-h"' if first else ""
-        return (f'<section class="all wrap"{sec}>{head}<div class="grid" data-films>{tiles}</div>'
-                f'<p class="empty" data-empty hidden></p></section>')
-
-    SORTS = (("time", "الأقرب وقتاً", "Soonest"), ("price", "الأرخص لك", "Cheapest for you"), ("verdict", "الأعلى تقييماً", "Best reviewed"))
-
-    def filter_sheet(self, lang, fids, prayer=False, yes=False):
-        """Every control of the old rows over the film list, in one sheet: genre (all, family, kids and the six
-        genres most of these films share), «مع منو رايح؟», «لازم يخلص قبل», language, sort, the prayer switch;
-        then «مسح» and «اعرض N فيلم» (the count follows the filters as they change, and is read out politely)."""
-        ar = lang == "ar"
-        b = lambda attrs, label, on=False: f'<button type="button" class="opt" {attrs} aria-pressed="{"true" if on else "false"}">{esc(label)}</button>'
-        sec = lambda key, body: (f'<div class="sec"><h3 class="l" id="sf-{key}">{esc(L(HOME_T[key], lang))}</h3>'
-                                 f'<div class="opts" role="group" aria-labelledby="sf-{key}">{body}</div></div>')
-        counts, langs = {}, {}
-        for fid in fids:
-            for k in genre_keys(self.films[fid]):
-                if k not in ("family", "kids"): counts[k] = counts.get(k, 0) + 1   # «عائلي»/«للأطفال» have their own chips
-            lg = self.films[fid].get("lang")
-            if lg: langs[lg] = langs.get(lg, 0) + 1
-        top = [k for k, _ in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:6]]
-        genre = (b('data-filter="all"', "الكل" if ar else "All", True) + b('data-filter="family"', "عائلي" if ar else "Family")
-                 + b('data-filter="kids"', "للأطفال" if ar else "Kids")
-                 # «يستاهل» (the verdict), where a home row's «الكل» lands (fix round 1, M4)
-                 + (b('data-filter="yes"', L(HOME_T["yes"], lang)) if yes else "") + "".join(b(f'data-filter="genre:{esc(k)}"', genre_label(k, lang)) for k in top))
-        ws = [("solo", "بروحي", "Just me"), ("friends", "ربعي", "Friends"), ("family", "العائلة", "Family"), ("kids", "العيال", "The kids")]
-        who = "".join(b(f'data-who="{k}"', a if ar else e) for k, a, e in ws)
-        ends = [("", "ما يهم", "Any time"), ("21:00", "9 بالليل", "9 pm"), ("22:00", "10 بالليل", "10 pm"), ("23:00", "11 بالليل", "11 pm"), ("24:00", "12 بالليل", "Midnight")]
-        before = "".join(b(f'data-before="{v}"', a if ar else e, not v) for v, a, e in ends)
-        top_l = [k for k, n in sorted(langs.items(), key=lambda kv: (-kv[1], kv[0])) if n >= 2][:5]
-        lg = b('data-flang=""', "الكل" if ar else "All", True) + "".join(b(f'data-flang="{esc(k)}"', L(LANGS.get(k, (k, k)), lang)) for k in top_l)
-        sort = "".join(b(f'data-sort="{k}"', a if ar else e) for k, a, e in self.SORTS)
-        body = (sec("genre", genre) + sec("who", who) + sec("before", before)
-                + (sec("lang", lg) if len(top_l) > 1 else "") + sec("sort", sort)
-                + (f'<div class="sec">{self.prayer_switch(lang)}</div>' if prayer else "")
-                + f'<div class="go"><button type="button" class="btn ghost" data-reset>{esc(L(HOME_T["clear"], lang))}</button>'
-                f'<button type="button" class="btn main" data-sheet-close data-show-all>{"اعرض" if ar else "Show"} <span data-fn>{esc(self.films_n(len(fids), lang))}</span></button></div>'
-                f'<p class="vh" data-fn-live aria-live="polite"></p>')
-        return self.sheet("sheet-filter", HOME_T["filter"], body, lang)
-
-    def sort_sheet(self, lang):
-        ar = lang == "ar"
-        opts = "".join(f'<button type="button" class="opt" data-sort="{k}" aria-pressed="false">{esc(a if ar else e)}</button>' for k, a, e in self.SORTS)
-        return self.sheet("sheet-sort", HOME_T["sort"], f'<div class="sec"><div class="opts" data-sort-pick>{opts}</div></div>', lang)
-
-    @staticmethod
-    def films_n(n, lang):
-        """«23 فيلم», «فيلمين» — as cinema.js's filmsN."""
-        if lang == "en": return f"{n} film" + ("" if n == 1 else "s")
-        return ar_count(n, ("فيلم واحد", "فيلمين", "أفلام", "فيلم"))
-
-    def rail(self, lang, key, title, tiles, sub="", more=None, attrs=""):
-        """A home row (UI redesign Task 3): its heading, an optional line beside it, «الكل» when there is somewhere
-        to go, and — on a desktop pointer — two arrow buttons that page the strip. The strip scrolls sideways
-        with a finger, a wheel or trackpad, or Tab through its tiles."""
-        arrows = (f'<span class="arr js-only"><button type="button" class="icon" data-rail="-1" aria-label="{esc(L(HOME_T["prev"], lang))}">{icon("prev")}</button>'
-                  f'<button type="button" class="icon" data-rail="1" aria-label="{esc(L(HOME_T["next"], lang))}">{icon("next")}</button></span>')
-        return (f'<section class="rail" aria-labelledby="r-{key}"{attrs}><div class="rail-h wrap"><h2 id="r-{key}">{esc(title)}</h2>'
-                + (f'<span class="sub">{sub}</span>' if sub else "")
-                + (f'<a class="all-l" href="{esc(more)}">{esc(L(HOME_T["all"], lang))}</a>' if more else "")
-                + f'{arrows}</div><div class="strip" data-strip>{tiles}</div></section>')
-
     def geo_attrs(self, c):
         return f' data-lat="{float(c["lat"])}" data-lng="{float(c["lng"])}"' if c.get("lat") is not None and c.get("lng") is not None else ""
-
-    def directions(self, c, lang):
-        """«الوصول»: Google Maps and Waze to the cinema's coordinates (or its maps link)."""
-        if c.get("lat") is not None and c.get("lng") is not None:
-            ll = f'{float(c["lat"])},{float(c["lng"])}'
-            g, w = f"https://www.google.com/maps/dir/?api=1&destination={ll}", f"https://waze.com/ul?ll={ll}&navigate=yes"
-        else:
-            m = c.get("maps") if SAFE_URL.match(str(c.get("maps") or "")) else None
-            g, w = m or ("https://www.google.com/maps/search/?api=1&query=" + quote(c.get("name") or "")), None
-        out = f'<a href="{esc(g)}" rel="noopener" target="_blank" lang="en">Google Maps</a>'
-        if w: out += f'{"، " if lang == "ar" else ", "}<a href="{esc(w)}" rel="noopener" target="_blank" lang="en">Waze</a>'
-        return f'<span class="go" data-go>{"الاتجاهات:" if lang == "ar" else "Directions:"} {out}</span>'
 
     def theater_ld(self, cid, lang):
         c = self.cinemas[cid]
