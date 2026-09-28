@@ -2,7 +2,10 @@
 identity: night, the velvet glow behind, one marquee-gold line glyph. Drawn, not lettered, so they read at 48 px
 and the same in both languages; the glyph stays inside the middle 60 % (Android masks shortcuts to a circle).
 
-  python src/icons/make_shortcuts.py   ->  src/icons/sc-now.png  sc-coming.png  sc-mine.png   (192 x 192)
+  python src/icons/make_shortcuts.py   ->  src/icons/sc-now.png  sc-coming.png   (192 x 192)
+
+«قائمتي» (a bookmark, /#mine) was dropped with its shortcut: no list existed behind it. When one does (/me/),
+its glyph is a bookmark ribbon drawn the same way.
 
 Run once when the identity changes; the PNGs are committed (build.py copies every src/icons/*.png)."""
 import math
@@ -43,12 +46,6 @@ def coming(d, c, r, w):
     d.rectangle([c + r * .15, c + r * .3, c + r * .15 + s, c + r * .3 + s], fill=GOLD)
 
 
-def mine(d, c, r, w):
-    """«قائمتي»: a bookmark ribbon."""
-    x0, x1, y0, y1 = c - r * .62, c + r * .62, c - r, c + r
-    d.polygon([(x0, y0), (x1, y0), (x1, y1), (c, y1 - r * .55), (x0, y1)], outline=GOLD, width=w)
-
-
 def icon(draw):
     im = base()
     big = SIZE * K
@@ -57,6 +54,6 @@ def icon(draw):
 
 
 if __name__ == "__main__":
-    for name, fn in (("now", now), ("coming", coming), ("mine", mine)):
+    for name, fn in (("now", now), ("coming", coming)):
         icon(fn).save(os.path.join(HERE, f"sc-{name}.png"), optimize=True)
     print("shortcut icons written to", HERE)

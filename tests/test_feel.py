@@ -93,8 +93,11 @@ def test_every_page_loads_the_bundle_through_the_boot_loader(site):
     for p in pages(site):
         h = open(p, encoding="utf-8").read()
         if 'rel="canonical"' not in h: continue
-        js = re.search(r'<link rel="preload" href="(/assets/cinema\.[0-9a-f]{10}\.js)" as="script">', h).group(1)
+        js = re.search(r'\("(/assets/cinema\.[0-9a-f]{10}\.js)",document\)</script>', h).group(1)
         assert f'<script src="{js}"' not in h and "defer></script>" not in h       # never a plain script tag
+        # no <link rel=preload as=script>: once sw.js controls the page the preload and the boot loader's request
+        # come from different worlds, and the bundle downloaded twice on every repeat visit (W0-P1, §4.1 #6)
+        assert 'as="script"' not in h and f'href="{js}"' not in h
         boot = re.search(r'<script id="boot">(.*?)</script>', h).group(1)
         assert boot.endswith(f'("{js}",document)') and "d.prerendering" in boot and '"prerenderingchange"' in boot
         assert h.index('<script id="boot">') > h.index("<script>window.CT =")  # the strings are there first
@@ -144,6 +147,8 @@ def test_view_transitions_only_without_reduced_motion_and_only_in_the_full_build
     assert m and "@view-transition{navigation:auto}" in m.group(1)
     assert css.count("@view-transition") == 1                          # never outside that media query
     assert "body[data-page=film] .fposter .pst.hero{view-transition-name:poster}" in m.group(1)
+    # the name makes .top a stacking context: z 30 keeps the fixed tab bar inside it above the posters (z 1)
+    assert ".top{view-transition-name:top;z-index:30}" in m.group(1)
     assert ":root[dir=rtl]{--vt-x:14px}" in css and ":root{--vt-x:-14px}" in css   # RTL slides the other way
     assert "view-transition" not in read(core_only, "assets", "cinema.css")
 
@@ -151,7 +156,10 @@ def test_view_transitions_only_without_reduced_motion_and_only_in_the_full_build
 def test_manifest_shortcuts_and_their_icons(site):
     m = json.loads(read(site, "manifest.webmanifest"))
     sc = m["shortcuts"]
-    assert [(s["name"], s["url"]) for s in sc] == [("الحين", "/#now"), ("نازل الخميس", "/coming/"), ("قائمتي", "/#mine")]
+    # «قائمتي» (/#mine) opened a plain home: no list exists yet (W0-P1 deletes it; W3-P1 brings /me/)
+    assert [(s["name"], s["url"]) for s in sc] == [("الحين", "/#now"), ("نازل الخميس", "/coming/")]
+    assert not os.path.exists(os.path.join(site, "assets", "icons", "sc-mine.png"))
+    assert 'id="now"' in read(site, "index.html")          # /#now has a target before any script runs
     for s in sc:
         assert s["short_name"] and s["description"] and len(s["short_name"]) <= 12
         (ic,) = s["icons"]

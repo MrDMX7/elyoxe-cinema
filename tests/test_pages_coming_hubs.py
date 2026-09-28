@@ -114,12 +114,15 @@ def test_no_last_chance_strip_even_with_a_list_in_the_data(out):
         assert "آخر فرصة" not in h and "Last chance" not in h and "last-chance" not in h, parts
 
 
-def test_phone_bottom_bar_stays_one_row_with_the_feature_links(out):
-    """Seven links in a four-column grid wrapped to a second 58 px row on phones (seen at 375 px, 2026-09-27)."""
-    nav = re.search(r'<nav class="nav".*?</nav>', read(out, "index.html"), re.S).group(0)
-    assert nav.count("<a ") > 4
-    css = read(out, "assets", "cinema.css")
-    assert re.search(r"@media \(max-width:\s*1023px\)\s*\{\s*\.nav\{grid-auto-flow:\s*column", css)
+def test_phone_bottom_bar_is_four_tabs_and_the_hubs_are_in_the_footer(out):
+    """Seven links in a four-slot bar: three sat off-screen at 390 px (live audit 2026-09-27). The bar keeps the
+    four built-in tabs; «عربي وخليجي» and «فعاليات» are footer links (W0-P1)."""
+    home = read(out, "index.html")
+    nav = re.search(r'<nav class="nav".*?</nav>', home, re.S).group(0)
+    assert nav.count("<a ") == 4 and "/arabic/" not in nav and "/events/" not in nav
+    foot = re.search(r'<p class="foot-l">.*?</p>', home, re.S).group(0)
+    assert 'href="/arabic/"' in foot and 'href="/events/"' in foot
+    assert "grid-auto-flow:column" not in read(out, "assets", "cinema.css")      # no sideways-scrolling bar
 
 
 @pytest.mark.parametrize("day,thursday", [

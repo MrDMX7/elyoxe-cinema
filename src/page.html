@@ -26,7 +26,6 @@
 {{preload}}
 <link rel="stylesheet" href="/assets/cinema.css?v={{v}}">
 <script>document.documentElement.classList.add("js")</script>
-<link rel="preload" href="{{js}}" as="script">
 <script type="speculationrules" id="spec">{"prerender":[{"where":{"and":[{"href_matches":["/film/*","/en/film/*","/abu-dhabi/*","/dubai/*","/sharjah/*","/ajman/*","/umm-al-quwain/*","/ras-al-khaimah/*","/fujairah/*","/al-ain/*","/en/abu-dhabi/*","/en/dubai/*","/en/sharjah/*","/en/ajman/*","/en/umm-al-quwain/*","/en/ras-al-khaimah/*","/en/fujairah/*","/en/al-ain/*"]},{"not":{"selector_matches":["[href*='?']","[target]","[download]","[data-nospec]"]}}]},"eagerness":"moderate"}],"prefetch":[{"where":{"and":[{"href_matches":"/*"},{"not":{"href_matches":["/film/*","/en/film/*","/abu-dhabi/*","/dubai/*","/sharjah/*","/ajman/*","/umm-al-quwain/*","/ras-al-khaimah/*","/fujairah/*","/al-ain/*","/en/abu-dhabi/*","/en/dubai/*","/en/sharjah/*","/en/ajman/*","/en/umm-al-quwain/*","/en/ras-al-khaimah/*","/en/fujairah/*","/en/al-ain/*","/data/*","/assets/*","/posters/*","/*.*"]}},{"not":{"selector_matches":["[target]","[download]","[data-nospec]"]}}]},"eagerness":"moderate"}]}</script>
 <script>(function(){var c=navigator.connection,m=window.matchMedia;if(c&&c.saveData||m&&m("(prefers-reduced-data: reduce)").matches){var s=document.getElementById("spec");if(s)s.remove()}addEventListener("pagereveal",function(e){var t=e.viewTransition,a=window.navigation&&navigation.activation;if(t&&t.types&&a&&a.from&&a.entry&&a.navigationType==="traverse"&&a.entry.index<a.from.index)t.types.add("back")})})()</script>
 <script type="application/ld+json">{{jsonld}}</script>
@@ -39,7 +38,7 @@
     <a href="{{hub}}"{{c_films}}>{{s_films}}</a>
     <a href="{{cinemas_href}}"{{c_cinemas}}>{{s_cinemas}}</a>
     <a href="{{thursday_href}}"{{c_thursday}}>{{s_thursday}}</a>
-    <a href="{{cards_href}}"{{c_cards}}>{{s_cards}}</a>{{nav_extra}}
+    <a href="{{cards_href}}"{{c_cards}}>{{s_cards}}</a>
   </nav>
   <a class="alt" href="{{alt}}" hreflang="{{alt_lang}}" lang="{{alt_lang}}">{{s_alt}}</a>
 </div></header>
@@ -48,7 +47,7 @@
 </main>
 <footer class="foot"><div class="wrap foot-in">
   <p>{{s_footer}}</p>
-  <p class="foot-l"><a href="{{halls_href}}">{{s_halls}}</a> <a href="{{cards_href}}">{{s_cards}}</a> <a href="https://elyoxe.com/">{{s_studio}}</a></p>
+  <p class="foot-l"><a href="{{halls_href}}">{{s_halls}}</a> <a href="{{cards_href}}">{{s_cards}}</a>{{foot_extra}} <a href="https://elyoxe.com/">{{s_studio}}</a></p>
 </div></footer>
 <script>window.CT = {{strings}};</script>
 <script id="boot">(function(u,d){function go(){var s=d.createElement("script"),late=d.readyState==="complete";s.src=u;if(late)s.onload=function(){var w=navigator.serviceWorker;if(w)w.register("/sw.js").catch(function(){})};d.body.appendChild(s)}if(d.prerendering)d.addEventListener("prerenderingchange",go,{once:true});else go()})("{{js}}",document)</script>

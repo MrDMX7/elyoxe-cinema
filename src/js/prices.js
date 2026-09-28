@@ -14,12 +14,14 @@ function offer(r) {
   return AR ? "خصم " + v : v + " off";
 }
 function weak(r) { return r && (r.confidence === "third-party" || r.confidence === "unconfirmed"); }
-/* the offer's conditions, in one sentence */
+/* the offer's conditions, in one sentence, each said once: in Arabic the note is printed, so a flag it
+   already states («من الشباك فقط، 4 تذاكر باليوم») is not said again (site_kit.rule_terms, the card pages);
+   a note carrying the source check's raw error is dropped, as site_kit.note_ar(r, ok=True) does */
 function terms(r) {
-  var t = [];
-  if (r.box_office_only) t.push(AR ? "من الشباك فقط" : "box office only");
-  if (r.max_tickets) t.push(esc(AR ? "لين " + r.max_tickets + " تذاكر" : "up to " + r.max_tickets + " tickets"));
-  if (AR && r.note_ar) t.push(esc(r.note_ar));
+  var t = [], note = AR && r.note_ar && !/not found|\b404\b/i.test(r.note_ar) ? r.note_ar : "";
+  if (r.box_office_only && note.indexOf("الشباك") < 0) t.push(AR ? "من الشباك فقط" : "box office only");
+  if (r.max_tickets && !/تذاكر|تذكرة/.test(note)) t.push(esc(AR ? "لين " + r.max_tickets + " تذاكر" : "up to " + r.max_tickets + " tickets"));
+  if (note) t.push(esc(note));
   if (weak(r)) t.push(esc(C.weak));
   return t.length ? TX.sep + t.join(TX.sep) : "";
 }

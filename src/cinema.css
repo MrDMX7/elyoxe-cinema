@@ -399,6 +399,10 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
 .foot-in{display:flex;flex-direction:column;gap:8px}
 .foot-l{display:flex;flex-wrap:wrap;gap:6px 18px}
 .foot a{color:var(--dim);text-decoration:none}
+/* the footer carries the sections the four-tab bar has no slot for (Arabic and Gulf, events, kids): full-height
+   tap targets, and the page you are on reads in screen light */
+.foot-l a{display:inline-flex;align-items:center;min-block-size:44px}
+.foot a[aria-current]{color:var(--screen)}
 
 /* ------------------------------------------------ desktop (E-Desk-*) */
 @media (min-width:1024px){
@@ -562,6 +566,12 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
 .x{display:none!important}
 .lnk{background:none;border:0;padding:0;color:var(--screen);text-decoration:underline;text-decoration-color:var(--seat);text-underline-offset:.2em;cursor:pointer;font:inherit}
 .lnk:hover{text-decoration-color:var(--screen)}
+/* on the ticket's paper the plan links («أضف للتقويم», «تقويم Google», «متى أطلع») are ink: screen light there was 1:1,
+   and the leave-by answer is ink too (seat grey on paper is 2.4:1); the row keeps the ticket's 16 px margins */
+.ticket .lnk{color:var(--ink);text-decoration-color:var(--ink-3)}
+.ticket .lnk:hover{text-decoration-color:var(--ink)}
+.ticket .plan-add{padding-inline:16px;padding-block-end:12px}
+.ticket .plan-leave{color:var(--ink-2)}
 .near{align-items:baseline;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--seat)}
 .near .lnk{min-block-size:44px;font-size:14px}
 .near-m:empty{display:none}
