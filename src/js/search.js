@@ -46,7 +46,7 @@ var STR = AR ? {
     });
     return out;
   }
-  /* 50 when the query's skeleton starts the name's, 45 when it starts at a later word (below a direct match) */
+  /* 50 when the query's skeleton starts the name's, 45 when it starts at a later word */
   function sks(q, s) {
     for (var w = s.split(" "), i = 0; q.length > 2 && i < w.length; i++) if (!w.slice(i).join("").indexOf(q)) return i ? 45 : 50;
     return -1;
@@ -117,7 +117,7 @@ var STR = AR ? {
     { key: "cm", label: STR.cinemas },
     { key: "p", label: STR.people }
   ];
-  /* a city (y) and a format or hall (h) sit with the cinemas; a chain (n) has no row of its own (W2-P8 chips) */
+  /* a city (y) and a format or hall (h) sit with the cinemas */
   function groupOf(t) { return t === "c" || t === "m" || t === "y" || t === "h" ? "cm" : t; }
 
   var panel, input, list, empty, btn, opener = null, activeId = -1, items = [];
@@ -157,12 +157,19 @@ var STR = AR ? {
     var query = norm(raw);
     if (!query) { render([]); return; }
     if (!DATA) { load().then(function () { search(raw); }); return; }
-    var scored = [], sq = /[\u0600-\u06ff]/.test(raw) ? skel(raw) : "";
+    var scored = [], top = -1, sq = /[\u0600-\u06ff]/.test(raw) ? skel(raw) : "";
+    /* a chain (n) is not scored until W2-P8 draws it: a match on it alone left a blank panel */
     for (var i = 0; i < DATA.length; i++) {
-      var s = score(query, DATA[i].k || []);
-      if (sq && DATA[i].s) s = Math.max(s, sks(sq, DATA[i].s));
-      if (s >= 0) scored.push({ s: s, e: DATA[i] });
+      var s = DATA[i].t === "n" ? -1 : score(query, DATA[i].k || []);
+      if (s > top && DATA[i].t !== "f") top = s;
+      scored.push({ s: s, e: DATA[i] });
     }
+    /* films draw first, so the skeleton only when no place or person matched inside its name (60): \u00ab\u0633\u062a\u0627\u0631\u00bb lists
+       Star, not a film that sounds like it; \u00ab\u0633\u0628\u0627\u064a\u062f\u0631\u00bb still lists Spider Island under Spider-Man */
+    scored = scored.filter(function (x) {
+      if (sq && top < 60 && x.e.s) x.s = Math.max(x.s, sks(sq, x.e.s));
+      return x.s >= 0;
+    });
     /* a showing match always outranks an archived one, whatever their scores -- the archived film is
        still found (its page is real and useful), just never ahead of one you can actually watch */
     scored.sort(function (x, y) {

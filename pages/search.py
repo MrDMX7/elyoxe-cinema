@@ -1,10 +1,11 @@
 """Bilingual fuzzy search (phase 3, batch A, task A5): a compact index at /data/search.json and the client
 chunk src/js/search.js that reads it. No page of its own — this module only feeds data and a lazy chunk.
 
-The index: every film (site.films — showing and archived, each still has a page), every cinema, every mall
-(malls.yaml, linked to one of its own cinemas — venue.py's rule: a mall not listed under a cinema's `mall`
-entry there is never guessed at), and every person with a real /people/<slug>/ page (pages/people.py's own
-`People` filter, imported rather than re-derived, so search never lists someone whose page does not exist).
+The index: every film (site.films — showing and archived, each still has a page), every cinema, and every
+person with a real /people/<slug>/ page (pages/people.py's own `People` filter, imported rather than re-derived,
+so search never lists someone whose page does not exist). A mall (malls.yaml) is not a row of its own: its names
+are keys of every cinema it lists (W1-D2 fix round), so «دبي مول» lands on both of its cinemas once each; a mall
+that malls.yaml does not tie to a cinema is never guessed at (venue.py's rule).
 
 Per entry: its Arabic/English names, the site path (joined without a leading/trailing slash — the client
 builds the language-correct href from `C.base`), a poster/photo where one exists, and `k`: normalised keys
@@ -18,11 +19,12 @@ The index learns Arabic (W1-D2, MASTER-PLAN §2.7):
     Arabic, where the reader's own Arabic covered 6), and a film carries every sourced Arabic name enrich.py
     kept (`aka_ar`: Wikidata's label and aliases, the chain's Arabic) as extra keys;
   - new entry types: `y` a city, `h` a format or premium hall (to its /q/ answer when that page is indexed
-    today, else /halls/), `n` a chain (its Arabic and English names; the client lists no row for it, W2-P8's
-    chips read it);
+    today, else /halls/), `n` a chain (its Arabic and English names; the client neither scores nor lists it
+    until W2-P8's chips read it);
   - `s`: the consonant skeleton of a Latin name (skeleton()), so «أفنجرز», «سبايدر» and «اوديسا» find
     Avengers, Spider-Man and The Odyssey however the Arabic is spelled; the client folds an Arabic query
-    with skeleton_ar()'s rule (src/js/search.js skel()).
+    with skeleton_ar()'s rule (src/js/search.js skel()), and uses it only when no place or person matched
+    directly (films are drawn first), so «ستار» lists Star's cinemas, not a film whose name sounds like it.
 
 The header carries the search button and the phone tab bar a «بحث» link (both `[data-search]`, UI redesign
 Task 2), and the chunk loads on every page through `page_js["*"]` — the two gaps task-A5-report.md flagged
@@ -164,19 +166,17 @@ def skeleton_match(q, s):
 
 
 # ------------------------------------------------------------------ the index
-def _malls(cinemas):
+def _mall_names(cinemas):
+    """{cinema id: [the names of the mall it is in]}, from malls.yaml's `cinemas:` lists (only cinemas that exist)."""
     try:
         raw = (yaml.safe_load(open(MALLS_PATH, encoding="utf-8")) or {}).get("malls") or {}
     except OSError:
         return {}
     out = {}
-    for mid, m in raw.items():
-        # fix round 1 (task-A5-review.md): the FIRST listed cinema is not always the one with a city --
-        # try every cinema this mall lists, in order, and take the first that both exists and has one.
-        cid = next((c for c in (m.get("cinemas") or []) if c in cinemas and cinemas[c].get("city")), None)
-        if not cid:
-            continue
-        out[mid] = {"ar": m.get("ar"), "en": m.get("en"), "path": f"{cinemas[cid]['city']}/{cid}"}
+    for m in raw.values():
+        for cid in m.get("cinemas") or []:
+            if cid in cinemas:
+                out.setdefault(cid, []).extend(x for x in (m.get("ar"), m.get("en")) if x)
     return out
 
 
@@ -241,13 +241,11 @@ def build_index(site):
         if f.get("status") == "archived":
             e["x"] = 1
         out.append(e)
+    malls = _mall_names(site.cinemas)
     for cid, c in site.cinemas.items():
         path = f"{c.get('city')}/{cid}" if c.get("city") else None
-        e = _entry("c", site.cname(cid, "ar"), site.cname(cid, "en"), path, more=(c.get("name_ar"), c.get("name")))
-        if e:
-            out.append(e)
-    for mid, m in _malls(site.cinemas).items():
-        e = _entry("m", m["ar"], m["en"], m["path"])
+        e = _entry("c", site.cname(cid, "ar"), site.cname(cid, "en"), path,
+                   more=(c.get("name_ar"), c.get("name"), *malls.get(cid, ())))
         if e:
             out.append(e)
     for slug, ar, en in CITIES:
