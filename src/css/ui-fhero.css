@@ -1,77 +1,80 @@
-/* the film hero: the frame or the poster, the title, the verdict, the facts, the actions; the trailer dialog (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
-/* ------------------------------------------------ film page (UI redesign Task 4; the mock's .fhero, .bar, .lay, .cin,
-   .tb, .ticket, .dock, .tabsx, .about): the hero, the sticky day bar, the schedule with the ticket beside it (desktop)
-   or the dock under it (phone), then the tabs */
-/* the hero: the trailer frame under the header, night rising from the foot and from the text's side */
-.fhero{position:relative;min-block-size:70vh;display:flex;align-items:flex-end;overflow:hidden;margin-block-start:calc(-1 * var(--head))}
+/* the film hero: «الشاشة» on the film page (W2-P1; MASTER-PLAN §1.6, §2.2), then the title, the verdict, the facts and
+   the actions; the trailer dialog. Owner: W2-P1 (§6.2); the hero's markup is W2-P3's (pages/_core/film.py).
+   With a trailer frame: the graded, grained frame full-bleed under the header, clamp(360px,50svh,440px) on a phone
+   (370 px at 360×740, 422 at 390×844). Without one: the poster card stands sharp as the lit case in its own light,
+   clamp(120px,20svh,180px) tall on a phone (99×148 at 360×740, 113×169 at 390×844), and the hero grows to its words.
+   No blurred fog. */
+.fhero{position:relative;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;margin-block-start:calc(-1 * (var(--head) + 1px))}
+.fhero.fr{min-block-size:clamp(360px,50svh,440px)}
 .fh-bd{position:absolute;inset:0}
-.fhero .bd{inset:0;block-size:auto;z-index:0}
-.fhero .bd img.fr{inset:0;inline-size:100%;block-size:100%;filter:none;object-fit:cover;object-position:50% 30%}
-/* no frame yet: the poster blurred beyond reading and darkened, full-bleed (as the home billboard) */
-.fhero .bd.pf img.pb{inset:-12%;inline-size:124%;block-size:124%;object-fit:cover;filter:blur(28px) brightness(.42) saturate(1.15)}
-/* no poster either: the film's colour as a velvet-dark glow (the typographic tile stands in the poster's place) */
-.fhero .bd.noimg{background:radial-gradient(70% 55% at 50% 30%,color-mix(in srgb,var(--pc) 70%,var(--night)),var(--night) 75%)}
-.fhero .bd-t{position:absolute;inset-block-start:calc(var(--head) + 24px);inset-inline-start:50%;translate:-50% 0;inline-size:min(30vw,128px);
-  block-size:auto;aspect-ratio:2/3;opacity:.7;box-shadow:0 30px 80px -20px rgba(122,22,38,.9)}
-:root[dir=rtl] .fhero .bd-t{translate:50% 0}
-.fhero.np .fhero-in{padding-block-start:calc(var(--head) + 24px + min(30vw,128px) * 1.5 + 24px)}
-.fhero .bd-t .pst-t{font-size:var(--fs-h2)}
-.fhero .bd::after{background:linear-gradient(0deg,var(--night) 3%,rgba(15,11,12,.4) 50%,rgba(15,11,12,.15) 100%),
-  linear-gradient(to var(--to-end),rgba(15,11,12,.8),rgba(15,11,12,0) 65%)}
-.fhero-in{position:relative;z-index:1;display:flex;gap:32px;align-items:flex-end;inline-size:100%;padding-block:calc(var(--head) + 40px) 24px}
+.fhero-in{position:relative;z-index:1;display:block;inline-size:100%;padding-block:calc(var(--head) + 16px) 12px}
+.fhero.fr .fhero-in{padding-block-start:0}
 .fh-t{min-inline-size:0;flex:1 1 auto}
-.fposter{display:none}
-.pst.hero{inline-size:220px;aspect-ratio:2/3;box-shadow:0 30px 80px -20px rgba(122,22,38,.9)}
+/* the case (a film with no frame): the page's own poster card, centred under the header */
+.fposter{display:block;inline-size:fit-content;margin-inline:auto;margin-block-end:24px}
+.fhero.fr .fposter{display:none}
+.pst.hero{block-size:clamp(120px,20svh,180px);inline-size:auto;aspect-ratio:2/3;
+  outline:1px solid var(--rule);outline-offset:8px;box-shadow:0 30px 120px -20px color-mix(in srgb,var(--pc) 60%,transparent)}
 .pst.hero .pst-t{font-size:var(--fs-h2)}
 /* the title by its length (--tsize, Kit.tsize), capped by the width; with no --tsize, the hero step */
-.ft{font-size:min(var(--tsize,var(--fs-hero)),16vw);line-height:1.02;margin-block-end:8px;overflow-wrap:anywhere}
+.ft{font-size:min(var(--tsize,var(--fs-hero)),16vw);line-height:1.02;text-wrap:balance;margin-block-end:4px;overflow-wrap:anywhere}
 [lang=en] .ft{letter-spacing:-.02em}
 :root[dir=rtl] .ft[dir=ltr]{text-align:right}
-.fte{font-size:var(--fs-meta);color:var(--seat);margin-block-end:12px}
+.fte{font-size:var(--fs-meta);color:var(--seat);margin-block-end:8px}
 .fte bdi + .num{margin-inline-start:8px}
-p.rr{font-size:var(--fs-meta);color:var(--dim);margin-block:-8px 12px}
-/* the verdict: three lines with script («المزيد» opens the rest); all of it without. Paragraph light, Arabic leading;
-   its word opens the sentence in Markazi 28 px: «يستاهل» gold, «بين بين» screen, «تجنّبه» seat grey (§1.4) */
+p.rr{font-size:var(--fs-meta);color:var(--dim);margin-block:-4px 8px}
+/* the verdict: two lines on a phone, three wider, with script («المزيد» opens the rest); all of it without. Paragraph
+   light, Arabic leading; its word opens the sentence in Markazi 28 px: «يستاهل» gold, «بين بين» screen, «تجنّبه»
+   seat grey (§1.4) */
 .fv{font-size:var(--fs-body);line-height:var(--lh-body);max-inline-size:60ch;color:var(--dim)}
-.js .fv:not(.open){display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.js .fv:not(.open){display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .fv .word{font:var(--dw) var(--fs-h2)/1 var(--display);color:var(--screen)}
 .fv.v-yes .word{color:var(--gold)}
 .fv.v-skip .word{color:var(--seat)}
-/* «المزيد» sits over the end of the third line (never below it: showing it must not move the hero, CLS) */
+/* «المزيد» sits over the end of the last line (never below it: showing it must not move the hero, CLS) */
 .fv-w{position:relative;max-inline-size:60ch}
-.fv-w .fv-m{position:absolute;inset-block-end:0;inset-inline-end:0;margin:0;border:0;padding:0 0 0 0;padding-inline-start:56px;cursor:pointer;
+.fv-w .fv-m{position:absolute;inset-block-end:0;inset-inline-end:0;margin:0;border:0;padding:0;padding-inline-start:56px;cursor:pointer;
   font:inherit;font-size:var(--fs-body);line-height:var(--lh-body);font-weight:500;color:var(--screen);text-decoration:none;
   background:linear-gradient(to var(--to-end),rgba(15,11,12,0),var(--night) 44px)}
 .fv-w .fv-m:hover,.fv-w .fv-m:focus-visible{text-decoration:underline;text-underline-offset:.2em}
 .fv-w .fv.open + .fv-m{position:static;background:none;padding:0;font-size:var(--fs-meta);font-weight:400;color:var(--seat);text-decoration:underline;min-block-size:32px}
-.ff{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:var(--fs-meta);color:var(--seat);margin-block-start:12px}
+/* the facts on one line on a phone (the genres are one tap away, in «عن الفيلم») */
+.ff{display:flex;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;gap:8px 16px;font-size:var(--fs-meta);color:var(--seat);margin-block:8px 12px}
 .ff .num{color:inherit}
 .basis{font-size:var(--fs-meta);color:var(--seat);margin-block-start:8px}
-.basis.rates{display:inline-flex;flex-wrap:wrap;gap:4px 12px;margin:0;font-size:inherit;color:var(--screen)}
+.basis.rates{display:inline-flex;flex-wrap:nowrap;gap:4px 12px;margin:0;font-size:inherit;color:var(--screen)}
 .basis.rates .num{color:var(--screen);font-weight:500}
-.fg{font-size:var(--fs-meta);color:var(--seat);margin-block-start:4px}
-.fh-t .cta{margin-block-start:20px}
-.fhero .btn.ghost{background:rgba(241,234,224,.14)}
+.fg{display:none;font-size:var(--fs-meta);color:var(--seat);margin-block-start:4px}
+.fh-t .cta{display:flex;flex-wrap:wrap;gap:8px;margin-block-start:12px}
+.fhero .cta .btn{min-block-size:44px;padding-inline:16px}
+.fhero .btn.ghost{background:rgb(241 234 224 / .14)}
 .fhero .btn svg{inline-size:16px;block-size:16px}
 /* an archived film: when it showed, and the way back to what is on */
 .fhero .archived{margin-block-start:20px;padding-block:16px 0;border-block-start:1px solid var(--line);display:flex;flex-direction:column;gap:16px;align-items:flex-start}
 .arch-s{font-family:var(--display);font-weight:var(--dw);font-size:var(--fs-h2);line-height:1.25}
+/* a phone keeps the tile → hero morph: with no frame the case carries «poster», with a frame the screen does (the
+   poster card is not drawn there) — both names live in src/css/transitions.css, the one file @view-transition is
+   allowed in, so a core-only build (no navigation transitions) never ships the property at all */
 @media (min-width:1024px){
-/* film page, desktop (UI redesign Task 4): the poster card beside the words in the velvet glow, the bar in the
-   page's measure, the schedule with the ticket as a sticky column at the end, no dock */
-  .fhero{min-block-size:min(80vh,760px)}
-  .fhero-in{padding-block:calc(var(--head) + 64px) 40px;gap:40px}
-  .fhero.np .fhero-in{padding-block-start:calc(var(--head) + 64px)}
-  .fposter{display:block;flex:0 0 auto}
-  .fhero .bd-t{display:none}
+/* film page, desktop (UI redesign Task 4): the poster card beside the words in its own light, over the frame or the
+   lit field; the bar in the page's measure, the schedule with the ticket as a sticky column at the end, no dock */
+  :root[dir=rtl] .fhero{--cx:84%}
+  :root[dir=ltr] .fhero{--cx:16%}
+  .fhero,.fhero.fr{block-size:auto;min-block-size:min(80vh,760px)}
+  .fhero-in,.fhero.fr .fhero-in{display:flex;gap:40px;align-items:flex-end;padding-block:calc(var(--head) + 64px) 40px}
+  .fposter,.fhero.fr .fposter{display:block;flex:0 0 auto;margin:0}
   .pst.hero{inline-size:240px;block-size:360px;aspect-ratio:auto}
   .pst.hero .pst-t{font-size:var(--fs-h1)}
-  .fhero .bd.pf img.pb{inset:-60px;inline-size:calc(100% + 120px);block-size:calc(100% + 120px);filter:blur(40px) saturate(1.1) brightness(.38)}
   .ft{font-size:min(calc(var(--tsize,64px) * 1.5),96px);line-height:.95;margin-block-end:12px}
   .fte{font-size:var(--fs-title)}
+  .js .fv:not(.open){-webkit-line-clamp:3;line-clamp:3}
+  .ff{flex-wrap:wrap;white-space:normal}
+  .fg{display:block}
+  .fh-t .cta{margin-block-start:20px}
+  .fhero .bd.fr::after{background:linear-gradient(0deg,var(--night) 3%,rgb(15 11 12 / .4) 50%,rgb(15 11 12 / .15) 100%),
+    linear-gradient(to var(--to-end),rgb(15 11 12 / .8),rgb(15 11 12 / 0) 65%)}
 }
 .trl-d{padding:0;border:0;background:var(--night);inline-size:min(960px,calc(100vw - 24px));max-inline-size:none;color:var(--screen)}
-.trl-d::backdrop{background:rgba(7,5,6,.85)}
 .trl-f{position:relative;aspect-ratio:16/9}
 .trl-f iframe{position:absolute;inset:0;inline-size:100%;block-size:100%;border:0}
 .trl-x{display:block;margin-inline-start:auto;inline-size:44px;block-size:44px;border:0;background:transparent;cursor:pointer;position:relative}

@@ -1,4 +1,4 @@
-"""The home page (UI redesign Task 3): the billboard and its per-city island, «يبدأ قريب منك», the rows in the spec's
+"""The home page (UI redesign Task 3): «يبدأ قريب منك» (the billboard is tests/test_screen.py's since W2-P1), the rows in the spec's
 order (each from the site's own data, none under 4 films, «الكل» to a page or to «كل الأفلام» with a preset), the
 tile, «كل الأفلام» with the filter and sort sheets holding every control the list used to have above it, what left
 the home page (cities grid, cards list, chains' freshness), and the 150 KB budget in both languages."""
@@ -119,38 +119,6 @@ def test_real_home_within_150kb_both_languages(tmp_path):
         assert n <= BUDGET, (parts, n)
 
 
-def test_billboard_slides_first_the_real_top_then_frames(tmp_path):
-    """Fix round 1, I1: slide 1 is the city's real most-shown film (the eyebrow says so), frame or not; slides 2-5
-    prefer the films of its top 10 that have a trailer frame, then the rest in order."""
-    from pages.core import CorePages
-    site = types.SimpleNamespace(films={f"f{i}": {} for i in range(12)})
-    for i in (1, 7, 9, 11): site.films[f"f{i}"]["backdrop"] = {"w640": "a", "w1280": "b"}
-    pick = CorePages(site).bill_pick
-    ranked = [f"f{i}" for i in range(12)]
-    assert pick(ranked) == ["f0", "f1", "f7", "f9", "f2"]           # f11 is outside the top 10
-    assert pick(["f7", "f0", "f1"]) == ["f7", "f1", "f0"]
-    assert pick([]) == []
-
-
-def test_billboard_pause_button_and_phone_sizes(out):
-    h = read(out)
-    bill = re.search(r'<section class="bill".*?</section>', h, re.S).group(0)
-    assert re.search(r'<button type="button" class="bill-pp" data-bill-pp aria-pressed="false"><span class="vh">أوقف التقليب</span></button>', bill)
-    js = open(os.path.join(ROOT, "src", "js", "bill.js"), encoding="utf-8").read()
-    assert "billHold.user" in js and "requestIdleCallback" in js and '"(min-width:1024px) 100vw, 320px"' in js
-    # the live flag is set before the slide's words change: a turn is never announced
-    show = js[js.index("function billShow("):js.index("function billDots(")]
-    assert show.index('slide.setAttribute("aria-live"') < show.index("slide.innerHTML")
-    # the slide's box keeps one height (a turn is never a layout shift) and the near row's place is held
-    assert re.search(r"\.bill-in\{[^}]*min-block-size:430px", css_all()) and ".js .rail[data-near-row][hidden]{display:block;visibility:hidden}" in css_all()
-    # stale layers go: every child but the newest
-    assert "c !== nu" in show
-    css = build.css_source()
-    assert "rgba(0,0,0,.5)" not in css[css.index("/* ------------------------------------------------ home (UI redesign Task 3)"):]
-    assert ".btn.ghost{backdrop-filter" not in css and ".bill .btn.ghost{" in css
-    assert css.count(".cta{display:flex") == 1
-
-
 def css_all():
     return build.css_source()
 
@@ -176,29 +144,6 @@ def test_no_duplicate_ids_on_any_page_even_with_summer_open(tmp_path):
                 ids = re.findall(r'\sid="([^"]+)"', open(os.path.join(dp, f), encoding="utf-8").read())
                 if len(ids) != len(set(ids)): bad.append(os.path.relpath(os.path.join(dp, f), o))
     assert not bad, bad[:10]
-
-
-def test_billboard_and_its_island(out):
-    for lang, parts in (("ar", ()), ("en", ("en",))):
-        h = read(out, *parts)
-        bill = re.search(r'<section class="bill" data-bill[^>]*aria-label="[^"]+">.*?</section>', h, re.S).group(0)
-        # Dubai's most shown tonight, server-drawn, the eyebrow naming the city
-        assert ("الأكثر عرضاً في دبي الليلة" if lang == "ar" else "Most shown in Dubai tonight") in bill
-        assert re.search(r'<h2 class="bill-t"><a href="/(en/)?film/[^"]+/" data-bill-a', bill)
-        assert 'data-from="' in bill and 'class="btn main"' in bill and "data-bill-tr" in bill
-        island = json.loads(re.search(r'<script type="application/json" id="bill-data">(.*?)</script>', bill, re.S).group(1))
-        assert "*" in island["c"] and set(island["c"]) <= {c for c, _, _ in CITIES} | {"*"}   # a city with nothing tonight: none
-        for c, rows in island["c"].items():
-            assert 1 <= len(rows) <= 5
-            for fid, price in rows:
-                assert fid in island["f"]
-                assert price is None or len(price) == 6
-        for o in island["f"].values():
-            assert o["t"] and o["h"] and o["v"] and o["w"] and isinstance(o["x"], list)
-            assert "·" not in "".join(o["x"])                               # facts are spans, never a dotted string
-        dots = re.findall(r'<button type="button" aria-label="([^"]+)" aria-pressed="(true|false)"><i></i></button>', bill)
-        assert len(dots) == len(island["c"]["dubai"]) and dots[0][1] == "true" and all(d[0] for d in dots)
-        assert re.search(r'<body data-page="home"[^>]* data-hero>', h)
 
 
 def test_near_row_is_drawn_by_the_script_and_hidden_until_then(out):
@@ -316,5 +261,3 @@ def test_filters_js_reads_the_sheet(out):
     js = open(os.path.join(ROOT, "src", "js", "filters.js"), encoding="utf-8").read()
     for need in ("[data-before]", "[data-flang]", "data-sort-pick", "[data-fcount]", "[data-fn-live]", 'param("sort")', 'param("f")', 'param("fl")'):
         assert need in js, need
-    bill = open(os.path.join(ROOT, "src", "js", "bill.js"), encoding="utf-8").read()
-    assert "6000" in bill and "if (!RM)" in bill and "visibilitychange" in bill and "mouseenter" in bill and "focusin" in bill

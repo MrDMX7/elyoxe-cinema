@@ -1,117 +1,145 @@
-/* the home billboard (UI redesign Task 3): the city's most-shown film tonight, then four more of its top films
-   (those with a trailer frame first), one at a time. The server wrote the first for Dubai and a JSON island
-   (#bill-data) of every city's five:
-   {f: {fid: {t, e?, h, v, w, s?, x: [facts], tr?, b?: [640, 1280] | p?: [342, 684], c}}, c: {city|"*": [[fid, price inputs]]}}.
-   The slide follows the city (pickCity), turns every 6 s — never under reduced motion, and not while a pointer
-   is over it, focus is in it, the tab is hidden or the visitor pressed pause — and its indicators are buttons.
-   The CTA's «من X» is a price cell like any other: renderPrices() and renderHome() give it the visitor's card
-   and city; until the city's shows are in, it says «…» (never the previous city's price). */
-var BILL = null, billI = 0, billT = null, billHold = { hover: false, focus: false, hidden: false, user: false };
-var BILL_BD = "(min-width:1024px) 100vw, 320px";   /* as Kit's BILL_BD_SIZES: a phone takes the 640w frame */
-function billList() {
-  var c = BILL && (BILL.c[city] && BILL.c[city].length ? BILL.c[city] : BILL.c["*"]);
-  return c || [];
-}
-function billFrame(o) {
-  var pc = ' style="--pc:' + esc(o.c) + '" aria-hidden="true"';
-  if (o.b) return '<div class="bd"' + pc + '><img src="' + esc(o.b[1]) + '" srcset="' + esc(o.b[0]) + " 640w, " + esc(o.b[1]) +
-    ' 1280w" sizes="' + BILL_BD + '" alt="" decoding="async" class="fr"></div>';
-  if (o.p) {
-    /* no frame yet (Kit's bill_frame): the 342w poster blurred full-bleed, and on a desktop a sharp copy with the glow */
-    return '<div class="bd pf"' + pc + '><img src="' + esc(o.p[0]) + '" class="pb" alt="" width="342" height="513" decoding="async">' +
-      '<img src="' + esc(o.p[0]) + '" srcset="' + esc(o.p[0]) + " 342w, " + esc(o.p[1]) + ' 684w" sizes="(min-width:1024px) 300px, 1px" class="ps" alt="" width="342" height="513" decoding="async"></div>';
-  }
-  /* nothing to show: the film's typographic tile over the velvet glow, never a flat field */
-  return '<div class="bd noimg"' + pc + '><span class="pst bd-t"><span class="pst-t"' + (o.e ? ' lang="en" dir="ltr"' : "") + ">" + esc(o.t) + "</span></span></div>";
-}
-/* the next slide's picture, fetched ahead — only once the page has loaded and gone idle (it must never compete
-   with the first picture, the page's LCP) */
-var billWarmOK = false;
-function billWarm(o) {
-  if (!billWarmOK || !o || !(o.b || o.p)) return;
-  var im = new Image();
-  if (o.b) { im.sizes = BILL_BD; im.srcset = o.b[0] + " 640w, " + o.b[1] + " 1280w"; im.src = o.b[1]; }
-  else im.src = o.p[0];
-}
-function billNext() { var list = billList(), nx = list[(billI + 1) % list.length]; billWarm(nx && BILL.f[nx[0]]); }
-/* the slide's price cell: priced from the city's own shows (renderFrom) once they are in, «…» until then */
-function billPrice(p) {
-  return esc(TX.from) + ' <span class="p" data-aed="' + esc(p[0]) + '" data-chain="' + esc(p[1]) + '" data-hall="' + esc(p[2]) + '" data-hk="' + esc(p[3]) + '" data-cin="' + esc(p[4]) + '"' +
-    (p[5] ? ' data-asof="' + esc(p[5]) + '"' : "") + ' data-wait><span class="num">…</span></span>';
-}
-var PLAY = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';
-function billShow(i, go) {
-  var box = q("[data-bill]"), list = billList();
-  if (!box || !list.length) return;
-  billI = (i + list.length) % list.length;
-  var row = list[billI], fid = row[0], o = BILL.f[fid], p = row[1];
-  if (!o) return;
-  var slide = q("[data-bill-slide]", box), cn = C.cities[city] || city;
-  /* said once, politely, only when the visitor picked it (set before the words change, never during rotation) */
-  slide.setAttribute("aria-live", go ? "polite" : "off");
-  /* the slide is written anew, into a box of a fixed height (cinema.css): new nodes and a box that keeps its
-     size, so a turn never counts as a layout shift */
-  var eye = BILL.c[city] && BILL.c[city].length ? sub(TX.top_in, { city: cn }) : TX.top, en = o.e ? ' lang="en" dir="ltr"' : "";
-  slide.innerHTML = '<p class="eyebrow" data-bill-eye>' + esc(eye) + "</p>" +
-    '<h2 class="bill-t"><a href="' + esc(o.h) + '" data-bill-a' + en + ">" + esc(o.t) + "</a></h2>" +
-    '<p class="bill-v" data-bill-v><b class="v-' + esc(o.v) + '">' + esc(o.w) + (AR || o.s ? "." : "") + "</b>" + (o.s ? " " + o.s : "") + "</p>" +
-    '<p class="bill-f" data-bill-f>' + o.x.map(function (x) { return "<span>" + x + "</span>"; }).join("") + "</p>" +
-    '<p class="cta"><a class="btn main" href="' + esc(o.h) + '" data-bill-go>' + esc(TX.times) +
-    '<span class="from" data-from="' + esc(fid) + '"' + (p ? ">" + billPrice(p) : " hidden>") + "</span></a>" +
-    (o.tr ? '<a class="btn ghost" data-bill-tr href="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(o.tr) + '" data-trailer="' + esc(o.tr) + '" rel="noopener" target="_blank">' + PLAY + esc(TX.bill_tr) + "</a>" : "") + "</p>";
-  if (p && S && S.city === city) renderFrom(false);
-  var bd = q("[data-bill-bd]", box);
-  bd.insertAdjacentHTML("beforeend", billFrame(o));
-  var nu = bd.lastElementChild, im = q("img", nu);
-  /* the new picture fades in over the old once loaded (at once under reduced motion); then every older layer
-     goes — however fast the indicators were pressed, one layer stays */
-  nu.classList.add("in");
-  var done = function () {
-    nu.classList.remove("in");
-    setTimeout(function () { [].slice.call(bd.children).forEach(function (c) { if (c !== nu && bd.lastElementChild === nu) c.remove(); }); }, RM ? 0 : 700);
-  };
-  if (!im || im.complete) requestAnimationFrame(done); else { im.addEventListener("load", done); im.addEventListener("error", done); }
-  qa("img", nu).forEach(function (x) { x.addEventListener("error", function () { x.remove(); }); });
-  qa("[data-bill-dots] button", box).forEach(function (b, k) { b.setAttribute("aria-pressed", k === billI ? "true" : "false"); });
-  billNext();
-}
-function billDots() {
-  var d = q("[data-bill-dots]"), list = billList(), pp = q("[data-bill-pp]");
-  if (!d) return;
-  d.innerHTML = list.length > 1 ? list.map(function (r, k) {
-    var o = BILL.f[r[0]] || {};
-    return '<button type="button" aria-label="' + esc(o.t) + '" aria-pressed="' + (k === billI ? "true" : "false") + '"><i></i></button>';
-  }).join("") : "";
-  if (pp) pp.hidden = RM || list.length < 2;
-}
-/* the city changed: its own five, from the first */
-function billCity() {
-  if (!BILL) return;
-  billDots(); billShow(0, false);
-}
-function billPaused() { return RM || billHold.user || billHold.hover || billHold.focus || billHold.hidden || billList().length < 2; }
-function billTick() { if (!billPaused()) billShow(billI + 1, false); }
-function bindBill() {
-  var box = q("[data-bill]"), j = q("#bill-data");
-  if (!box || !j) return;
-  try { BILL = JSON.parse(j.textContent); } catch (e) { return; }
-  /* the server drew Dubai's first film; a visitor whose city is another gets theirs before anything else moves */
-  if (city !== "dubai") billCity(); else billDots();
-  box.addEventListener("mouseenter", function () { billHold.hover = true; });
-  box.addEventListener("mouseleave", function () { billHold.hover = false; });
-  box.addEventListener("focusin", function () { billHold.focus = true; });
-  box.addEventListener("focusout", function (e) { if (!box.contains(e.relatedTarget)) billHold.focus = false; });
-  document.addEventListener("visibilitychange", function () { billHold.hidden = document.hidden; });
-  q("[data-bill-dots]", box).addEventListener("click", function (e) {
-    var b = e.target.closest && e.target.closest("button");
-    if (!b) return;
-    billShow(qa("[data-bill-dots] button", box).indexOf(b), true);
+/* «الشاشة», home's billboard (W2-P1; MASTER-PLAN §2.1, §1.3, §1.6). The server wrote every slide (pages/_core/bill.py);
+   slide 1, the UAE's most-shown film tonight, is the same for every visitor and nothing here swaps it after paint.
+   - A phone swipes: the slides are a CSS scroll-snap strip that never turns by itself (owner decision D3; the flag
+     BILL_PHONE_ROTATE brings back the approved 6 s turn, stopping for good at the first touch). The indicators follow
+     the slide the strip snapped to: an IntersectionObserver on the strip, never scrollLeft maths (negative in RTL).
+   - A desktop cross-fades every 6 s (the one grandfathered autonomous motion, §1.3): paused while the billboard is
+     under half on screen, under the pointer, with focus inside, in a hidden tab, after the pause button, and always
+     under reduced motion.
+   - Pictures: slide 1's came with the page; slide 2's loads once the page has loaded and gone idle; the rest on the
+     first swipe (or the desktop's turn). Under Save-Data nothing loads before a swipe.
+   - The card door under the CTA is the screen's one door (§1.2 #10): it opens the card sheet and says whether the
+     slide's price is after the visitor's card («السعر بعد خصم فزعة») or the card does nothing at that chain (§1.7).
+   billInsert(slide), desktop only, puts a slide (an element or its HTML) right after the one showing; slide 1 is never
+   replaced (W3-P1's «من قائمتك» slide). A phone answers false: there a saved film speaks in «قائمتي». */
+var BILL = null, BILL_TURN = 6000, BILL_PHONE_ROTATE = false;
+function billSlides() { return BILL ? qa(".slide", BILL.strip) : []; }
+function billSave() { var c = navigator.connection; return !!(c && c.saveData); }
+/* a slide's picture: its data-srcset / data-src become real (the <source> first, then the <img>) */
+function billLoad(k) {
+  var sl = billSlides()[k];
+  if (!sl) return;
+  qa("[data-srcset], [data-src]", sl).forEach(function (el) {
+    if (el.hasAttribute("data-srcset")) { el.setAttribute("srcset", el.getAttribute("data-srcset")); el.removeAttribute("data-srcset"); }
+    if (el.hasAttribute("data-src")) { el.setAttribute("src", el.getAttribute("data-src")); el.removeAttribute("data-src"); }
   });
-  /* pause / play: the rotation stops for as long as the visitor wants (WCAG 2.2.2), a touch screen included */
+}
+/* the slide now showing: its indicator, the light its frame spills, the door's words */
+function billSet(i) {
+  var sl = billSlides();
+  if (!sl[i]) return;
+  BILL.i = i;
+  sl.forEach(function (s, k) { s.classList.toggle("on", k === i); });
+  qa("[data-bill-dots] button", BILL.box).forEach(function (b, k) { b.setAttribute("aria-pressed", k === i ? "true" : "false"); });
+  var sp = sl[i].getAttribute("data-spill"), st = BILL.box.style;
+  if (sp) { sp.split(";").forEach(function (c, k) { st.setProperty("--sp" + (k + 1), c); }); BILL.box.setAttribute("data-spill", ""); }
+  else BILL.box.removeAttribute("data-spill");
+  billDoor();
+}
+/* the visitor (a dot) or the desktop's clock asks for slide i */
+function billGo(i, user) {
+  var sl = billSlides(), n = sl.length;
+  if (!n) return;
+  i = (i + n) % n;
+  billLoad(i);
+  if (BILL.desk) { billSet(i); if (!billSave()) billLoad((i + 1) % n); return; }
+  /* a phone: the strip scrolls to it and the observer marks it */
+  sl[i].scrollIntoView({ block: "nearest", inline: "start", behavior: RM || !user ? "auto" : "smooth" });
+}
+/* «السعر بعد خصم فزعة ▾» when the slide's price is after the card; «ما في خصم فزعة في فوكس ▾» when the card does
+   nothing at that price's chain (§1.7); «عندك بطاقة؟ شوف سعرك ▾» with no card. Read from the card's rules (prices.js
+   after()), not from the repriced cell, so the order of the card's listeners never matters. */
+function billDoor() {
+  var d = BILL && q("[data-bill-door]", BILL.box), t = d && q("[data-door-t]", d);
+  if (!t) return;
+  var name = card && C.cards && C.cards[card], s = d.getAttribute("data-no");
+  if (name) {
+    var sl = billSlides()[BILL.i], c = sl && q(".bill-go .p[data-aed]", sl), x = null;
+    if (c && !D) return;   /* the card's rules are not in yet: the door keeps its words until they are */
+    if (c) x = after(+c.getAttribute("data-aed"), c.getAttribute("data-chain"), c.getAttribute("data-hall"), card, c.getAttribute("data-hk"), c.getAttribute("data-cin"));
+    s = !x || x.a != null ? sub(d.getAttribute("data-yes"), { card: name })
+      : sub(d.getAttribute("data-not"), { card: name, chain: chainName(c.getAttribute("data-chain")) });
+  }
+  if (t.textContent !== s) t.textContent = s;
+}
+function billPaused() {
+  var h = BILL.hold;
+  return RM || h.user || h.hover || h.focus || h.hidden || h.off || billSlides().length < 2 || (!BILL.desk && (!BILL_PHONE_ROTATE || BILL.touched));
+}
+function billTick() { if (!billPaused()) billGo(BILL.i + 1, false); }
+/* the turn's clock exists only where a turn may happen (a desktop; a phone only with the flag, until a touch); each
+   tick asks billPaused() first. A phone with the flag off never sets it */
+function billClock() {
+  if (BILL.t) { clearInterval(BILL.t); BILL.t = null; }
+  if (!RM && billSlides().length > 1 && (BILL.desk || (BILL_PHONE_ROTATE && !BILL.touched))) BILL.t = setInterval(billTick, BILL_TURN);
+}
+/* the billboard is the country's (§2.1): a new city moves nothing on it (main.js pickCity still calls this) */
+function billCity() {}
+function billInsert(el) {
+  if (!BILL || !BILL.desk) return false;
+  if (typeof el === "string") { var w = document.createElement("div"); w.innerHTML = el; el = w.firstElementChild; }
+  if (!el || !el.classList || !el.classList.contains("slide")) return false;
+  el.classList.remove("on");
+  var cur = billSlides()[BILL.i];
+  cur.parentNode.insertBefore(el, cur.nextSibling);
+  var dots = q("[data-bill-dots]", BILL.box);
+  if (dots) {
+    var b = document.createElement("button"), a = q(".bill-t a", el);
+    b.type = "button"; b.setAttribute("aria-label", a ? a.textContent : ""); b.setAttribute("aria-pressed", "false"); b.innerHTML = "<i></i>";
+    dots.insertBefore(b, dots.children[BILL.i + 1] || null);
+  }
+  billClock();
+  return true;
+}
+function bindBill() {
+  var box = q("[data-bill]"), strip = box && q("[data-bill-s]", box);
+  if (!strip) return;
+  var mq = window.matchMedia && window.matchMedia("(min-width: 1024px)");
+  BILL = { box: box, strip: strip, i: 0, t: null, desk: !!(mq && mq.matches), swiped: false, touched: false,
+    hold: { user: false, hover: false, focus: false, hidden: document.hidden, off: false } };
+  var h = BILL.hold;
+  if ("IntersectionObserver" in window) {
+    /* a phone: the snapped slide is the one at least 60 % inside the strip */
+    var snap = new IntersectionObserver(function (es) {
+      if (BILL.desk) return;
+      es.forEach(function (e) {
+        if (e.isIntersecting && e.intersectionRatio >= 0.6) { var k = billSlides().indexOf(e.target); if (k >= 0 && k !== BILL.i) billSet(k); }
+      });
+    }, { root: strip, threshold: 0.6 });
+    billSlides().forEach(function (s) { snap.observe(s); });
+    /* the turn waits while the billboard is under half on screen */
+    new IntersectionObserver(function (es) { h.off = es[es.length - 1].intersectionRatio < 0.5; }, { threshold: [0, 0.5, 1] }).observe(box);
+  }
+  /* the first swipe loads the other slides' pictures; a touch ends the phone's turn for good (when the flag is on) */
+  strip.addEventListener("scroll", function () { if (!BILL.swiped && !BILL.desk) { BILL.swiped = true; billSlides().forEach(function (s, k) { billLoad(k); }); } }, { passive: true });
+  strip.addEventListener("pointerdown", function () { if (!BILL.touched) { BILL.touched = true; billClock(); } }, { passive: true });
+  box.addEventListener("mouseenter", function () { h.hover = true; });
+  box.addEventListener("mouseleave", function () { h.hover = false; });
+  box.addEventListener("focusin", function () { h.focus = true; });
+  box.addEventListener("focusout", function (e) { if (!box.contains(e.relatedTarget)) h.focus = false; });
+  document.addEventListener("visibilitychange", function () { h.hidden = document.hidden; });
+  var dots = q("[data-bill-dots]", box);
+  if (dots) dots.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("button");
+    if (b) billGo(qa("button", dots).indexOf(b), true);
+  });
+  /* pause / play (WCAG 2.2.2): the desktop's turn stops for as long as the visitor wants */
   var pp = q("[data-bill-pp]", box);
-  if (pp) pp.addEventListener("click", function () { billHold.user = !billHold.user; pp.setAttribute("aria-pressed", billHold.user ? "true" : "false"); });
-  var idle = function () { billWarmOK = true; billNext(); };
+  if (pp) pp.addEventListener("click", function () { h.user = !h.user; pp.setAttribute("aria-pressed", h.user ? "true" : "false"); });
+  /* the width crossed 1024 px: a phone's strip or a desktop's stack, and the clock follows */
+  if (mq) {
+    var flip = function () {
+      BILL.desk = mq.matches;
+      if (!BILL.desk) billSlides()[BILL.i].scrollIntoView({ block: "nearest", inline: "start" });
+      billClock();
+    };
+    if (mq.addEventListener) mq.addEventListener("change", flip); else if (mq.addListener) mq.addListener(flip);
+  }
+  /* slide 2's picture once the page has loaded and gone idle (never beside slide 1's, the page's LCP) */
+  var idle = function () { if (!billSave()) billLoad(1); };
   var afterLoad = function () { if (window.requestIdleCallback) requestIdleCallback(idle, { timeout: 3000 }); else setTimeout(idle, 1500); };
   if (document.readyState === "complete") afterLoad(); else window.addEventListener("load", afterLoad);
-  if (!RM) billT = setInterval(billTick, 6000);
+  on("ready", function () { billDoor(); getJSON("/data/discounts.json").then(billDoor); });
+  on("card", billDoor);
+  billClock();
 }

@@ -22,5 +22,11 @@
   ::view-transition-old(poster),::view-transition-new(poster){animation-duration:.24s;block-size:100%;object-fit:cover}
   ::view-transition-group(poster){z-index:2}
 }
+/* a phone keeps the same morph with a graded frame (W2-P1, MASTER-PLAN §1.6, §2.2): the screen carries «poster»
+   instead of the case, since the poster card is not drawn there (src/css/ui-fhero.css's .fhero.fr .fposter{display:
+   none}) */
+@media (max-width:1023px) and (prefers-reduced-motion:no-preference){
+  body[data-page=film] .fhero.fr .fh-bd{view-transition-name:poster}
+}
 @keyframes vt-out{to{opacity:0;transform:translateX(var(--vt-x))}}
 @keyframes vt-in{from{opacity:0;transform:translateX(calc(-1 * var(--vt-x)))}}
