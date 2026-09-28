@@ -1,0 +1,55 @@
+/* the film page: the day bar, the tabs and their panels, the archived page's similar films (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
+.syn{font-size:15px;line-height:1.7;color:var(--screen);max-inline-size:62ch}
+/* the day bar: sticks right under the header while the schedule is in view; the chosen day gold */
+.dbar{position:sticky;inset-block-start:var(--head);z-index:25;background:var(--night);border-block-end:1px solid var(--line)}
+.js .dbar.js-only{display:block!important}
+.dbar-in{display:flex;align-items:center;gap:8px;padding-block:10px}
+.days{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;min-inline-size:0}
+.days::-webkit-scrollbar{display:none}
+.dy[hidden]{display:none}
+.dy{flex:0 0 auto;min-block-size:44px;padding-inline:14px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:0;
+  font:inherit;font-size:13px;line-height:1.25;color:var(--seat);background:none;border:0;border-block-end:2px solid transparent;cursor:pointer;text-align:start}
+.dy b{font-weight:500;color:var(--screen);font-size:14px}
+.dy[aria-pressed=true]{border-block-end-color:var(--gold)}
+.dy[aria-pressed=true] b{color:var(--gold)}
+.dmore{margin-inline-start:auto;position:relative;border:1px solid var(--line-2)}
+.dmore .fbadge{position:absolute;inset-block-start:-6px;inset-inline-end:-6px}
+.tpns{content-visibility:auto;contain-intrinsic-block-size:auto 480px}
+/* the tabs: a line of words under the schedule; with script one panel at a time (tabs.js) */
+.ftabs{border-block-end:1px solid var(--line);margin-block-start:40px}
+.tabsx{display:flex;gap:26px;overflow-x:auto;scrollbar-width:none;scroll-margin-block-start:calc(var(--head) + 8px)}
+.tabsx::-webkit-scrollbar{display:none}
+.tabsx a{flex:0 0 auto;min-block-size:48px;display:inline-flex;align-items:center;font-size:15px;color:var(--seat);text-decoration:none;border-block-end:2px solid transparent}
+.tabsx a:hover{color:var(--screen)}
+.tabsx a[aria-selected=true]{color:var(--screen);border-block-end-color:var(--screen)}
+.tpns{padding-block:22px 0}
+.tpn{scroll-margin-block-start:calc(var(--head) + 8px)}
+.tpns > .tpn{margin-block-start:0}
+.tpn + .tpn{margin-block-start:40px}
+.js .tpn[role=tabpanel] + .tpn{margin:0}
+.tpn[hidden]{display:none}
+.tpn:focus-visible{outline-offset:6px}
+.tp-h{font-size:26px;margin-block-end:12px}
+/* inside a tab the tab says what it is: the sections' own headings stay for a reader, out of sight */
+.js .tpn[role=tabpanel] > .tp-h,.js .tpn[role=tabpanel] > section > h2:first-child,.js .tpn[role=tabpanel] .sec-h h2{position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.js .tpn[role=tabpanel] .dfeat > summary{display:none}
+.tpn#about{display:grid;gap:22px;max-inline-size:900px}
+.tpn#about[hidden]{display:none}
+.tpn .facts{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px 16px;font-size:14px;margin:0}
+.tpn .facts div{display:contents}
+.tpn .facts dt{color:var(--seat)}
+.tpn .facts dd{margin:0;overflow-wrap:anywhere}
+.tpn .crumbs{margin:0}
+.tpn .similar{margin:0;padding:0}
+.tpn .cmp,.tpn .sim,.tpn .cast{margin:0}
+.tpn .wrap{padding-inline:0;max-inline-size:none}
+/* archived film page */
+.similar .posters.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px;overflow:visible;margin-inline:0;padding-inline:0}
+.similar .film{inline-size:auto}
+@media (min-width:1024px){
+  .similar .posters.grid{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .dy{font-size:13px}
+  .ftabs{margin-block-start:56px}
+  .tabsx{gap:30px}
+  .tp-h{font-size:30px}
+}

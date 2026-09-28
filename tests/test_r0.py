@@ -17,6 +17,7 @@ from pathlib import Path
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from test_w0_p3 import FAKE_DOM, needs_node, node  # noqa: E402
+import build  # noqa: E402  (test_w0_p3 put the repo on sys.path)
 
 JS = Path(ROOT, "src", "js")
 
@@ -59,5 +60,5 @@ def test_a_show_link_is_found_before_the_layout_and_revealed():
 
 
 def test_the_now_target_clears_the_sticky_header():
-    css = open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
+    css = build.css_source()
     assert "#now{scroll-margin-block-start:calc(var(--head) + 8px)}" in css

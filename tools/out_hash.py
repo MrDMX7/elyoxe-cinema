@@ -15,18 +15,19 @@ the token replaced) and reported on its own line; every other byte must still ma
 import argparse, hashlib, json, os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-V_TOKEN = [re.compile(rb"\?v=[0-9a-f]{10}\b"), re.compile(rb'var V = "[0-9a-f]{10}"')]
-
-
 def manifest(out):
-    files = {}
+    """{path: [sha256, sha256 with the build's version token set aside, size]}. The token is read from sw.js
+    (`var V = "…"`, Kit.v) and replaced wherever it appears: ?v= on every page, the worker's name and its comment."""
+    files, v = {}, None
+    sw = os.path.join(out, "sw.js")
+    if os.path.exists(sw):
+        m = re.search(rb'var V = "([0-9a-f]{10})"', open(sw, "rb").read())
+        v = m and m.group(1)
     for dp, _, fs in os.walk(out):
         for f in fs:
             p = os.path.join(dp, f)
             b = open(p, "rb").read()
-            n = b
-            for rx in V_TOKEN:
-                n = rx.sub(b"<V>", n)
+            n = b.replace(v, b"<V>") if v else b
             files[os.path.relpath(p, out).replace(os.sep, "/")] = [hashlib.sha256(b).hexdigest(), hashlib.sha256(n).hexdigest(), len(b)]
     return files
 

@@ -23,7 +23,10 @@ from pages._core.places import TOMORROW_AT_CINEMA, PlacesPages  # noqa: F401  (p
 # declarations with no page access: tests/test_js.py and tests/test_parity.py run them in node as they are.
 # main.js (start-up) stays last: a feature's main-bundle modules go in just before it (build.js_files).
 JS = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "bill", "ticket", "film", "tabs", "trailer", "pwa", "sheet", "main")
-CSS = ()            # src/cinema.css is the base sheet; features append src/css/<name>.css
+# the shared stylesheet: src/cinema.css (tokens and base), then these partials in this order (W1-P1 split the rest of
+# cinema.css by owner, MASTER-PLAN §6.2), then every feature's src/css/<name>.css in module order
+CSS = ("ui-paper", "ui-chrome", "ui-tabs", "ui-sheet", "ui-near", "ui-bill", "ui-fhero", "ui-lights", "ui-rows", "ui-tile", "ui-grid",
+       "ui-film", "ui-sched", "ui-dock", "ui-ticket", "ui-places", "ui-money", "ui-edge")
 LAZY_JS = ()
 DIRS = tuple(c for c, _, _ in CITIES) + ("film", "cards", "halls", "data", "assets", "en", "cinema", "cinemas", "sources")
 

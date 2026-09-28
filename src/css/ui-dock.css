@@ -1,0 +1,17 @@
+/* the phone's dock: the chosen time on paper over the tab bar (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
+/* the dock: the chosen time on paper, over the tab bar; «التفاصيل والحجز» opens the ticket sheet */
+.dock{position:fixed;inset-inline:0;inset-block-end:calc(60px + env(safe-area-inset-bottom));z-index:31;background:var(--screen);color:var(--ink);
+  padding:12px var(--gut);display:flex;align-items:center;gap:12px}
+.dock[hidden]{display:none}
+.dk-t{min-inline-size:0;flex:1 1 auto}
+.dk-p{font-size:22px;font-weight:600;line-height:1.1}
+.dk-p .num{font-size:22px}
+.dk-p .per,.dk-p .na{font-size:12px;font-weight:400;color:var(--ink-2)}
+.dk-s{font-size:12px;color:var(--ink-2);line-height:1.5}
+.dk-b{margin-inline-start:auto;flex:0 0 auto;white-space:nowrap;background:var(--velvet);color:var(--screen);min-block-size:44px;padding-inline:18px;font-size:15px;font-weight:500;cursor:pointer}
+.dk-b:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+body.docked{padding-block-end:calc(140px + env(safe-area-inset-bottom))}
+@media (min-width:1024px){
+  .dock,body.docked .dock{display:none}
+  body.docked{padding-block-end:0}
+}

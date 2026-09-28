@@ -486,12 +486,12 @@ def test_dates_are_human_and_english_runs_marked(site):
     assert "<small>25 سبتمبر 2026</small>" in cin and "25 September 2026" in read(out, "en", "al-ain", "star-bawadi-mall")
     assert 'lang="en">Google Maps</a>' in cin and 'lang="en">Waze</a>' in cin
     assert '<span class="basis rates">' in read(out, "film", "crawlers") and '<bdi dir="ltr" lang="en">' not in read(out, "film", "crawlers")
-    assert "E0816F" not in open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
+    assert "E0816F" not in build.css_source()
     # font preloads: the Arabic display + body faces (en: the latin body face); the digits' latin subset comes via the stylesheet
     assert 'href="/assets/fonts/readex-arabic.woff2"' in read(out) and 'href="/assets/fonts/markazi-700-arabic.woff2"' in read(out)
     assert read(out).count('as="font"') == 2 and read(out, "en").count('as="font"') == 1
     assert 'href="/assets/fonts/readex-latin.woff2"' in read(out, "en")
-    assert "fonts/readex-latin.woff2" in open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
+    assert "fonts/readex-latin.woff2" in build.css_source()
 
 
 def test_no_poster_hero_is_not_a_colour_field(site):
@@ -502,7 +502,7 @@ def test_no_poster_hero_is_not_a_colour_field(site):
     home = read(out)                                   # the fixture's Dubai top tonight (The Paradise) has no poster
     bill = home[home.index('<section class="bill"'):home.index("</section>", home.index('<section class="bill"'))]
     assert '<div class="bd noimg"' in bill and '<span class="pst bd-t"><span class="pst-t" lang="en" dir="ltr">The Paradise</span>' in bill
-    css = open(os.path.join(ROOT, "src", "cinema.css"), encoding="utf-8").read()
+    css = build.css_source()
     assert not re.search(r"\.bill \.bd-t\{display:none", css)
     rule = re.search(r"\.bill \.bd-t\{([^}]*)\}", css).group(1)
     assert "position:absolute" in rule and "aspect-ratio:2/3" in rule and "opacity:0" not in rule

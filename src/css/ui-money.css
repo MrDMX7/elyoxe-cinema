@@ -1,0 +1,32 @@
+/* money: cards (rows, the matrix, examples, FAQ) and /sources/ (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
+.links{display:flex;flex-wrap:wrap;gap:6px 20px;align-items:baseline;margin-block-start:10px}
+.links > span{color:var(--seat);font-size:13px;min-inline-size:4.5rem}
+.links a{text-decoration:none;border-block-end:1px solid var(--line-2)}
+.links a:hover{border-color:var(--screen)}
+.chains{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(16rem,100%),1fr));column-gap:32px}
+.chains li{padding-block:10px;border-block-end:1px solid var(--line);display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.chains b{font-weight:500}
+.src,.chkd{color:var(--seat);font-size:12px}
+.weak{color:var(--seat);font-size:12px}
+.crd{grid-template-areas:"nm val" "sub sub"}
+.crd .off{color:var(--gold);font-weight:600;font-size:18px}
+.crd .off.txt{font-size:15px}
+.crd .val{display:flex;flex-direction:column;align-items:flex-end}
+.nil{color:var(--seat);font-size:14px}
+.ex{padding-block:4px 14px;border-block-end:1px solid var(--line);color:var(--seat);font-size:13px}
+.ex s{color:var(--seat)}
+.ex b{color:var(--gold);font-weight:600;font-size:18px}
+.cardrows .crd{border-block-end:0}
+/* cards matrix */
+.xwrap{overflow-x:auto;border-block:1px solid var(--line-2)}
+.matrix{border-collapse:collapse;inline-size:max-content;min-inline-size:100%;font-size:14px}
+.matrix th,.matrix td{padding:10px 14px;border-block-end:1px solid var(--line);text-align:start;white-space:nowrap}
+.matrix thead th{color:var(--seat);font-weight:400;font-size:12px}
+.matrix tbody th{font-weight:500;position:sticky;inset-inline-start:0;background:var(--night)}
+.matrix tbody th a{text-decoration:none}
+.matrix td b{color:var(--gold);font-weight:600}
+.matrix .nil{font-size:12px}
+.faq details{border-block-start:1px solid var(--line);padding-block:12px}
+.faq details:last-child{border-block-end:1px solid var(--line)}
+.faq summary{cursor:pointer;font-weight:500}
+.faq details p{color:var(--dim);font-size:14px;margin-block-start:6px}

@@ -1,7 +1,8 @@
 """Build «سينما» — https://cinema.elyoxe.com — static pages from data/latest.json + discounts.yaml + halls.yaml.
 
   src/page.html     the page template (head with SEO, header with the wordmark and nav, footer)
-  src/cinema.css    the «هـ» design system (night, velvet, marquee gold; Markazi Text + Readex Pro)
+  src/cinema.css    the «هـ» design system's tokens and base (night, velvet, marquee gold; Markazi Text + Readex Pro);
+                    its components in src/css/ui-*.css, one Wave 2 owner each (pages/core.py CSS, W1-P1)
   src/js/*.js       client modules, bundled into /assets/cinema.<hash>.js (+ lazy chunks /assets/<name>.<hash>.js)
   src/fonts/        self-hosted woff2 subsets (OFL, licences beside them)
   site_kit.py       the shared helpers and the Kit (price cells, posters, ticket, page()) every page module uses
@@ -52,6 +53,14 @@ def js_files(modules=None, src=None):
 
 def css_files(modules):
     return [_asset(m, "css", n) for m in modules for n in getattr(m, "CSS", ())]
+
+
+def css_source(modules=None):
+    """The shared stylesheet's source, unminified, in the order /assets/cinema.css is made from it: src/cinema.css
+    (tokens and base), then every module's partials in module order (core's src/css/ui-*.css first, W1-P1).
+    Tests that pin a rule read it here, wherever the rule's file is."""
+    modules = discover() if modules is None else modules
+    return "\n".join(open(p, encoding="utf-8").read() for p in [os.path.join(SRC, "cinema.css")] + css_files(modules))
 
 
 def bundle_js(src=None, modules=None):
@@ -130,8 +139,7 @@ class Site(Kit):
         adir = os.path.join(self.out, "assets")
         os.makedirs(os.path.join(adir, "fonts"), exist_ok=True)
         # the base sheet, then each module's partials (src/css/<name>.css) in module order, minified as one
-        css = "\n".join(open(p, encoding="utf-8").read() for p in [os.path.join(SRC, "cinema.css")] + css_files(self.modules))
-        self.write(os.path.join(adir, "cinema.css"), minify_css(css))
+        self.write(os.path.join(adir, "cinema.css"), minify_css(css_source(self.modules)))
         if os.path.exists(os.path.join(SRC, "icon.svg")):
             self.write(os.path.join(adir, "icon.svg"), open(os.path.join(SRC, "icon.svg"), encoding="utf-8").read())
         self.write(os.path.join(adir, self.js_name), self.js)
