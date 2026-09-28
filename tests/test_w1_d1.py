@@ -15,7 +15,7 @@ import sys
 import warnings
 
 import pytest
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
@@ -215,6 +215,27 @@ def test_a_youtube_throttle_stops_the_run_and_skips_the_node_retry(tmp_path, mon
     assert _cache(tmp_path)["film-a"]["kind"] == "transient" and "film-b" not in _cache(tmp_path)
 
 
+def test_a_timed_out_download_is_not_retried_with_node(tmp_path, monkeypatch):
+    """Review M4: no JS runtime fixes a slow link, and a second 240 s wait held one film for 480 s."""
+    import subprocess as sp
+    calls = []
+    monkeypatch.setattr(bd.shutil, "which", lambda name: "/usr/bin/node" if name == "node" else None)
+
+    def run(cmd, **kw):
+        calls.append(list(cmd))
+        raise sp.TimeoutExpired(cmd, kw.get("timeout"))
+    video, why = bd._yt_dlp_download("AAAAAAAAAAA", tmp_path, "film-a", run=run)
+    assert video is None and why == f"download: timed out after {bd.DOWNLOAD_TIMEOUT}s" and len(calls) == 1
+
+
+def test_when_both_attempts_fail_the_first_reason_is_kept(tmp_path, monkeypatch):
+    monkeypatch.setattr(bd.shutil, "which", lambda name: "/usr/bin/node" if name == "node" else None)
+    errs = iter(["ERROR: [youtube] abc: Requested format is not available", "ERROR: node exploded"])
+    video, why = bd._yt_dlp_download("AAAAAAAAAAA", tmp_path, "film-a",
+                                     run=lambda cmd, **kw: _Result(1, stderr=next(errs)))
+    assert video is None and why == "download: ERROR: [youtube] abc: Requested format is not available"
+
+
 def test_yt_dlps_non_utf8_stderr_is_read_not_lost(tmp_path):
     """On Windows yt-dlp writes cp1252 (0x92, a curly apostrophe): text=True alone crashed subprocess's reader
     thread and the reason came back empty. A real child process writes those bytes here."""
@@ -235,14 +256,16 @@ def fixture_run(tmp_path_factory):
     for name, size, bar in (("film-1080", (1920, 1080), 138), ("film-720", (1280, 720), 92)):
         tmp = tmp_path_factory.mktemp(name)
         mp = pytest.MonkeyPatch()
-        mp.setattr(bd, "OVERRIDE_PATH", tmp / "none.yaml")
-        mp.setattr(bd, "_mem_available_mb", lambda: None)
-        mp.setattr(bd.shutil, "which", lambda n: None)
-        mp.setattr(bd.subprocess, "run", _fake(size=size, bar=bar))
-        mp.setattr(bd, "SAMPLE_COUNT", 8)
-        data = _films(name)
-        r = bd.run(data, {"data_dir": str(tmp), "now": NOW})
-        mp.undo()
+        try:   # a raise inside run() must not leave subprocess.run and shutil.which faked for the session
+            mp.setattr(bd, "OVERRIDE_PATH", tmp / "none.yaml")
+            mp.setattr(bd, "_mem_available_mb", lambda: None)
+            mp.setattr(bd.shutil, "which", lambda n: None)
+            mp.setattr(bd.subprocess, "run", _fake(size=size, bar=bar))
+            mp.setattr(bd, "SAMPLE_COUNT", 8)
+            data = _films(name)
+            r = bd.run(data, {"data_dir": str(tmp), "now": NOW})
+        finally:
+            mp.undo()
         out[name] = (tmp, data, r, json.loads((tmp / "backdrops.json").read_text(encoding="utf-8"))[name])
     return out
 
@@ -263,6 +286,7 @@ def test_fixture_run_writes_landscape_spill_and_kept_frames_for_every_film(fixtu
         assert all(abs(a - b) >= gap - 0.1 for i, a in enumerate(ts) for b in ts[i + 1:])   # different shots
         for k in e["kept"]:
             assert _file(tmp, k["w1280"]).is_file() and _file(tmp, k["w640"]).is_file()
+            assert k["d"] > 0   # its detail against the trailer's median, the rank's third factor
         assert 0 <= e["x"] <= 1
 
 
@@ -325,6 +349,55 @@ def test_the_window_goes_to_the_subject_in_focus_not_the_most_colourful_patch():
     left = bd.score_frame(img.crop((0, 0, 357, h)))
     right = bd.score_frame(img.crop((w - 357, 0, w, h)))
     assert left > right   # what the colour ranking would have chosen
+
+
+def _haze(w=640, h=268):
+    """A saturated, soft glow: a warm gradient with nothing in focus (a dust field, a fire flare)."""
+    img = Image.new("RGB", (w, h))
+    d = ImageDraw.Draw(img)
+    for x in range(w):
+        d.line([(x, 0), (x, h)], fill=(225, 150 + x * 60 // w, 40))
+    return img.filter(ImageFilter.GaussianBlur(6))
+
+
+def _bold_credit(img):
+    """A credit in a heavy face («EDITING VIVEK HARSHAN»): yellow letters with 7 px stems, 34 px tall."""
+    img = img.copy()
+    d = ImageDraw.Draw(img)
+    for x in range(120, 520, 26):
+        d.rectangle([x, 150, x + 6, 184], fill=(240, 200, 40))
+        d.rectangle([x, 150, x + 16, 156], fill=(240, 200, 40))
+    return img
+
+
+def test_the_screen_is_the_frame_in_focus_not_the_most_colourful_haze():
+    """Review I1: colour x mid-tone alone ranked a saturated soft haze above a detailed frame of the same
+    trailer (Dubai's #1 got a yellow dust field with a tenth of the detail of its own second frame). The rank
+    now carries the frame's detail against the trailer's median, and bold type stays a gate."""
+    haze, subject = _haze(), ImageEnhance.Color(_scene(640, 268, 12)).enhance(0.3)
+    credit = _bold_credit(ImageEnhance.Color(_scene(640, 268, 13)).enhance(1.4))
+    assert bd.score_frame(haze) > 1.3 * bd.score_frame(subject)      # what colour alone would choose
+    assert bd.score_frame(credit) > bd.score_frame(subject) and bd.detail(credit) > bd.detail(subject)
+    frames = [haze, subject, credit, haze, subject, haze]
+    samples = [{"t": 10.0 + 12 * i, "crop": img} for i, img in enumerate(frames)]
+    kept, floor, why = bd._pick(samples, 100.0)
+    assert floor == bd.LUMA_MIN and why is None
+    assert kept[0][1]["crop"] is subject                              # the screen is in focus
+    assert all(s["crop"] is not credit for _, s in kept)             # bold type is never kept
+    assert kept[0][1]["rel"] > 1 > min(s["rel"] for s in samples)
+
+
+def test_bold_type_is_text_though_the_thin_stroke_top_hat_misses_it():
+    """Review M2: a heavy credit's stems are wider than the 5 px opening, so only their corners were strokes.
+    The row-wise opening sees the stems; a bright horizontal bar (a car's chrome, a sill), which a wide
+    square opening mistakes for a line of text, is not type to it."""
+    credit = _bold_credit(ImageEnhance.Brightness(_scene(640, 268, 9)).enhance(0.6))
+    assert bd.text_score(bd.stroke_profile(credit), set())[1] is None
+    assert bd.text_score(bd.stroke_profile(credit), set(), bd.bold_profile(credit))[1] == "text"
+    chrome = _scene(640, 268, 9).copy()
+    ImageDraw.Draw(chrome).rectangle([0, 120, 639, 126], fill=(245, 245, 245))
+    assert bd.text_score(bd.stroke_profile(chrome), set(), bd.bold_profile(chrome))[1] is None
+    assert all(bd.text_band(bd.bold_profile(_scene(640, 268, s)))[0] < bd.BOLD_FLAG / 3 for s in range(8))
 
 
 # -------- sharpness
@@ -509,7 +582,8 @@ def test_the_most_shown_film_goes_first_under_the_cap(tmp_path, monkeypatch):
     assert list(_cache(tmp_path)) == ["zzz-film"]
 
 
-def test_top_10_failures_retry_after_6_hours_whatever_the_kind(tmp_path, monkeypatch):
+def test_top_10_failures_retry_after_6_hours(tmp_path, monkeypatch):
+    """Entries written before this version (no `v`, like Dubai's #1 and #2), whatever their kind."""
     fids = [f"film-{i:02d}" for i in range(11)]
     shows = {f: 100 - i for i, f in enumerate(fids)}   # film-10 is the 11th: not in tonight's top 10
     stale = "2026-09-28T05:00:00+00:00"                  # 7 h before NOW: past 6 h, far inside 7 days
@@ -523,6 +597,28 @@ def test_top_10_failures_retry_after_6_hours_whatever_the_kind(tmp_path, monkeyp
     cache = _cache(tmp_path)
     assert r["new"] == 10 and r["cached"] == 1
     assert all("w1280" in cache[f] for f in fids[:10]) and cache["film-10"]["fail"] == stale
+
+
+def test_a_settled_rejection_of_a_top_film_waits_its_week(tmp_path, monkeypatch):
+    """Review M1: a "rejected" failure written by this version is the same code on the same samples, so the
+    6 h top-10 retry re-downloaded it 29 times a week for the same answer. A transient failure, or a
+    rejection by an older version, still retries after 6 h."""
+    fids = ["film-a", "film-b", "film-c"]
+    stale = "2026-09-28T05:00:00+00:00"                  # 7 h before NOW
+    t = {f: _films(f)["films"][f]["trailer"] for f in fids}
+    (tmp_path / "backdrops.json").write_text(json.dumps({
+        "film-a": {"trailer": t["film-a"], "fail": stale, "kind": "rejected", "v": bd.STEP_VERSION},
+        "film-b": {"trailer": t["film-b"], "fail": stale, "kind": "transient", "v": bd.STEP_VERSION},
+        "film-c": {"trailer": t["film-c"], "fail": stale, "kind": "rejected", "v": 1},
+    }), encoding="utf-8")
+    _fast(monkeypatch)
+    monkeypatch.setattr(bd.subprocess, "run", _fake(size=(640, 360), bar=0))
+    r = _run(tmp_path, _films(*fids, shows={"film-a": 30, "film-b": 20, "film-c": 10}))
+    cache = _cache(tmp_path)
+    assert r["new"] == 2 and r["cached"] == 1
+    assert cache["film-a"]["fail"] == stale and "w1280" in cache["film-b"] and "w1280" in cache["film-c"]
+    r = _run(tmp_path, _films(*fids, shows={"film-a": 30}), now="2026-10-05T06:00:00+00:00")   # 7 days on
+    assert r["new"] == 1 and "w1280" in _cache(tmp_path)["film-a"]
 
 
 # -------- an older version's frame is re-made, and stays up until then
@@ -586,6 +682,38 @@ def test_the_override_x_places_the_portrait_window(tmp_path, monkeypatch):
     assert (b["x"], b["override_x"]) == (1.0, 1.0) and "override_t" not in b
     with Image.open(_file(tmp_path, a["w1280"])) as land:
         assert a["spill_p"] == bd.spill(land.convert("RGB"), 0, round(land.height * 2 / 3))
+
+
+def test_an_override_change_keeps_the_frame_until_the_re_make_succeeds(tmp_path, monkeypatch):
+    """Review M3: a changed `x`/`t` made the film "work", so a failed re-make replaced a good frame with a
+    `fail` entry and prune deleted its files. It is re-made like an older version's frame now."""
+    _fast(monkeypatch, 6)
+    monkeypatch.setattr(bd.subprocess, "run", _fake())
+    _run(tmp_path, _films("film-a"))
+    first = _cache(tmp_path)["film-a"]
+
+    (tmp_path / "backdrops_override.yaml").write_text("film-a: {x: 0.2}\n", encoding="utf-8")
+    monkeypatch.setattr(bd.subprocess, "run", _fake(fail_download=9))
+    data = _films("film-a")
+    r = _run(tmp_path, data, now="2026-09-28T13:00:00+00:00")
+    e = _cache(tmp_path)["film-a"]
+    assert r["failed"] == 1 and "fail" not in e and e["w1280"] == first["w1280"]
+    assert (e["up_kind"], e["up_override_x"]) == ("transient", 0.2)
+    assert _file(tmp_path, e["w1280"]).is_file() and _file(tmp_path, e["p"]).is_file()
+    assert data["films"]["film-a"]["backdrop"]["w1280"] == first["w1280"]
+
+    # the same value again inside its TTL: not retried
+    monkeypatch.setattr(bd.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(AssertionError("in ttl")))
+    r = _run(tmp_path, _films("film-a"), now="2026-09-28T14:00:00+00:00")
+    assert (r["new"], r["failed"], r["cached"], r.get("portraits")) == (0, 0, 1, 1)
+
+    # another value: tried at once, and on success it replaces the frame
+    (tmp_path / "backdrops_override.yaml").write_text("film-a: {x: 0.8}\n", encoding="utf-8")
+    monkeypatch.setattr(bd.subprocess, "run", _fake())
+    r = _run(tmp_path, _films("film-a"), now="2026-09-28T14:30:00+00:00")
+    e = _cache(tmp_path)["film-a"]
+    assert r["upgraded"] == 1 and (e["x"], e["override_x"]) == (0.8, 0.8)
+    assert not any(k.startswith("up_") for k in e)
 
 
 def test_the_memory_guard_starts_no_film_below_the_floor(tmp_path, monkeypatch):

@@ -16,12 +16,14 @@ carries a trailer id, most-shown first:
    (mean luma >= BAR_LUMA) in at least ACTIVE_SHARE of the frames that are not black. The old per-frame crop
    cut a dark scene down to its lit rows (resident-evil: a 1280x75 "frame"); one box per trailer can't.
 4. **Reject text over the picture** (`text_score`: burned-in subtitles, credits, title cards; a white
-   top-hat of max(R,G,B), with each trailer's own subtitle rows learned from its 16 frames), then **score**
-   each frame's active picture with `score_frame` (unchanged rules: luma range, a dense bottom band, a title
-   card on a flat ground). When no frame passes and some were only too dark, a second pass accepts frames
-   down to LUMA_MIN_DARK (a dark film gets a dark frame, which the grade lifts to the night token). Keep the
-   best KEEP frames at least KEPT_GAP apart (different shots) — the first is the screen, all three are
-   written (for later context picks and the frame game).
+   top-hat of max(R,G,B) for thin strokes, with each trailer's own subtitle rows learned from its 16 frames,
+   and a row-wise one for bold stems), then **score** each frame's active picture with `score_frame`
+   (unchanged rules: luma range, a dense bottom band, a title card on a flat ground). When no frame passes
+   and some were only too dark, a second pass accepts frames down to LUMA_MIN_DARK (a dark film gets a dark
+   frame, which the grade lifts to the night token). **Rank** the frames that pass by score_frame x the text
+   penalty x their `detail` against the trailer's median (bounded to DETAIL_RANGE): colour alone rewarded
+   haze, fire and glow. Keep the best KEEP frames at least KEPT_GAP apart (different shots) — the first is
+   the screen, all three are written (for later context picks and the frame game).
 5. **Grade** (`grade`, Pillow only): saturation -12 %, then a per-channel curve that lifts black to the night
    token #0F0B0C and rolls white to the screen token #F1EAE0 with square weights (1-x)^2 and x^2, so the
    warm split tone lives in the ends and mid-tones move by about 5 levels (subtle on skin).
@@ -43,7 +45,7 @@ carries a trailer id, most-shown first:
 
     {fid: {"trailer", "w1280", "w640", "w": 1280, "h", "t", "at",                    <- as before
            "v": 2, "src": [w, h], "box": [x0, y0, x1, y1], "x": 0..1, "spill": [4 hex], "spill_p": [4 hex],
-           "kept": [{"t", "s", "w1280", "w640", "h"}, ...<=3], "sec": <processing seconds>,
+           "kept": [{"t", "s", "d", "w1280", "w640", "h"}, ...<=3], "sec": <processing seconds>,
            "p", "pw", "ph", "pq", "pkb", "sharp"  |  "p_skip": <why no portrait>}}
     {fid: {"trailer", "fail": <iso>, "kind": "transient" | "rejected", "why": <reason>, "v": 2}}
 
@@ -55,11 +57,13 @@ HEX before it lands in markup).
 Caching and retries. An entry is reused as long as the film's trailer id and its override are unchanged. A
 failure retries after a TTL by `kind` ("transient": the download/ffprobe/every seek failed, 6 h;
 "rejected": the video played but no frame passed, 7 days; an old entry with no kind: 7 days) — **except for
-tonight's TOP_N films by show count, whose failures retry after FAIL_TTL_TOP (6 h) whatever the kind**:
-those are the frames people actually see (Dubai's #1 and #2 had sat on week-long failures). Every failure
+tonight's TOP_N films by show count, whose failures retry after FAIL_TTL_TOP (6 h)** unless the failure is a
+"rejected" one written by this STEP_VERSION (the same code on the same samples: it waits its 7 days): those
+are the frames people actually see (Dubai's #1 and #2 had sat on week-long failures). Every failure
 records `why` and prints it to stderr (cinema.log); the step's result carries them too (health.json). An
-entry written by an older version of this step (`v` < STEP_VERSION: ungraded, <= 720p) stays attached and is
-re-made after every missing film, under the same cap, so the channel converges on one look.
+entry written by an older version of this step (`v` < STEP_VERSION: ungraded, <= 720p), or for another
+override value than today's, stays attached and is re-made after every missing film, under the same cap, so
+the channel converges on one look; a failed re-make keeps it and waits its TTL (`up_fail`).
 
 Limits, per run: at most CINEMA_BACKDROPS_MAX (env, default DEFAULT_MAX_NEW) films are started; none is
 started once CINEMA_BACKDROPS_BUDGET_S (default 480 s, the step cap) has passed, or while the machine has
@@ -364,23 +368,34 @@ def spill(img: Image.Image, x0: int = 0, x1: int | None = None) -> list:
     return out
 
 
-def window_x(img: Image.Image, luma_min: float = LUMA_MIN):
-    """-> (x, detail | None): where the phone's 2:3 window (full height) sits, x in 0..1 along its travel
-    (0 = the image's left edge). Among WINDOW_STEPS positions that `score_frame` accepts (no text band, not
-    too dark), the one with the most **detail** (mean FIND_EDGES of a 320 px copy: films keep their subject in
-    focus and let the rest go soft), times a centre bias (an edge window counts 1 - CENTRE_BIAS). Detail, not
-    colourfulness: on W1-D1's 13 real frames the most colourful window was fire beside Spider-Man's face, the
-    teal wall beside the crawlers' spider and the LED wall beside shish-dou's lead. No window passes ->
-    (0.5, None)."""
-    w, h = img.size
-    ww = max(1, round(h * 2 / 3))
-    if ww >= w:
-        return 0.5, None
+def _edge_map(img: Image.Image) -> Image.Image:
+    """FIND_EDGES of a SCORE_WIDTH-wide grey copy, with the kernel's unfiltered outer ring cut off."""
     g = img.convert("L")
     if g.width > SCORE_WIDTH:
         g = g.resize((SCORE_WIDTH, max(3, round(g.height * SCORE_WIDTH / g.width))), Image.BOX)
     edges = g.filter(ImageFilter.FIND_EDGES)
-    edges = edges.crop((1, 1, edges.width - 1, edges.height - 1))   # the kernel's unfiltered outer ring
+    return edges.crop((1, 1, max(2, edges.width - 1), max(2, edges.height - 1)))
+
+
+def detail(img: Image.Image) -> float:
+    """Mean edge strength of a SCORE_WIDTH-wide copy: films keep their subject in focus and let the rest go
+    soft, so haze, glow and a flat card read low and a subject in focus reads high. The measure `window_x`
+    places the phone's window by, and `_pick` ranks frames by (against the trailer's own median)."""
+    return ImageStat.Stat(_edge_map(img)).mean[0]
+
+
+def window_x(img: Image.Image, luma_min: float = LUMA_MIN):
+    """-> (x, detail | None): where the phone's 2:3 window (full height) sits, x in 0..1 along its travel
+    (0 = the image's left edge). Among WINDOW_STEPS positions that `score_frame` accepts (no text band, not
+    too dark), the one with the most **detail** (`detail`: mean FIND_EDGES of a 320 px copy), times a centre
+    bias (an edge window counts 1 - CENTRE_BIAS). Detail, not colourfulness: on W1-D1's 13 real frames the
+    most colourful window was fire beside Spider-Man's face, the teal wall beside the crawlers' spider and the
+    LED wall beside shish-dou's lead. No window passes -> (0.5, None)."""
+    w, h = img.size
+    ww = max(1, round(h * 2 / 3))
+    if ww >= w:
+        return 0.5, None
+    edges = _edge_map(img)
     k = edges.width / w
     best = None
     for i in range(WINDOW_STEPS):
@@ -421,9 +436,11 @@ THROTTLED_WHY = "download: YouTube is throttling this address"
 def _yt_dlp_download(trailer_id: str, work_dir: Path, fid: str, run=None):
     """-> (video path | None, why | None). FORMAT first; on failure once more with node as the JS runtime
     when node is on PATH (yt-dlp enables only deno by default) -- unless YouTube answered with a throttle
-    (YT_THROTTLED), which no runtime fixes. yt-dlp's stderr is read as UTF-8 with replacement: on Windows it
-    carries cp1252 bytes (a curly apostrophe in «Sign in to confirm you're not a bot»), which crashed
-    subprocess's reader thread under text=True and lost the reason."""
+    (YT_THROTTLED) or the first attempt timed out: no JS runtime fixes a slow link, and a second 240 s wait
+    would hold the hourly run well past its 8 minutes. The reason kept is the first attempt's (the node
+    attempt only ever adds to it). yt-dlp's stderr is read as UTF-8 with replacement: on Windows it carries
+    cp1252 bytes (a curly apostrophe in «Sign in to confirm you're not a bot»), which crashed subprocess's
+    reader thread under text=True and lost the reason."""
     run = run or subprocess.run
     template = work_dir / f"{fid}.%(ext)s"
     url = f"https://www.youtube.com/watch?v={trailer_id}"
@@ -436,21 +453,20 @@ def _yt_dlp_download(trailer_id: str, work_dir: Path, fid: str, run=None):
         try:
             r = run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=DOWNLOAD_TIMEOUT)
         except subprocess.TimeoutExpired:
-            why = f"download: timed out after {DOWNLOAD_TIMEOUT}s"
-            continue
+            return None, why or f"download: timed out after {DOWNLOAD_TIMEOUT}s"
         except (OSError, subprocess.SubprocessError) as e:
-            why = f"download: {type(e).__name__}: {e}"[:200]
+            why = why or f"download: {type(e).__name__}: {e}"[:200]
             continue
         if getattr(r, "returncode", 1) != 0:
             err = _last_line(getattr(r, "stderr", ""))
-            why = "download: " + (err or f"yt-dlp exit {getattr(r, 'returncode', '?')}")
             if YT_THROTTLED.search(_text(getattr(r, "stderr", ""))):
                 return None, f"{THROTTLED_WHY} ({err[:120]})"
+            why = why or "download: " + (err or f"yt-dlp exit {getattr(r, 'returncode', '?')}")
             continue
         matches = sorted(p for p in work_dir.glob(f"{fid}.*") if not p.name.endswith((".part", ".ytdl")))
         if matches:
             return matches[0], None
-        why = "download: yt-dlp exited 0 but wrote no file"
+        why = why or "download: yt-dlp exited 0 but wrote no file"
     return None, why
 
 
@@ -591,17 +607,53 @@ SUB_FROM = 0.75                   # subtitles live in the bottom quarter
 SUB_STRONG, SUB_FRAMES, SUB_FLAG = 0.03, 3, 0.012
 TITLE_FLAG, BOTTOM_FLAG = 0.035, 0.025
 TEXT_PENALTY = 10                 # a frame that passes is still ranked down by its text-likeness
+# Bold type (a credit in a heavy face, a distributor logo): its stems are wider than the 5 px opening, so the
+# thin-stroke top-hat sees only their corners (coyote's «WILL FORTE», dhoomakethu's «EDITING VIVEK HARSHAN»,
+# resident-evil's Constantin logo all passed it). A second top-hat opens along the row only (1 x BOLD_KERNEL):
+# it keeps vertical stems up to 8 px wide and drops a horizontal line (a car's chrome, a window sill), which a
+# wide square opening mistook for text. Measured on the same 192 frames plus dhoomakethu's: the three bold
+# texts read 0.071-0.078, every clean frame <= 0.020 (a faint «This Is» on black, 0.027, is text too).
+BOLD_KERNEL, BOLD_STROKE, BOLD_FLAG = 9, 72, 0.045
+
+
+def _v_channel(img: Image.Image) -> Image.Image:
+    r, g, b = img.convert("RGB").split()
+    return ImageChops.lighter(ImageChops.lighter(r, g), b)
 
 
 def stroke_profile(img: Image.Image) -> list:
     """Share of stroke pixels in each of TEXT_BINS row bins."""
-    r, g, b = img.convert("RGB").split()
-    v = ImageChops.lighter(ImageChops.lighter(r, g), b)
+    v = _v_channel(img)
     opened = v
     for f in [ImageFilter.MinFilter(3)] * (TEXT_KERNEL // 2) + [ImageFilter.MaxFilter(3)] * (TEXT_KERNEL // 2):
         opened = opened.filter(f)   # a 5x5 opening as two 3x3 passes each way: the same image, 40 % faster
     strokes = ImageChops.subtract(v, opened).point(lambda p: 255 if p >= TEXT_STROKE else 0)
     return [p / 255 for p in _pixels(strokes.resize((1, TEXT_BINS), Image.BOX))]
+
+
+def _row_rank(img: Image.Image, r: int, pick) -> Image.Image:
+    """Min (pick=ImageChops.darker) or max (ImageChops.lighter) over a horizontal window of 2r+1 pixels; a
+    shift that runs off the image leaves the pixel's own value (neutral), never wraps round."""
+    w, h = img.size
+    out = img
+    for d in range(1, r + 1):
+        if d >= w:
+            break
+        left, right = img.copy(), img.copy()
+        left.paste(img.crop((d, 0, w, h)), (0, 0))      # left[x] = img[x + d]
+        right.paste(img.crop((0, 0, w - d, h)), (d, 0))  # right[x] = img[x - d]
+        out = pick(pick(out, left), right)
+    return out
+
+
+def bold_profile(img: Image.Image) -> list:
+    """Share of bold-stem pixels in each of TEXT_BINS row bins: a white top-hat of max(R,G,B) with a
+    1 x BOLD_KERNEL opening (along the row only)."""
+    v = _v_channel(img)
+    r = BOLD_KERNEL // 2
+    opened = _row_rank(_row_rank(v, r, ImageChops.darker), r, ImageChops.lighter)
+    stems = ImageChops.subtract(v, opened).point(lambda p: 255 if p >= BOLD_STROKE else 0)
+    return [p / 255 for p in _pixels(stems.resize((1, TEXT_BINS), Image.BOX))]
 
 
 def text_band(prof: list, hb: int = 2) -> tuple:
@@ -625,37 +677,57 @@ def subtitle_rows(profs: list) -> set:
     return rows | {i + d for i in rows for d in (-1, 1) if lo <= i + d < n}
 
 
-def text_score(prof: list, rows: set) -> tuple:
-    """-> (text-likeness for ranking, reason when it is text, else None)."""
+def text_score(prof: list, rows: set, bold: list | None = None) -> tuple:
+    """-> (text-likeness for ranking, reason when it is text, else None). `bold` is the frame's
+    `bold_profile`, when measured."""
     sub = max((prof[i] for i in rows), default=0.0)
     band, y = text_band(prof)
     if rows and sub >= SUB_FLAG:
         return sub, "subtitle"
     if band >= TITLE_FLAG or (y >= SUB_FROM - 0.05 and band >= BOTTOM_FLAG):
         return band, "text"
+    if bold is not None:
+        heavy = text_band(bold)[0]
+        if heavy >= BOLD_FLAG:
+            return heavy, "text"
     return max(sub, band), None
+
+
+# a frame's detail against its own trailer's median, bounded: half as detailed counts half, twice counts
+# twice, and no further (a busy frame is not twice as good again)
+DETAIL_RANGE = (0.5, 2.0)
 
 
 def _pick(samples: list, duration) -> tuple:
     """-> (ranked [(score, sample)], luma floor used, rejection summary). Text over the picture is rejected
-    first (`text_score`); then score_frame; a dark trailer gets a second pass at LUMA_MIN_DARK."""
+    first (`text_score`, thin strokes and bold stems); then score_frame; a dark trailer gets a second pass
+    at LUMA_MIN_DARK. The frames that pass are ranked by score_frame (colourfulness x a mid-tone weight)
+    x the text penalty x their **detail** against the trailer's median (`detail`, DETAIL_RANGE): colour alone
+    rewarded haze, fire and glow, and chose the softest frame the step kept in 7 of 11 real films (Dubai's #1:
+    a yellow dust field with a tenth of the detail of its own second frame)."""
     profs = [stroke_profile(s["crop"]) for s in samples]
     rows = subtitle_rows(profs)
     judged = []
     for s, prof in zip(samples, profs):
-        texty, why = text_score(prof, rows)
+        texty, why = text_score(prof, rows, bold_profile(s["crop"]))
         s["texty"] = texty
+        s["detail"] = detail(s["crop"])
         if why:
             judged.append((s, None, why, ImageStat.Stat(_small(s["crop"]).convert("L")).mean[0]))
         else:
             judged.append((s, *_judge(s["crop"])))
-    penalty = lambda s: max(0.5, 1 - TEXT_PENALTY * s["texty"])
-    ok = [(sc * penalty(s), s) for s, sc, _, _ in judged if sc is not None]
+    lit = [s["detail"] for s, _, _, luma in judged if luma >= BAR_LUMA]
+    med = statistics.median(lit) if lit else 0.0
+    for s in samples:
+        s["rel"] = s["detail"] / med if med > 0 else 1.0
+    lo, hi = DETAIL_RANGE
+    weight = lambda s: max(0.5, 1 - TEXT_PENALTY * s["texty"]) * min(hi, max(lo, s["rel"]))
+    ok = [(sc * weight(s), s) for s, sc, _, _ in judged if sc is not None]
     floor = LUMA_MIN
     if not ok and any(reason == "dark" for _, _, reason, _ in judged):
         # every other rule still applies in this pass: only the luma floor moves
         floor = LUMA_MIN_DARK
-        ok = [(sc * penalty(s), s) for s, _, reason, _ in judged if reason == "dark"
+        ok = [(sc * weight(s), s) for s, _, reason, _ in judged if reason == "dark"
               for sc in [score_frame(s["crop"], LUMA_MIN_DARK)] if sc is not None]
     ok.sort(key=lambda p: (-p[0], p[1]["t"]))
     gap = max(KEPT_GAP_MIN_S, KEPT_GAP_FRAC * (duration or 0))
@@ -736,6 +808,8 @@ def process_film(fid: str, trailer_id: str, work_dir: Path, out_dir: Path, run=N
             h, names, h1280, b1280 = _save_webp(full, out_dir, fid)
             rec = {"t": round(s["t"], 1), "s": None if sc is None else round(sc, 1),
                    "w1280": f"/posters/{names[1280]}", "w640": f"/posters/{names[640]}", "h": h1280}
+            if s.get("rel") is not None:
+                rec["d"] = round(s["rel"], 2)   # its detail against the trailer's median (the rank's factor)
             if entry is not None:
                 extras.append(rec)
                 del full
@@ -805,14 +879,18 @@ def _parse_iso(s):
 
 
 def _fail_is_stale(entry: dict, now_dt, top: bool = False, at_key: str = "fail", kind_key: str = "kind") -> bool:
-    """A failure's TTL: tonight's top films retry after FAIL_TTL_TOP whatever the kind; otherwise
-    "transient" after 6 h, and "rejected" (or an old entry with no kind: the conservative default, so an old
-    cache is never hammered) after 7 days."""
+    """A failure's TTL: "transient" after 6 h, and "rejected" (or an old entry with no kind: the
+    conservative default, so an old cache is never hammered) after 7 days. Tonight's top films retry after
+    FAIL_TTL_TOP -- except a "rejected" failure written by this STEP_VERSION: the same samples through the
+    same code give the same answer, so re-downloading it every 6 h (29 times a week) buys nothing but
+    YouTube's attention; it waits its 7 days like any other (the override file is the faster fix)."""
     at = _parse_iso(entry.get(at_key))
-    if top:
+    kind = entry.get(kind_key)
+    settled = kind == "rejected" and (entry.get("v") or 1) >= STEP_VERSION
+    if top and not settled:
         ttl = FAIL_TTL_TOP
     else:
-        ttl = FAIL_TTL_TRANSIENT if entry.get(kind_key) == "transient" else FAIL_TTL_REJECTED
+        ttl = FAIL_TTL_TRANSIENT if kind == "transient" else FAIL_TTL_REJECTED
     return at is None or now_dt - at >= ttl
 
 
@@ -899,18 +977,22 @@ def _mem_available_mb():
 
 
 def _state(entry, trailer: str, ov, now_dt, top: bool) -> str:
-    """'hit' (use as is) | 'work' (nothing usable: make it) | 'upgrade' (usable, made by an older version)."""
+    """'hit' (use as is) | 'work' (nothing usable: make it) | 'upgrade' (usable, but made by an older
+    version or for another override value: re-made, and it stays attached until the re-make succeeds)."""
     if not isinstance(entry, dict) or entry.get("trailer") != trailer or entry.get("override") == "none":
         return "work"
-    want_t, want_x = (ov or {}).get("t"), (ov or {}).get("x")
-    if entry.get("override_t") != want_t or entry.get("override_x") != want_x:
-        return "work"
+    want = ((ov or {}).get("t"), (ov or {}).get("x"))
+    other_override = (entry.get("override_t"), entry.get("override_x")) != want
     if entry.get("fail"):
+        if other_override:
+            return "work"
         return "work" if _fail_is_stale(entry, now_dt, top) else "hit"
     if not entry.get("w1280"):
         return "work"
-    if (entry.get("v") or 1) < STEP_VERSION:
-        if entry.get("up_fail") and not _fail_is_stale(entry, now_dt, top, "up_fail", "up_kind"):
+    if other_override or (entry.get("v") or 1) < STEP_VERSION:
+        # a failed re-make waits its TTL -- unless it was tried for another override value than today's
+        tried = (entry.get("up_override_t"), entry.get("up_override_x"))
+        if entry.get("up_fail") and tried == want and not _fail_is_stale(entry, now_dt, top, "up_fail", "up_kind"):
             return "hit"
         return "upgrade"
     return "hit"
@@ -1021,7 +1103,10 @@ def run(data: dict, ctx: dict | None = None) -> dict:
             throttled = throttled or str(reason).startswith(THROTTLED_WHY)
             print(f"backdrops: {fid}: {reason}", file=sys.stderr)
             if is_upgrade:
-                cache[fid] = {**cache[fid], "up_fail": now_iso, "up_kind": kind or "transient", "up_why": reason}
+                # the attached frame stays; the failed re-make is remembered with the override it was for
+                old = {k: v for k, v in cache[fid].items() if not k.startswith("up_")}
+                cache[fid] = {**old, "up_fail": now_iso, "up_kind": kind or "transient", "up_why": reason,
+                              **{f"up_{k}": v for k, v in marks.items()}}
             else:
                 cache[fid] = {"trailer": trailer, "fail": now_iso, "kind": kind or "transient", "why": reason,
                               "v": STEP_VERSION, **marks}

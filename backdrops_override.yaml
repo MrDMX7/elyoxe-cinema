@@ -14,7 +14,7 @@
 #                                keeps the scored frame and only moves the window.
 #
 # Changing a value re-extracts on the next run; the cache is keyed on the values themselves, not just
-# the fid. fid must match a film's current fid (site_kit.FID/normalize.film_fid shape); an unknown or
+# the fid. The frame already made stays up until the new one is written (a failed re-make keeps it). fid must match a film's current fid (site_kit.FID/normalize.film_fid shape); an unknown or
 # malformed key is ignored, never an error.
 
 # sacrifice (trailer SEoOcTKx9S4): checked by hand -- this is a distributor-branded promotional cut,

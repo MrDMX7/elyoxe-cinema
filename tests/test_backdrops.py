@@ -490,12 +490,13 @@ def test_override_seconds_skips_scoring_and_re_extracts_when_the_value_changes(t
     r2 = bd.run(data2, {"data_dir": str(tmp_path), "now": "2026-09-27T13:00:00+00:00"})
     assert r2 == {"new": 0, "failed": 0, "cached": 1}
 
-    # the value changes: re-extracted, even though nothing else about the film changed
+    # the value changes: re-extracted, even though nothing else about the film changed (W1-D1 review M3: as
+    # an upgrade, so the frame already made stays attached until the new one is written)
     override_path.write_text("film-a: 40\n", encoding="utf-8")
     monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video, frame_color=(0, 0, 0)))
     data3 = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
     r3 = bd.run(data3, {"data_dir": str(tmp_path), "now": "2026-09-27T14:00:00+00:00"})
-    assert r3 == {"new": 1, "failed": 0, "cached": 0}
+    assert r3 == {"new": 1, "failed": 0, "cached": 0, "upgraded": 1}
     cache3 = json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))
     assert cache3["film-a"]["t"] == 40.0 and cache3["film-a"]["override_t"] == 40.0
     assert data3["films"]["film-a"]["backdrop"]["t"] == 40.0
