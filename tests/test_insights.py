@@ -157,7 +157,8 @@ def test_compare_data_and_chunk(none):
     # the cheapest ticket per city, before and after each card: star fazaa is 20 % off
     base, cards = j["p"]["resident-evil"]["al-ain"]
     assert base > 0 and all(v < base for v in cards.values())
-    assert all(len(x) == 3 for x in j["n"]["crawlers"]["dubai"]) and len(j["n"]["crawlers"]["dubai"]) <= 6
+    # no build-time next times (compare.js reads the city's day slices) and no IMDb field (MASTER-PLAN §4.1 #17, #18)
+    assert set(j) == {"t", "f", "p"} and all(len(v) == 7 for v in j["f"].values())
     film = read(none, "film", "crawlers", "index.html")
     # the chunk is fetched only where a compare box is: the box names it, a few bytes of the main bundle load it
     url = re.search(r'<section class="wrap cmp" data-cmp="crawlers" data-cmp-src="(/assets/compare\.[0-9a-f]{10}\.js)" hidden>', film).group(1)
@@ -165,7 +166,60 @@ def test_compare_data_and_chunk(none):
     assert f'data-cmp-src="{url}"' in read(none, "boxoffice", "index.html")
     archived = read(none, "film", "weapons", "index.html")
     assert "data-cmp" not in archived and "compare" not in json.dumps(ct(archived).get("chunks") or {})
-    assert "data-cmp-src" in read(none, "assets", re.search(r'href="/assets/(cinema\.[0-9a-f]{10}\.js)" as="script"', film).group(1))
+    assert "data-cmp-src" in read(none, "assets", re.search(r'"/assets/(cinema\.[0-9a-f]{10}\.js)"', film).group(1))
+
+
+def test_compare_rates_are_the_film_pages_own(tmp_path_factory):
+    """Resident Evil's film page showed 96 %/91 % from its verdict's basis while compare.json had nulls (MASTER-PLAN
+    §4.1 #37): every film's critics and audience in compare.json are exactly the numbers its film page prints."""
+    d = json.load(open(DATA, encoding="utf-8"))
+    d["films"]["resident-evil"]["rt"] = None
+    d["films"]["resident-evil"]["verdict"]["basis"] = "RT 96% (249 ناقد) · الجمهور 91%"
+    d["films"]["the-paradise"]["rt"] = {"critics": None, "audience": 78}
+    out = str(tmp_path_factory.mktemp("ins_rates"))
+    path = os.path.join(out + "-data.json")
+    json.dump(d, open(path, "w", encoding="utf-8"))
+    build.build(path, DISC, out, noindex=False, modules=build.discover(only=MINE))
+    j = json.loads(read(out, "data", "compare.json"))
+    assert j["f"]["resident-evil"][3:5] == [96, 91]
+    for fid, f in j["f"].items():
+        # (legend: the redesign's hero prints them in a <span class="basis rates"> of the facts line, UI redesign Task 4)
+        rates = re.search(r'class="basis rates">((?:<span>(?:النقاد|الجمهور) <span class="num" dir="ltr">\d+%</span></span>)*)', read(out, "film", fid, "index.html"))
+        shown = dict(re.findall(r'<span>(النقاد|الجمهور) <span class="num" dir="ltr">(\d+)%</span></span>', rates.group(1))) if rates else {}
+        assert [f[3], f[4]] == [int(shown[k]) if k in shown else None for k in ("النقاد", "الجمهور")], fid
+
+
+def test_compare_chunk_has_no_imdb_row_and_reads_the_day_slices():
+    js = open(os.path.join(ROOT, "src", "js", "compare.js"), encoding="utf-8").read()
+    assert "imdb" not in js.lower()
+    assert '"/data/" + city + "-" + d + ".json"' in js and "J.n" not in js
+
+
+def test_prices_late_night_is_dated_the_day_it_was_read(tmp_path_factory):
+    """At 23:00 the index is built from tomorrow's shows: the page carries today's date and says whose shows these
+    are, never tomorrow's date on today's page (MASTER-PLAN §4.1 #20)."""
+    d = json.load(open(DATA, encoding="utf-8"))
+    d["generated"] = "2026-09-25T23:00:00+04:00"
+    d["shows"] = [x for x in d["shows"] if x["date"] != TODAY or x["time"] >= "23:30"]
+    out = str(tmp_path_factory.mktemp("ins_late"))
+    path = os.path.join(out + "-data.json")
+    json.dump(d, open(path, "w", encoding="utf-8"))
+    build.build(path, DISC, out, noindex=False, modules=build.discover(only=MINE))
+    ar, en = read(out, "prices", "index.html"), read(out, "en", "prices", "index.html")
+    assert "مؤشر الأسعار، 25 سبتمبر 2026" in ar and "Price index, 25 September 2026" in en
+    assert "26 سبتمبر" not in ar and "26 September" not in en
+    assert "الأرقام من عروض بكرة." in ar and "The numbers are from tomorrow’s shows." in en
+    assert "25 سبتمبر 2026" in re.search(r"<title>(.*?)</title>", ar).group(1)
+    assert "نسجّل الأسعار من 25 سبتمبر" in ar
+
+
+def test_prices_table_is_two_columns_on_a_phone(none):
+    ar = read(none, "prices", "index.html")
+    idx = re.search(r'<table class="matrix pidx">(.*?)</table>', ar, re.S).group(1)
+    assert re.findall(r"<th>(.*?)</th>", re.search(r"<thead>(.*?)</thead>", idx).group(1)) == ["القاعة", "الوسيط", "أرخص", "أغلى", "العروض"]
+    assert '<tr class="pi-ch"><th colspan="5" scope="colgroup">فوكس</th></tr>' in idx
+    css = read(none, "assets", "cinema.css")
+    assert re.search(r"@media \(max-width:600px\)\{\.pidx th:nth-child\(n\+3\),\.pidx td:nth-child\(n\+3\)\{display:none\}", css)
 
 
 def test_similar_on_showing_film_pages_only(none):

@@ -1,5 +1,5 @@
 {
-  "ar": "Dark Nun تقييم النقاد 53% بس، والجمهور شوي أحسن عند 61%. لا يعتبر فاشل بس مب لازم تستعجل عليه.",
+  "ar": "راهبات الظلام رعب كوري بمخيّم 120 دقيقة، والنقاد منقسمين عليه. تقييم متوسط ما يخليه خيار مضمون.",
   "basis": "RT 53% (17 نقد) · الجمهور 61%",
   "basis_numbers": {
     "cinemascore": null,
@@ -7,8 +7,8 @@
     "rt_count": 17
   },
   "by": "claude",
-  "en": "Dark Nun sits at a mixed 53% with critics, slightly better with audiences at 61%. Not a flop, but no rush to see it either.",
+  "en": "Dark Nun is a 120-minute Korean horror thriller with a split critical reception. A middling score makes it far from a safe pick.",
   "fid": "dark-nun",
   "verdict": "mixed",
-  "written": "2026-09-26"
+  "written": "2026-09-28"
 }

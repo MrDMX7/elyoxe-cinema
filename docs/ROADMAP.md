@@ -40,7 +40,13 @@ Phase 3: 93 live UAE cinema map · 96 first show in the UAE + countdown · 97 «
 Phase 3: 109 UAE cut vs original runtime · 110 UAE vs US release date · 111 book in one tap (deep link to the show's seat page) · 115 mall parking fees (sourced) · 116 independent/outdoor/drive-in cinemas (Cinema Akil etc.) · 119 «هل تعرف؟» sourced trivia · 120 no-spoilers switch.
 
 ## Phase 2 — RELEASED 2026-09-27 (merge c51595c)
-People pages · «نازل الخميس» · «آخر فرصة» · Arabic hub · events · seat map + seats left + best seat · calendar + leave-by + double feature · mall hours · snacks · price history + /prices/ + /boxoffice/ · compare · «شي يشبه» · /q/ answer pages · Ramadan/Eid · kids · summer · «يستاهل IMAX؟».
+People pages · «نازل الخميس» · Arabic hub · events · seat map + seats left + best seat · calendar + leave-by + double feature · mall hours · snacks · price history + /prices/ + /boxoffice/ · compare · «شي يشبه» · /q/ answer pages · Ramadan/Eid · kids · summer (built in July and August only, legend W0-P2).
+Not released (taken off this list 2026-09-28, legend W0-P4): «يستاهل IMAX؟» (18). `verdicts.write_imax()` exists and is
+tested, but no run calls it and no page renders it (0 of the verdict files carried an "imax" line). It stays off
+until a page shows it; only then does a run start writing it.
+Switched off 2026-09-28 (legend W0-P2, §4.1 #13): «آخر فرصة» (24). With a 2-day read window "no show after
+tomorrow" is true of nearly every film, hits included; `steps/last_chance.py` writes nothing and no page draws the
+strip until a real signal exists (7-day reads, a chain's own last-week label, a show-count collapse).
 
 ## Added 2026-09-27 (owner picks, lists 5–15) → Phase 3 unless noted
 121 quietest hall · 122 couple/sofa seats · 123 rate the cinema · 124 Friday + all-prayer marks · 125 new cinema tracker · 126 ticket price changes · 127 Arab critics · 128 shared list · 129 taste quiz · 131 VIP night planner ·

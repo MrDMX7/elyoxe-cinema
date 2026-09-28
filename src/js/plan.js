@@ -41,8 +41,9 @@ function planFold(line) {
   return out.join("\r\n ");
 }
 
-/* the .ics text: DTSTART/DTEND in Asia/Dubai (a fixed +04:00 offset, no VTIMEZONE ambiguity), a 60-min
-   VALARM (design C.41), and a Google Maps link in the description since the client has the cinema's
+/* the .ics text: DTSTART/DTEND in Asia/Dubai (a fixed +04:00 offset, no VTIMEZONE ambiguity), a VALARM at the
+   leave-by time when the visitor's place is known (x.alarm minutes before the start), else 60 minutes before
+   (design C.41), and a Google Maps link in the description since the client has the cinema's
    coordinates (data/cinemas.json) but never a street address. Every line is folded (planFold) before
    being joined — most stay one physical line (bytes.length <= 75 is a no-op), SUMMARY/LOCATION/
    DESCRIPTION with real Arabic content usually don't. */
@@ -62,7 +63,7 @@ function planIcs(x) {
     "SUMMARY:" + planIcsEsc(x.film + " — " + x.cin),
     "LOCATION:" + planIcsEsc(x.cin),
     "DESCRIPTION:" + planIcsEsc(x.film + (loc ? "\n" + loc : "")),
-    "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + planIcsEsc(x.film), "TRIGGER:-PT60M", "END:VALARM",
+    "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + planIcsEsc(x.film), "TRIGGER:-PT" + (x.alarm > 0 ? Math.round(x.alarm) : 60) + "M", "END:VALARM",
     "END:VEVENT", "END:VCALENDAR"
   ];
   return lines.map(planFold).join("\r\n") + "\r\n";
@@ -83,26 +84,51 @@ function planGCalUrl(x) {
    inside one city and 90 km/h once the straight line alone is past 30 km (a rough «that’s not local
    traffic anymore» cut — there is no per-trip road-network figure to read instead), + 10 min parking.
    Always «تقريباً»: this is an estimate, not a promise. */
-function planLeaveBy(x, loc) {
+function planTrip(x, loc) {
   if (!loc || x.lat == null) return null;
   var km = haversine(loc.lat, loc.lng, x.lat, x.lng), road = km * 1.35;
   var speed = km > 30 ? 90 : 60, mins = Math.round(road / speed * 60) + 10;
-  var t = planUtc(x.date, x.time).getTime() - mins * 60000;
-  return hhmm(t);   // hhmm() itself adds the UAE +4h back onto a UTC instant
+  var st = planUtc(x.date, x.time).getTime();
+  return { mins: mins, start: st, leave: st - mins * 60000 };
+}
+function planLeaveBy(x, loc) { var tr = planTrip(x, loc); return tr ? hhmm(tr.leave) : null; }   // hhmm() adds the UAE +4h back
+/* the leave-by line at `now` (ms): the time to leave while it is still ahead; once it has passed, when the
+   visitor would arrive leaving now, and how long after the start that is (plan §1.7, «late leave-by») */
+function planLeaveLine(tr, now, ar) {
+  var late = Math.round((now - tr.leave) / 60000);
+  if (late < 1) return sub(ar ? "اطلع من البيت الساعة {t} تقريباً" : "Leave home around {t}, approximately", { t: hhmm(tr.leave) });
+  var at = hhmm(tr.start + late * 60000);
+  if (!ar) return "Leave now and you’ll arrive " + at + ", " + late + (late === 1 ? " minute" : " minutes") + " after it starts.";
+  return "لو طلعت الحين توصل " + at + "، بعد ما يبدأ " + (late === 1 ? "بدقيقة" : late === 2 ? "بدقيقتين" : "بـ" + arCount(late, ["دقيقة", "دقيقتين", "دقايق", "دقيقة"]));
 }
 
+/* The links restate the show, so they are rebuilt only when the show or the trip changes. The minute tick
+   (main.js) then rewrites the leave-by line's text alone: a rebuilt link would drop a keyboard focus to <body>,
+   out of the phone sheet's modal dialog. When a rebuild does happen under a focused control, the focus goes to
+   the control in the same place, else the last one. */
 function planRender(box, x, loc) {
+  var trip = planTrip(x, loc);
+  x.alarm = trip ? trip.mins : 0;
+  var line = trip ? planLeaveLine(trip, NOW.getTime(), AR) : null;
+  var sig = [AR, x.film, x.cin, x.date, x.time, x.endHm, x.lat, x.lng, x.alarm].join("|");
+  if (box.planSig === sig) {
+    var p = q(".plan-leave", box);
+    if (p && line != null && p.textContent !== line) p.textContent = line;
+    return;
+  }
   var ics = "data:text/calendar;charset=utf-8," + encodeURIComponent(planIcs(x));
   var cal = AR ? "أضف للتقويم" : "Add to calendar", gcal = AR ? "تقويم Google" : "Google Calendar";
   var html = '<a class="lnk" download="cinema.ics" href="' + ics + '">' + esc(cal) + '</a>' +
     ' <a class="lnk" href="' + esc(planGCalUrl(x)) + '" rel="noopener" target="_blank">' + esc(gcal) + '</a>';
-  var leave = planLeaveBy(x, loc);
-  if (leave) {
-    html += '<p class="plan-leave">' + esc(sub(AR ? "اطلع من البيت الساعة {t} تقريباً" : "Leave home around {t}, approximately", { t: leave })) + '</p>';
+  if (trip) {
+    html += '<p class="plan-leave">' + esc(line) + '</p>';
   } else if (x.lat != null) {
     html += '<button type="button" class="lnk" data-plan-loc>' + esc(AR ? "متى أطلع من البيت؟" : "When should I leave home?") + '</button>';
   }
+  var ctl = function () { return qa("a, button", box); }, was = box.contains(document.activeElement) ? ctl().indexOf(document.activeElement) : -1;
   box.innerHTML = html;
+  box.planSig = sig;
+  if (was >= 0) { var f = ctl(); if (f.length) (f[was] || f[f.length - 1]).focus(); }
 }
 
 function planFromTicket() {
@@ -137,6 +163,7 @@ function planRefresh() {
   var x = planFromTicket();
   if (!x) return;
   geo().then(function () {
+    if (q("[data-tk-pick]", tk)) return;   // the ticket is asking for a time (ticket.js pickState): nothing to plan
     x = planFromTicket() || x;   // G may only just have loaded
     planRender(planMount(), x, LOC);
   });

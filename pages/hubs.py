@@ -1,6 +1,7 @@
 """pages/hubs.py (Task 2, design spec A): /arabic/ (Gulf & Arabic films) + /events/ (chain-labelled
-special events), and the «آخر فرصة» strip on home + city pages (Kit.SLOTS: home.after_tonight,
-city.after_tonight -- the extension hooks PLUGINS.md offers; no new hook was needed).
+special events). The «آخر فرصة» strip that sat in home.after_tonight / city.after_tonight is deleted
+(W0-P2, MASTER-PLAN §4.1 #13): steps/last_chance.py is switched off until a real signal exists, and a strip
+brought back then is built on that signal, not on this one.
 
 /arabic/: films from `site.showing` whose `lang` is Arabic (data's own film-level `lang`, the
 same field core.py's ticket already reads -- never guessed at from title or chain). "Produced in
@@ -22,15 +23,11 @@ pre-existing, project-wide "no page is noindex outside its own named exemptions"
 would fail against `fixtures/sample_latest.json`'s empty `events` data -- true, but the fix was
 to add a third exemption there (the file already exempts the unconfirmed-discount-card URL the
 same way, one line with a comment), not to revert the page. That exemption is now in place.
-
-«آخر فرصة» strip: steps/last_chance.py's data["last_chance"][city] -> the same site.film_tile()
-core.py's own posters row uses, so a last-chance film looks and behaves exactly like any other
-tile (same poster, price, verdict word, link to its film page -- these are always currently-
-showing films, never coming-soon ones).
 """
 import os
+import re
 
-from site_kit import NOINDEX, L, NavItem, P, Page, Pages, Plugin, esc
+from site_kit import NOINDEX, L, NavItem, P, Page, Pages, Plugin, esc, human_date
 
 TITLE_AR = ("عربي وخليجي", "Arabic & Gulf")
 TITLE_EV = ("فعاليات", "Events")
@@ -41,15 +38,18 @@ DIRS = ("arabic", "events")
 _ARABIC_LANGS = {"arabic", "ar"}
 
 
+def _latin_lang(text, lang):
+    """` lang="en"` for a chain's own Latin title on an Arabic page (as site_kit's hall_html marks one)."""
+    return ' lang="en"' if lang == "ar" and re.search(r"[A-Za-z]", text or "") else ""
+
+
 def register(site):
     p = HubPages(site)
     return Plugin(
         pages=[Page(("arabic",), lang, lambda lang=lang: p.arabic_page(lang)) for lang in ("ar", "en")]
         + [Page(("events",), lang, lambda lang=lang: p.events_page(lang)) for lang in ("ar", "en")],
         nav=[NavItem("arabic", href=lambda lang: P(lang, "arabic"), label=TITLE_AR),
-             NavItem("events", href=lambda lang: P(lang, "events"), label=TITLE_EV)],
-        # home draws «آخر فرصة» as one of its rows (pages/core.py home_rows, UI redesign Task 3) from the same data
-        slots={"city.after_tonight": last_chance_strip})
+             NavItem("events", href=lambda lang: P(lang, "events"), label=TITLE_EV)])
 
 
 class HubPages(Pages):
@@ -79,7 +79,21 @@ class HubPages(Pages):
         only the fids that are still real film pages (film_fid on a raw title always matches a
         real data["films"] entry once that film is merged -- see steps/events.py's docstring --
         but this stays defensive rather than assuming it)."""
-        return [ev for ev in (self.d.get("events") or []) if any(fid in self.films for fid in ev.get("fids") or [])]
+        return [ev for ev in (self.d.get("events") or [])
+                if any(fid in self.films for fid in ev.get("fids") or []) or self.event_sessions(ev["label"])]
+
+    def event_sessions(self, label):
+        """data["event_shows"] (normalize.py, W0-P4 / legend §4.1 #32): sessions of a not-a-film event
+        (Roxy's «Immersive Dining»), which are never films, so they never have a film page. Upcoming only,
+        grouped by cinema and day: [(cid, date, title, book, [times])]."""
+        out = {}
+        for e in self.d.get("event_shows") or []:
+            if e.get("event") != label or e.get("cinema") not in self.cinemas or self.is_past(e):
+                continue
+            key = (e["cinema"], e["date"])
+            row = out.setdefault(key, [e["cinema"], e["date"], e.get("title") or label, e.get("book"), []])
+            row[4].append(e["time"])
+        return [tuple(r[:4]) + (sorted(r[4]),) for _, r in sorted(out.items(), key=lambda kv: (kv[0][1], kv[0][0]))]
 
     def events_page(self, lang):
         title = L(TITLE_EV, lang)
@@ -95,6 +109,12 @@ class HubPages(Pages):
                 rows = "".join(
                     f'<div class="row"><a class="nm" href="{P(lang, "film", fid)}">{esc(self.ftitle(fid, lang))}</a></div>'
                     for fid in ev.get("fids") or [] if fid in self.films)
+                rows += "".join(
+                    f'<div class="row"><a class="nm" href="{esc(book or self.book_url({"cinema": cid}))}" '
+                    f'rel="noopener nofollow" target="_blank"><bdi{_latin_lang(t, lang)}>{esc(t)}</bdi></a><span class="sub">'
+                    f'<span>{self.cname_html(cid, lang)}</span><span>{esc(human_date(d, lang))}</span>'
+                    f'<span>{" ".join(esc(x) for x in times)}</span></span></div>'
+                    for cid, d, t, book, times in self.event_sessions(ev["label"]))
                 sections.append(f'<section class="wrap ev-block"><h2>{esc(name)}</h2><div class="rows">{rows}</div></section>')
             body = head + "".join(sections)
             graph = [self.breadcrumb_ld(lang, (title, P(lang, "events")))]
@@ -110,20 +130,3 @@ class HubPages(Pages):
         return {"title": title, "desc": desc, "body": body, "kind": "events", "nav": "events", "graph": graph,
                 "robots": NOINDEX,
                 "path": os.path.join(self.out, *(["en"] if lang == "en" else []), "events", "index.html")}
-
-# -------------------------------------------------------------- last-chance strip (slot)
-# A plain fn(site, lang, **ctx) as PLUGINS.md's slot contract asks for -- NOT a Pages/HubPages
-# method: the framework calls slot functions with the site itself as the first argument, so a
-# bound method here would double up on that first positional argument.
-def last_chance_strip(site, lang, city=None):
-    last_chance = site.d.get("last_chance") or {}
-    if city:
-        fids = [fid for fid in last_chance.get(city, []) if fid in site.films]
-    else:
-        fids = list(dict.fromkeys(fid for fids in last_chance.values() for fid in fids if fid in site.films))
-    if not fids:
-        return ""
-    heading = "آخر فرصة" if lang == "ar" else "Last chance"
-    tiles = "".join(site.film_tile(fid, lang, site.shows, i=i) for i, fid in enumerate(fids[:8]))
-    return (f'<section class="tonight wrap last-chance"><div class="sec-h"><h2>{esc(heading)}</h2></div>'
-            f'<div class="posters">{tiles}</div></section>')

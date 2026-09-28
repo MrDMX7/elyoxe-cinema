@@ -51,7 +51,7 @@ the sitemap and the assets.
 | `film.share` | a film page: the hero's actions, after «الإعلان» (a ghost button; pages/og.py's «شارك») | `fid` |
 | `film.cast` | a film page: the «الطاقم» tab (pages/people.py) | `fid` |
 | `film.similar` | a film page: the «شي يشبه» tab (pages/insights.py; an archived film gets core's tiles) | `fid` |
-| `film.double` | a film page: the «فيلمين ورا بعض» tab (pages/venue.py) | `fid` |
+| `film.double` | a film page: the «فيلمين ورا بعض» tab. Nothing fills it since W0-P2 (MASTER-PLAN §4.1 #14: the all-cities pairs were past times), so the tab is not drawn; W2-P6 retires the slot | `fid` |
 | `film.compare` | a film page: the «قارن» tab (pages/insights.py); the hero's «قارن» links to it | `fid` |
 
 On the film page a tab is drawn only when its slot (or core's own part) has something to show; with no script
@@ -154,7 +154,7 @@ def test_example_pages_data_sitemap(hello):
 
 def test_example_nav_and_slot_reach_core_pages(hello):
     home = read(hello, "index.html")
-    assert '<a href="/hello/">أهلاً</a>' in re.search(r'<nav class="nav".*?</nav>', home, re.S).group(0)
+    assert '<a href="/hello/">أهلاً</a>' in re.search(r'<p class="foot-l">.*?</p>', home, re.S).group(0)
     assert home.index('id="tonight"') < home.index('<p class="wrap hello">')
 
 

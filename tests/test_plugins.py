@@ -54,8 +54,9 @@ def test_example_pages_data_sitemap(hello):
 
 def test_example_nav_and_slot_reach_core_pages(hello):
     home = read(hello, "index.html")
-    nav = re.search(r'<nav class="foot-l".*?</nav>', home, re.S).group(0)   # a feature's own key: a footer link
-    assert '<a href="/hello/">أهلاً</a>' in nav
+    nav = re.search(r'<nav class="nav".*?</nav>', home, re.S).group(0)
+    foot = re.search(r'<nav class="foot-l".*?</nav>', home, re.S).group(0)   # a feature's own key: a footer link
+    assert '<a href="/hello/">أهلاً</a>' in foot and "/hello/" not in nav
     assert '<a href="/en/hello/">Hello</a>' in read(hello, "en", "index.html")
     assert '<a href="/hello/" aria-current="page">أهلاً</a>' in read(hello, "hello", "index.html")
     assert '<p class="wrap hello"><span class="num">' in home
@@ -75,7 +76,7 @@ def test_example_css_partial_and_lazy_chunk(hello):
     if NODE:
         r = subprocess.run([NODE, "--check", os.path.join(hello, *url.strip("/").split("/"))], capture_output=True, text=True)
         assert r.returncode == 0, r.stderr
-    js = re.search(r'<link rel="preload" href="/assets/(cinema\.[0-9a-f]{10}\.js)" as="script">', read(hello, "index.html")).group(1)
+    js = re.search(r'\("/assets/(cinema\.[0-9a-f]{10}\.js)",document\)', read(hello, "index.html")).group(1)
     assert len(gzip.compress(open(os.path.join(hello, "assets", js), "rb").read())) < 45 * 1024
 
 

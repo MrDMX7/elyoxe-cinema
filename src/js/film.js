@@ -126,6 +126,19 @@ function fsMore() {
     var a = q(".cg-h a", rest[0]); if (a) a.focus();
   });
 }
+/* a show link (#s-…, ticket.js showFromHash) names a time in a cinema that may not be laid out yet: its city opened,
+   the cinema shown (a city's «N سينمات ثانية» opened with it) and laid out, before its new button is looked up */
+function fsReveal(cg) {
+  var sec = cg && cg.closest(".fcity[data-city]");
+  if (!sec) return;
+  if (!sec.open) sec.open = true;
+  if (cg.classList.contains("more-h")) {
+    FS.open[sec.getAttribute("data-city")] = true;
+    qa(".cg.more-h", sec).forEach(function (c) { c.classList.remove("more-h"); });
+    qa("[data-more-c]", sec).forEach(function (b) { b.parentNode.removeChild(b); });
+  }
+  fsHydrate(sec);
+}
 /* the next time at each cinema, when it starts within the hour: «يبدأ بعد 40 د» in live green. Of the times already
    started, the last two stay (faded); the earlier ones leave the row, which would otherwise open on a wall of
    morning shows nobody can book any more */

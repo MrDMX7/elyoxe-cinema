@@ -160,7 +160,8 @@ def test_the_control_sentence_is_gone_from_the_bodies(out):
 
 
 def test_sheet_js_is_in_the_main_bundle(out):
-    js = re.search(r'<link rel="preload" href="/assets/(cinema\.[0-9a-f]{10}\.js)" as="script">', read(out, "index.html")).group(1)
+    # the bundle as the boot loader names it (W0-P1 dropped its preload: a repeat visit fetched it twice; merged at R0)
+    js = re.search(r'"/assets/(cinema\.[0-9a-f]{10}\.js)"', read(out, "index.html")).group(1)
     b = read(out, "assets", js)
     assert "function sheetOpen(" in b and "function bindSheets(" in b and "IntersectionObserver" in b
     assert b.index("function sheetOpen(") < b.index("(function init()")

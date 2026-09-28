@@ -32,7 +32,7 @@ def test_coming_page_groups_by_release_thursday_and_dated_countdown(out):
     assert "1 أكتوبر 2026" in h        # Verity's release_date (2026-10-01) is itself a Thursday
     assert "التاريخ لاحقاً" in h        # Gatto has no release_date
     assert "cs-card" in h and h.count("cs-card") == 2
-    assert '<button type="button" class="btn ghost cs-notify" disabled>' in h  # phase-3 placeholder, inert
+    assert "cs-notify" not in h and "disabled" not in h and "نبّهني" not in h   # the dead «نبّهني» is gone (W0-P2)
 
 
 def test_coming_page_english_variant(out):
@@ -107,30 +107,57 @@ def test_events_hub_with_real_events_is_indexed_and_in_sitemap(out):
     assert "<loc>https://cinema.elyoxe.com/en/events/</loc>" in sm
 
 
-def test_last_chance_strip_on_home_and_its_city_only(out):
+def test_no_last_chance_strip_even_with_a_list_in_the_data(out):
+    """The fixture still carries data["last_chance"] (al-ain: heart-of-the-beast); the strip is deleted and the
+    step switched off (W0-P2, MASTER-PLAN §4.1 #13), so no page prints «آخر فرصة» whatever the data says."""
+    assert json.load(open(DATA, encoding="utf-8")).get("last_chance")
+    for parts in (("index.html",), ("al-ain", "index.html"), ("dubai", "index.html"), ("en", "index.html"), ("en", "al-ain", "index.html")):
+        h = read(out, *parts)
+        assert "آخر فرصة" not in h and "Last chance" not in h and "last-chance" not in h, parts
+        # legend's home draws «آخر فرصة» as a row and tags a tile «آخر أسبوع» from the same data: both off too
+        assert "آخر أسبوع" not in h and "Last week" not in h and 'aria-labelledby="r-last"' not in h, parts
+
+
+def test_phone_bottom_bar_is_four_tabs_and_the_hubs_are_in_the_footer(out):
+    """Seven links in a four-slot bar: three sat off-screen at 390 px (live audit 2026-09-27). The bar keeps the
+    four built-in tabs; «عربي وخليجي» and «فعاليات» are footer links (W0-P1)."""
     home = read(out, "index.html")
-    # home (UI redesign Task 3): «آخر فرصة» is a row once 4 films are in their last days; with one (this fixture)
-    # its tile in «كل الأفلام» carries the «آخر أسبوع» tag, and no strip comes from the slot
-    tile = re.search(r'<a class="film tile[^"]*" href="/film/heart-of-the-beast/".*?</a>', home, re.S).group(0)
-    assert '<span class="tag">آخر أسبوع</span>' in tile
-    assert "last-chance" not in home and 'aria-labelledby="r-last"' not in home
-
-    al_ain = read(out, "al-ain", "index.html")
-    assert "آخر فرصة" in al_ain and 'data-fid="heart-of-the-beast"' in al_ain
-
-    dubai = read(out, "dubai", "index.html")
-    assert "class=\"tonight wrap last-chance\"" not in dubai   # only the al-ain slice has one
-
-
-def test_feature_links_go_to_the_footer_and_the_tab_bar_stays_four(out):
-    """Phase 2's links (Arabic, Events, Kids…) wrapped the old phone bar to a second row (2026-09-27); since the UI
-    redesign a feature's NavItem is a footer link and the tab bar is always the same four."""
-    home = read(out, "index.html")
+    # (legend: the redesign's markup, UI redesign Task 2: the phone's bar is nav.tabs, the footer's row nav.foot-l)
     tabs = re.search(r'<nav class="tabs".*?</nav>', home, re.S).group(0)
-    assert tabs.count("<a ") == 4
+    assert tabs.count("<a ") == 4 and "/arabic/" not in tabs and "/events/" not in tabs
+    nav = re.search(r'<nav class="nav".*?</nav>', home, re.S).group(0)
+    assert nav.count("<a ") == 4 and "/arabic/" not in nav and "/events/" not in nav
     foot = re.search(r'<nav class="foot-l".*?</nav>', home, re.S).group(0)
     assert 'href="/arabic/"' in foot and 'href="/events/"' in foot
-    assert 'href="/arabic/"' not in re.search(r'<nav class="nav".*?</nav>', home, re.S).group(0)
+    assert "grid-auto-flow:column" not in read(out, "assets", "cinema.css")      # no sideways-scrolling bar
+
+
+@pytest.mark.parametrize("day,thursday", [
+    ("2026-09-28", "2026-10-01"),   # Monday -> the coming Thursday
+    ("2026-09-29", "2026-10-01"),   # Tuesday
+    ("2026-09-30", "2026-10-01"),   # Wednesday
+    ("2026-10-01", "2026-10-01"),   # Thursday -> itself
+    ("2026-10-02", "2026-10-01"),   # Friday -> the Thursday before («Anbil Avan» sat under 8 October)
+    ("2026-10-03", "2026-10-01"),   # Saturday
+    ("2026-10-04", "2026-10-01"),   # Sunday
+])
+def test_release_week_is_the_thursday_that_opens_it(day, thursday):
+    from pages import coming as cm
+    assert cm._thursday_of(day) == thursday
+
+
+def test_friday_release_groups_under_the_thursday_before(tmp_path):
+    d = json.load(open(DATA, encoding="utf-8"))
+    d["coming"]["anbil-avan"] = {"title": "Anbil Avan", "title_ar": None, "release_date": "2026-10-02", "poster": None,
+                                 "trailer": None, "genres": [], "chains": ["vox"]}
+    path = tmp_path / "data.json"
+    path.write_text(json.dumps(d), encoding="utf-8")
+    o = str(tmp_path / "out")
+    build.build(str(path), DISC, o, modules=MODULES)
+    h = open(os.path.join(o, "coming", "index.html"), encoding="utf-8").read()
+    week = re.search(r'<section class="wrap cs-week"><h2>1 أكتوبر 2026</h2>(.*?)</section>', h, re.S).group(1)
+    assert "Anbil Avan" in week and "8 أكتوبر" not in h
+
 
 def test_countdown_counts_days_in_arabic_grammar():
     import types

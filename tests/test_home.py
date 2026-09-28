@@ -31,8 +31,7 @@ def out(tmp_path_factory):
     return o
 
 
-@pytest.fixture(scope="module")
-def full(tmp_path_factory):
+def full_data():
     """The fixture with enough of everything for every row: 5 announced films (2 on the coming Thursday), 4 films
     in their last days, 4 Arabic films."""
     d = json.load(open(DATA, encoding="utf-8"))
@@ -46,11 +45,19 @@ def full(tmp_path_factory):
     d["coming"] = {f"soon-{i}": {"title": f"Soon {i}", "title_ar": None, "release_date": day, "poster": None, "trailer": None,
                                  "genres": ["Drama"], "chains": ["vox"]}
                    for i, day in enumerate(["2026-10-01", "2026-10-01", "2026-10-08", "2026-10-15", "2026-10-22"])}
-    tmp = tmp_path_factory.mktemp("homefull")
-    p = tmp / "d.json"; p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+    return d
+
+
+def build_full(tmp):
+    p = tmp / "d.json"; p.write_text(json.dumps(full_data(), ensure_ascii=False), encoding="utf-8")
     o = str(tmp / "out")
     build.build(str(p), DISC, o, noindex=False)
     return o
+
+
+@pytest.fixture(scope="module")
+def full(tmp_path_factory):
+    return build_full(tmp_path_factory.mktemp("homefull"))
 
 
 def main_of(h):
@@ -90,7 +97,8 @@ def test_home_of_about_100_films_within_150kb(tmp_path):
     for parts in ((), ("en",)):
         h = read(o, *parts)
         assert h.count('class="film tile') == n
-        assert len(re.findall(r'<section class="rail"', h)) == 8          # near + every row
+        # near + every row but «آخر فرصة», which is off with steps/last_chance.py (W0-P2, plan §4.1 #13, merged at R0)
+        assert len(re.findall(r'<section class="rail"', h)) == 7
         size = os.path.getsize(os.path.join(o, *parts, "index.html"))
         assert size <= BUDGET, (parts, size)
 
@@ -195,7 +203,8 @@ def test_billboard_and_its_island(out):
 
 def test_near_row_is_drawn_by_the_script_and_hidden_until_then(out):
     h = read(out)
-    row = re.search(r'<section class="rail" aria-labelledby="r-near" data-near-row hidden>.*?</section>', h, re.S).group(0)
+    # id="now": the manifest's «الحين» shortcut lands here (W0-P1, plan §4.1 #5, merged at R0)
+    row = re.search(r'<section class="rail" aria-labelledby="r-near" id="now" data-near-row hidden>.*?</section>', h, re.S).group(0)
     assert "يبدأ قريب منك" in row and "data-near-sub" in row and "data-near" in row and '<div class="strip" data-strip></div>' in row
     js = open(os.path.join(ROOT, "src", "js", "home.js"), encoding="utf-8").read()
     near = js[js.index("function renderNear("):js.index("function renderFrom(")]
@@ -206,7 +215,10 @@ def test_rows_in_order_from_the_data(full):
     h = read(full)
     m = main_of(h)
     keys = re.findall(r'<section class="rail" aria-labelledby="r-([a-z]+)"', m)
-    assert keys == ["near", "top", "yes", "cheap", "family", "coming", "last", "arabic"], keys
+    # no «آخر فرصة» row and no «آخر أسبوع» tag while steps/last_chance.py is off (W0-P2, plan §4.1 #13, merged at R0),
+    # whatever data["last_chance"] holds; test_last_chance_row_only_with_the_step_on draws it with the switch on
+    assert keys == ["near", "top", "yes", "cheap", "family", "coming", "arabic"], keys
+    assert "آخر أسبوع" not in m
     rows = {k: re.search(r'<section class="rail" aria-labelledby="r-' + k + r'".*?</section>', m, re.S).group(0) for k in keys}
     for k in keys[1:]:
         assert rows[k].count('class="tile') >= 4, k
@@ -214,10 +226,8 @@ def test_rows_in_order_from_the_data(full):
     href = lambda k: re.search(r'<a class="all-l" href="([^"]+)"', rows[k]).group(1)
     assert href("top") == "/#all" and href("yes") == "/?f=yes#all" and href("cheap") == "/?sort=price#all"
     assert href("family") == "/?f=family#all" and href("coming") == "/coming/" and href("arabic") == "/arabic/"
-    assert 'class="all-l"' not in rows["last"]
-    # tags: «الخميس» on this Thursday's releases only, «آخر أسبوع» on every last-chance tile
+    # tags: «الخميس» on this Thursday's releases only
     assert rows["coming"].count('<span class="tag">الخميس</span>') == 2
-    assert rows["last"].count('<span class="tag">آخر أسبوع</span>') == 4
     # rows re-sort for the visitor: «الأكثر عرضاً» by their city, «أرخص لك» after their card
     assert 'data-rail-sort="count"' in rows["top"] and 'data-rail-sort="pay"' in rows["cheap"]
     # the verdict row holds only «يستاهل» films
@@ -225,6 +235,18 @@ def test_rows_in_order_from_the_data(full):
     # a row's tile: the id and runtime the prices read, not the filter attributes (the sheet filters the grid)
     assert "data-genres" not in rows["top"] and 'data-fid="' in rows["top"]
     assert 'data-rail="1"' in rows["top"] and 'aria-label="التالي"' in rows["top"]
+
+
+def test_last_chance_row_only_with_the_step_on(tmp_path, monkeypatch):
+    """The row and the tags the redesign draws from data["last_chance"] come back only when the step is switched on
+    again on a real signal (W2-P4 deletes this code or rebuilds it on that signal)."""
+    from steps import last_chance
+    monkeypatch.setattr(last_chance, "ENABLED", True)
+    m = main_of(read(build_full(tmp_path)))
+    keys = re.findall(r'<section class="rail" aria-labelledby="r-([a-z]+)"', m)
+    assert keys == ["near", "top", "yes", "cheap", "family", "coming", "last", "arabic"], keys
+    row = re.search(r'<section class="rail" aria-labelledby="r-last".*?</section>', m, re.S).group(0)
+    assert 'class="all-l"' not in row and row.count('<span class="tag">آخر أسبوع</span>') == 4
 
 
 def test_rows_under_four_are_skipped(out):

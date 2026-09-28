@@ -75,10 +75,13 @@ def test_indirectly_sourced_malls_are_flagged_in_the_data_itself():
 
 # ---------------------------------------------------------------- snacks (B.46)
 class _SiteStub:
-    """Just enough of Kit for snacks_section: .rules (already official-only, as site_kit filters it) and
-    .h.chain_name — never the full build, so this stays a unit test of venue.py's own logic."""
-    def __init__(self, rules=None):
+    """Just enough of Kit for snacks_section: .rules (already official-only, as site_kit filters it), .disc's
+    cards (their names), .today and .h.chain_name — never the full build, so this stays a unit test of
+    venue.py's own logic."""
+    def __init__(self, rules=None, cards=None):
         self.rules = rules or {}
+        self.disc = {"cards": cards or []}
+        self.today = "2026-09-25"
         self.h = types.SimpleNamespace(chain_name=lambda chain, lang: chain)
 
 
@@ -118,9 +121,26 @@ def test_snacks_no_chain_entry_renders_nothing(monkeypatch):
 # ---------------------------------------------------------------- FOOD_WORDS heuristic
 def test_food_words_surfaces_an_official_note_that_mentions_food(monkeypatch):
     monkeypatch.setattr(venue, "load_snacks", lambda: {})   # no combos: isolate the food-discount branch
-    rules = {"cineroyal": {"fab": {"note_ar": "التذكرة بـ20 درهم وخصم 20% على الأكل", "source": "https://cineroyal.ae/x"}}}
+    rules = {"cineroyal": {"fab": {"type": "fixed", "note_ar": "التذكرة بـ20 درهم وخصم 20% على الأكل", "source": "https://cineroyal.ae/x"}}}
     html = venue.snacks_section(_SiteStub(rules), "ar", "cineroyal")
     assert 'class="food-disc"' in html and "الأكل" in html
+
+
+def test_food_line_names_its_card(monkeypatch):
+    """«خصم البطاقات على الأكل» listed HSBC's rule with no card name (W0-P2, MASTER-PLAN §4.1 #16)."""
+    monkeypatch.setattr(venue, "load_snacks", lambda: {})
+    rules = {"vox": {"hsbc": {"type": "bogo", "note_ar": "اشترِ تذكرة وخذ الثانية مجاناً + خصم 25% على المأكولات", "source": "https://x"}}}
+    cards = [{"id": "hsbc", "name_ar": "إتش إس بي سي", "name_en": "HSBC"}]
+    ar = venue.snacks_section(_SiteStub(rules, cards), "ar", "vox")
+    assert re.search(r'<ul class="food-disc"><li><b><bdi>إتش إس بي سي</bdi></b>: اشترِ تذكرة', ar)
+    en = venue.snacks_section(_SiteStub(rules, cards), "en", "vox")
+    assert '<b><bdi>HSBC</bdi></b>: <span lang="ar" dir="rtl">' in en
+
+
+def test_food_line_skips_an_expired_offer(monkeypatch):
+    monkeypatch.setattr(venue, "load_snacks", lambda: {})
+    rules = {"vox": {"hsbc": {"type": "bogo", "valid_until": "2026-09-01", "note_ar": "خصم 25% على المأكولات", "source": "https://x"}}}
+    assert venue.snacks_section(_SiteStub(rules), "ar", "vox") == ""
 
 
 def test_food_words_skips_a_note_that_never_mentions_food():
@@ -130,7 +150,7 @@ def test_food_words_skips_a_note_that_never_mentions_food():
 
 def test_food_words_matches_every_listed_word():
     for w in venue.FOOD_WORDS:
-        rules = {"c": {"card": {"note_ar": f"خصم على {w}", "source": "https://x"}}}
+        rules = {"c": {"card": {"type": "percent", "note_ar": f"خصم على {w}", "source": "https://x"}}}
         assert venue.snacks_section(_SiteStub(rules), "ar", "c") != "", w
 
 
@@ -194,27 +214,45 @@ def test_group_pairs_folds_times_of_the_same_films_at_the_same_cinema():
     assert groups == [("c1", "a", "b", [("18:00", "20:20"), ("21:00", "23:30")])]
 
 
-def test_film_page_double_features_stay_small_at_real_volume():
-    """A busy film pairs with hundreds of shows across the country: the film page carries a capped list (open: it is
-    its own «فيلمين ورا بعض» tab since UI redesign Task 4) (a few per city, each linked to its cinema page, which lists every pair) — never all of them."""
-    site = _PairSite(60)
-    pairs = [p for p in venue.double_features(_busy_day()) if "a" in (p[0]["film"], p[1]["film"])]
-    assert len(pairs) > 500
-    html = venue.film_double_feature_html(site, "ar", pairs)
-    assert html.startswith('<details class="dfeat" open>') and "<summary>" in html
-    assert len(html.encode()) < 6_000
-    assert html.count("<li") <= venue.PER_CITY * 4
-    en = venue.film_double_feature_html(site, "en", pairs)
-    assert "Cinema c0" in en and len(en.encode()) < 6_000
+def test_venue_no_longer_fills_the_film_page():
+    """The film page's all-cities double feature is deleted (W0-P2, MASTER-PLAN §4.1 #14)."""
+    assert not hasattr(venue, "film_double_feature_html")
+    plugin = venue.register(types.SimpleNamespace())
+    assert set(plugin.slots) == {"cinema.after_halls"} and plugin.page_js == {"cinema": ["when"]}
 
 
-def test_cinema_page_double_features_are_grouped_and_bounded():
+def test_cinema_page_double_features_are_grouped_bounded_and_written_with_then():
     site = _PairSite(1)
     pairs = venue.double_features(_busy_day(1))
-    html = venue.double_feature_html(site, "ar", pairs, show_cinema=False)
-    assert html.startswith('<details class="dfeat">')
-    assert html.count("<li") == min(len(venue.group_pairs(pairs)), venue.MAX_LINES) and len(html.encode()) < 6_000
-    assert '<bdi dir="ltr" class="num">12:00 → ' in html and " +" in html and "</details>" in html
+    html = venue.double_feature_html(site, "ar", pairs, "2026-09-25")
+    assert html.startswith('<details class="dfeat" data-d="2026-09-25" data-when-group><summary>فيلمين ورا بعض</summary>')
+    # no heavier than the arrow version (< 6 KB): the block counts against the page budget, and the schedule's
+    # per-show booking links must never be what gives way for it
+    assert html.count("<li data-when-group>") == min(len(venue.group_pairs(pairs)), venue.MAX_LINES) and len(html.encode()) < 6_000
+    # two start times in reading order, «ثم» between them, and no arrow left to flip in an RTL line
+    assert '<span data-until="12:00">12:00 ثم 14:37</span>' in html
+    assert "→" not in html and "←" not in html and "</details>" in html
+    assert re.search(r'<b><bdi>Film a</bdi></b> ثم <b><bdi>Film [b-h]</bdi></b>', html)
+    en = venue.double_feature_html(site, "en", pairs, "2026-09-25")
+    assert " then " in en and "→" not in en
+
+
+class _Kit:
+    """The Kit surface future_pairs reads: today's shows by cinema and the build's clock."""
+    def __init__(self, shows, now="21:30", today="2026-09-25"):
+        self._by_cin, self.today, self._now = {}, today, now
+        for s in shows: self._by_cin.setdefault(s["cinema"], []).append(s)
+
+    def is_past(self, s):
+        return (s["date"], s["time"]) < (self.today, self._now)
+
+
+def test_cinema_page_keeps_only_pairs_whose_first_film_has_not_started():
+    ss = [show(film="a", time="19:00", ends="21:00"), show(film="b", time="21:20", ends="23:00"),   # a started: gone
+          show(film="c", time="21:40", ends="23:30"), show(film="d", time="23:50", ends="01:30")]   # c ahead: kept
+    pairs = venue.future_pairs(_Kit(ss), "c1")
+    assert [(a["film"], b["film"]) for a, b, _ in pairs] == [("c", "d")]
+    assert venue.double_feature_html(_PairSite(2), "ar", venue.future_pairs(_Kit(ss, now="23:59"), "c1"), "2026-09-25") == ""
 
 
 # ---------------------------------------------------------------- a real build: the slots actually fill

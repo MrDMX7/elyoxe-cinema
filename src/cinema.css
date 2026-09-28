@@ -571,7 +571,8 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
 .foot .mark{font-size:24px;margin-inline-end:auto;color:var(--gold)}
 [lang=en] .foot .mark{font-size:20px}
 .foot-l{display:flex;flex-wrap:wrap;gap:4px 22px}
-.foot-l a{min-block-size:32px;display:inline-flex;align-items:center}
+/* the footer carries the sections the four-tab bar has no place for (W0-P1, plan §4.1 #1): full-height tap targets */
+.foot-l a{min-block-size:44px;display:inline-flex;align-items:center}
 .foot-l a[aria-current]{color:var(--screen)}
 .foot-s{flex-basis:100%;font-size:12px}
 .foot a{color:var(--dim);text-decoration:none}
@@ -812,6 +813,8 @@ body[data-page=home]::before{display:none}
    paint, so the rows under it never jump down (it was the page's whole CLS); it gives the place back only when
    nothing starts in the next 3 hours */
 .js .rail[data-near-row][hidden]{display:block;visibility:hidden}
+/* the «الحين» shortcut lands here (/#now): the row's heading clear of the sticky header */
+#now{scroll-margin-block-start:calc(var(--head) + 8px)}
 .js .rail[data-near-row].gone{display:none}
 .rail[data-near-row] .strip{min-block-size:114px}
 .rail-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 14px;margin-block-end:12px}

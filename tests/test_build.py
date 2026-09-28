@@ -164,7 +164,7 @@ def test_city_day_slices_for_the_client(site):
     # the client is one bundle, named by its hash; the budget is 45 KB gzipped (spec: Budgets)
     import gzip
     home = open(os.path.join(out, "index.html"), encoding="utf-8").read()
-    name = re.search(r'<link rel="preload" href="/assets/(cinema\.[0-9a-f]{10}\.js)" as="script">', home).group(1)
+    name = re.search(r'\("/assets/(cinema\.[0-9a-f]{10}\.js)",document\)</script>', home).group(1)
     js = open(os.path.join(out, "assets", name), "rb").read()
     assert len(gzip.compress(js)) < 45 * 1024
     assert json.load(open(os.path.join(out, "data", "cinemas.json"), encoding="utf-8"))
@@ -571,6 +571,7 @@ def test_archived_film_keeps_its_page(site):
     for page in (read(out), read(out, "al-ain"), read(out, "al-ain", "star-bawadi-mall")):
         assert "/film/weapons/" not in page and "/film/the-long-walk/" not in page
     for f in os.listdir(os.path.join(out, "data")):
+        if os.path.isdir(os.path.join(out, "data", f)): continue   # data/seats/ (W0-P3: its index.json is always written)
         if f == "search.json":
             # pages/search.py (task A5, ruling round 2, task-A5-review.md): search is a lookup surface, not
             # a listing -- an archived film keeps a real page (this very test asserts that above), so it

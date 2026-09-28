@@ -14,6 +14,7 @@ from site_kit import Emit, Pages, Plugin
 JS = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filters", "bill", "ticket", "film", "tabs", "trailer", "pwa", "sheet", "main")
 CSS = ()            # src/cinema.css is the base sheet; features append src/css/<name>.css
 LAZY_JS = ()
+TOMORROW_AT_CINEMA = ("مواعيد بكرة تنزل هني الصبح.", "Tomorrow’s times appear here in the morning.")
 DIRS = tuple(c for c, _, _ in CITIES) + ("film", "cards", "halls", "data", "assets", "en", "cinema", "cinemas", "sources")
 
 
@@ -48,11 +49,14 @@ class CorePages(Pages):
             body += (f'<h1 class="vh">{"كل سينما في الإمارات، والسعر بعد خصم بطاقتك" if lang == "ar" else "Every cinema in the UAE, priced after your card discount"}</h1>')
             body += self.rail(lang, "near", L(HOME_T["near"], lang), "",
                               sub=f'<span data-near-sub></span><button type="button" class="lnk near-ask" data-near hidden>{esc(L(CHROME_T["near"], lang))}</button>',
-                              attrs=" data-near-row hidden")
+                              # id="now": the manifest's «الحين» shortcut opens /#now here (W0-P1, plan §4.1 #5; the row's slot
+                              # is reserved while hidden). At cutover the board carries the id (W2-P2)
+                              attrs=' id="now" data-near-row hidden')
             body += self.home_rows(lang, films)
             body += self.slot("home.after_tonight", lang)
             # a film in its last days is tagged in the grid too (the «آخر فرصة» row needs 4 films to be drawn)
-            last = {f: L(HOME_T["tag_last"], lang) for fs in (self.d.get("last_chance") or {}).values() for f in fs}
+            # (off with steps/last_chance.py until the signal is real: W0-P2, plan §4.1 #13 and §4.2 #23)
+            last = {f: L(HOME_T["tag_last"], lang) for fs in self.last_chance().values() for f in fs}
             body += self.posters_row(lang, films, self.shows, L(HOME_T["all_films"], lang), tags=last, prayer=True, yes=True)
             hn = self.first_city_show(self.shows, ["dubai"])
             body += self.ticket(hn, lang, hidden=True) if hn else self.ticket_shell()
@@ -170,6 +174,13 @@ class CorePages(Pages):
                 f'<script type="application/json" id="bill-data">{island}</script></section>')
 
     # -------------------------------------------------- home: the rows
+    def last_chance(self):
+        """data["last_chance"] while steps/last_chance.py is switched on, else nothing (W0-P2, plan §4.1 #13; the
+        row and the «آخر أسبوع» tags stay off until the signal is real, §4.2 #23): a latest.json written before the
+        switch, or by hand, never brings them back."""
+        from steps.last_chance import ENABLED
+        return (self.d.get("last_chance") or {}) if ENABLED else {}
+
     def home_rows(self, lang, films):
         """The rows, in the spec's order, each from the data the site already keeps: tonight's show counts, the
         verdicts, the cheapest ticket, the family flag, «نازل الخميس» (data["coming"], pages/coming.py's fold),
@@ -198,14 +209,19 @@ class CorePages(Pages):
         coming = self.d.get("coming") or {}
         if coming and "thursday" in keys:
             from pages.coming import fold_near_duplicates, _thursday_of
-            thu = _thursday_of(self.today)
+            # «الخميس» marks the week that opens on the coming Thursday (today when it is one), filed as /coming/
+            # files it: _thursday_of puts Mon–Wed under the Thursday after and Fri–Sun under the one before (W0-P2,
+            # plan §4.1 #11), so on a Friday it names the week already open, not the one this row announces
+            from datetime import date, timedelta
+            t0 = date.fromisoformat(self.today)
+            thu = (t0 + timedelta(days=(3 - t0.weekday()) % 7)).isoformat()
             items = sorted(fold_near_duplicates(coming), key=lambda kv: (not kv[1].get("release_date"), kv[1].get("release_date") or "", kv[1]["title"]))
             items = [(k, f) for k, f in items if not f.get("release_date") or f["release_date"] >= self.today]
             if len(items) >= 4:
                 tiles = "".join(self.coming_tile(k, f, lang, L(HOME_T["tag_thu"], lang) if f.get("release_date") and _thursday_of(f["release_date"]) == thu else None)
                                 for k, f in items[:N])
                 out.append(self.rail(lang, "coming", L(HOME_T["coming"], lang), tiles, more=P(lang, "coming")))
-        last = list(dict.fromkeys(f for fs in (self.d.get("last_chance") or {}).values() for f in fs if f in self.films and f in self.showing))
+        last = list(dict.fromkeys(f for fs in self.last_chance().values() for f in fs if f in self.films and f in self.showing))
         row("last", HOME_T["last"], last, tag=L(HOME_T["tag_last"], lang))
         arabic = [f for f in films if str(self.films[f].get("lang") or "").lower() in ("arabic", "ar")]
         row("arabic", HOME_T["arabic"], arabic, P(lang, "arabic") if "arabic" in keys else home + "?fl=Arabic#all")
@@ -230,7 +246,7 @@ class CorePages(Pages):
                         + (f'<span class="age" data-at="{esc(ch["at"])}">{esc(L(T["updated"], lang))} {esc(ago(at, self.now, lang))}</span>' if at else "")
                         + state + '</li>')
         return (f'<section class="wrap srcs"><h2>{"من وين الأسعار" if lang == "ar" else "Where the prices come from"}</h2>'
-                f'<p class="hint">{"من نظام الحجز عند كل سينما، ثلاث مرات باليوم. إذا ما حصلنا السعر نكتب «السعر في الشباك»، وما نخمّن." if lang == "ar" else "From each chain’s booking system, three times a day. When we can’t read a price we say «price at the box office» — we never guess."}</p>'
+                f'<p class="hint">{"من نظام الحجز عند كل سينما: المواعيد كل ساعة، والسعر مرة باليوم لكل قاعة. إذا ما حصلنا السعر نكتب «السعر في الشباك»، وما نخمّن." if lang == "ar" else "From each chain’s booking system: showtimes every hour, prices once a day per hall. When we can’t read a price we say «price at the box office» — we never guess."}</p>'
                 f'<ul class="chains">{"".join(rows)}</ul></section>')
 
     def sources_page(self):
@@ -253,7 +269,7 @@ class CorePages(Pages):
                 cids = sorted((cid for cid, c in self.cinemas.items() if c.get("city") == city), key=lambda cid: self.cname(cid, lang))
                 cn = L((a, e), lang)
                 body += (f'<section class="wrap cities" id="{city}"><h2><a href="{P(lang, city)}">{esc(cn)}</a> '
-                         f'<small>{num(len(cids))} {"سينما" if lang == "ar" else ("cinema" if len(cids) == 1 else "cinemas")}</small></h2>')
+                         f'<small>{ar_count_num(len(cids), CINEMAS_AR) if lang == "ar" else num(len(cids)) + (" cinema" if len(cids) == 1 else " cinemas")}</small></h2>')
                 if cids:
                     body += ('<ul class="clist">' + "".join(
                         f'<li><a href="{P(lang, city, cid)}">{self.cname_html(cid, lang)}</a> <span class="n">{esc(self.h.chain_name(self.cinemas[cid]["chain"], lang))}</span></li>'
@@ -281,7 +297,10 @@ class CorePages(Pages):
                              f'<a href="{P(lang, near)}">{esc(nn)}</a>.</p></section>')
                     body += self.ticket_shell()
                 else:
-                    body += (f'<p class="lead">{f"{len(cids)} سينما و{len(fids)} فيلم اليوم. السعر لكل قاعة من السينما نفسها، وينحسب بعد خصم بطاقتك." if lang == "ar" else f"{len(cids)} cinemas and {len(fids)} films today. Every hall’s price comes from the cinema itself and is worked out after your card."}</p></section>')
+                    nc, nf = len(cids), len(fids)
+                    counts = (f"{ar_count(nc, CINEMAS_AR)} و{ar_count(nf, FILMS_AR)} اليوم" if lang == "ar" else
+                              f"{nc} {'cinema' if nc == 1 else 'cinemas'} and {nf} {'film' if nf == 1 else 'films'} today")
+                    body += (f'<p class="lead">{f"{counts}. السعر لكل قاعة من السينما نفسها، وينحسب بعد خصم بطاقتك." if lang == "ar" else f"{counts}. Every hall’s price comes from the cinema itself and is worked out after your card."}</p></section>')
                     body += f'<div class="wrap">{self.me(lang, city, "city")}</div>'
                     if fids: body += self.posters_row(lang, fids, today, "الليلة في " + cn if lang == "ar" else "Tonight in " + cn, prayer=True)
                     body += self.slot("city.after_tonight", lang, city=city)
@@ -385,13 +404,18 @@ class CorePages(Pages):
                     rows += self.card_row(card, chain, r, st, lang, P(lang, "cards", card["id"]))
                 if rows:
                     rest += f'<section><h2>{"البطاقات في " + self.h.chain_name(chain, lang) if lang == "ar" else "Cards at " + self.h.chain_name(chain, lang)}</h2><div class="rows">{rows}</div></section>'
-                rest += '</div>' + (self.ticket(nxt, lang) if nxt else self.ticket_shell()) + '</div>'
+                rest += '</div>'
+                tk = lambda n: (self.ticket(n, lang) if n else self.ticket_shell()) + '</div>'
                 # films with their times, today then tomorrow — as richly as fits what the rest of the page leaves
                 th0 = self.theater_ld(cid, lang)
                 th0["event"] = [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:40]
-                left = PAGE_TARGET - CHROME - len(body.encode()) - len(rest.encode()) - self.ld_size([th0]) - 600
+                left = PAGE_TARGET - CHROME - len(body.encode()) - len((rest + tk(nxt)).encode()) - self.ld_size([th0]) - 600
                 sched, _ = self.fit(lambda m: self.cinema_schedule(shows, lang, m, self.sid(nxt) if nxt else None), ("full", "today", "plain", "compact"), left)
-                body += sched + rest
+                on = nxt
+                if not sched and any(s["date"] == self.today for s in shows):
+                    # every time today has started and tomorrow's aren't listed yet: say when they come, no ticket
+                    sched, on = f'<p class="hint">{L(TOMORROW_AT_CINEMA, lang)}</p>', None
+                body += sched + rest + tk(on)
                 title = (f"{name} — أسعار التذاكر ومواعيد اليوم وخصم البطاقات" if lang == "ar" else f"{name} — ticket prices, today’s showtimes and card discounts")
                 desc = (f"مواعيد أفلام {name} اليوم، سعر التذكرة لكل قاعة وفئة، شو الفرق بين القاعات، والسعر بعد خصم فزعة وإسعاد والبنوك." if lang == "ar"
                         else f"Today’s showtimes at {name}, ticket prices per hall and seat class, what each hall offers, and the price after Fazaa, Esaad and bank cards.")
@@ -407,7 +431,7 @@ class CorePages(Pages):
         out = []
         days = ((self.today, ("اليوم", "Today")), (self.tomorrow, ("بكرة", "Tomorrow")))
         for day, lab in days[:2 if mode in ("full", "compact") else 1]:
-            ds = [s for s in shows if s["date"] == day]
+            ds = self.live_halls([s for s in shows if s["date"] == day], lambda s: (s["film"], self.hkey(s)))
             if not ds: continue
             out.append(f'<section class="day" data-d="{day}"><h2>{esc(L(lab, lang))} <small>{esc(human_date(day, lang))}</small></h2><div class="cfilms">')
             fids = sorted({s["film"] for s in ds}, key=lambda f: (-sum(1 for s in ds if s["film"] == f), self.ftitle(f, "en")))
@@ -425,7 +449,7 @@ class CorePages(Pages):
                 out.append('</div></div>')
             out.append('</div></section>')
         if mode not in ("full", "compact"):
-            out.append(f'<p class="hint">{"مواعيد بكرة تنزل هني الصبح." if lang == "ar" else "Tomorrow’s times appear here in the morning."}</p>')
+            out.append(f'<p class="hint">{L(TOMORROW_AT_CINEMA, lang)}</p>')
         return "".join(out)
 
     # -------------------------------------------------- film (UI redesign Task 4): hero → day bar → schedule + ticket → tabs
@@ -622,8 +646,9 @@ class CorePages(Pages):
                         f'<button type="button" class="btn dk-b" data-dk-open aria-haspopup="dialog">{esc(L(FILM_T["details"], lang))}</button>'
                         f'</div><p class="vh" data-dk-live aria-live="polite"></p>')   # the live region outside the dock: always rendered (M5)
                 graph = [self.movie_ld(fid, lang)] + [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:30] + [self.breadcrumb_ld(lang, (t, P(lang, "film", fid)))]
+                none = f'<p class="lead">{esc(L(FILM_T["none"], lang))}</p>'
                 if not cities:
-                    sched = f'<p class="lead">{esc(L(FILM_T["none"], lang))}</p>'
+                    sched = none
                 else:
                     # the schedule is most of the page's weight: render it as richly as fits what the rest leaves
                     bar0 = self.film_bar(lang, days); sheet0 = self._sheets.pop()   # measured (bar and its «⋯» sheet), drawn for real below
@@ -635,9 +660,13 @@ class CorePages(Pages):
                     # day's times when the visitor's «اليوم» has moved on)
                     sched, mode = self.fit(lambda m: self.film_schedule(shows, cities, lang, m, self.sid(nxt) if nxt else None), ("full", "compact"), left)
                     if mode not in ("full", "compact") and nxt and nxt["date"] != self.today: nxt = self.first_city_show([s for s in shows if s["date"] == self.today], cities) or nxt
+                    # every hall's times have started and the next day isn't listed (a film's last night, after its
+                    # last start): the page says so, as for a film with no shows, and holds no ticket for a started show
+                    # (W0-P1 I1; the branch's cities are <details class="fcity[ here]">)
+                    if 'class="fcity' not in sched: sched, nxt = none, None
                 # a day button only for a day the schedule actually has
                 days = [d for d in days if f'data-d="{d}"' in sched]
-                bar = self.film_bar(lang, days) if cities else ""
+                bar = self.film_bar(lang, days) if cities and days else ""
                 ticket = self.ticket(nxt, lang) if nxt else self.ticket_shell()
                 body = (hero + f'<section class="fsched" id="times" aria-labelledby="times-h"><h2 class="vh" id="times-h">{esc(L(FILM_T["times"], lang))}</h2>'
                         f'{bar}<div class="wrap lay"><div class="cgs"><p class="nc" data-nc hidden></p>{sched}<p class="empty" data-empty hidden></p></div>'
@@ -670,6 +699,13 @@ class CorePages(Pages):
         return (f'<section class="tonight wrap similar"><div class="sec-h"><h2>{"أفلام معروضة الحين تشبهه" if lang == "ar" else "Showing now, in the same vein"}</h2></div>'
                 f'<div class="posters grid">{tiles}</div></section>')
 
+    def live_halls(self, shows, hall):
+        """The shows of every hall (`hall(s)` its key) that still has a time to come when the data was built:
+        a hall whose times have all passed is dropped with its heading («THEATRE من 195.00» over nothing).
+        Only the build's clock is known here: a hall whose last time passes later is the client's to hide."""
+        live = {hall(s) for s in shows if not self.is_past(s)}
+        return [s for s in shows if hall(s) in live]
+
     def film_schedule(self, shows, cities, lang, mode, on=None):
         """city → cinema group → hall: the hall's price (once, or per day when days differ), then the time
         buttons per day. mode full = today + tomorrow with booking URLs; today = today only; plain = unlinked.
@@ -679,9 +715,10 @@ class CorePages(Pages):
         the card; the hall rows here are what a visitor with no script reads."""
         days = [(self.today, ("اليوم", "Today"))] + ([(self.tomorrow, ("بكرة", "Tomorrow"))] if mode in ("full", "compact") else [])
         out = []
+        shows = self.live_halls([s for s in shows if s["date"] in {d for d, _ in days}], lambda s: (s["cinema"], self.hkey(s)))
         # Dubai (the script's default city) first, as the script will show it: no city moves above it at start-up (CLS)
         for city in sorted(cities, key=lambda c: c != "dubai"):
-            cs = [s for s in shows if self.cinemas[s["cinema"]].get("city") == city and s["date"] in (d for d, _ in days)]
+            cs = [s for s in shows if self.cinemas[s["cinema"]].get("city") == city]
             if not cs: continue
             cids = list(dict.fromkeys(s["cinema"] for s in cs))
             n = ar_count(len(cids), FILM_T["n_cin"][0]) if lang == "ar" else f'{len(cids)} {FILM_T["n_cin"][1][len(cids) != 1]}'
@@ -705,7 +742,7 @@ class CorePages(Pages):
                         low = min((p for p in priced["prices"] if (p.get("aed") or 0) > 0), key=lambda p: p["aed"])
                         return (("من " if lang == "ar" else "from ")
                                 + self.pcell(low["aed"], chain, priced.get("hall") or "OTHER", k, cid, self.table_date(priced), lang))
-                    hd = [(d, lab) for d, lab in days if any(s["date"] == d for s in hs)]
+                    hd = [(d, lab) for d, lab in days if any(s["date"] == d and not (mode == "compact" and self.is_past(s)) for s in hs)]
                     per_day = {d: price_for([s for s in hs if s["date"] == d]) for d, _ in hd}
                     known = {v for v in per_day.values() if v}
                     split = len(known) > 1 or (len(known) == 1 and None in per_day.values())

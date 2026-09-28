@@ -13,6 +13,11 @@ purpose — Task 2 the chrome (header pills, sheets, tab bar, footer) on every p
 their own tests; this file keeps guarding what must NOT move: every /data JSON, robots, the service worker,
 the manifest, and the sitemap (phase 1's entries all still there, byte for byte, the new pages only added).
 
+Both builds read the same input with the shows that had already started when the data was built taken out:
+W0-P1 (the trust sweep, merged into legend at R0) stopped drawing a hall whose times have all passed, which no
+normalisation can undo on the phase-1 side. Past-show rendering is covered by tests/test_w0_p1.py and
+tests/test_build.py.
+
 No git, or a clone without GOLDEN_REF (a shallow CI checkout): skipped."""
 import collections, io, json, os, re, shutil, subprocess, sys, zipfile
 
@@ -36,7 +41,8 @@ TEXT = (".html", ".json", ".xml", ".txt", ".js", ".css", ".webmanifest", ".svg")
 # data-saver/«back» script in every page's head; the bundle loaded by the «boot» loader that holds it while the
 # page is prerendering (phase 1: a plain deferred <script>); the manifest's shortcuts and their three icons
 # (tests/test_feel.py covers them); the final review's I2 og:image:width/height pair (tests/test_og.py).
-SHELL_HTML = [(re.compile(r'<link rel="preload" href="[^"]+" as="script">\n'
+# W0-P1 dropped that bundle preload again (a repeat visit downloaded the bundle twice), so it is optional here.
+SHELL_HTML = [(re.compile(r'(?:<link rel="preload" href="[^"]+" as="script">\n)?'
                           r'<script type="speculationrules" id="spec">.*?</script>\n'
                           r'<script>\(function\(\)\{var c=navigator\.connection.*?</script>\n', re.S), ""),
               (re.compile(r'<meta property="og:image:width" content="1200">\n<meta property="og:image:height" content="630">\n'), ""),
@@ -99,6 +105,18 @@ def same_page(path, x, y):
 def ct_keys(b):
     m = re.search(r"<script>window\.CT = (.*?);</script>", b.decode("utf-8"))
     return set(json.loads(m.group(1))) if m else set()
+
+
+def live_input(data, tmp):
+    """`data` without the shows already started at its `generated` time (both builds read this copy)."""
+    from site_kit import parse_iso
+    d = json.load(open(data, encoding="utf-8"))
+    now = parse_iso(d["generated"])
+    cut = (now.date().isoformat(), now.strftime("%H:%M"))
+    d["shows"] = [s for s in d["shows"] if (s["date"], s["time"]) >= cut]
+    p = os.path.join(str(tmp), "live_input.json")
+    json.dump(d, open(p, "w", encoding="utf-8"), ensure_ascii=False)
+    return p
 
 
 def _has_ref():
@@ -164,6 +182,7 @@ def files(out):
 @pytest.mark.parametrize("name,data,disc", CASES, ids=[c[0] for c in CASES])
 def test_core_build_is_byte_identical_to_phase1(phase1, tmp_path, name, data, disc):
     if not os.path.exists(data): pytest.skip(f"{os.path.relpath(data, ROOT)} not in this checkout")
+    data = live_input(data, tmp_path)
     before = files(run_build(phase1, data, disc, str(tmp_path / "before")))
     after = files(run_build(ROOT, data, disc, str(tmp_path / "after"), "core"))
     assert sorted(before) == sorted(p for p in after if not REDESIGN_ADDED.match(p))
