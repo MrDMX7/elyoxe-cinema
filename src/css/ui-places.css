@@ -21,7 +21,6 @@
 .row .sub{grid-area:sub;color:var(--seat);font-size:12px;display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline}
 .row .from,.row .val{grid-area:val;align-self:center;text-align:end;font-size:13px;color:var(--seat)}
 .row .from .p .num,.row .from .p b{font-size:20px}
-.more{margin-block-start:14px}
 /* schedules on a city page: film → cinemas → times */
 .sched{display:grid}
 .srow{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding-block:14px;border-block-end:1px solid var(--line)}
@@ -60,7 +59,6 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:14px}
   .cf-b h3{font-size:28px}
 }
 .cin-h{padding-block:18px 0}
-.more{display:inline-block;margin-block-start:6px;font-size:13px;color:var(--seat)}
 /* long schedules: a row far below the fold is not laid out or painted until it comes near (Lighthouse's
    main-thread time was two thirds style + layout on a busy cinema page). Paint containment clips at the
    padding box, so each row gets 4 px of inline padding back from a negative margin: a time button's focus

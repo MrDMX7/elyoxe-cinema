@@ -84,6 +84,8 @@ span.num[dir=ltr],bdi.num{unicode-bidi:isolate}
 main > section:not(.bill):not(.rail):not(.all):not(.head):not(.fhero):not(.fsched),main > .wrap > section,.split .main > section{margin-block-start:36px}
 main > section:not(.fsched) > h2,.main > section > h2,.cities > h2,.srcs > h2{font-size:26px;padding-block-end:10px;margin-block-end:4px;border-block-end:1px solid var(--line)}
 h2 small{font-family:var(--body);font-weight:400;font-size:13px;color:var(--seat)}
+/* the 404's head (before the desktop block below, whose .head padding wins there, as it always did) */
+.nf{padding-block:60px}
 .prayer{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--seat);margin-inline-start:auto}
 .switch{inline-size:50px;block-size:28px;padding:3px;border:0;display:flex;justify-content:flex-start;background:rgba(241,234,224,.2);cursor:pointer}
 .switch i{display:block;inline-size:22px;block-size:22px;background:var(--night)}

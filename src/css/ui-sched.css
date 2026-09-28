@@ -32,7 +32,7 @@
 .cg-m [data-dist]{font-size:13px;color:var(--seat)}
 .cg-m .age{font-size:12px;color:var(--seat)}
 .cg-h .map{font-size:13px;color:var(--seat);margin-inline-start:auto;text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:4px;min-block-size:24px;display:inline-flex;align-items:center}
-.more-c{display:flex;min-block-size:44px;align-items:center;font-size:14px;color:var(--dim);margin-block:8px}
+.more-c{display:flex;min-block-size:44px;align-items:center;margin-block:8px}   /* colour and font from .lnk, which it always carries */
 /* no script: each hall's name and «من» price over its times (the rows the server writes) */
 .hl{margin-block-start:8px}
 .hl-n{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:12px;color:var(--seat)}

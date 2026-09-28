@@ -17,6 +17,9 @@
 .ex s{color:var(--seat)}
 .ex b{color:var(--gold);font-weight:600;font-size:18px}
 .cardrows .crd{border-block-end:0}
+/* .more after .links: «links more» rows (the cards strip, home's, /prices/) take .more's display and margin, and the
+   city schedule's «و N سينما ثانية» link its size and colour (W1-P1 kept the order the one stylesheet had) */
+.more{margin-block-start:14px}
 /* cards matrix */
 .xwrap{overflow-x:auto;border-block:1px solid var(--line-2)}
 .matrix{border-collapse:collapse;inline-size:max-content;min-inline-size:100%;font-size:14px}
@@ -30,3 +33,4 @@
 .faq details:last-child{border-block-end:1px solid var(--line)}
 .faq summary{cursor:pointer;font-weight:500}
 .faq details p{color:var(--dim);font-size:14px;margin-block-start:6px}
+.more{display:inline-block;margin-block-start:6px;font-size:13px;color:var(--seat)}
