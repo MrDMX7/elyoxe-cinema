@@ -19,7 +19,7 @@ const LOCK = require("./perf_lock.cjs");
 
 async function measure(browser, url, size, when, css) {
   const ctx = await K.phone(browser, size);
-  await ctx.clock.install({ time: when });
+  await K.pinClock(ctx, when);
   await ctx.addInitScript(() => {
     try { localStorage.setItem("cinema.city", "dubai"); } catch (e) {}
     window.__loaf = [];
@@ -38,8 +38,11 @@ async function measure(browser, url, size, when, css) {
     requestAnimationFrame(loop);
   });
   const vp = K.SIZES[size];
-  await cdp.send("Input.synthesizeScrollGesture", { x: Math.round(vp.w / 2), y: Math.round(vp.h * 0.7), yDistance: -2600, speed: 1300, gestureSourceType: "touch", repeatCount: 1 });
-  await cdp.send("Input.synthesizeScrollGesture", { x: Math.round(vp.w / 2), y: Math.round(vp.h * 0.35), yDistance: 1800, speed: 1600, gestureSourceType: "touch", repeatCount: 1 });
+  /* «mouse»: a synthesized touch gesture does not scroll a Playwright phone context (scrollY stays 0, measured) */
+  await cdp.send("Input.synthesizeScrollGesture", { x: Math.round(vp.w / 2), y: Math.round(vp.h * 0.7), yDistance: -2600, speed: 1300, gestureSourceType: "mouse", repeatCount: 1 });
+  const scrolled = await page.evaluate(() => window.scrollY);
+  if (scrolled < 500) throw new Error("the scroll gesture did not scroll the page (scrollY " + scrolled + "): nothing would be measured");
+  await cdp.send("Input.synthesizeScrollGesture", { x: Math.round(vp.w / 2), y: Math.round(vp.h * 0.35), yDistance: 1800, speed: 1600, gestureSourceType: "mouse", repeatCount: 1 });
   await page.evaluate(() => { window.__stop = true; window.scrollTo(0, 0); window.__g = []; let last = performance.now(); window.__stop2 = false;
     const loop = (t) => { window.__g.push(t - last); last = t; if (!window.__stop2) requestAnimationFrame(loop); }; requestAnimationFrame(loop); });
   await page.waitForTimeout(3000);

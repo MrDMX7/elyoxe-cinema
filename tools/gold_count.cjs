@@ -49,7 +49,7 @@ async function count(page) {
     for (const size of o.sizes) {
       for (const withCard of [false, true]) {
         const ctx = await K.phone(browser, size);
-        await ctx.clock.install({ time: K.pinned(o) });
+        await K.pinClock(ctx, K.pinned(o));
         await ctx.addInitScript((c) => { try { localStorage.setItem("cinema.city", "dubai"); if (c) localStorage.setItem("cinema.card", c); } catch (e) {} }, withCard ? card : "");
         const page = await ctx.newPage();
         const errs = [];

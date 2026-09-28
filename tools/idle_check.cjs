@@ -4,7 +4,7 @@
    may only be the board's minute tick; under prefers-reduced-motion: reduce there is no transform animation at all.
    Today (before the board, W2-P2) it records what runs; --assert turns the rule on.
 
-     node tools/idle_check.cjs --out out [--port 8111] [--size 360x740,390x844] [--page /] [--idle 10] [--assert] [--json FILE]
+     node tools/idle_check.cjs --out out [--port 8111] [--size 360x740,390x844] [--page /] [--idle 10] [--window 7] [--assert] [--json FILE]
 
    A perf tool: it takes the laptop's perf lock (tools/perf_lock.cjs) and asserts X-Served-By first. The board tick is
    an animation whose target sits inside the board ([data-board] or #now) or a flip tile (.flip). */
@@ -25,7 +25,7 @@ async function running(page) {
 
 (async () => {
   const o = K.args();
-  const pagePath = o.get("page", "/"), idle = +o.get("idle", 10), assert = o.has("assert");
+  const pagePath = o.get("page", "/"), idle = +o.get("idle", 10), win = +o.get("window", 7), assert = o.has("assert");
   const R = K.results(), report = [];
   const lock = await LOCK.acquire(o.name);
   const load = await LOCK.load();
@@ -38,12 +38,19 @@ async function running(page) {
     for (const size of o.sizes) {
       for (const reduce of [false, true]) {
         const ctx = await K.phone(browser, size, reduce ? { reducedMotion: "reduce" } : {});
-        await ctx.clock.install({ time: K.pinned(o) });
+        await K.pinClock(ctx, K.pinned(o));
         const page = await ctx.newPage();
         await page.goto(srv.base + pagePath, { waitUntil: "load" });
         await page.waitForTimeout(idle * 1000);
-        const a = await running(page);
-        const label = `${pagePath} ${size}${reduce ? " reduced motion" : ""} after ${idle} s idle`;
+        /* then a window as long as the longest autonomous cycle on the page (the desktop billboard's 6 s turn): every
+           animation that runs in it, sampled every 250 ms, so a periodic one is never missed between two turns */
+        const seen = new Map();
+        for (let t = 0; t < win * 1000; t += 250) {
+          for (const x of await running(page)) seen.set(x.kind + x.name + x.target, x);
+          await page.waitForTimeout(250);
+        }
+        const a = [...seen.values()];
+        const label = `${pagePath} ${size}${reduce ? " reduced motion" : ""} after ${idle} s idle, over the next ${win} s`;
         report.push({ size, reduce, animations: a });
         const notBoard = a.filter((x) => !x.board), transforms = a.filter((x) => x.transform);
         const list = (xs) => xs.map((x) => `${x.kind} ${x.name} on ${x.target}${x.iterations === Infinity ? " (loops)" : ""}`).join(" | ") || "none";

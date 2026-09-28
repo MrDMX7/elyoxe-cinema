@@ -104,7 +104,7 @@ const HIDDEN_STATE = () => {
     if (want("hold")) {
       for (const size of ["360x740", "390x844"]) {
         const ctx = await K.phone(browser, size);
-        await ctx.clock.install({ time: K.pinned(o) });
+        await K.pinClock(ctx, K.pinned(o));   /* the page's clock only: layout-shift entries need the real performance API */
         await ctx.addInitScript(() => {
           try { localStorage.setItem("cinema.city", "dubai"); } catch (e) {}
           window.__cls = 0;

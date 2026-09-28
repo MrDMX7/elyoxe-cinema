@@ -91,7 +91,7 @@ async function route(page, base, name) {
     for (const size of o.sizes) {
       for (const name of ["row", "pick", "tile"]) {
         const ctx = await K.phone(browser, size);
-        await ctx.clock.install({ time: K.pinned(o) });
+        await K.pinClock(ctx, K.pinned(o));
         await ctx.addInitScript(() => { try { localStorage.setItem("cinema.city", "dubai"); } catch (e) {} });
         const page = await ctx.newPage();
         let r;

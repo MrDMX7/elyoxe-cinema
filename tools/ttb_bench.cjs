@@ -27,7 +27,7 @@ const BOOK_VISIBLE = () => {
 
 async function once(browser, base, size, when) {
   const ctx = await K.phone(browser, size);
-  await ctx.clock.install({ time: when });
+  await K.pinClock(ctx, when);
   await ctx.addInitScript(() => { try { localStorage.setItem("cinema.city", "dubai"); } catch (e) {} });
   const page = await ctx.newPage();
   const cdp = await ctx.newCDPSession(page);

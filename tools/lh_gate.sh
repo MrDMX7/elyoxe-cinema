@@ -6,7 +6,7 @@
 #
 #   bash tools/lh_gate.sh --out out [--port 8111] [--name w1-p1] [--runs 5] [--now 2026-09-26T22:56]
 #                         [--film heart-of-the-beast] [--cinema dubai/reel-dubai-mall] [--pages home,film,cinema]
-#                         [--assert] [--expect home=96,film=97] [--json FILE]
+#                         [--assert] [--expect home=96,film=97] [--json FILE] [--posters DIR]
 #
 # Lighthouse: the `lighthouse` CLI on PATH (npm i -g lighthouse; 13.5 on this laptop), its default mobile emulation and
 # simulated throttling, headless Chrome. --now adds ?now= to every URL (the page's own UAE clock), so a build from
@@ -15,12 +15,12 @@ set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 OUT="$ROOT/out"; PORT=8111; NAME="${CINEMA_PKG:-w1-p1}"; RUNS=5; NOW=""; FILM="heart-of-the-beast"; CINEMA="dubai/reel-dubai-mall"
-PAGES="home,film,cinema"; ASSERT=0; EXPECT=""; JSON=""
+PAGES="home,film,cinema"; ASSERT=0; EXPECT=""; JSON=""; POSTERS=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --out) OUT="$2"; shift 2;; --port) PORT="$2"; shift 2;; --name) NAME="$2"; shift 2;; --runs) RUNS="$2"; shift 2;;
     --now) NOW="$2"; shift 2;; --film) FILM="$2"; shift 2;; --cinema) CINEMA="$2"; shift 2;; --pages) PAGES="$2"; shift 2;;
-    --assert) ASSERT=1; shift;; --expect) EXPECT="$2"; shift 2;; --json) JSON="$2"; shift 2;;
+    --assert) ASSERT=1; shift;; --expect) EXPECT="$2"; shift 2;; --json) JSON="$2"; shift 2;; --posters) POSTERS="$2"; shift 2;;
     *) echo "unknown argument $1" >&2; exit 2;;
   esac
 done
@@ -29,11 +29,12 @@ done
 if [ -z "${CINEMA_PERF_LOCK_HELD:-}" ]; then
   SELF_BASH="$BASH"; command -v cygpath >/dev/null 2>&1 && SELF_BASH="$(cygpath -w "$BASH")"   # node spawns it: a Windows path there
   exec node "$HERE/perf_lock.cjs" run --pkg "$NAME" -- "$SELF_BASH" "$0" --out "$OUT" --port "$PORT" --name "$NAME" --runs "$RUNS" \
-    ${NOW:+--now "$NOW"} --film "$FILM" --cinema "$CINEMA" --pages "$PAGES" $([ "$ASSERT" = 1 ] && echo --assert) ${EXPECT:+--expect "$EXPECT"} ${JSON:+--json "$JSON"}
+    ${NOW:+--now "$NOW"} --film "$FILM" --cinema "$CINEMA" --pages "$PAGES" $([ "$ASSERT" = 1 ] && echo --assert) ${EXPECT:+--expect "$EXPECT"} ${JSON:+--json "$JSON"} \
+    ${POSTERS:+--posters "$POSTERS"}
 fi
 
 TMP="$(mktemp -d)"
-python "$HERE/serve.py" --out "$OUT" --port "$PORT" --name "$NAME" > "$TMP/serve.log" 2>&1 &
+python "$HERE/serve.py" --out "$OUT" --port "$PORT" --name "$NAME" ${POSTERS:+--posters "$POSTERS"} > "$TMP/serve.log" 2>&1 &
 SRV=$!
 trap 'kill $SRV 2>/dev/null; rm -rf "$TMP"' EXIT
 for _ in $(seq 1 100); do grep -q serving "$TMP/serve.log" 2>/dev/null && break; kill -0 $SRV 2>/dev/null || break; sleep 0.2; done
@@ -52,8 +53,10 @@ IFS=',' read -ra LIST <<< "$PAGES"
 for key in "${LIST[@]}"; do
   for i in $(seq 1 "$RUNS"); do
     lighthouse "${URL[$key]}" --quiet --only-categories=performance,accessibility --output=json --output-path="$TMP/lh-$key-$i.json" \
-      --chrome-flags="--headless=new --no-first-run --no-default-browser-check" --max-wait-for-load=60000 >/dev/null 2>"$TMP/lh-$key-$i.err" \
-      || echo "INFO lighthouse run $key $i failed: $(tail -2 "$TMP/lh-$key-$i.err")"
+      --chrome-flags="--headless=new --no-first-run --no-default-browser-check" --max-wait-for-load=60000 >/dev/null 2>"$TMP/lh-$key-$i.err"
+    # on Windows Lighthouse often exits 1 after writing its report (it can't delete Chrome's temp profile): only a
+    # missing report is a failed run
+    [ -s "$TMP/lh-$key-$i.json" ] || echo "INFO lighthouse run $key $i wrote no report: $(tail -2 "$TMP/lh-$key-$i.err")"
   done
 done
 

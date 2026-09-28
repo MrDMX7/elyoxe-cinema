@@ -75,6 +75,19 @@ function dataTime(out) {
   } catch (e) { return null; }
 }
 
+/* Shift the page's wall clock (Date only) so it starts at `when` and runs on at real speed, on every page of the
+   context. Never Playwright's ctx.clock for a measurement: it fakes performance, requestAnimationFrame and the timers,
+   so frame times are the fake clock's and performance.getEntriesByType("navigation") comes back empty. */
+async function pinClock(ctx, when) {
+  await ctx.addInitScript((t) => {
+    const R = Date, off = t - R.now();
+    function D(...a) { return new.target ? (a.length ? new R(...a) : new R(R.now() + off)) : new R(R.now() + off).toString(); }
+    D.prototype = R.prototype; D.now = () => R.now() + off; D.parse = R.parse; D.UTC = R.UTC;
+    Object.setPrototypeOf(D, R);
+    window.Date = D;
+  }, +when);
+}
+
 /* the instant a tool pins the page's clock to: --now (UAE wall time, «2026-09-27T20:40»), else the data's own time */
 function pinned(o) {
   const v = o.now || dataTime(o.out);
@@ -96,4 +109,4 @@ function results() {
   };
 }
 
-module.exports = { ROOT, SIZES, args, sha, serve, assertServed, phone, launch, chromium, dataTime, pinned, results };
+module.exports = { ROOT, SIZES, args, sha, serve, assertServed, phone, launch, chromium, dataTime, pinned, pinClock, results };
