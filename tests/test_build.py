@@ -388,11 +388,11 @@ def test_bogo_price_says_per_person_with_two_tickets(tmp_path):
     assert "per person, with 2 tickets" in read(out, "en", "cards", "enbd")
     home = open(os.path.join(ROOT, "src", "js", "home.js"), encoding="utf-8").read()
     prices = open(os.path.join(ROOT, "src", "js", "prices.js"), encoding="utf-8").read()
-    # the «starting now» slot, the home's «يبدأ قريب منك» row, every tile and the billboard's «from» all append the
-    # per-person note (UI redesign Task 3: the row and renderFrom are their own functions now; W1-P2: the tiles and «from»
-    # draw their cell with prices.js payCell(), which appends it)
+    # every tile, the cheap row's show cards and the billboard's «from» append the per-person note (W1-P2: they draw their
+    # cell with prices.js payCell(), which appends it; W2-P4: the tile's line is tileLine, the show cards renderCheap, and
+    # the near row and «الحين» are deleted)
     fn = lambda name: home[home.index("function " + name + "("):].split("\nfunction ", 1)[0]
-    assert all(fn(n).count("ppNote(b.r)") + fn(n).count("payCell(b, go, was)") == 1 for n in ("renderNow", "renderNear", "renderFrom", "renderHome"))
+    assert all(fn(n).count("ppNote(b.r)") + fn(n).count("payCell(") == 1 for n in ("renderFrom", "tileLine", "renderCheap"))
     assert "ppNote(b.r)" in prices[prices.index("function payCell"):]
     assert "ppNote(x.r)" in prices[prices.index("function priceHTML"):prices.index("function renderPrices")]
     assert "r: x.a != null ? x.r : null" in prices                               # best() keeps the rule
@@ -542,9 +542,10 @@ def test_posters_and_tiles(site):
     # no poster: a typographic tile in the film's colour (or a hue from its id), never a broken image
     assert re.search(r'<span class="pst" style="--pc:#1D2A4A"><span class="pst-t">سبايدر مان', home)
     assert re.search(r'<span class="pst" style="--pc:#[0-9A-F]{6}"><span class="pst-t"[^>]*>The Paradise', home)
-    assert 'data-genres="animation comedy family" data-family="1" data-kids="1"' in home
-    # the controls live in the filter sheet now (UI redesign Task 3)
-    assert 'data-filter="family"' in home and 'data-sort="price"' in home and 'data-before="21:00"' in home
+    # a grid tile carries the «مع منو» answers it passes (W2-P4, kit/filters.who_fits), not the old family/kids flags
+    assert 'data-genres="animation comedy family" data-fits="family kids"' in home
+    # the controls live in the filter sheet now (UI redesign Task 3), the one question on top (W2-P4)
+    assert 'data-who="family"' in home and 'data-sort="price"' in home and 'data-before="21:00"' in home
 
 
 def test_hostile_media_fields_are_dropped(tmp_path):
@@ -605,7 +606,8 @@ def test_real_poster_tile_puts_the_title_under_the_poster(site):
     home = read(out)
     tile = re.search(r'<a class="film[^"]*" href="/film/coyote-vs-acme/".*?</a>', home, re.S).group(0)
     assert '<span class="pst img"' in tile and 'class="pst-t"' not in tile
-    assert re.search(r'</span></span><span class="t"[^>]*>كايوتي ضد أكمي</span><span class="m" data-cheap>', tile)
+    # then the verdict word, then the price line (W2-P4, MASTER-PLAN §2.1)
+    assert re.search(r'</span></span><span class="t"[^>]*>كايوتي ضد أكمي</span><span class="vw">يستاهل</span><span class="m" data-cheap>', tile)
     # a failed image gives way to the tile's colour: cinema.js posterFallback() (no inline handler per tile)
     assert "onerror" not in tile
     assert "classList.remove(\"img\")" in open(os.path.join(ROOT, "src", "js", "main.js"), encoding="utf-8").read()

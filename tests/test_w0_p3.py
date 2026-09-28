@@ -144,19 +144,12 @@ def test_slice_end_times_without_dates_match_the_old_ones(tmp_path, site):
 
 
 # ---------------------------------------------------------------- #24 «الحين»
-@needs_node
-def test_now_prefers_a_film_worth_it_inside_the_window(tmp_path):
-    got = node(tmp_path, ["pure.js", "home.js"], """(function () { var n = 1e12, m = 60e3;
-      var sh = [{at: n + 2 * m, km: null, v: "unknown", id: "runner"}, {at: n + 7 * m, km: null, v: "yes", id: "beast"},
-                {at: n + 12 * m, km: null, v: "mixed", id: "paradise"}, {at: n + 50 * m, km: null, v: "yes", id: "too-late"}];
-      var near = [{at: n + 2 * m, km: 9, v: "yes", id: "far-good"}, {at: n + 20 * m, km: 1, v: "mixed", id: "near-good"},
-                  {at: n + 1 * m, km: 0.5, v: "unknown", id: "nearest-unknown"}];
-      var none = [{at: n + 2 * m, km: null, v: "skip", id: "skip"}, {at: n + 9 * m, km: null, v: "unknown", id: "unknown"}];
-      return [nowPick(sh, n, 45).id, nowPick(near, n, 45).id, nowPick(none, n, 45).id,
-              nowPick([{at: n + 50 * m, km: null, v: "yes"}], n, 45), nowPick([{at: n - m, km: null, v: "yes"}], n, 45)]; })()""")
-    # a «يستاهل»/«بين بين» film inside the window wins over a sooner unknown one (Runner at 22:03, audit §3);
-    # among the good ones the nearest cinema, then the soonest; with none good, the soonest of any
-    assert got == ["beast", "near-good", "skip", None, None]
+def test_now_pick_left_with_the_near_row():
+    """«الحين» (nowPick, #24) and the near row it fed were deleted by W2-P4 (MASTER-PLAN §4.2 #20, §4.3): the board
+    (W2-P2) shows what starts next, and «اختار لي» picks with a reason (pick.js). Nothing in the bundle calls them."""
+    js = build.bundle_js()
+    for fn in ("function nowPick", "function renderNow", "function renderNear"):
+        assert fn not in js, fn
 
 
 # ---------------------------------------------------------------- #25 «الأحسن تقييم»
@@ -336,7 +329,7 @@ def test_seat_chunk_asks_only_for_listed_cinemas(tmp_path):
 def test_bundle_carries_the_new_client_and_parses(tmp_path):
     js = build.bundle_js()
     for fn in ("function showKey", "function showFromHash", "function rollTicket", "function pickState", "function renderBook",
-               "function nowPick", "function scoreRank", "function hidePassed", "function planLeaveLine", "function planTrip"):
+               "function scoreRank", "function hidePassed", "function planLeaveLine", "function planTrip"):
         assert fn in js, fn
     assert "اختار وقت" in js
     if NODE:
@@ -353,7 +346,7 @@ def test_the_minute_moves_the_ticket_and_hides_passed_halls():
     # W1-P1: the minute is one timeout aligned to each UAE :00 (function minute), no longer a free setInterval
     tick = re.search(r"function minute\(\) \{(.*?)emit\(\"minute\", NOW\);", main, re.S)
     assert tick, "the minute clock"
-    for fn in ("marks()", "hidePassed()", "renderNow()", "rollTicket()", "planRefresh()"):
+    for fn in ("marks()", "hidePassed()", "rollTicket()", "planRefresh()"):
         assert fn in tick.group(1), fn
 
 

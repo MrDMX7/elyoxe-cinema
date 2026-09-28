@@ -156,11 +156,12 @@ def test_the_manifest_has_no_mine_shortcut_and_now_has_a_target(out):
     assert not os.path.exists(os.path.join(ROOT, "src", "icons", "sc-mine.png"))
     for parts in ((), ("en",)):
         h = read(out, *parts, "index.html")
-        # legend: home's «الحين» is the row «يبدأ قريب منك» (UI redesign Task 3; the board takes the id in W2-P2)
-        assert h.count('id="now"') == 1 and '<section class="rail" aria-labelledby="r-near" id="now" data-near-row data-hold hidden>' in h
+        # legend: the near row «يبدأ قريب منك» is deleted (W2-P4); the board carries id="now" (W2-P2), and until it fills
+        # its slot an empty anchor under the billboard keeps /#now landing there
+        assert h.count('id="now"') == 1 and "data-near-row" not in h
     assert 'id="now"' not in read(out, "dubai", "index.html")                     # home only: one target
-    # hidden until the city's slice is in, the row still holds its place, so /#now scrolls to it at once
-    assert ".js .rail[data-near-row][hidden]{display:block;visibility:hidden}" in read(out, "assets", "cinema.css")
+    # clear of the sticky header when the shortcut scrolls to it
+    assert "#now{scroll-margin-block-start:" in read(out, "assets", "cinema.css")
 
 
 # ------------------------------------------------------------------ #6 the bundle is fetched once

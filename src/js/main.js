@@ -184,7 +184,7 @@ function bindRails() {
   /* a show link (#s-…) opens its ticket; else the desktop column moves off a show that has started (on a film page
      film.js's fsStart has chosen already: rollTicket serves the cinema and city pages) */
   if (!showFromHash()) rollTicket();
-  /* the clock: at each UAE minute's :00 «الحين», the struck times, the halls whose last time passed, the desktop
+  /* the clock: at each UAE minute's :00 the struck times, the halls whose last time passed, the desktop
      ticket, the leave-by line and the ages move on, then «minute» is emitted. One timeout aligned to the next :00
      and set again each time (never a free setInterval, which drifts off the minute: MASTER-PLAN §1.3, W1-P1) */
   function minute() {
@@ -195,7 +195,7 @@ function bindRails() {
       if (gone && nx) nx.click();
     }
     if (marks()) hidePassed();   /* a hall can only run out when one of its times has just changed */
-    ages(); renderNow(); renderNear(); rollTicket();
+    ages(); rollTicket();
     if (page === "film") { fsSoon(); fsTick(); }
     if (typeof planRefresh === "function" && tk && !tk.hidden && (desk() || tk.classList.contains("open"))) planRefresh();
     emit("minute", NOW);

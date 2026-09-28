@@ -42,9 +42,11 @@ def test_haversine_and_km_text(tmp_path):
 def test_show_span_and_time_filters(tmp_path):
     got = run(tmp_path, """[showSpan('21:00','23:15'), showSpan('23:30','01:40'), showSpan('00:30','02:30'), showSpan('19:00',null,120), showSpan('19:00',null,null),
       endsOk(showSpan('21:00','23:15'),'23:00'), endsOk(showSpan('21:00','22:50'),'23:00'), endsOk(showSpan('23:30','01:40'),'24:00'), endsOk(showSpan('21:00','22:50'),''),
-      endsOk(showSpan('22:00','23:59'),'24:00'), lateOk(showSpan('20:59','23:00'),true), lateOk(showSpan('21:00','23:00'),true), lateOk(showSpan('00:30','02:00'),true), lateOk(showSpan('14:00','16:00'),false)]""")
+      endsOk(showSpan('22:00','23:59'),'24:00')]""")
     assert got[:5] == [[1260, 1395], [1410, 1540], [30, 150], [1140, 1275], [1140, 1290]]   # calendar dates: 00:30 is early that day
-    assert got[5:] == [False, True, False, True, True, False, True, True, True]
+    # «ربعي»'s late shows (lateOk) went with «ربعي» (W2-P4, MASTER-PLAN §4.2 #26); «العيال»'s daytime rule is kidsOk,
+    # tests/test_w2_p4.py
+    assert got[5:] == [False, True, False, True, True]
 
 
 def test_prayer_overlap(tmp_path):
@@ -63,21 +65,12 @@ def test_a_remembered_filter_falls_back_to_all_where_the_page_has_no_chip(tmp_pa
 def test_film_filters_and_companions(tmp_path):
     got = run(tmp_path, """[filmOk({genres:['action'],family:false,kids:false},'all'), filmOk({genres:['action']},'genre:action'), filmOk({genres:['drama']},'genre:action'),
       filmOk({family:true},'family'), filmOk({family:true,kids:false},'kids'), filmOk({kids:true},'kids'),
-      whoPreset('family'), whoPreset('kids'), whoPreset('friends'), whoPreset('solo'), whoPreset(''), verdictRank('yes'), verdictRank('skip'), verdictRank('odd')]""")
+      verdictRank('yes'), verdictRank('skip'), verdictRank('odd'), typeof whoPreset]""")
     assert got[:6] == [True, True, False, True, False, True]
-    assert got[6] == {"filt": "family", "before": "", "late": False, "sort": "time"}
-    assert got[7] == {"filt": "kids", "before": "21:00", "late": False, "sort": "time"}
-    assert got[8]["late"] is True and got[8]["sort"] == "time"
-    assert got[9] == got[10] == {"filt": "all", "before": "", "late": False, "sort": ""}
-    assert got[11:] == [0, 3, 2]
-
-
-def test_now_window_prefers_the_nearest_cinema(tmp_path):
-    got = run(tmp_path, """(function(){ var n = 1e12, m = 60e3;
-      var shows = [{at:n-5*m,km:1,id:'started'},{at:n+10*m,km:8,id:'far-soon'},{at:n+30*m,km:2,id:'near-later'},{at:n+50*m,km:0.5,id:'too-late'}];
-      var noloc = shows.map(function(s){return {at:s.at,km:null,id:s.id}});
-      return [pickNow(shows,n,45).id, pickNow(noloc,n,45).id, pickNow([{at:n+46*m,km:1}],n,45)]; })()""")
-    assert got == ["near-later", "far-soon", None]
+    assert got[6:9] == [0, 3, 2]
+    # «مع منو رايح؟» is no longer a preset over the other controls (W2-P4, MASTER-PLAN §4.2 #26): one stored answer,
+    # read by the grid and the pick (tests/test_w2_p4.py)
+    assert got[9] == "undefined"
 
 
 def test_bundle_parses_and_has_every_module(tmp_path):
