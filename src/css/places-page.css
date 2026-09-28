@@ -54,9 +54,9 @@ body[data-page=city]::before{block-size:440px;background:radial-gradient(320px 2
 .chead .mall-late{margin-block-start:8px;color:var(--dim);font-size:var(--fs-meta);line-height:1.6}
 /* «الليلة هنا»: one block per film, upcoming times only; the ones already started fold under «+12 عرض فات»
    (places.js), shown struck once opened. Tomorrow folds under its heading */
-.here-h{align-items:center;padding-block:0 12px;border-block-end:1px solid var(--line)}
-.here-h h2{font-size:var(--fs-h2)}
-.here-h .chip{min-block-size:44px;padding-inline:16px;gap:8px}
+.here-h{align-items:center;flex-wrap:wrap;row-gap:8px;padding-block:0 12px;border-block-end:1px solid var(--line)}
+.here-h h2{flex:1 1 auto;min-inline-size:0;font-size:var(--fs-h2)}
+.here-h .chip{flex:0 0 auto;min-block-size:44px;padding-inline:16px;gap:8px}
 .here-h .chip svg{inline-size:16px;block-size:16px}
 .js .cf:not(.all-t) .tm.past:not(.on){display:none}
 .js .cf.all-t .hl.x:not(.xf){display:block!important}
