@@ -50,10 +50,10 @@ def test_every_core_partial_exists_is_listed_once_and_the_edge_is_page_scoped():
     files = sorted(p.stem for p in (SRC / "css").glob("ui-*.css"))
     assert sorted(listed) == files and len(listed) == len(set(listed))
     assert core.PAGE_CSS == {"404": ("ui-edge",)} and "ui-edge" not in core.CSS
-    for stub in ("ui-paper", "ui-lights", "ui-edge"):          # W1-P2, W2-P1 and W2-P10 fill them: no rule yet
+    for stub in ("ui-lights", "ui-edge"):          # W2-P1 and W2-P10 fill them: no rule yet (W1-P2 filled ui-paper)
         assert build.minify_css((SRC / "css" / f"{stub}.css").read_text(encoding="utf-8")).strip() == ""
     for n in files:
-        if n not in ("ui-paper", "ui-lights", "ui-edge"):
+        if n not in ("ui-lights", "ui-edge"):
             assert build.minify_css((SRC / "css" / f"{n}.css").read_text(encoding="utf-8")).strip(), n
 
 
@@ -63,6 +63,8 @@ def test_the_base_sheet_keeps_tokens_and_base_only():
     for comp in (r"\.bill\b", r"\.fhero\b", r"\.ticket\b", r"\.dock\b", r"\.rail\b", r"\.tile\b", r"\.sheet\b", r"\.tabs\b", r"\.fcity\b",
                  r"\.nr\b", r"\.matrix\b", r"\.cf\b", r"\.top\b", r"\.foot\b(?!\{position)"):
         rules = re.sub(r":not\([^)]*\)", "", re.sub(r"/\*.*?\*/", "", base, flags=re.S)).replace("main,.foot{position:relative}", "")
+        # the press state is the system's one rule over every pressable thing (W1-P2, MASTER-PLAN §1.3), not a component's
+        rules = re.sub(r"[^{}]*:active[^{}]*\{[^}]*\}", "", rules)
         assert not re.search(comp + r"[^{]*\{", rules), comp
 
 

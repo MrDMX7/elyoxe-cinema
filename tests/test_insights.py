@@ -88,9 +88,9 @@ def test_prices_index_today_both_languages(none):
         assert 'data-page="prices"' in h and '<h1 class="pt">' in h and '<link rel="canonical"' in h
         assert "noindex" not in h
     idx = re.search(r'<table class="matrix pidx".*?</table>', ar, re.S).group(0)
-    # vox Standard today (fixture): median 40.00 of the cheapest seat, 38.00 to 52.00, 69 shows
+    # vox Standard today (fixture): median 40 of the cheapest seat, 38 to 52, 69 shows (whole dirhams print «40», W1-P2)
     row = re.search(r'<tr data-k="vox\|Standard">(.*?)</tr>', idx, re.S).group(1)
-    assert all(x in row for x in (">40.00<", ">38.00<", ">52.00<", ">69<"))
+    assert all(x in row for x in (">40<", ">38<", ">52<", ">69<"))
     assert "25 سبتمبر 2026" in ar and "25 September 2026" in en
     assert "قبل أي خصم" in ar
     # no history: neither the chart nor the cheapest time; the page says how many days it has
@@ -118,7 +118,7 @@ def test_prices_short_history_shows_cheapest_time_not_chart(short):
     ar = read(short, "prices", "index.html")
     assert 'id="cheapest-time"' in ar and "<svg" not in main(ar)
     sec = re.search(r'<section[^>]*id="cheapest-time".*?</section>', ar, re.S).group(0)
-    assert "الثلاثاء" in sec and "25.00" in sec
+    assert "الثلاثاء" in sec and ">25<" in sec and "25.00" not in sec
     assert "30" in re.search(r'<p class="hint hist-n">(.*?)</p>', ar, re.S).group(1)
 
 

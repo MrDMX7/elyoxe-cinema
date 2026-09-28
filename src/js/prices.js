@@ -1,5 +1,6 @@
 /* prices: every .p cell on the page is rewritten to the price after the visitor's card (the server wrote
-   the price before any card). `go` = the visitor just changed the card: changed digits flip. */
+   the price before any card). `go` = the visitor just changed the card: changed digits flip. What you pay comes
+   first and the struck list price after it, with a space between (never «33.6042»: MASTER-PLAN §5.2 W1-P2). */
 function rule(chain, c) { return discRule(D && D.rules, chain, c); }
 function state(r) { return discState(r, TODAY); }
 function after(aed, chain, hall, c, hk, cin) { return discAfter(D && D.rules, TODAY, aed, chain, hall, hk, cin, c); }
@@ -32,12 +33,27 @@ function priceHTML(el, go) {
   var pay = fmt(x.a != null ? x.a : aed), was = el.getAttribute("data-shown");
   el.setAttribute("data-shown", pay);
   var d = flipDigits(pay, go && was != null && was !== pay);
-  if (x.a != null) return '<s class="num">' + fmt(aed) + "</s><b>" + d + "</b>" + ppNote(x.r) + asof;
+  if (x.a != null) return "<b>" + d + '</b> <s class="num">' + fmt(aed) + "</s>" + ppNote(x.r) + asof;
   return '<span class="num">' + d + "</span>" + (x.st === "excluded" ? "<small>" + esc(C.excluded) + "</small>" : "") + asof;
 }
 function renderPrices(go) {
   qa(".p[data-aed]").forEach(function (el) { el.innerHTML = priceHTML(el, go); });
   if (page === "film") fsNotes();
+  lows();
+}
+/* gold is yours (MASTER-PLAN §1.5): with no card, the one cheapest price of each row ([data-lo]) or price table is lit
+   (.lo, the first on a tie, as kit/tile.py lights it for the first paint); with a card the prices after it are gold
+   (the stylesheet's .p:has(s) b) and no list price is */
+function lows() {
+  qa("[data-lo], table.prices").forEach(function (g) {
+    var lo = null, v;
+    qa(".p", g).forEach(function (el) {
+      el.classList.remove("lo");
+      v = parseFloat(el.getAttribute("data-shown") || el.getAttribute("data-aed"));
+      if (!card && v > 0 && !el.closest(".off") && (!lo || v < lo.v)) lo = { el: el, v: v };
+    });
+    if (lo) lo.el.classList.add("lo");
+  });
 }
 
 /* the cheapest ticket for this visitor among shows [{c, h, k, p: [[seat, aed]…]}] */
@@ -54,3 +70,5 @@ function best(shows) {
 }
 /* a price the page did not write (the best for this visitor); `was` = what the cell showed before */
 function payHTML(b, go, was) { var pay = fmt(b.pay); return flipDigits(pay, go && was != null && was !== pay); }
+/* that price as a cell's inside: what you pay, then (after a space) the list price struck, then its note */
+function payCell(b, go, was) { return "<b>" + payHTML(b, go, was) + "</b>" + (b.off ? ' <s class="num">' + fmt(b.aed) + "</s>" : "") + ppNote(b.r); }

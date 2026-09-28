@@ -5,59 +5,58 @@
 /* ------------------------------------------------ the ticket (phone: bottom sheet; desktop: side panel) */
 .ticket{background:var(--screen);color:var(--ink);display:flex;flex-direction:column;margin-block-start:24px;position:relative}
 .tk-top{display:flex}
-.tk-main{flex:1 1 auto;padding:12px 16px 10px;display:flex;flex-direction:column;gap:2px;min-inline-size:0}
-.tk-cin{font-family:var(--display);font-weight:var(--dw);font-size:24px;line-height:1.1}
-.tk-film{font-size:12px;color:var(--ink-2)}
-.tk-when{font-size:12px;color:var(--ink-2);display:flex;flex-direction:column}
+.tk-main{flex:1 1 auto;padding:12px 16px;display:flex;flex-direction:column;gap:2px;min-inline-size:0}
+.tk-cin{font-family:var(--display);font-weight:var(--dw);font-size:var(--fs-h2);line-height:1.1}
+.tk-film{font-size:var(--fs-meta);color:var(--ink-2)}
+.tk-when{font-size:var(--fs-meta);color:var(--ink-2);display:flex;flex-direction:column}
 .tk-h{color:var(--ink);font-weight:500}
-.tk-left{font-size:12px;color:var(--velvet);font-weight:500}
-.tk-stub{inline-size:100px;flex:0 0 auto;border-inline-start:2px dashed var(--rule-t);background:var(--paper-2);display:flex;flex-direction:column;align-items:center;justify-content:center}
-.tk-stub span{font-size:11px;color:var(--ink-2)}
-.tk-stub b{font-weight:600;font-size:28px;line-height:1.2}
-.tk-seats{border-collapse:collapse;border-block-start:2px dashed var(--rule-t);margin-inline:16px;inline-size:calc(100% - 32px)}
-.tk-seats th,.tk-seats td{min-block-size:42px;block-size:42px;border-block-end:1px solid var(--rule-p);font-weight:400;font-size:14px;padding:0}
+.tk-left{font-size:var(--fs-meta);color:var(--velvet);font-weight:500}
+.tk-stub{inline-size:100px;flex:0 0 auto;border-inline-start:2px dashed var(--rule);background:var(--paper-2);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.tk-stub span{font-size:var(--fs-meta);color:var(--ink-2)}
+.tk-stub b{font-weight:600;font-size:var(--fs-h2);line-height:1.2}
+.tk-seats{border-collapse:collapse;border-block-start:2px dashed var(--rule);margin-inline:16px;inline-size:calc(100% - 32px)}
+.tk-seats th,.tk-seats td{min-block-size:44px;block-size:44px;border-block-end:1px solid var(--rule-p);font-weight:400;font-size:var(--fs-body);padding:0}
 .tk-seats th{text-align:start}
 .tk-seats td{text-align:end}
 .tk-seats .p{justify-content:flex-end}
-.tk-seats .p .num,.tk-seats .p b{color:var(--ink);font-size:18px}
-.tk-seats .p s{color:var(--ink-2);font-size:12px;order:0}
+/* on paper a list price is ink and yours (after a card) velvet, the struck one ink-2 after it */
+.tk-seats .p .num,.tk-seats .p b{color:var(--ink);font-size:var(--fs-time)}
+.tk-seats .p:has(s) b{color:var(--velvet)}
+.tk-seats .p s.num{color:var(--ink-2);font-size:var(--fs-meta)}
 .tk-seats .p small,.tk-seats .na,.ticket .per,.ticket .asof{color:var(--ink-2)}
-.tk-terms{padding:8px 16px 0;font-size:12px;color:var(--ink-2)}
+.tk-terms{padding:8px 16px 0;font-size:var(--fs-meta);color:var(--ink-2)}
 /* the calendar and «when to leave» links (plan.js) on ticket paper: ink, not the night's screen light */
-.ticket .plan-add{padding:8px 16px 0;font-size:13px}
+.ticket .plan-add{padding:8px 16px 0;font-size:var(--fs-meta)}
 .ticket .plan-add .lnk{color:var(--ink);text-decoration-color:var(--ink-3)}
 .ticket .plan-leave{color:var(--ink-2)}
-.tk-act{display:flex;margin-block-start:10px}
-.tk-act .book{flex:1 1 auto;min-block-size:52px;display:flex;align-items:center;justify-content:center;background:var(--ink);color:var(--gold);text-decoration:none;font-weight:600;padding-inline:12px;text-align:center}
+.tk-act{display:flex;margin-block-start:12px}
+/* «احجز» fills velvet (the seats); «أرسلها للقروب» beside it in ink */
+.tk-act .book{flex:1 1 auto;min-block-size:52px;display:flex;align-items:center;justify-content:center;background:var(--velvet);color:var(--screen);text-decoration:none;font-weight:600;padding-inline:12px;text-align:center}
 .tk-act .book.off{color:var(--dim);font-weight:400}
-.tk-act .share{min-inline-size:118px;min-block-size:52px;display:flex;align-items:center;justify-content:center;background:var(--velvet);color:var(--screen);text-decoration:none;font-weight:600;padding-inline:12px}
+.tk-act .share{min-inline-size:120px;min-block-size:52px;display:flex;align-items:center;justify-content:center;background:var(--ink);color:var(--screen);text-decoration:none;font-weight:600;padding-inline:12px}
 .tk-x{position:absolute;inset-block-start:0;inset-inline-end:0;inline-size:36px;block-size:36px;border:0;background:transparent;cursor:pointer}
 .tk-x::before,.tk-x::after{content:"";position:absolute;inset-inline-start:9px;inset-block-start:17px;inline-size:18px;block-size:2px;background:var(--ink);transform:rotate(45deg)}
 .tk-x::after{transform:rotate(-45deg)}
 /* focus on ticket paper: gold on paper is 1.6:1, so the ring is ink there, and drawn inside the two dark buttons
-   in a colour that stands on each (gold on ink 9.8:1, screen light on velvet 8.9:1) */
+   in a colour that stands on each (screen light on velvet 8.9:1, gold on ink 9.8:1) */
 .ticket :focus-visible{outline:2px solid var(--ink);outline-offset:-3px}
-.tk-act .book:focus-visible{outline:2px solid var(--gold);outline-offset:-5px}
-.tk-act .share:focus-visible{outline:2px solid var(--screen);outline-offset:-5px}
+.tk-act .book:focus-visible{outline:2px solid var(--screen);outline-offset:-5px}
+.tk-act .share:focus-visible{outline:2px solid var(--gold);outline-offset:-5px}
 .ticket:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media (max-width:1023px){
   .js .ticket{position:fixed;inset-inline:12px;inset-block-end:12px;margin:0;z-index:40;max-block-size:calc(100vh - 80px);overflow-y:auto;
-    transform:translateY(calc(100% + 24px));visibility:hidden;transition:transform .35s var(--ease),visibility 0s linear .35s}
-  .js .ticket.open{transform:none;visibility:visible;transition:transform .35s var(--ease)}
+    transform:translateY(calc(100% + 24px));visibility:hidden;transition:transform .28s var(--ease-sheet),visibility 0s linear .28s}
+  .js .ticket.open{transform:none;visibility:visible;transition:transform .28s var(--ease-sheet)}
   .js .ticket:not(.open) .tk-x{display:none}
 }
 @media (min-width:1024px){
   .ticket{position:sticky;inset-block-start:24px;margin:0}
-  .tk-main{padding:16px 18px 12px;gap:3px}
-  .tk-cin{font-size:28px}
+  .tk-main{padding:16px 20px 12px;gap:4px}
   .tk-stub{inline-size:104px}
-  .tk-stub b{font-size:30px}
-  .tk-seats{margin-inline:18px;inline-size:calc(100% - 36px)}
-  .tk-seats th,.tk-seats td{block-size:48px;font-size:15px}
-  .tk-seats .p .num,.tk-seats .p b{font-size:20px}
-  .tk-seats .p s{font-size:13px}
-  .tk-terms{padding:10px 18px 0;line-height:1.6}
-  .tk-act{flex-direction:column;margin-block-start:14px}
+  .tk-seats{margin-inline:20px;inline-size:calc(100% - 40px)}
+  .tk-seats th,.tk-seats td{block-size:48px}
+  .tk-terms{padding:12px 20px 0;line-height:1.6}
+  .tk-act{flex-direction:column;margin-block-start:16px}
   .tk-act .book{min-block-size:56px}
   .js .tk-x{display:none!important}
   /* never taller than the room under the bar (a 720 px screen, a card's terms and the seat map make it ~600 px): it
@@ -66,14 +65,14 @@
     max-block-size:calc(100vh - var(--head) - 100px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
   .tkcol .tk-act{position:sticky;inset-block-end:0;z-index:1}
   .tkcol .ticket{position:static;margin:0}
-  .tk-empty{display:flex;flex-direction:column;gap:8px;background:var(--tint);border:1px dashed var(--line-2);padding:22px}
-  .tk-empty .k{font-family:var(--display);font-weight:var(--dw);font-size:30px;line-height:1.1}
-  .tk-empty p:not(.k){font-size:14px;color:var(--dim)}
+  .tk-empty{display:flex;flex-direction:column;gap:8px;background:var(--tint);border:1px dashed var(--line-2);padding:24px}
+  .tk-empty .k{font-family:var(--display);font-weight:var(--dw);font-size:var(--fs-h2);line-height:1.1}
+  .tk-empty p:not(.k){font-size:var(--fs-body);line-height:var(--lh-body);color:var(--dim)}
 }
 @media (prefers-reduced-motion:reduce){
   .js .ticket,.js .ticket.open{transition:none}
 }
-.tk-go{padding:8px 16px 0;font-size:12px;color:var(--ink-2)}
+.tk-go{padding:8px 16px 0;font-size:var(--fs-meta);color:var(--ink-2)}
 .tk-go .go a{color:var(--ink)}
 .scrim{position:fixed;inset:0;z-index:39;background:rgba(7,5,6,.6);opacity:0;visibility:hidden;transition:opacity .25s,visibility 0s linear .25s}
 .scrim.on{opacity:1;visibility:visible;transition:opacity .25s}

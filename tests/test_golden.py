@@ -54,6 +54,8 @@ REDESIGN_ADDED = re.compile(r"^(en/)?(cinemas|sources)/index\.html$")
 # W1-P1 (MASTER-PLAN §5.2): core declares Wave 2's lazy stub (drag.js) and page-scoped sheets (page-<kind>.css) — assets
 # only, added, never a page; a page-scoped sheet is written only once its partials hold a rule
 SEAMS_ADDED = re.compile(r"^assets/(drag\.[0-9a-f]{10}\.js|page-[\w-]+\.[0-9a-f]{10}\.css)$")
+# W1-P2 (MASTER-PLAN §5.2): the system's two tiny Markazi faces (tools/subset_digits.py), fonts only, added
+SYSTEM_ADDED = re.compile(r"^assets/fonts/markazi-700-(digits|mark)\.woff2$")
 REDESIGN_CHANGED = re.compile(r"(\.html|^assets/cinema\.css)$")
 
 
@@ -61,10 +63,23 @@ def sitemap_urls(b):
     return set(re.findall(r"<url>.*?</url>", b.decode("utf-8"), re.S))
 
 
+def aed(v):
+    """A price as a value: W1-P2 prints whole dirhams as «42» where phase 1 printed «42.00» (site_kit.money), the same price."""
+    try: return f"{float(v):.2f}"
+    except (TypeError, ValueError): return v
+
+
+def prices2(o):
+    """Every JSON-LD «price» compared as a value (see aed)."""
+    if isinstance(o, dict): return {k: (aed(v) if k == "price" else prices2(v)) for k, v in o.items()}
+    if isinstance(o, list): return [prices2(x) for x in o]
+    return o
+
+
 def films20(ld):
     """The home's JSON-LD ItemList «Films» lists the 20 most shown since UI redesign Task 3's fix round 1 (the list of
     every film was ~9 KB of a page with a 150 KB budget): compared on its first 20 on both sides; all else as is."""
-    try: j = json.loads(ld)
+    try: j = prices2(json.loads(ld))
     except ValueError: return ld
     for g in j.get("@graph") or []:
         if g.get("@type") == "ItemList" and g.get("name") == "Films": g["itemListElement"] = g["itemListElement"][:20]
@@ -86,7 +101,7 @@ def inv(b):
     return {"links": one(r'<link rel="(?:canonical|alternate)"[^>]*>'), "title": one(r"<title>(.*?)</title>"),
             "desc": one(r'<meta name="description"[^>]*>'), "robots": one(r'<meta name="robots"[^>]*>'),
             "ld": [films20(x) for x in one(r'<script type="application/ld\+json">(.*?)</script>')],
-            "aed": cells("aed"), "chain": cells("chain"), "hall": cells("hall"), "show": cells("show")}
+            "aed": sorted(aed(v) for v in cells("aed")), "chain": cells("chain"), "hall": cells("hall"), "show": cells("show")}
 
 
 CITY_PAGE = re.compile(r"^(en/)?[a-z-]+/index\.html$")
@@ -188,7 +203,7 @@ def test_core_build_is_byte_identical_to_phase1(phase1, tmp_path, name, data, di
     data = live_input(data, tmp_path)
     before = files(run_build(phase1, data, disc, str(tmp_path / "before")))
     after = files(run_build(ROOT, data, disc, str(tmp_path / "after"), "core"))
-    assert sorted(before) == sorted(p for p in after if not REDESIGN_ADDED.match(p) and not SEAMS_ADDED.match(p))
+    assert sorted(before) == sorted(p for p in after if not REDESIGN_ADDED.match(p) and not SEAMS_ADDED.match(p) and not SYSTEM_ADDED.match(p))
     assert len(before) > 50
     bundle = "assets/cinema.HASH.js"
     diff = [p for p in before if p not in (bundle, "sitemap.xml") and not REDESIGN_CHANGED.search(p) and before[p] != after[p]]

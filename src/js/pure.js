@@ -13,6 +13,10 @@ function seatsLeft(n, lg) {
   return "باقي " + arCount(n, ["مقعد واحد", "مقعدين", "مقاعد", "مقعد"]);
 }
 
+/* a price as the site prints it: «42» for whole dirhams, «33.60» only when a card makes the fils real. Rounded to the
+   fils half up (Math.round); site_kit.money() is its twin (tests/test_w1_p2.py holds them equal, MASTER-PLAN §1.4) */
+function fmt(n) { var k = Math.round(n * 100); return k % 100 ? (k / 100).toFixed(2) : String(k / 100); }
+
 /* great-circle distance in km */
 function haversine(lat1, lng1, lat2, lng2) {
   var r = Math.PI / 180, a = Math.sin((lat2 - lat1) * r / 2), b = Math.sin((lng2 - lng1) * r / 2);

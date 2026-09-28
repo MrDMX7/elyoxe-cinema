@@ -1,20 +1,18 @@
 /* home rows: the section heads, the sideways strips, their arrows; «الحين»'s landing (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
 /* ------------------------------------------------ section heads, poster rows */
-.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-block:18px 10px}
-.sec-h h2{font-size:26px;flex:0 0 auto}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-block:16px 12px}
+.sec-h h2{font-size:var(--fs-h2);flex:0 0 auto}
 .sec-h .chips{min-inline-size:0}
 .tonight{position:relative}
-.posters{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding-inline:var(--gut);scrollbar-width:none;padding-block-end:6px;margin-inline:calc(-1 * var(--gut));padding-inline:var(--gut)}
+.posters{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x proximity;scroll-padding-inline:var(--gut);scrollbar-width:none;padding-block-end:8px;margin-inline:calc(-1 * var(--gut));padding-inline:var(--gut)}
 .posters::-webkit-scrollbar{display:none}
 @media (min-width:1024px){
   .sec-h{padding-block:0 0}
-  .tonight .sec-h h2{font-size:36px}
-  .tonight .chips{gap:22px}
-  .tonight .filters .chip{font-size:14px}
-  .posters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:26px 22px;overflow:visible;margin:0;padding:18px 0 0}
+  .tonight .chips{gap:24px}
+  .posters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:24px;overflow:visible;margin:0;padding:16px 0 0}
 }
 /* rows: a heading line, then a sideways strip from edge to edge (its start in line with the page's text) */
-.rail{margin-block-start:34px}
+.rail{margin-block-start:var(--s6)}
 /* «يبدأ قريب منك» fills in once the city's shows arrive: with script its place is held (invisible) from the first
    paint, so the rows under it never jump down (it was the page's whole CLS); it gives the place back only when
    nothing starts in the next 3 hours */
@@ -22,23 +20,22 @@
 /* the «الحين» shortcut lands here (/#now): the row's heading clear of the sticky header */
 #now{scroll-margin-block-start:calc(var(--head) + 8px)}
 .js .rail[data-near-row].gone{display:none}
-.rail[data-near-row] .strip{min-block-size:114px}
-.rail-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 14px;margin-block-end:12px}
-.rail-h h2{font-size:26px}
-[lang=en] .rail-h h2{font-size:22px;letter-spacing:-.01em}
-.rail-h .sub{font-size:13px;color:var(--seat)}
-.rail-h .all-l{margin-inline-start:auto;font-size:13px;color:var(--seat);text-decoration:none;min-block-size:24px;display:inline-flex;align-items:center}
+.rail[data-near-row] .strip{min-block-size:124px}   /* a filled strip is ~121 (a near card 84.5 + 2 × 12, the strip 8 + 4): held and filled alike */
+.rail-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 16px;margin-block-end:12px}
+.rail-h h2{font-size:var(--fs-h2)}
+[lang=en] .rail-h h2{letter-spacing:-.01em}
+.rail-h .sub{font-size:var(--fs-meta);color:var(--seat)}
+.rail-h .all-l{margin-inline-start:auto;font-size:var(--fs-meta);color:var(--seat);text-decoration:none;min-block-size:24px;display:inline-flex;align-items:center}
 .rail-h .all-l:hover{color:var(--screen)}
-.rail-h .near-ask{font-size:13px;min-block-size:24px;margin-inline-start:10px}
-.rail-h .near-m{flex-basis:100%;font-size:12px;color:var(--dim)}
+.rail-h .near-ask{font-size:var(--fs-meta);min-block-size:24px;margin-inline-start:12px}
+.rail-h .near-m{flex-basis:100%;font-size:var(--fs-meta);color:var(--dim)}
 .js .arr.js-only{display:none!important}
 .strip{--edge:max(var(--gut),calc((100% - var(--max)) / 2 + var(--gut)));display:flex;gap:16px;overflow-x:auto;overscroll-behavior-x:contain;
-  scroll-snap-type:x mandatory;padding-inline:var(--edge);scroll-padding-inline:var(--edge);padding-block:6px 4px;scrollbar-width:none}
+  scroll-snap-type:x mandatory;padding-inline:var(--edge);scroll-padding-inline:var(--edge);padding-block:8px 4px;scrollbar-width:none}
 .strip::-webkit-scrollbar{display:none}
 .strip > *{flex:0 0 auto;scroll-snap-align:start}
 @media (min-width:1024px){
   .rail{margin-block-start:40px}
-  .rail-h h2{font-size:30px}
   .strip{gap:12px}
 }
 @media (hover:hover) and (min-width:1024px){

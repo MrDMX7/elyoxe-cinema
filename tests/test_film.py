@@ -283,7 +283,7 @@ def test_unknown_verdict_and_the_hero_without_any_picture(out):
         assert '<section class="fhero np">' in h
         assert re.search(r'<div class="dock"[^>]*hidden>.*?data-dk-open[^>]*>[^<]+</button></div><p class="vh" data-dk-live aria-live="polite"></p>', h)
     css = build.css_source()
-    assert ".fhero.np .fhero-in{padding-block-start:calc(var(--head) + 24px + min(30vw,130px) * 1.5 + 24px)}" in css
+    assert ".fhero.np .fhero-in{padding-block-start:calc(var(--head) + 24px + min(30vw,128px) * 1.5 + 24px)}" in css   # 128: the 4-pt grid (W1-P2)
     # I1: the «المزيد» rules outrank .lnk (the button no longer carries it); M4: one .cg-m
     assert ".fv-w .fv-m{position:absolute;" in css and css.count(".cg-m{") == 1
     assert 'class="lnk fv-m"' not in read(out, "film", FID)

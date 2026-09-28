@@ -389,9 +389,11 @@ def test_bogo_price_says_per_person_with_two_tickets(tmp_path):
     home = open(os.path.join(ROOT, "src", "js", "home.js"), encoding="utf-8").read()
     prices = open(os.path.join(ROOT, "src", "js", "prices.js"), encoding="utf-8").read()
     # the «starting now» slot, the home's «يبدأ قريب منك» row, every tile and the billboard's «from» all append the
-    # per-person note (UI redesign Task 3: the row and renderFrom are their own functions now)
+    # per-person note (UI redesign Task 3: the row and renderFrom are their own functions now; W1-P2: the tiles and «from»
+    # draw their cell with prices.js payCell(), which appends it)
     fn = lambda name: home[home.index("function " + name + "("):].split("\nfunction ", 1)[0]
-    assert all(fn(n).count("ppNote(b.r)") == 1 for n in ("renderNow", "renderNear", "renderFrom", "renderHome"))
+    assert all(fn(n).count("ppNote(b.r)") + fn(n).count("payCell(b, go, was)") == 1 for n in ("renderNow", "renderNear", "renderFrom", "renderHome"))
+    assert "ppNote(b.r)" in prices[prices.index("function payCell"):]
     assert "ppNote(x.r)" in prices[prices.index("function priceHTML"):prices.index("function renderPrices")]
     assert "r: x.a != null ? x.r : null" in prices                               # best() keeps the rule
 

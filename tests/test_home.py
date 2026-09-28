@@ -205,7 +205,7 @@ def test_near_row_is_drawn_by_the_script_and_hidden_until_then(out):
     h = read(out)
     # id="now": the manifest's «الحين» shortcut lands here (W0-P1, plan §4.1 #5, merged at R0)
     row = re.search(r'<section class="rail" aria-labelledby="r-near" id="now" data-near-row data-hold hidden>.*?</section>', h, re.S).group(0)
-    assert "يبدأ قريب منك" in row and "data-near-sub" in row and "data-near" in row and '<div class="strip" data-strip></div>' in row
+    assert "يبدأ قريب منك" in row and "data-near-sub" in row and "data-near" in row and '<div class="strip" data-strip data-lo></div>' in row
     js = open(os.path.join(ROOT, "src", "js", "home.js"), encoding="utf-8").read()
     near = js[js.index("function renderNear("):js.index("function renderFrom(")]
     assert "3 * 3600e3" in near and "row.hidden = !list.length" in near and "inMinutes(" in near and "kmTo(" in near
