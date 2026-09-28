@@ -18,7 +18,14 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 ALIASES_PATH = os.path.join(_HERE, "aliases.yaml")
 CHAINS_PATH = os.path.join(_HERE, "chains.yaml")
 CINEMAS_PATH = os.path.join(_HERE, "cinemas.yaml")
+EVENTS_PATH = os.path.join(_HERE, "events.yaml")
 DEFAULT_AD_OFFSET = 15
+# a chain whose own runtime for a film is further than this from the chains' median is listed in
+# the health report (data/health.json "runtime") -- the film still uses the median
+RUNTIME_GAP_MIN = 10
+# events.yaml kinds that are not a film screening: a session carrying such a label (Roxy's
+# «Immersive Dining - …») is routed to data["event_shows"], never to films/shows
+NOT_A_FILM_KINDS = {"dining"}
 # carried from the previous latest.json when this run finds nothing better for a film
 _PREV_FILM_EXTRAS = ("poster", "poster_2x", "poster_color", "trailer")
 
@@ -79,7 +86,7 @@ def _local_now(now: str) -> datetime:
 
 
 def merge(results: dict[str, dict | None], previous: dict | None, now: str,
-          aliases: dict | None = None) -> dict:
+          aliases: dict | None = None, event_labels: dict | None = None) -> dict:
     """Merge each chain's fetch() output (or None/error on failure) into latest.json's shape.
 
     `results[chain]` is a reader's {"cinemas": [...], "shows": [...]} on success, or None / an
@@ -92,8 +99,20 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
     merge_duplicates() -- `aliases` ({"aliases": {raw fid: canonical}, "titles": {fid: title}},
     default: aliases.yaml) first, then the automatic rules. data["merged"] records
     {merged-away fid: canonical fid} for this run.
+
+    Runtime (W0-P4, legend §4.1 #31): a film's runtime is the median of the chains' own runtimes
+    (each chain counted once, by the runtime it lists most), not the longest -- one chain listing
+    120 min against 100-105 at the other six moved every «يخلص تقريباً» by up to 20 minutes. Every
+    freshly read show ends on that median. A chain more than RUNTIME_GAP_MIN minutes from it is
+    listed in data["runtime_gaps"] (refresh.py moves it into health.json).
+
+    Events (§4.1 #32): a session whose raw title carries an events.yaml label of a not-a-film kind
+    (NOT_A_FILM_KINDS: Roxy's «Immersive Dining - …») never becomes a film or a show; it goes to
+    data["event_shows"] for /events/.
     """
     previous = previous or {}
+    if event_labels is None:
+        event_labels = load_event_labels()
     prev_cinemas: dict = previous.get("cinemas", {})
     prev_shows: list = previous.get("shows", [])
     prev_chains: dict = previous.get("chains", {})
@@ -103,6 +122,9 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
     cinemas_out: dict = {}
     shows_out: list = []
     films_acc: dict = {}
+    events_out: list = []
+    fresh: set = set()   # id() of every show read this run (its end is set from the film's median runtime)
+    not_films = {fid for fid, f in prev_films.items() if event_label(f.get("title") or "", event_labels)}
 
     def add_film(chain: str, show: dict) -> str:
         cleaned = clean_title(show["film_title"])
@@ -120,6 +142,7 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
                 "genres": [],
                 "title_ar": None,
                 "chains": set(),
+                "chain_rt": {},
             },
         )
         if show.get("film_poster") and show["film_poster"] not in acc["poster_src"]:
@@ -141,7 +164,9 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
             acc["rating"] = show["film_rating"]
         runtime = show.get("runtime")
         if runtime is not None:
-            acc["runtime"] = max(acc["runtime"] or 0, runtime)
+            acc["runtime"] = max(acc["runtime"] or 0, runtime)   # for the duplicate rule; the median replaces it
+            if isinstance(runtime, (int, float)) and runtime > 0:
+                acc["chain_rt"].setdefault(chain, []).append(int(runtime))
         if show.get("poster") and not acc["poster"]:
             acc["poster"] = show["poster"]
         acc["chains"].add(chain)
@@ -162,6 +187,7 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
                 "genres": list((pf or {}).get("genres") or []) if isinstance((pf or {}).get("genres"), list) else [],
                 "title_ar": (pf or {}).get("title_ar_chain"),
                 "chains": set(),
+                "chain_rt": {},
             },
         )
         acc["chains"].add(chain)
@@ -173,9 +199,14 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
             cinemas_out[cid] = prev_cinemas[cid]
         for show in prev_shows:
             if show.get("cinema") in prev_chain_cinema_ids:
+                if show.get("film") in not_films:
+                    continue  # an event carried as a "film" by a run from before events were routed
                 shows_out.append(dict(show))
                 if show.get("film"):
                     add_prev_film(chain, show["film"])
+        for ev in previous.get("event_shows") or []:
+            if ev.get("cinema") in prev_chain_cinema_ids:
+                events_out.append(dict(ev))
 
     chains_cfg = load_chains()
 
@@ -188,6 +219,10 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
             for cinema in result.get("cinemas", []):
                 cinemas_out[cinema["id"]] = dict(cinema)
             for show in result.get("shows", []):
+                label = event_label(show.get("film_title") or "", event_labels)
+                if label:
+                    events_out.append(event_show(show, label))
+                    continue
                 fid = add_film(chain, show)
                 s = {k: v for k, v in show.items()
                      if not k.startswith("film_") and k not in ("runtime", "poster")}
@@ -195,11 +230,9 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
                     s.pop("lang", None)
                 if not s.get("subs"):
                     s.pop("subs", None)
-                ends = end_time(show["date"], show["time"], show.get("runtime"), ad_offset(chains_cfg, chain))
-                if ends:
-                    s["ends"] = ends
                 s["film"] = fid
                 shows_out.append(s)
+                fresh.add(id(s))
         else:
             error = None if result is None else str(result)
             chains_out[chain] = {
@@ -224,6 +257,8 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
     cutoff = _local_now(now) - timedelta(minutes=30)
     shows_out = [s for s in shows_out if _show_dt(s) >= cutoff]
     shows_out.sort(key=lambda s: (s["date"], s["time"]))
+    events_out = [e for e in events_out if _show_dt(e) >= cutoff]
+    events_out.sort(key=lambda e: (e["date"], e["time"], e.get("cinema") or ""))
 
     referenced_fids = {s["film"] for s in shows_out}
     films_acc = {fid: acc for fid, acc in films_acc.items() if fid in referenced_fids}
@@ -236,11 +271,24 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
     for s in shows_out:
         s["film"] = mapping.get(s["film"], s["film"])
 
-    # a show whose chain gave no runtime of its own ends on the film's chain runtime (the longest
-    # any chain lists) — computed here, before enrich, so an end time never rests on Wikidata alone
+    # the film's runtime = the median of its chains' own runtimes (a chain counted once)
+    runtime_gaps = []
+    for fid, acc in films_acc.items():
+        per = chain_runtimes(acc.get("chain_rt"))
+        if not per:
+            continue   # no fresh chain listed one: the previous run's runtime stays
+        acc["runtime"] = median_runtime(per.values())
+        if any(abs(v - acc["runtime"]) > RUNTIME_GAP_MIN for v in per.values()):
+            runtime_gaps.append({"fid": fid, "title": acc["title"], "runtime": acc["runtime"],
+                                 "chains": dict(sorted(per.items()))})
+
+    # every show read this run ends on the film's median chain runtime, and a carried show with no
+    # end of its own gets one the same way — computed here, before enrich, so an end time never
+    # rests on Wikidata alone
     for s in shows_out:
-        if s.get("ends"):
+        if s.get("ends") and id(s) not in fresh:
             continue
+        s.pop("ends", None)
         chain = (cinemas_out.get(s.get("cinema")) or {}).get("chain")
         ends = end_time(s["date"], s["time"], (films_acc.get(s["film"]) or {}).get("runtime"),
                         ad_offset(chains_cfg, chain))
@@ -278,6 +326,81 @@ def merge(results: dict[str, dict | None], previous: dict | None, now: str,
     }
     if mapping:
         out["merged"] = dict(sorted(mapping.items()))
+    if events_out:
+        out["event_shows"] = events_out
+    if runtime_gaps:
+        out["runtime_gaps"] = sorted(runtime_gaps, key=lambda g: g["fid"])
+    return out
+
+
+# ---------------------------------------------------------------- runtime and events (W0-P4)
+
+def chain_runtimes(chain_rt: dict | None) -> dict:
+    """{chain: [runtime per show]} -> {chain: the runtime that chain lists most} (ties: the shorter)."""
+    out = {}
+    for chain, vals in (chain_rt or {}).items():
+        vals = [int(v) for v in vals if isinstance(v, (int, float)) and v > 0]
+        if vals:
+            counts: dict = {}
+            for v in vals:
+                counts[v] = counts.get(v, 0) + 1
+            out[chain] = min(counts, key=lambda v: (-counts[v], v))
+    return out
+
+
+def median_runtime(values) -> int | None:
+    """The median of the chains' runtimes in whole minutes (an even count takes the midpoint, halves up)."""
+    vals = sorted(int(v) for v in values if v)
+    if not vals:
+        return None
+    n = len(vals)
+    mid = vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2
+    return int(mid + 0.5)
+
+
+def load_event_labels(path: str = EVENTS_PATH) -> dict:
+    """events.yaml -> {lowercased label: {"name_ar", "name_en", "kind"}} (the file steps/events.py reads)."""
+    out = {}
+    for row in _load_yaml(path).get("labels") or []:
+        m = str((row or {}).get("match") or "").strip().lower()
+        if m:
+            out[m] = {"name_ar": row.get("name_ar"), "name_en": row.get("name_en"), "kind": row.get("kind")}
+    return out
+
+
+_EV_SUFFIX = re.compile(r"\s*[\(\[]([^\)\]]*)[\)\]]\s*$")
+_EV_PREFIX = re.compile(r"^(.+?)\s+-\s+.+$")
+
+
+def event_label(raw_title: str, labels: dict | None) -> str | None:
+    """The not-a-film label (NOT_A_FILM_KINDS) a chain's raw title carries, else None: a trailing
+    (...)/[...] suffix or a leading "<label> - " prefix, matched against events.yaml like steps/events.py."""
+    if not raw_title or not labels:
+        return None
+    t, cands = raw_title.strip(), []
+    while True:
+        m = _EV_SUFFIX.search(t)
+        if not m:
+            break
+        cands.append(m.group(1))
+        t = t[:m.start()].strip()
+    m = _EV_PREFIX.match(t)
+    if m:
+        cands.append(m.group(1))
+    for c in cands:
+        key = c.strip().lower()
+        if (labels.get(key) or {}).get("kind") in NOT_A_FILM_KINDS:
+            return key
+    return None
+
+
+def event_show(show: dict, label: str) -> dict:
+    """One not-a-film session for data["event_shows"]: where, when, what, and the chain's own link."""
+    out = {"cinema": show.get("cinema"), "title": (show.get("film_title") or "").strip(), "event": label,
+           "date": show.get("date"), "time": show.get("time")}
+    for k in ("hall", "hall_label", "book", "prices"):
+        if show.get(k) is not None:
+            out[k] = show[k]
     return out
 
 
@@ -432,9 +555,12 @@ def merge_duplicates(films: dict, aliases: dict | None = None, counts: dict | No
         order = sorted(members, key=lambda m: (m != canon, -counts.get(m, 0), m))
         acc = dict(films.get(canon) or films[order[0]])
         acc["chains"] = set()
+        acc["chain_rt"] = {}
         for m in order:
             fm = films[m]
             acc["chains"] |= set(fm.get("chains") or ())
+            for c, vals in (fm.get("chain_rt") or {}).items():
+                acc["chain_rt"].setdefault(c, []).extend(vals)
             for k in ("lang", "rating", "runtime", "poster", "title_ar", "trailer"):
                 if not acc.get(k) and fm.get(k):
                     acc[k] = fm[k]

@@ -223,12 +223,34 @@ def _hall_from_show(rec: dict) -> tuple[str, str]:
     return hall, label
 
 
-def _book_url(movie_id: int) -> str:
-    # The site keeps the selected cinema in browser state (header dropdown / localStorage),
-    # not in the URL — /now-showing-booking/<movie_id>/1/ is the real link the site's own
-    # movie cards point at (the trailing "1" is a fixed language id, not a cinema id). We
-    # were not able to confirm a per-cinema deep link, so every show for a given film links
-    # to this one page; see docs/probe/star.md.
+def _pos_int(v) -> int | None:
+    """A positive integer id from an API field (int or digit string), else None."""
+    if isinstance(v, bool):
+        return None
+    if isinstance(v, int):
+        return v if v > 0 else None
+    if isinstance(v, str) and v.strip().isdigit():
+        n = int(v.strip())
+        return n if n > 0 else None
+    return None
+
+
+def _book_url(movie_id: int, rec: dict | None = None) -> str:
+    """The show's own seat page when the record carries all four ids, else the film's page.
+
+    Show level (verified live 2026-09-27, legend rivals-uae §14, and re-checked against the API
+    2026-09-28): /now-showing-single-show-booking/<ss_id>/<screen_id>/<movie_details_id>/<movie_id>
+    opens straight on «Pick Seats» for that exact show — e.g. /1032022/79/5182/2389 is Bawadi Mall
+    PLATINUM SUITE (screen_id 79, movie_details_id 5182 = that film's 2D-suite version) for Heart of
+    the Beast (movie_id 2389). A record missing any of the four keeps the film-level link, so a
+    changed Star payload never produces a broken URL.
+
+    Film level: /now-showing-booking/<movie_id>/1/ is the link the site's own movie cards use (the
+    trailing "1" is a fixed language id); the visitor re-picks cinema and time there."""
+    rec = rec or {}
+    ids = [_pos_int(rec.get(k)) for k in ("ss_id", "screen_id", "movie_details_id")] + [_pos_int(movie_id)]
+    if all(ids):
+        return f"{SITE}/now-showing-single-show-booking/{ids[0]}/{ids[1]}/{ids[2]}/{ids[3]}"
     return f"{SITE}/now-showing-booking/{movie_id}/1/"
 
 
@@ -396,7 +418,7 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                     "hall": hall,
                     "hall_label": hall_label,
                     "prices": prices,
-                    "book": _book_url(movie_id),
+                    "book": _book_url(movie_id, rec),
                     # the session and its screen, for seats.py (steps/occupancy.py strips both before publishing)
                     "_sid": rec.get("ss_id"),
                     "_screen": rec.get("screen_name"),

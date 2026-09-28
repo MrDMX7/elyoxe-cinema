@@ -92,6 +92,13 @@ show for a given film links to this one page (`readers/star.py::_book_url`); the
 has to (re)pick their cinema on that page. Flagged here rather than guessing a URL shape that
 might 404.
 
+**Update 2026-09-28 (legend W0-P4, §4.1 #33): a per-show link is confirmed.**
+`https://www.starcinemas.ae/now-showing-single-show-booking/<ss_id>/<screen_id>/<movie_details_id>/<movie_id>`
+opens that show's «2. Pick Seats» step (checked live in headed Chrome on four shows: Bawadi Mall SCREEN 02
+29 Sep 11:45, Junction Mall DIP SCREEN 01 and 02, Mall of Al Ain SCREEN 1). The four ids are fields of each
+show record the reader already fetches. `readers/star.py::_book_url` builds it when all four are positive
+integers and falls back to the film-level link above otherwise.
+
 ## Coverage
 
 All 17 UAE Star Cinemas sites returned by `/cinemas`: Abu Dhabi (National Cinema, Central Mall

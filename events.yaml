@@ -6,8 +6,9 @@
 #
 # match: the exact bracketed/parenthesised suffix or leading "<match> - " prefix text, matched
 #        case-insensitively (steps/events.py lower-cases both sides).
-# kind:  a loose category (festival, ladies, dining, classics, other) -- informational only,
-#        not read anywhere else yet.
+# kind:  a loose category (festival, ladies, dining, classics, other). normalize.py reads it: a
+#        session whose label kind is in normalize.NOT_A_FILM_KINDS ("dining") is not a film and goes
+#        to data["event_shows"] (legend §4.1 #32); every other kind stays a film.
 labels:
   - match: "K-Fest"
     name_ar: "مهرجان كي-فست"

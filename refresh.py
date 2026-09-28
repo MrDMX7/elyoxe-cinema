@@ -270,6 +270,25 @@ def _write_verdicts_isolated(data: dict) -> dict:
             "failed": failed, "error": last_error}
 
 
+def _fix_verdict_text(data: dict) -> dict:
+    """W0-P4 (legend §4.1 #36): rewrite only the verdicts whose text spells the film differently from
+    the site's title or states another runtime (verdicts.text_mismatches), at most
+    verdicts.TEXT_FIX_CAP a run and once per fid per title-and-runtime basis; a fid that still fails
+    waits in health["verdict_text"]["unfixed"] instead of looping. Never raises."""
+    # the check's memory, data/verdict_fixes.json: {fid: {basis, at, ok}} (resolved at call time, so a
+    # test's sandboxed DATA_DIR is honoured)
+    path = DATA_DIR / "verdict_fixes.json"
+    try:
+        state = _load_json(path)
+        new_state, report = verdicts_mod.fix_text_mismatches(data, state if isinstance(state, dict) else {},
+                                                             today=now_iso()[:10])
+        _write_json_atomic(path, new_state)
+        return report
+    except Exception as e:  # noqa: BLE001 - the check must never abort the publish
+        print(f"refresh: verdict text check failed: {e}", file=sys.stderr)
+        return {"ok": False, "error": str(e)}
+
+
 def chain_timeout(chain: str) -> float:
     return CHAIN_TIMEOUTS.get(chain, DEFAULT_TIMEOUT)
 
@@ -312,7 +331,7 @@ def _fold_target(old: str, rec: dict, current: dict, alias: dict, members_of: di
 
 
 def update_film_history(merged: dict, history: dict, now: str, fresh_chains=None,
-                        aliases: dict | None = None) -> tuple[dict, list[dict]]:
+                        aliases: dict | None = None, event_labels: dict | None = None) -> tuple[dict, list[dict]]:
     """Advances film_history.json state for this run and returns (new_history, new_films).
     Mutates `merged`: archived films are added to merged["films"], and merged["redirects"] is set
     to {old fid: canonical fid} for every fid that was folded into another one (build.py writes a
@@ -354,6 +373,11 @@ def update_film_history(merged: dict, history: dict, now: str, fresh_chains=None
         members_of.setdefault(c, set()).add(m)
 
     hist = {k: dict(v) for k, v in history.items() if isinstance(v, dict)}
+    # a not-a-film event (normalize.NOT_A_FILM_KINDS) recorded as a film by an earlier run is dropped:
+    # never archived into a film page, never counted as absent (W0-P4, legend §4.1 #32)
+    labels = normalize.load_event_labels() if event_labels is None else event_labels
+    hist = {k: v for k, v in hist.items()
+            if k in current_films or not normalize.event_label(((v.get("snapshot") or {}).get("title")) or "", labels)}
 
     # 1. fold records whose film now lives under another canonical fid
     for old in sorted(hist):
@@ -501,6 +525,7 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
                     chain_price_caches[chain] = private_cache
 
         if ok:
+            carried = price_table.carry_today(raw, now[:10])
             price_table.fill(raw, table, today=now[:10])
             total = len(raw.get("shows", []))
 
@@ -526,6 +551,8 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             results[chain] = raw
             health[chain] = {"ok": True, "at": now, "error": None, "shows": total,
                               "prices_degraded": degraded}
+            if carried:
+                health[chain]["carried_today"] = carried
             if chain in reused:
                 # a resumed raw is this unfinished run's own earlier fetch, not a fresh one: it never
                 # counts as a confirmed absence (film history) nor raises/clears an alert (alerts.py)
@@ -541,6 +568,7 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             summaries.append(
                 f"{chain}: ok  cinemas={len(raw.get('cinemas', []))}  shows={total}  "
                 f"priced={pct:.0f}%{f'  cached={cached_reused}' if cached_reused else ''}"
+                f"{f'  carried_today={carried}' if carried else ''}"
                 f"{'  DEGRADED' if degraded else ''}{'  (resumed)' if chain in reused else ''}  {seconds:.1f}s"
             )
         else:
@@ -557,6 +585,17 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
                        {c: {today: dict(v)} for c, v in chain_price_caches.items() if v})
 
     merged = normalize.merge(results, previous, now)
+
+    # W0-P4 (legend §4.1 #31): films whose chains disagree on the runtime by more than
+    # normalize.RUNTIME_GAP_MIN minutes -- the film uses the chains' median; the gap is only reported
+    gaps = merged.pop("runtime_gaps", [])
+    health["runtime"] = {"ok": True, "error": None, "gaps": gaps}
+    if gaps:
+        summaries.append("runtime: chains disagree by > %d min on %d film(s): " % (normalize.RUNTIME_GAP_MIN, len(gaps))
+                         + ", ".join(f"{g['fid']} {g['runtime']} ({' '.join(f'{c}={v}' for c, v in g['chains'].items())})"
+                                     for g in gaps))
+    if merged.get("event_shows"):
+        summaries.append(f"events: {len(merged['event_shows'])} not-a-film session(s) kept out of films (data event_shows)")
 
     # a film merged into another (normalize.merge_duplicates, aliases.yaml) takes its verdict file
     # with it: moved to the canonical fid when that one has nothing better, else deleted
@@ -612,6 +651,12 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
                 f"verdicts: {verdict_health['succeeded']}/{verdict_health['attempted']} ok, "
                 f"failed: {', '.join(verdict_health['failed'])}"
             )
+        text_health = _fix_verdict_text(merged)
+        health["verdict_text"] = text_health
+        if text_health.get("rewritten") or text_health.get("unfixed") or text_health.get("error"):
+            summaries.append(f"verdict text: {text_health.get('mismatches', '?')} mismatch(es), rewritten: "
+                             f"{', '.join(text_health.get('rewritten') or []) or '-'}, unfixed: "
+                             f"{', '.join(text_health.get('unfixed') or []) or '-'}")
     _attach_verdicts(merged)
 
     # phase-2 data steps: every steps/<name>.py with run(data, ctx) -> dict|None, in name order.
