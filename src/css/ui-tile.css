@@ -1,4 +1,4 @@
-/* the poster and the film tile (rows, the grid, the archived page's similar films) (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
+/* the poster and the film tile (rows, the grid, the archived page's similar films), the show card (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
 /* W1-P2 deleted the old poster card's rules that no page draws any more (.fn, .fm, .fp, .cheap, .film.big and their
    desktop sizes: none of those classes is in any built page or in the client) */
 /* on a phone only two of up to 66 poster tiles sit in view in the sideways row: their width comes from the row or the
@@ -14,13 +14,15 @@
 /* the verdict word (§1.4): Markazi, «يستاهل» gold, «تجنّبه» seat grey */
 .vw{font-family:var(--display);font-weight:var(--dw);color:var(--seat)}
 .v-yes .vw,.vw.v-yes{color:var(--gold)}
-.vw.v-mixed{color:var(--screen)}
+.vw.v-mixed,.tile.v-mixed .vw{color:var(--screen)}
 .sc{color:var(--seat)}
 @media (min-width:1024px){
   .film{inline-size:auto;flex:none}
 }
-/* the tile: poster, title on one line, the price (or «السعر في الشباك»); a corner tag; on a desktop pointer a panel
-   over the poster's foot with the verdict word and the next time — over it, so nothing below moves */
+/* the tile (MASTER-PLAN §2.1): the poster; the title in two lines, their height held so every tile lines up; in «كل
+   الأفلام» the verdict word (13 px); then the one line that differs between films («من 42», «33.60 42» after a card,
+   «التالي 21:30» in the evening). Every line has a fixed height, so a tile's height is known before it is drawn (the
+   grid's placeholders, ui-grid.css). A corner tag; on a desktop pointer a panel over the poster's foot */
 .tile{display:flex;flex-direction:column;min-inline-size:0;text-decoration:none;color:var(--screen);gap:0}
 .strip .tile{inline-size:128px}
 .tp{position:relative;display:block;overflow:hidden;background:#1D1517}
@@ -28,16 +30,28 @@
 .tile .pst.img{padding:0}
 /* a corner tag: velvet, 12 px (the curtain's job, §1.5) */
 .tile .tag{position:absolute;z-index:2;inset-block-start:0;inset-inline-start:0;background:var(--velvet);color:var(--screen);font-size:12px;line-height:1.6;padding:2px 8px}
-.tile .t{font-size:var(--fs-title);font-weight:500;line-height:1.35;margin-block-start:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* an English title on the Arabic page lines up with the Arabic ones (the start of the RTL column), its ellipsis at its own end */
+.tile .t{font-size:var(--fs-title);font-weight:500;line-height:1.35;block-size:2.7em;margin-block-start:8px;overflow:hidden;overflow-wrap:anywhere;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+/* an English title on the Arabic page lines up with the Arabic ones (the start of the RTL column) */
 :root[dir=rtl] .tile .t[dir=ltr]{text-align:right}
-.tile .m{font-size:var(--fs-meta);color:var(--seat)}
+.tile .vw{display:block;font-size:var(--fs-meta);line-height:1.5;block-size:1.5em;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.tile .m{display:block;font-size:var(--fs-meta);line-height:1.5;block-size:1.5em;color:var(--seat);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tile .m .p,.tile .m .pv{display:inline;white-space:nowrap}
-.tile .m .p small,.tile .m .asof{display:block}
+/* the per-person and table-date notes follow the price on its one line (the ellipsis ends what does not fit) */
+.tile .m small{display:inline;margin-inline-start:4px}
+.tile .m .nx{color:var(--dim)}
 .tile.off .tp{opacity:.55}
 .tile .hv{display:none}
 .film.tile{gap:0}
 .tile.soon .m{color:var(--dim)}
+/* «أرخص عرض الليلة»: a show card (the poster, the time, the cinema, the price) */
+.shc .st{display:flex;flex-direction:column;margin-block-start:8px;min-inline-size:0}
+.shc .st b{font-size:var(--fs-time);font-weight:600;line-height:1.35}
+.shc .st bdi{font-size:var(--fs-meta);line-height:1.5;color:var(--seat);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:1023px){
+  /* a phone's tile is 100-130 px wide: «التالي 21:30» keeps the time, the cinema is on the film page one tap away */
+  .tile .m .nx bdi{display:none}
+}
 @media (min-width:1024px){
   .strip .tile{inline-size:188px}
 }
@@ -47,7 +61,7 @@
   .tile .hv{display:flex;flex-direction:column;gap:2px;position:absolute;z-index:2;inset-inline:0;inset-block-end:0;padding:36px 12px 12px;
     background:linear-gradient(rgba(15,11,12,0),rgba(15,11,12,.94) 45%);font-size:var(--fs-meta);line-height:1.4;opacity:0;transform:translateY(8px);
     transition:opacity .2s,transform .2s var(--ease-out)}
-  .tile .hv .vw{font-size:22px;line-height:1.1;color:var(--screen)}
+  .tile .hv .vw{font-size:22px;line-height:1.1;color:var(--screen);block-size:auto}
   .tile.v-yes .hv .vw{color:var(--gold)}
   .tile .hv .nx{color:var(--dim)}
   .tile .hv .nx:empty{display:none}

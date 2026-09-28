@@ -71,7 +71,7 @@ def test_the_base_sheet_keeps_tokens_and_base_only():
 def test_each_component_lives_in_its_owners_partial():
     """A sample of the §6.2 table: the rule a Wave 2 package will change is in the file it owns."""
     at = {"ui-chrome": [".top{", ".pill{", ".foot-l{", ".gnote{"], "ui-tabs": [".tabs{"], "ui-sheet": [".sheet{", ".opt{"],
-          "ui-near": [".now{", ".nr{"], "ui-bill": [".bill{", ".bill-in{", ".bd{"], "ui-fhero": [".fhero{", ".ft{", ".trl-d{"],
+          "ui-bill": [".bill{", ".bill-in{", ".bd{"], "ui-fhero": [".fhero{", ".ft{", ".trl-d{"],
           "ui-rows": [".rail{", ".strip{", "#now{"], "ui-tile": [".tile{", ".pst{"], "ui-grid": [".grid{", ".all-h{", ".ctl{"],
           "ui-film": [".dbar{", ".tabsx{", ".dy{"], "ui-sched": [".fcity{", ".cg{", ".tm{", ".tl{"], "ui-dock": [".dock{"],
           "ui-ticket": [".ticket{", ".tk-act{", ".tkcol{"], "ui-places": [".split{", ".cf{", ".srow{", ".clist{"],
@@ -93,12 +93,15 @@ def test_hidden_means_hidden_one_rule_no_patches(tmp_path):
     build.build(DATA, DISC, out, noindex=False, modules=build.discover(only=("core",)))
     home = open(os.path.join(out, "index.html"), encoding="utf-8").read()
     held = re.findall(r"<[^>]*\bdata-hold\b[^>]*>", home)
-    assert len(held) == 1 and 'id="now" data-near-row data-hold hidden' in held[0]
+    # W2-P4 deleted the near row, home's held slot (the board's box is W2-P2's, in its own slot)
+    assert not held
+    # the city page's «الحين» box (Kit.me) is no longer drawn by any script (renderNow went with the near row, W2-P4) and
+    # its held-and-invisible rule went with ui-near.css: it stays hidden, taking no room, until the board's city.hero
+    # replaces it (W2-P2, W2-P6)
     city = open(os.path.join(out, "dubai", "index.html"), encoding="utf-8").read()
     assert '<a class="now" href="#all" data-now data-hold hidden>' in city
-    # each held slot keeps a «.js …[hidden]» rule that lays it out invisible
     css = open(os.path.join(out, "assets", "cinema.css"), encoding="utf-8").read()
-    assert ".js .now[data-now][hidden]{display:flex;visibility:hidden}" in css and ".js .rail[data-near-row][hidden]{display:block;visibility:hidden}" in css
+    assert ".now[data-now]" not in css and "data-near-row" not in css and ".now{" not in css
 
 
 def test_the_wave2_stubs_are_declared_and_cost_nothing():

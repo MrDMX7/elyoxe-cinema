@@ -41,8 +41,6 @@ function showSpan(start, ends, runtime) {
 }
 /* «يخلص قبل»: "" = any time, "24:00" = midnight */
 function endsOk(span, before) { var b = toMin(before); return b == null || !span || span[1] <= b; }
-/* ربعي's late shows: from 21:00, and the small hours (before 06:00) count as late too */
-function lateOk(span, late) { return !late || !span || span[0] >= 21 * 60 || span[0] < 6 * 60; }
 /* a show overlaps a prayer when the prayer falls inside it, or the show starts in the prayer's first
    `win` minutes (the time it takes to pray in congregation) */
 function overlaps(span, p, win) { return !!span && p != null && span[0] < p + (win || 0) && span[1] > p; }
@@ -66,23 +64,5 @@ function filmsN(n, lg) {
 /* a remembered filter applies only where the page offers it (each page has its own genre chips):
    anything else reads as «الكل» there, and stays remembered for the pages that have it */
 function effectiveFilter(filt, offered) { return filt && offered.indexOf(filt) >= 0 ? filt : "all"; }
-/* «مع منو رايح؟»: each companion is a preset over the same controls */
-function whoPreset(who) {
-  return who === "family" ? { filt: "family", before: "", late: false, sort: "time" }
-    : who === "kids" ? { filt: "kids", before: "21:00", late: false, sort: "time" }
-    : who === "friends" ? { filt: "all", before: "", late: true, sort: "time" }
-    : { filt: "all", before: "", late: false, sort: "" };
-}
 function verdictRank(v) { return { yes: 0, mixed: 1, unknown: 2, skip: 3 }[v] != null ? { yes: 0, mixed: 1, unknown: 2, skip: 3 }[v] : 2; }
 
-/* «الحين»: among shows [{at: start ms, km: distance or null}], the one starting within `win` minutes of
-   now — the nearest cinema first when distances are known, else the soonest */
-function pickNow(shows, now, win) {
-  var end = now + win * 60e3;
-  var c = shows.filter(function (s) { return s.at >= now && s.at <= end; });
-  c.sort(function (a, b) {
-    var da = a.km == null ? 1e9 : a.km, db = b.km == null ? 1e9 : b.km;
-    return da - db || a.at - b.at;
-  });
-  return c[0] || null;
-}

@@ -1,4 +1,4 @@
-/* «كل الأفلام»: the grid, its heading, the filter sheet's content, the filter and control rows, the empty line (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
+/* «كل الأفلام»: the grid, its heading, the filter sheet's content (the one question on top), the filter and control rows, the empty line (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
 .h-city:not(:empty)::before{content:" "}
 .ctl{flex-wrap:wrap;align-items:center;gap:8px 24px;padding-block:4px 12px;font-size:var(--fs-meta);color:var(--seat)}
 .ctl-g{display:flex;align-items:center;gap:8px;min-inline-size:0;max-inline-size:100%}
@@ -14,9 +14,14 @@
 .pr-t{font-size:var(--fs-meta);color:var(--dim)}
 .pr-t:empty{display:none}
 .empty{padding-block:16px;color:var(--dim);font-size:var(--fs-body);line-height:var(--lh-body)}
+.empty .lnk{min-block-size:44px}
 [lang=en] .all-h h2{letter-spacing:-.01em}
 .grid .film,.grid .film.big{inline-size:auto;flex:none}
-.grid .film:not(.big){contain-intrinsic-block-size:auto 240px}
+/* a tile not yet drawn holds its real height (MASTER-PLAN §2.1 «Speed», §4.2 #13: a guess of 240 shrank the page 673 px
+   while scrolling): its poster is a column wide at 2:3, and its lines have fixed heights (ui-tile.css: 8 + 2 × 21.6 for
+   the title, 19.5 for the verdict word, 19.5 for the price line). «كل الأفلام» is the size container its columns read */
+[data-films]{container-type:inline-size}
+[data-films] > .film{contain-intrinsic-block-size:auto calc((100cqi - 24px) / 3 * 1.5 + 90.2px)}
 /* «كل الأفلام»: 3 columns on a phone, 7 on a desktop, under «تصفية» (a badge counting what filters) and the sort */
 .all{margin-block-start:44px;scroll-margin-block-start:calc(var(--head) + 8px)}
 .all-h{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-block-end:16px}
@@ -26,16 +31,30 @@
 .all-h .chip svg{inline-size:16px;block-size:16px}
 .fbadge{background:var(--gold);color:var(--ink);min-inline-size:20px;padding-inline:4px;text-align:center;font-size:var(--fs-meta);line-height:20px;font-weight:500}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 12px}
+/* the filter sheet's one question on top (MASTER-PLAN §2.0): «مع منو» as three full-width answers, each saying what it
+   sets; «متى» and «وين» as 44 px options; «العيال» after 20:00 offers tomorrow morning */
+.ask .opt{min-block-size:44px}
+.opts.who{flex-direction:column;flex-wrap:nowrap}
+.opts.who .opt{flex-direction:column;align-items:flex-start;justify-content:center;gap:0;padding-block:4px;text-align:start}
+.opts.who .opt small{font-size:var(--fs-meta);font-weight:400;color:var(--seat)}
+.kids-late{margin-block-start:12px;font-size:var(--fs-meta);color:var(--dim)}
+.kids-late .lnk{min-block-size:44px}
 /* the filter sheet: chips per section, the prayer switch, then «مسح» and «اعرض N فيلم» held at its foot */
 .sheet .go{position:sticky;inset-block-end:calc(-20px - env(safe-area-inset-bottom));display:flex;gap:12px;margin-block-start:12px;
   padding-block:12px calc(20px + env(safe-area-inset-bottom));margin-block-end:calc(-20px - env(safe-area-inset-bottom));background:#17100F}
 .sheet .go .btn{flex:1 1 0;justify-content:center;min-block-size:48px;padding-inline:12px}
+/* nothing left to show: the button says why, and does nothing (§1.7). Both spans are in the markup; CSS swaps them by
+   the button's [disabled], so no script has to (filters.js only sets/clears .disabled) */
+.sheet .go .btn[disabled]{background:var(--tint);color:var(--dim);cursor:default}
+.sheet .go .btn [data-fnone]{display:none}
+.sheet .go .btn[disabled] [data-fshow]{display:none}
+.sheet .go .btn[disabled] [data-fnone]{display:inline}
 .sheet .prayer{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin:0;font-size:var(--fs-title);color:var(--screen)}
 .sheet .prayer .chip{min-block-size:40px}
 .sheet .pr-t{flex-basis:100%}
 @media (min-width:1024px){
   .all-h h2{flex-basis:auto}
   .grid{grid-template-columns:repeat(7,minmax(0,1fr));gap:24px 16px}
-  .grid .film:not(.big){contain-intrinsic-block-size:auto 330px}
+  [data-films] > .film{contain-intrinsic-block-size:auto calc((100cqi - 96px) / 7 * 1.5 + 90.2px)}
   .all{margin-block-start:56px}
 }

@@ -1,19 +1,25 @@
-"""Film tiles, the coming tile, a home row (rail) and the «كل الأفلام» grid (site_kit.Kit's tile helpers, moved as
-they were by W1-P1). Owner: W1-P2, then W2-P4 (MASTER-PLAN §6.2).
+"""Film tiles, the show card, the coming tile, a home row (rail) and the «كل الأفلام» grid (site_kit.Kit's tile
+helpers, moved as they were by W1-P1). Owner: W1-P2, then W2-P4 (MASTER-PLAN §6.2).
 
 A mixin of site_kit.Kit: `self` is the site. Imported by site_kit after its helpers are defined."""
 from site_kit import *  # noqa: F401,F403  (the helpers these methods were written against)
+from kit.filters import EMPTY, KIDS_AM, KIDS_LATE, RESET, who_fits
 
 # a row's price cells as Kit.pcell writes them (before any card: the list price)
 LO_CELL = re.compile(r'<span class="p" data-aed="([0-9.]+)"')
+# the verdict word on a tile (MASTER-PLAN §1.4, §1.7): an unknown verdict is the short «الحكم بعده», never a sentence
+TILE_V = {"unknown": ("الحكم بعده", "No verdict yet")}
 
 
 class TileKit:
     def film_tile(self, fid, lang, shows, big=False, i=99, live=False, row=False, tag=None):
-        """A film tile (UI redesign Task 3): the poster (2:3), the title on one line, «من X درهم» (the cheapest
-        ticket, which cinema.js reprices after the visitor's card) or «السعر في الشباك», an optional corner tag
-        («الخميس»/«آخر أسبوع»/«إعادة عرض»), and — on a desktop pointer only — a panel over the poster's foot with
-        the verdict word and the next time (cinema.js fills [data-next]), laid over it, so nothing moves.
+        """A film tile: the poster (2:3), the title in two lines (their height held, so tiles line up), and the line
+        that differs between films. A `live` tile (home and city: its line is redrawn by src/js/home.js for the
+        visitor's city, card and clock, MASTER-PLAN §2.1): «من 42» by day, «التالي 21:30 ريل دبي مول» after 17:00,
+        «33.60 42» once a card is chosen (yours gold, the list price struck). A live tile in «كل الأفلام» opens with
+        the verdict word (13 px Markazi, gold only for «يستاهل»); a row's tile does not (its row already says why it
+        is there). Elsewhere (hubs, people, similar films) the older line: «من X درهم» or «السعر في الشباك».
+        An optional corner tag («إعادة عرض»), and on a desktop pointer the hover panel home.js draws.
         `row`: a tile in a home row — only the id and runtime the price code reads, not the filter attributes
         (the rows are curated; the filter sheet filters the «كل الأفلام» grid, whose tiles carry them all)."""
         f = self.films[fid]; v, vw = self.vword(fid, lang)
@@ -21,17 +27,32 @@ class TileKit:
         mc = self.min_price(today) if live else self.min_cell(today, lang)
         cell = (f'<span class="pv"><span class="num">{money(mc[0])}</span></span>' if live else mc[0]) if mc else ""   # .pv: cinema.js reprices it
         ar = lang == "ar"
-        price = (f'{L(HOME_T["from"], lang)} {cell} {esc(L(T["aed"], lang))}' if ar else f'{L(HOME_T["from"], lang)} {esc(L(T["aed"], lang))} {cell}') if mc else self.box(lang)
+        if live: price = f'{L(HOME_T["from"], lang)} {cell}' if mc else self.box(lang)
+        else: price = (f'{L(HOME_T["from"], lang)} {cell} {esc(L(T["aed"], lang))}' if ar else f'{L(HOME_T["from"], lang)} {esc(L(T["aed"], lang))} {cell}') if mc else self.box(lang)
         tag = tag or (L(RERELEASE, lang) if f.get("rerelease") else None)
-        attrs = (f' data-fid="{esc(fid)}"' if row else self.film_attrs(fid)) + f' data-v="{v}"'
+        attrs = (f' data-fid="{esc(fid)}"' if row else self.film_attrs(fid, fits=live)) + f' data-v="{v}"'
         attrs += f' data-runtime="{int(f["runtime"])}"' if f.get("runtime") else ""
         if not row and f.get("lang"): attrs += f' data-lang="{esc(f["lang"])}"'
         sizes = POSTER_SIZES["tile row"] if row else POSTER_SIZES["tile"]
+        word = (f'<span class="vw">{esc(L(TILE_V.get(v, (vw, vw)), lang))}</span>' if live and not row else "")   # its colour: the tile's v-*
         return (f'<a class="{"tile" if row else "film tile"} v-{v}" href="{P(lang, "film", fid)}"{attrs}>'
                 + f'<span class="tp">{self.poster(fid, lang, eager=not row, lazy=row or i >= 1, sizes=sizes, srcset=not row, label=False)}'
                 + (f'<span class="tag">{esc(tag)}</span>' if tag else "") + '</span>'
                 + f'<span class="t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>'
-                + f'<span class="m" data-cheap>{price}</span></a>')
+                + word + f'<span class="m" data-cheap>{price}</span></a>')
+
+    def show_card(self, s, lang):
+        """«أرخص عرض الليلة»'s card (MASTER-PLAN §2.1): one show, not a film: the poster, the time and the cinema, and the
+        show's cheapest price. It links to the show itself (/film/<fid>/#s-<key>, the show link of §2.2). The film's name
+        is said to a screen reader (the poster carries it for the eye). home.js redraws the row from the city's slice
+        for the visitor's city, card and clock (renderCheap), as it does every live tile's price (.pv)."""
+        fid, cid = s["film"], s["cinema"]
+        pr = min(p["aed"] for p in s["prices"] if p.get("aed") and p["aed"] > 0)
+        return (f'<a class="tile shc" href="{P(lang, "film", fid)}#s-{self.show_key_of(s)}" data-film="{esc(fid)}">'
+                + f'<span class="tp">{self.poster(fid, lang, lazy=True, sizes=POSTER_SIZES["tile row"], srcset=False, label=False)}</span>'
+                + f'<span class="vh"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>'
+                + f'<span class="st"><b class="num">{esc(s["time"])}</b> <bdi>{esc(self.cname(cid, lang))}</bdi></span>'
+                + f'<span class="m"><span class="pv"><span class="num">{money(pr)}</span></span></span></a>')
 
     def coming_tile(self, fid, f, lang, tag=None):
         """A tile for a film the chains announced (data["coming"], not in self.films: no film page yet) — it links
@@ -48,19 +69,26 @@ class TileKit:
                 + (f'<span class="tag">{esc(tag)}</span>' if tag else "") + '</span>'
                 + f'<span class="t"{ta}>{esc(t)}</span><span class="m">{esc(when)}</span></a>')
 
-    def film_attrs(self, fid):
-        """What cinema.js filters a film by: its id, genre keys and the family/kids flags."""
-        f = self.films[fid]; fam, kids = film_flags(f)
-        return f' data-fid="{esc(fid)}" data-genres="{esc(" ".join(genre_keys(f)))}" data-family="{int(fam)}" data-kids="{int(kids)}"'
+    def film_attrs(self, fid, fits=False):
+        """What cinema.js filters a film by: its id and genre keys, then either the family/kids flags the genre chips read
+        (the cinema page's «عائلي»/«للأطفال»), or, with `fits` («كل الأفلام»), the «مع منو» answers it passes
+        (kit/filters.who_fits: data-fits, read by the grid here and by the pick, W2-P2b) and, for a film «العايلة» passes,
+        its UAE rating (the pick's «مع منو» fit, MASTER-PLAN §3.1: G/PG 1, PG13 .5)."""
+        f = self.films[fid]; a = f' data-fid="{esc(fid)}" data-genres="{esc(" ".join(genre_keys(f)))}"'
+        if not fits:
+            fam, kids = film_flags(f)
+            return a + f' data-family="{int(fam)}" data-kids="{int(kids)}"'
+        who = who_fits(f)
+        return a + (f' data-fits="{who}"' if who else "") + (f' data-rating="{esc(f["rating"])}"' if "family" in who and f.get("rating") else "")
 
     def posters_row(self, lang, fids, shows, heading, city_label="", prayer=False, tags=None, yes=False):
         """«كل الأفلام» (UI redesign Task 3; the home and city pages): every film's tile in a grid (3 columns on
         a phone, 7 on a desktop) under two chips — «تصفية» (the filter sheet; its badge counts what is filtering)
-        and the sort. The controls that sat in rows over the list (genre, «مع منو رايح؟», «يخلص قبل», the sort,
-        the prayer switch) are in the sheet now, with the language; src/js/filters.js drives them as before.
+        and the sort. The controls that sat in rows over the list are in the sheet, the one question on top
+        (kit/filters.py); src/js/filters.js drives them. When nothing is left the line says so (§1.7), and under
+        «العيال» after 20:00 it offers tomorrow morning instead.
         The two sheets go after the footer with the header's (self._sheets, emptied by page()) — once per page,
         like the section's ids: /summer/ draws one grid per city (fix round 1, I2); the later grids share them."""
-        ar = lang == "ar"
         first = not self._grid
         tiles = "".join(self.film_tile(fid, lang, shows, i=i, live=True, tag=(tags or {}).get(fid)) for i, fid in enumerate(fids))
         hid = ' id="all-h"' if first else ""
@@ -74,7 +102,8 @@ class TileKit:
         self._grid = True
         sec = ' id="all" aria-labelledby="all-h"' if first else ""
         return (f'<section class="all wrap"{sec}>{head}<div class="grid" data-films>{tiles}</div>'
-                f'<p class="empty" data-empty hidden></p></section>')
+                f'<p class="empty" data-empty hidden>{esc(L(EMPTY, lang))} <button type="button" class="lnk" data-reset>{esc(L(RESET, lang))}</button></p>'
+                f'<p class="empty" data-kids-late hidden>{esc(L(KIDS_LATE, lang))} <button type="button" class="lnk" data-kids-am>{esc(L(KIDS_AM, lang))}</button></p></section>')
 
     @staticmethod
     def lo(cells):
@@ -88,12 +117,14 @@ class TileKit:
         return cells[:i] + " lo" + cells[i:]
 
     def rail(self, lang, key, title, tiles, sub="", more=None, attrs=""):
-        """A home row (UI redesign Task 3): its heading, an optional line beside it, «الكل» when there is somewhere
-        to go, and — on a desktop pointer — two arrow buttons that page the strip. The strip scrolls sideways
-        with a finger, a wheel or trackpad, or Tab through its tiles."""
+        """A home row: its heading, which is the link to «الكل» when there is somewhere to go (the whole heading line
+        is the target, at least 44 px tall, MASTER-PLAN §2.1 and §4.2 #15), an optional line under it (a door, a
+        note), and — on a desktop pointer — two arrow buttons that page the strip. The strip scrolls sideways with a
+        finger, a wheel or trackpad, or Tab through its tiles."""
         arrows = (f'<span class="arr js-only"><button type="button" class="icon" data-rail="-1" aria-label="{esc(L(HOME_T["prev"], lang))}">{icon("prev")}</button>'
                   f'<button type="button" class="icon" data-rail="1" aria-label="{esc(L(HOME_T["next"], lang))}">{icon("next")}</button></span>')
-        return (f'<section class="rail" aria-labelledby="r-{key}"{attrs}><div class="rail-h wrap"><h2 id="r-{key}">{esc(title)}</h2>'
-                + (f'<span class="sub">{sub}</span>' if sub else "")
-                + (f'<a class="all-l" href="{esc(more)}">{esc(L(HOME_T["all"], lang))}</a>' if more else "")
-                + f'{arrows}</div><div class="strip" data-strip data-lo>{self.lo(tiles)}</div></section>')
+        h = f'<h2 id="r-{key}">{esc(title)}</h2>'
+        head = (f'<a class="rail-a" href="{esc(more)}">{h}<span class="all-l">{esc(L(HOME_T["all"], lang))}</span></a>' if more else h)
+        return (f'<section class="rail" aria-labelledby="r-{key}"{attrs}><div class="rail-h wrap">{head}{arrows}'
+                + (f'<p class="sub">{sub}</p>' if sub else "")
+                + f'</div><div class="strip" data-strip data-lo>{self.lo(tiles)}</div></section>')

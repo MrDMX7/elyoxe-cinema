@@ -151,8 +151,11 @@ def test_wave2_slots_are_declared_and_each_lands_in_its_place(tmp_path):
     build.build(DATA, DISC, out, noindex=False, modules=build.discover(only=("core",)) + [mod])
     home = read(out, "index.html")
     assert home.index('<script>document.documentElement.classList.add("js")</script><script data-slot="head.inline">') < home.index("</head>")
+    # W2-P4: the near row (id="now") is deleted; the board in home.after_bill carries the id, and with a module filling
+    # the slot, home draws no anchor of its own (one target)
     assert home.index("</section>", home.index('<section class="bill"')) < home.index('data-slot="home.after_bill"') \
-        < home.index('data-slot="home.after_board"') < home.index('id="now"') < home.index('id="all"')
+        < home.index('data-slot="home.after_board"') < home.index('class="rail"') < home.index('id="all"')
+    assert 'id="now"' not in home
     film = read(out, "film", "heart-of-the-beast", "index.html")
     assert film.index('<section class="fhero') < film.index('data-slot="film.first"') < film.index('<section class="fsched"')
     tk = film[film.index('<div class="tk-act">'):film.index("</aside>", film.index('<div class="tk-act">'))]

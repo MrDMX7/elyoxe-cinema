@@ -1,7 +1,9 @@
-"""The home page (UI redesign Task 3): «يبدأ قريب منك» (the billboard is tests/test_screen.py's since W2-P1), the rows in the spec's
-order (each from the site's own data, none under 4 films, «الكل» to a page or to «كل الأفلام» with a preset), the
-tile, «كل الأفلام» with the filter and sort sheets holding every control the list used to have above it, what left
-the home page (cities grid, cards list, chains' freshness), and the 150 KB budget in both languages."""
+"""The home page (UI redesign Task 3; W2-P4, MASTER-PLAN §2.1): the billboard and its per-city island, the rows in the
+spec's order (each from the site's own data, none under 4 films, no film in the first 3 slots of two rows, the heading
+the link to «الكل»: a page or «كل الأفلام» with a preset), the tile, «كل الأفلام» with the filter and sort sheets
+holding every control the list used to have above it (the one question on top), what left the home page (cities grid,
+cards list, chains' freshness, the near row, «آخر فرصة»), and the 150 KB budget in both languages. W2-P4's own checks
+are in tests/test_w2_p4.py."""
 import json
 import os
 import re
@@ -39,6 +41,7 @@ def full_data():
     for f in fids[:4]: d["films"][f]["lang"] = "Arabic"
     d["films"]["resident-evil"]["verdict"]["verdict"] = "yes"      # 4 «يستاهل» and 4 family films showing
     d["films"]["heart-of-the-beast"]["family"] = True
+    d["films"]["heart-of-the-beast"]["rating"] = "PG"               # «العايلة»: up to PG13, no horror or war (kit/filters)
     for x in d["shows"]:                                            # one film with no price anywhere: «السعر في الشباك»
         if x["film"] == "crawlers": x["prices"] = []
     d["last_chance"] = {"dubai": fids[2:6]}
@@ -97,8 +100,10 @@ def test_home_of_about_100_films_within_150kb(tmp_path):
     for parts in ((), ("en",)):
         h = read(o, *parts)
         assert h.count('class="film tile') == n
-        # near + every row but «آخر فرصة», which is off with steps/last_chance.py (W0-P2, plan §4.1 #13, merged at R0)
-        assert len(re.findall(r'<section class="rail"', h)) == 7
+        # every row the data fills, «نازل الخميس» aside (a Friday build: the Thursday band's days) and «آخر فرصة» deleted
+        # (W2-P4); no near row
+        keys = re.findall(r'<section class="rail" aria-labelledby="r-([a-z]+)"', h)
+        assert keys == ["top", "yes", "cheap", "family", "arabic"], keys
         size = os.path.getsize(os.path.join(o, *parts, "index.html"))
         assert size <= BUDGET, (parts, size)
 
@@ -146,68 +151,89 @@ def test_no_duplicate_ids_on_any_page_even_with_summer_open(tmp_path):
     assert not bad, bad[:10]
 
 
-def test_near_row_is_drawn_by_the_script_and_hidden_until_then(out):
-    h = read(out)
-    # id="now": the manifest's «الحين» shortcut lands here (W0-P1, plan §4.1 #5, merged at R0)
-    row = re.search(r'<section class="rail" aria-labelledby="r-near" id="now" data-near-row data-hold hidden>.*?</section>', h, re.S).group(0)
-    assert "يبدأ قريب منك" in row and "data-near-sub" in row and "data-near" in row and '<div class="strip" data-strip data-lo></div>' in row
+def test_the_near_row_is_deleted(out):
+    """«يبدأ قريب منك» and its script are deleted (W2-P4, MASTER-PLAN §4.2 #20): the board (W2-P2) is its place. Until the
+    board fills home.after_bill, an empty anchor keeps /#now landing under the billboard."""
+    for parts in ((), ("en",)):
+        h = read(out, *parts)
+        assert "r-near" not in h and "data-near-row" not in h and "data-near-sub" not in h
+        assert h.count('id="now"') == 1 and '<div id="now"></div>' in h
     js = open(os.path.join(ROOT, "src", "js", "home.js"), encoding="utf-8").read()
-    near = js[js.index("function renderNear("):js.index("function renderFrom(")]
-    assert "3 * 3600e3" in near and "row.hidden = !list.length" in near and "inMinutes(" in near and "kmTo(" in near
+    assert "function renderNear(" not in js and "function renderNow(" not in js and "function nowPick(" not in js
+    assert not os.path.exists(os.path.join(ROOT, "src", "css", "ui-near.css"))
 
 
-def test_rows_in_order_from_the_data(full):
-    h = read(full)
-    m = main_of(h)
+def test_rows_in_order_from_the_data(tmp_path):
+    """The rows in the spec's order over a busy week (the fixture scaled to ~100 films): each at least 4 tiles, no film in
+    the first 3 slots of two rows, the whole heading the link to «الكل»."""
+    o, _ = scaled(tmp_path)
+    m = main_of(read(o))
     keys = re.findall(r'<section class="rail" aria-labelledby="r-([a-z]+)"', m)
-    # no «آخر فرصة» row and no «آخر أسبوع» tag while steps/last_chance.py is off (W0-P2, plan §4.1 #13, merged at R0),
-    # whatever data["last_chance"] holds; test_last_chance_row_only_with_the_step_on draws it with the switch on
-    assert keys == ["near", "top", "yes", "cheap", "family", "coming", "arabic"], keys
-    assert "آخر أسبوع" not in m
+    assert keys == ["top", "yes", "cheap", "family", "arabic"], keys
     rows = {k: re.search(r'<section class="rail" aria-labelledby="r-' + k + r'".*?</section>', m, re.S).group(0) for k in keys}
-    for k in keys[1:]:
-        assert rows[k].count('class="tile') >= 4, k
-    # «الكل»: a page, or «كل الأفلام» with its sort or filter chosen
-    href = lambda k: re.search(r'<a class="all-l" href="([^"]+)"', rows[k]).group(1)
+    firsts = {}
+    for k in keys:
+        fids = re.findall(r'<a class="tile[^"]*" href="/film/([^/]+)/', rows[k])
+        assert len(fids) >= 4, k
+        for f in fids[:3]:
+            assert f not in firsts, (f, k, firsts.get(f))
+            firsts[f] = k
+    # «الكل»: the heading line is the link (44 px, ui-rows.css): a page, or «كل الأفلام» with its sort or filter chosen
+    href = lambda k: re.search(r'<a class="rail-a" href="([^"]+)"><h2 id="r-' + k + r'">', rows[k]).group(1)
     assert href("top") == "/#all" and href("yes") == "/?f=yes#all" and href("cheap") == "/?sort=price#all"
-    assert href("family") == "/?f=family#all" and href("coming") == "/coming/" and href("arabic") == "/arabic/"
-    # tags: «الخميس» on this Thursday's releases only
-    assert rows["coming"].count('<span class="tag">الخميس</span>') == 2
-    # rows re-sort for the visitor: «الأكثر عرضاً» by their city, «أرخص لك» after their card
-    assert 'data-rail-sort="count"' in rows["top"] and 'data-rail-sort="pay"' in rows["cheap"]
-    # the verdict row holds only «يستاهل» films
+    assert href("family") == "/?who=family#all" and href("arabic") == "/arabic/"          # hubs.py draws /arabic/
+    # rows re-sort for the visitor: «الأكثر عرضاً» by their city; «أرخص عرض الليلة» is redrawn from their city's shows
+    assert 'data-rail-sort="count"' in rows["top"] and "data-rail-cheap" in rows["cheap"]
+    # the verdict row holds only «يستاهل» films, and no tag repeats a row's name
     assert set(re.findall(r'class="tile v-(\w+)"', rows["yes"])) == {"yes"}
+    assert '<span class="tag">' not in "".join(rows.values())
     # a row's tile: the id and runtime the prices read, not the filter attributes (the sheet filters the grid)
     assert "data-genres" not in rows["top"] and 'data-fid="' in rows["top"]
     assert 'data-rail="1"' in rows["top"] and 'aria-label="التالي"' in rows["top"]
 
 
-def test_last_chance_row_only_with_the_step_on(tmp_path, monkeypatch):
-    """The row and the tags the redesign draws from data["last_chance"] come back only when the step is switched on
-    again on a real signal (W2-P4 deletes this code or rebuilds it on that signal)."""
+def test_coming_row_only_from_sunday_to_wednesday_evening(full, tmp_path, monkeypatch):
+    """«نازل الخميس» is a row from Sunday to Wednesday 18:00; from then to Saturday the Thursday band (W2-P7) says it, so
+    the row steps aside (MASTER-PLAN §2.1). No «الخميس» tag on its tiles: the row's name says it."""
+    assert "r-coming" not in main_of(read(full))                      # the fixture is a Friday
+    from site_kit import Kit
+    monkeypatch.setattr(Kit, "week_phase", staticmethod(lambda now: "rest"))
+    m = main_of(read(build_full(tmp_path)))
+    row = re.search(r'<section class="rail" aria-labelledby="r-coming".*?</section>', m, re.S).group(0)
+    assert row.count('class="tile soon"') == 5 and '<span class="tag">' not in row
+    assert re.search(r'<a class="rail-a" href="/coming/"><h2 id="r-coming">نازل الخميس</h2>', row)
+
+
+def test_no_last_chance_row_or_tag_even_with_the_step_on(tmp_path, monkeypatch):
+    """«آخر فرصة» and the «آخر أسبوع» tags are deleted (W2-P4, MASTER-PLAN §4.2 #23): with a 2-day read window the data
+    flags every film older than 14 days. Switching steps/last_chance.py back on brings neither back."""
     from steps import last_chance
     monkeypatch.setattr(last_chance, "ENABLED", True)
     m = main_of(read(build_full(tmp_path)))
-    keys = re.findall(r'<section class="rail" aria-labelledby="r-([a-z]+)"', m)
-    assert keys == ["near", "top", "yes", "cheap", "family", "coming", "last", "arabic"], keys
-    row = re.search(r'<section class="rail" aria-labelledby="r-last".*?</section>', m, re.S).group(0)
-    assert 'class="all-l"' not in row and row.count('<span class="tag">آخر أسبوع</span>') == 4
+    assert "r-last" not in m and "آخر أسبوع" not in m and "آخر فرصة" not in m
 
 
 def test_rows_under_four_are_skipped(out):
     m = main_of(read(out))
     assert 'aria-labelledby="r-arabic"' not in m          # one Arabic film in the fixture
     assert 'aria-labelledby="r-coming"' not in m and 'aria-labelledby="r-last"' not in m
+    assert 'aria-labelledby="r-yes"' not in m               # three «يستاهل» films showing: under 4
 
 
 def test_tile_markup(out):
     m = main_of(read(out))
     tile = re.search(r'<a class="film tile v-yes" href="/film/coyote-vs-acme/"[^>]*>.*?</a>', m, re.S).group(0)
-    for attr in ('data-fid="coyote-vs-acme"', "data-genres=", "data-family=", "data-kids=", 'data-v="yes"', "data-runtime=", 'data-lang="English"'):
+    # a grid tile: what the grid filters by, the «مع منو» answers it passes, and for a film «العايلة» passes its rating
+    for attr in ('data-fid="coyote-vs-acme"', "data-genres=", 'data-fits="family kids"', 'data-rating="PG"', 'data-v="yes"',
+                 "data-runtime=", 'data-lang="English"'):
         assert attr in tile, attr
-    # the desktop hover panel is drawn by home.js (hoverPanel), not shipped per tile (fix round 1, I3)
+    assert "data-family=" not in tile and "data-kids=" not in tile
+    # the poster, the title (two lines held, ui-tile.css), the verdict word, then the one line that differs («من 42»;
+    # home.js redraws it for the visitor's city, card and clock). The desktop hover panel is home.js's (fix round 1, I3)
     assert re.search(r'<span class="tp"><span class="pst img"[^>]*><img [^>]+></span></span><span class="t">كايوتي ضد أكمي</span>'
-                     r'<span class="m" data-cheap>من <span class="pv"><span class="num">[\d.]+</span></span> درهم</span></a>$', tile)
+                     r'<span class="vw">يستاهل</span><span class="m" data-cheap>من <span class="pv"><span class="num">[\d.]+</span></span></span></a>$', tile)
+    # an unknown verdict says the short «الحكم بعده» (MASTER-PLAN §1.7)
+    assert re.search(r'<a class="film tile v-unknown" href="/film/shish-dou/".*?<span class="vw">الحكم بعده</span>', m, re.S)
     assert 'class="hv"' not in m
     js = open(os.path.join(ROOT, "src", "js", "home.js"), encoding="utf-8").read()
     assert "function hoverPanel(" in js and "(hover: hover) and (min-width: 1024px)" in js
@@ -215,7 +241,7 @@ def test_tile_markup(out):
 
 def test_tile_without_a_price_says_box_office(full):
     tile = re.search(r'<a class="film tile[^"]*" href="/film/crawlers/"[^>]*>.*?</a>', main_of(read(full)), re.S).group(0)
-    assert tile.endswith('<span class="m" data-cheap><span class="na">السعر في الشباك</span></span></a>')
+    assert tile.endswith('<span class="vw">تجنّبه</span><span class="m" data-cheap><span class="na">السعر في الشباك</span></span></a>')
 
 
 def test_all_films_grid_and_its_sheets(full):
@@ -225,19 +251,24 @@ def test_all_films_grid_and_its_sheets(full):
         grid = re.search(r'<section class="all wrap" id="all" aria-labelledby="all-h">.*?</section>', m, re.S).group(0)
         assert grid.count('class="film tile') == len(re.findall(r'"@type": "ListItem", "position": \d+, "url": "[^"]+/film/', h))
         assert 'data-sheet-open="sheet-filter"' in grid and 'data-sheet-open="sheet-sort"' in grid and "data-fcount hidden" in grid
-        assert '<div class="grid" data-films>' in grid and "data-empty" in grid
+        assert '<div class="grid" data-films>' in grid and "data-empty" in grid and "data-kids-late" in grid
         after = h[h.index("</main>"):]
         fs = re.search(r'<div class="sheet" id="sheet-filter" role="dialog" aria-modal="true" aria-labelledby="sheet-filter-t" hidden>.*?data-fn-live aria-live="polite"></p></div></div>', after, re.S).group(0)
-        # every control the list had above it, in the sheet: genre (all, family, kids, genres), who, ends-before,
-        # sort, the prayer switch — plus the language when the films have more than one — «مسح» and «اعرض N»
-        for need in ('data-filter="all"', 'data-filter="family"', 'data-filter="kids"', 'data-filter="yes"', 'data-filter="genre:',
-                     'data-who="solo"', 'data-who="friends"', 'data-who="family"', 'data-who="kids"',
+        # the one question on top (W2-P4, MASTER-PLAN §2.0), then every control the list had above it: genre (all,
+        # «يستاهل», genres), ends-before, sort, the prayer switch, plus the language when the films have more than one,
+        # «مسح» and «اعرض N»
+        assert fs.index('data-who=""') < fs.index('data-when="now"') < fs.index('data-where="near"') < fs.index('data-filter="all"')
+        for need in ('data-filter="all"', 'data-filter="yes"', 'data-filter="genre:',
+                     'data-who=""', 'data-who="family"', 'data-who="kids"', 'data-when="now"', 'data-when="tonight"', 'data-when="late"',
+                     'data-when="tomorrow"', 'data-where="near"', 'data-where="mine"', 'data-where=""', "data-kids-late", "data-kids-am",
                      'data-before=""', 'data-before="21:00"', 'data-before="24:00"',
                      'data-sort="price"', 'data-sort="time"', 'data-sort="verdict"',
                      'role="switch"', "data-prayer", "data-hide-clash", "data-prayer-times",
                      'data-flang=""', 'data-flang="Arabic"', "data-reset", "data-show-all", "data-fn"):
             assert need in fs, (lang, need)
-        assert fs.count('data-filter="genre:family"') == 0   # «عائلي» is its own chip, never twice
+        # «بروحي» and «ربعي» set nothing and are deleted; «عائلي» and «للأطفال» are «مع منو» now, never a genre chip too
+        assert 'data-who="solo"' not in fs and 'data-who="friends"' not in fs and "بروحي" not in fs and "ربعي" not in fs
+        assert 'data-filter="family"' not in fs and 'data-filter="kids"' not in fs and 'data-filter="genre:family"' not in fs
         ss = re.search(r'<div class="sheet" id="sheet-sort".*?</div></div></div>', after, re.S).group(0)
         assert "data-sort-pick" in ss and ss.count("data-sort=") == 3
         assert len(re.findall(r'\sid="([^"]+)"', h)) == len(set(re.findall(r'\sid="([^"]+)"', h)))
@@ -259,5 +290,6 @@ def test_search_tab_falls_back_to_all_films(out):
 
 def test_filters_js_reads_the_sheet(out):
     js = open(os.path.join(ROOT, "src", "js", "filters.js"), encoding="utf-8").read()
-    for need in ("[data-before]", "[data-flang]", "data-sort-pick", "[data-fcount]", "[data-fn-live]", 'param("sort")', 'param("f")', 'param("fl")'):
+    for need in ("[data-before]", "[data-flang]", "data-sort-pick", "[data-fcount]", "[data-fn-live]", 'param("sort")', 'param("f")', 'param("fl")',
+                 'param("who")', "[data-when]", "[data-where]"):
         assert need in js, need

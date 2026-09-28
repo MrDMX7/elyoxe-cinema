@@ -3,17 +3,48 @@ Owner in Wave 2: W2-P4 (rows and grid); W3-P1 and W4-P2 add their slot lines onl
 
 Methods of pages.core.CorePages: `self` is a Pages, which reads everything else (self.page, self.poster,
 self.shows ...) through to the site."""
+import datetime as _dt
+import re as _re
+
 from site_kit import *  # noqa: F401,F403  (the names these pages were written against)
+
+# the rows' words that are this package's (MASTER-PLAN §2.1; the dialect gate reviews them, §1.7)
+ROW_T = {"cheap": ("أرخص عرض الليلة", "Cheapest show tonight"), "arabic": ("عربي وخليجي", "Arabic and Gulf"),
+         "nums": ("بالأرقام", "By the numbers"),
+         # the row's card door (§2.0, §2.1): with a card chosen home.js writes «بعد خصم فزعة» (CT after_card)
+         "door": ("عندك بطاقة؟ شوف سعرك", "Got a card? See your price"),
+         # §1.7: a failed city update keeps the server's prices and says so once
+         "stale": ("ما قدرنا نحدّث الأوقات، هذي آخر نسخة من {t}", "Couldn’t refresh the times. This is the {t} copy.")}
+N = 10          # tiles in a row
+FIRST = 3       # a film already in an earlier row's first 3 slots starts at slot 4 or later (§2.1 de-duplication)
+# insights' three links in the home.after_tonight slot (pages/insights.py home_links, untouched): made one «بالأرقام» row
+NUMS = _re.compile(r'<section class="wrap insx"><p class="links more">(.*?)</p></section>', _re.S)
+NUMS_A = _re.compile(r'<a href="([^"]+)">([^<]+)</a>')
+
+
+def dedupe(rows, first=FIRST):
+    """[[fid…]…] in page order -> each row reordered so that no film sits in the first `first` slots of two rows: a
+    row's first slots take its films not already up front in an earlier row, in its own order, and the rest follow in
+    their order. A row with fewer than 4 films, or too few new ones to open with, comes back as None (not drawn).
+    src/js/home.js lead() is its twin for the rows the script re-sorts for the visitor's city."""
+    seen, out = set(), []
+    for r in rows:
+        fresh = [f for f in r if f not in seen]
+        if len(r) < 4 or len(fresh) < first:
+            out.append(None); continue
+        head = fresh[:first]
+        out.append(head + [f for f in r if f not in head])
+        seen.update(head)
+    return out
 
 
 class HomePages:
     # ================================================================ pages
     def home(self):
-        """The home page (UI redesign Task 3, docs/superpowers/specs/2026-09-27-ui-redesign-design.md «Home»): the
-        billboard (the default city's most-shown film over a frame of its trailer, then its top 5 in turn), «يبدأ
-        قريب منك» (drawn by cinema.js from the city's slice), the rows, the feature slot, then «كل الأفلام» with
-        the filter sheet. The cities grid, the cards list and the chains' freshness live in the header's sheets,
-        /cinemas/, /cards/ and /sources/ now."""
+        """The home page (UI redesign Task 3; MASTER-PLAN §2.1): the billboard, the board (W2-P2's home.after_bill slot),
+        the Thursday band (W2-P7's home.after_board), the rows, «بالأرقام», then «كل الأفلام» with the filter sheet.
+        The cities grid, the cards list and the chains' freshness live in the header's sheets, /cinemas/, /cards/ and
+        /sources/ now."""
         films = sorted(self.showing, key=lambda fid: (-self.today_count.get(fid, 0), fid))
         today = [s for s in self.shows if s["date"] == self.today]
         tops = {}
@@ -27,19 +58,16 @@ class HomePages:
             self.site._first_poster = {}   # no tile claims the page's image priority: the billboard's frame is the LCP
             body = self.billboard(lang, tops, today) if films else ""
             body += (f'<h1 class="vh">{"كل سينما في الإمارات، والسعر بعد خصم بطاقتك" if lang == "ar" else "Every cinema in the UAE, priced after your card discount"}</h1>')
-            # Wave 2's places on home (W1-P1): the board under the billboard, then the Thursday band (MASTER-PLAN §1.2 #2)
-            body += self.slot("home.after_bill", lang) + self.slot("home.after_board", lang)
-            body += self.rail(lang, "near", L(HOME_T["near"], lang), "",
-                              sub=f'<span data-near-sub></span><button type="button" class="lnk near-ask" data-near hidden>{esc(L(CHROME_T["near"], lang))}</button>',
-                              # id="now": the manifest's «الحين» shortcut opens /#now here (W0-P1, plan §4.1 #5; the row's slot
-                              # is reserved while hidden). At cutover the board carries the id (W2-P2)
-                              attrs=' id="now" data-near-row data-hold hidden')
+            # Wave 2's places on home (W1-P1): the board under the billboard, then the Thursday band (MASTER-PLAN §1.2 #2).
+            # The near row «يبدأ قريب منك» that sat here is deleted (W2-P4): the board takes its place and carries id="now".
+            # Until the board fills its slot, an empty anchor keeps the manifest's «الحين» shortcut (/#now) landing here
+            body += self.slot("home.after_bill", lang) or '<div id="now"></div>'
+            body += self.slot("home.after_board", lang)
+            # a failed city update keeps the server's prices and says so, once (§1.7; home.js shows it, never .off tiles)
+            body += f'<p class="stale-l wrap" data-stale hidden>{esc(L(ROW_T["stale"], lang).format(t=self.uae_now().strftime("%H:%M")))}</p>'
             body += self.home_rows(lang, films)
-            body += self.slot("home.after_tonight", lang)
-            # a film in its last days is tagged in the grid too (the «آخر فرصة» row needs 4 films to be drawn)
-            # (off with steps/last_chance.py until the signal is real: W0-P2, plan §4.1 #13 and §4.2 #23)
-            last = {f: L(HOME_T["tag_last"], lang) for fs in self.last_chance().values() for f in fs}
-            body += self.posters_row(lang, films, self.shows, L(HOME_T["all_films"], lang), tags=last, prayer=True, yes=True)
+            body += self.home_nums(lang, self.slot("home.after_tonight", lang))
+            body += self.posters_row(lang, films, self.shows, L(HOME_T["all_films"], lang), prayer=True, yes=True)
             hn = self.first_city_show(self.shows, ["dubai"])
             body += self.ticket(hn, lang, hidden=True) if hn else self.ticket_shell()
             title = ("سينما الإمارات اليوم — الأفلام والأسعار وخصم فزعة وإسعاد" if lang == "ar"
@@ -54,55 +82,96 @@ class HomePages:
             self.page(lang, (), title, desc, body, graph, "home")
 
     # -------------------------------------------------- home: the rows
-    def last_chance(self):
-        """data["last_chance"] while steps/last_chance.py is switched on, else nothing (W0-P2, plan §4.1 #13; the
-        row and the «آخر أسبوع» tags stay off until the signal is real, §4.2 #23): a latest.json written before the
-        switch, or by hand, never brings them back."""
-        from steps.last_chance import ENABLED
-        return (self.d.get("last_chance") or {}) if ENABLED else {}
+    def uae_now(self):
+        """The build's own time on the UAE wall clock, naive."""
+        n = self.now
+        return n.astimezone(_dt.timezone(_dt.timedelta(hours=4))).replace(tzinfo=None) if n.tzinfo else n
+
+    def night_shows(self, city="dubai"):
+        """The shows still to start tonight in `city` at the build's time: from now to 03:00 (UAE cinemas run 00:30 and
+        01:30 shows, dated the next day), in start order."""
+        now = self.uae_now()
+        end = _dt.datetime.combine(now.date() + _dt.timedelta(days=0 if now.hour < 3 else 1), _dt.time(3))
+        out = []
+        for s in self.shows:
+            if self.cinemas[s["cinema"]].get("city") != city: continue
+            try: at = _dt.datetime.fromisoformat(f'{s["date"]}T{s["time"]}')
+            except ValueError: continue
+            if now <= at < end: out.append((at, s))
+        return [s for _, s in sorted(out, key=lambda x: x[0])]
+
+    def cheap_shows(self, city="dubai"):
+        """«أرخص عرض الليلة» (MASTER-PLAN §2.1, §4.2 #22): each film's cheapest show still to start tonight (the soonest
+        of equal prices), cheapest first. It replaces «أرخص لك الليلة», whose 42, 42, 42 told no story: a show card
+        says which time and where. The build draws Dubai's for the first paint; home.js redraws it for the visitor's
+        city and card (renderCheap)."""
+        best = {}
+        for s in self.night_shows(city):
+            pr = [p["aed"] for p in s.get("prices") or [] if p.get("aed") and p["aed"] > 0]
+            if not pr: continue
+            k = (min(pr), s["date"], s["time"])
+            if s["film"] not in best or k < best[s["film"]][0]: best[s["film"]] = (k, s)
+        return [s for _, s in sorted(best.values(), key=lambda x: (x[0], x[1]["film"]))]
+
+    def family_fit(self, fid):
+        """How well a film suits «العايلة» (the same scale as the pick's «مع منو» fit, MASTER-PLAN §3.1): a children's
+        film, or animation or the family genre, 2; rated G or PG, 1; else (PG13) 0. Orders the «للعائلة» row."""
+        f = self.films[fid]
+        if film_flags(f)[1] or set(genre_keys(f)) & {"animation", "family"}: return 2
+        return 1 if str(f.get("rating") or "").upper().replace(" ", "") in ("G", "PG") else 0
 
     def home_rows(self, lang, films):
-        """The rows, in the spec's order, each from the data the site already keeps: tonight's show counts, the
-        verdicts, the cheapest ticket, the family flag, «نازل الخميس» (data["coming"], pages/coming.py's fold),
-        «آخر فرصة» (data["last_chance"], steps/last_chance.py) and Arabic (pages/hubs.py's rule: the film's own
-        `lang`). A row with fewer than 4 films is not drawn. «الكل» goes to the feature's page, or to «كل الأفلام»
-        with the matching sort or filter chosen (?sort= / ?f= / ?fl=, read by src/js/filters.js)."""
-        N = 10
+        """The rows, in the spec's order (MASTER-PLAN §2.1), each from the data the site already keeps: «الأكثر عرضاً
+        الليلة» (Dubai's count first: the script re-sorts it by the visitor's city), «يستاهل», «أرخص عرض الليلة» (show
+        cards), «للعائلة» (the «مع منو: العايلة» rule, kit/filters.who_fits, the best suited first), «نازل الخميس»
+        (Sunday to Wednesday 18:00: from then to Saturday the Thursday band, W2-P7, says it), «عربي وخليجي». A film
+        already in the first 3 slots of an earlier row starts at slot 4 or later, and a row with fewer than 4 films (or
+        too few new ones to open with) is not drawn. No tag repeats its row's name. «آخر فرصة» and the «آخر أسبوع» tags
+        are deleted (§4.2 #23: the data behind them flags every film older than 14 days). The heading is the link to
+        «الكل»: a page, or «كل الأفلام» with the matching sort or filter chosen (?sort= / ?f= / ?who= / ?fl=, read by
+        src/js/filters.js)."""
         home = P(lang)
         keys = {it.key for it in self.nav_items}
-        tile = lambda fid, tag=None: self.film_tile(fid, lang, self.shows, row=True, live=True, tag=tag)
-        out = []
-
-        def row(key, title, fids, more=None, sub="", tag=None, attrs=""):
-            if len(fids) >= 4:
-                out.append(self.rail(lang, key, L(title, lang), "".join(tile(f, tag) for f in fids[:N]), sub=sub, more=more, attrs=attrs))
-
-        # «الأكثر عرضاً الليلة»: by tonight's shows (cinema.js re-sorts it by the visitor's city)
-        row("top", HOME_T["top"], films, home + "#all", attrs=' data-rail-sort="count"')
-        row("yes", HOME_T["yes"], [f for f in films if (self.films[f].get("verdict") or {}).get("verdict") == "yes"],
-            home + "?f=yes#all", sub=esc(L(HOME_T["yes_sub"], lang)))
-        # «أرخص لك الليلة»: the cheapest ticket before any card here; after the visitor's card and in their city there
-        priced = [(self.min_price([s for s in self._by_film.get(f, []) if s["date"] == self.today]), f) for f in films]
-        cheap = [f for b, f in sorted(((b, f) for b, f in priced if b), key=lambda x: (x[0][0], x[1]))]
-        row("cheap", HOME_T["cheap"], cheap, home + "?sort=price#all", sub='<span data-card-sub></span>', attrs=' data-rail-sort="pay"')
-        row("family", HOME_T["family"], [f for f in films if film_flags(self.films[f])[0]], home + "?f=family#all")
+        from kit.filters import who_fits
+        dubai = {}
+        for s in self.shows:
+            if s["date"] == self.today and self.cinemas[s["cinema"]].get("city") == "dubai": dubai[s["film"]] = dubai.get(s["film"], 0) + 1
+        cheap = self.cheap_shows("dubai")
+        by = {s["film"]: s for s in cheap}
+        door = (f'<button type="button" class="lnk door" data-sheet-open="sheet-card" data-door="{esc(L(ROW_T["door"], lang))}">'
+                f'{esc(L(ROW_T["door"], lang))}<span aria-hidden="true"> ▾</span></button>')
+        family = sorted((f for f in films if "family" in who_fits(self.films[f]).split()), key=lambda f: -self.family_fit(f))
+        spec = [("top", HOME_T["top"], sorted(films, key=lambda f: (-dubai.get(f, 0), -self.today_count.get(f, 0), f)), home + "#all", "", ' data-rail-sort="count"'),
+                ("yes", HOME_T["yes"], [f for f in films if (self.films[f].get("verdict") or {}).get("verdict") == "yes"],
+                 home + "?f=yes#all", esc(L(HOME_T["yes_sub"], lang)), ""),
+                ("cheap", ROW_T["cheap"], [s["film"] for s in cheap], home + "?sort=price#all", door, " data-rail-cheap"),
+                ("family", HOME_T["family"], family, home + "?who=family#all", "", ""),
+                ("arabic", ROW_T["arabic"], [f for f in films if str(self.films[f].get("lang") or "").lower() in ("arabic", "ar")],
+                 P(lang, "arabic") if "arabic" in keys else home + "?fl=Arabic#all", "", "")]
+        out = {}
+        for (key, title, _, more, sub, attrs), o in zip(spec, dedupe([x[2] for x in spec])):
+            if not o: continue
+            if key == "cheap": tiles = "".join(self.show_card(by[f], lang) for f in o[:N])
+            else: tiles = "".join(self.film_tile(f, lang, self.shows, row=True, live=True) for f in o[:N])
+            out[key] = self.rail(lang, key, L(title, lang), tiles, sub=sub, more=more, attrs=attrs)
         coming = self.d.get("coming") or {}
-        if coming and "thursday" in keys:
-            from pages.coming import fold_near_duplicates, _thursday_of
-            # «الخميس» marks the week that opens on the coming Thursday (today when it is one), filed as /coming/
-            # files it: _thursday_of puts Mon–Wed under the Thursday after and Fri–Sun under the one before (W0-P2,
-            # plan §4.1 #11), so on a Friday it names the week already open, not the one this row announces
-            from datetime import date, timedelta
-            t0 = date.fromisoformat(self.today)
-            thu = (t0 + timedelta(days=(3 - t0.weekday()) % 7)).isoformat()
+        if coming and "thursday" in keys and self.week_phase(self.now) == "rest":
+            from pages.coming import fold_near_duplicates
             items = sorted(fold_near_duplicates(coming), key=lambda kv: (not kv[1].get("release_date"), kv[1].get("release_date") or "", kv[1]["title"]))
             items = [(k, f) for k, f in items if not f.get("release_date") or f["release_date"] >= self.today]
             if len(items) >= 4:
-                tiles = "".join(self.coming_tile(k, f, lang, L(HOME_T["tag_thu"], lang) if f.get("release_date") and _thursday_of(f["release_date"]) == thu else None)
-                                for k, f in items[:N])
-                out.append(self.rail(lang, "coming", L(HOME_T["coming"], lang), tiles, more=P(lang, "coming")))
-        last = list(dict.fromkeys(f for fs in self.last_chance().values() for f in fs if f in self.films and f in self.showing))
-        row("last", HOME_T["last"], last, tag=L(HOME_T["tag_last"], lang))
-        arabic = [f for f in films if str(self.films[f].get("lang") or "").lower() in ("arabic", "ar")]
-        row("arabic", HOME_T["arabic"], arabic, P(lang, "arabic") if "arabic" in keys else home + "?fl=Arabic#all")
-        return "".join(out)
+                # no «الخميس» tag: the row is «نازل الخميس», and each tile says its date
+                out["coming"] = self.rail(lang, "coming", L(HOME_T["coming"], lang), "".join(self.coming_tile(k, f, lang) for k, f in items[:N]),
+                                          more=P(lang, "coming"))
+        return "".join(out[k] for k in ("top", "yes", "cheap", "family", "coming", "arabic") if k in out)
+
+    def home_nums(self, lang, slot):
+        """«بالأرقام» (MASTER-PLAN §2.1, §4.2 #42): the home.after_tonight slot's run-on paragraph of insights' three links
+        (/prices/, /boxoffice/, /q/, 17 px targets) becomes one row of three items, each at least 44 px tall. The rest of
+        the slot (the scores island, a seasonal banner) passes through as it is. Without the insights module: nothing."""
+        m = NUMS.search(slot)
+        if not m: return slot
+        items = "".join(f'<li><a href="{h}">{t}</a></li>' for h, t in NUMS_A.findall(m.group(1)))
+        row = (f'<section class="rail nums" aria-labelledby="r-nums"><div class="rail-h wrap"><h2 id="r-nums">{esc(L(ROW_T["nums"], lang))}</h2></div>'
+               f'<ul class="nums-l wrap">{items}</ul></section>')
+        return slot[:m.start()] + row + slot[m.end():]

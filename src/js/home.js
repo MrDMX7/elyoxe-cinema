@@ -1,9 +1,15 @@
 /* home + city: the city's shows from /data/<city>-<date>.json (indexed arrays, see build.slices):
    C[[cid,chain,ar,en]] F[[fid,ar,en]] H[[code,chain|key,ar,en]] P[prices] B[url prefixes]
    S[[cinema i, film i, time, hall i, price i|-1, prefix i|-1, url tail(, table date)]] E[end offsets] L/Li[lang, subs] */
-function sliceOf(c, d) { return C.days && C.days.indexOf(d) < 0 ? Promise.resolve(null) : getJSON("/data/" + c + "-" + d + ".json"); }
-function slice(d) { return sliceOf(city, d); }
-/* one day's slice as {cinemas, films, shows}; parsed once per URL */
+/* a day's slice: the parsed JSON; false when the city has no shows that day (a day the build wrote for no city, or a
+   404: the build writes a city's day only when it has shows); null when the fetch failed (the network, a 5xx, the
+   offline worker). Kept in core.js's getJSON cache (JC), so the other readers share the one request */
+function sliceOf(c, d) {
+  var u = "/data/" + c + "-" + d + ".json";
+  if (C.days && C.days.indexOf(d) < 0) return Promise.resolve(false);
+  return JC[u] || (JC[u] = fetch(u).then(function (r) { return r.ok ? r.json() : r.status === 404 ? false : null; }).catch(function () { return null; }));
+}
+/* one day's slice as {cinemas, films, shows}; parsed once per URL. A failed fetch is not kept (the next try asks again) */
 var PS = {};
 /* «HH:MM» + e minutes, as the UAE wall clock reads it: plain minute arithmetic (no DST there), the same as
    hhmm(uae(d + "T" + t) + e min) without two Dates per show (a city's day is thousands of shows, and the desktop
@@ -12,27 +18,41 @@ function addMin(t, e) {
   var m = Math.floor(((+t.slice(0, 2) * 60 + +t.slice(3, 5) + e) % 1440 + 1440) % 1440);
   return (m < 600 ? "0" : "") + Math.floor(m / 60) + ":" + (m % 60 < 10 ? "0" : "") + (m % 60);
 }
+/* each show carries `at`, its start in ms, worked out once here from its date's UAE midnight (one Date per day, not one
+   per show and per comparison: those were most of the 1.4 s frame when the city's shows arrived, MASTER-PLAN §4.2 #12).
+   A day's slice is in start order (build.slices), and today's comes before tomorrow's, so S.shows is too */
 function parseSlice(j, d) {
-  var o = { cinemas: {}, films: {}, shows: [] };
+  var o = { cinemas: {}, films: {}, shows: [], bad: j === null, none: j === false };
   if (!j) return o;
+  var d0 = uae(d + "T00:00").getTime();
   j.C.forEach(function (c) { o.cinemas[c[0]] = { chain: c[1], ar: c[2], en: c[3] }; });
   j.F.forEach(function (f) { o.films[f[0]] = { ar: f[1], en: f[2] }; });
   j.S.forEach(function (a, n) {
-    var h = j.H[a[3]], e = j.E && j.E[n], l = j.Li && j.Li[n] >= 0 ? j.L[j.Li[n]] : null;
-    o.shows.push({ c: j.C[a[0]][0], f: j.F[a[1]][0], d: d, t: a[2], h: h[0], k: h[1].slice(h[1].indexOf("|") + 1), hn: AR ? h[2] : h[3],
+    var h = j.H[a[3]], e = j.E && j.E[n], l = j.Li && j.Li[n] >= 0 ? j.L[j.Li[n]] : null, t = a[2];
+    o.shows.push({ c: j.C[a[0]][0], f: j.F[a[1]][0], d: d, t: t, h: h[0], k: h[1].slice(h[1].indexOf("|") + 1), hn: AR ? h[2] : h[3],
       p: a[4] >= 0 ? j.P[a[4]] : null, b: a[5] >= 0 ? j.B[a[5]] + a[6] : (a[6] || null), asof: a[7] || null,
-      e: e ? addMin(a[2], e) : null, lg: l && l[0], sb: l && l[1] });
+      e: e ? addMin(t, e) : null, lg: l && l[0], sb: l && l[1], at: d0 + (+t.slice(0, 2) * 60 + +t.slice(3, 5)) * 60e3 });
   });
   return o;
 }
 function daySlice(c, d) {
-  var k = c + d;
-  return PS[k] ? Promise.resolve(PS[k]) : sliceOf(c, d).then(function (j) { return (PS[k] = parseSlice(j, d)); });
+  var k = c + d, u = "/data/" + c + "-" + d + ".json";
+  return PS[k] ? Promise.resolve(PS[k]) : sliceOf(c, d).then(function (j) {
+    if (j === null) { delete JC[u]; return parseSlice(null, d); }
+    return (PS[k] = parseSlice(j, d));
+  });
 }
+/* the city's slice did not come (a network failure, a 5xx, or no day of it on the server): the page keeps the prices the
+   server wrote, says so once (§1.7 «ما قدرنا نحدّث الأوقات…»), never turns a tile into «ما يعرض» (§4.2 #7), and asks
+   again at the next minute */
+var SLICE_BAD = false;
+function sliceStale(on) { SLICE_BAD = on; qa("[data-stale]").forEach(function (e) { e.hidden = !on; }); }
 function loadCity() {
   var want = city;
   return Promise.all([daySlice(city, TODAY), daySlice(city, TOMORROW)]).then(function (ds) {
     if (want !== city) return;
+    if (ds[0].bad || ds[1].bad && ds[0].none) { S = null; sliceStale(true); return; }
+    sliceStale(false);
     var o = { cinemas: {}, films: {}, shows: [], city: want };   /* whose shows these are (bill.js asks) */
     ds.forEach(function (x) {
       Object.keys(x.cinemas).forEach(function (k) { o.cinemas[k] = x.cinemas[k]; });
@@ -63,7 +83,7 @@ function renderSched() {
     if (!order.length) return;
     sc.innerHTML = order.map(function (c) {
       var hs = {}, ks = [];
-      by[c].sort(function (a, b) { return a.t < b.t ? -1 : 1; }).forEach(function (s) { if (!hs[s.k]) { hs[s.k] = []; ks.push(s.k); } hs[s.k].push(s); });
+      by[c].forEach(function (s) { if (!hs[s.k]) { hs[s.k] = []; ks.push(s.k); } hs[s.k].push(s); });
       ks.sort(function (a, b) { return (a !== "Standard") - (b !== "Standard"); });
       return '<div class="scin" data-cin="' + esc(c) + '" data-chain="' + esc(S.cinemas[c].chain) + '"><a class="cn" href="' + esc(c) + '/">' + esc(nm(S.cinemas[c])) + "</a>" +
         '<div class="times" data-d="' + TODAY + '">' + ks.map(function (k) {
@@ -85,87 +105,13 @@ function upgradeTimes() {
     tl.innerHTML = (sm ? sm.outerHTML + " " : "") + ts.map(function (t) { return tmButton({ t: t }); }).join("");
   });
 }
-function start(s) { return uae(s.d + "T" + s.t).getTime(); }
-/* does a show pass the time controls («يخلص قبل», ربعي's late shows) and, with «أخفِ العروض المتقاطعة» on, stay clear
-   of Maghrib and Isha in the visitor's city (prayer.js; no clash is known before adhan has loaded)? */
+function start(s) { return s.at != null ? s.at : uae(s.d + "T" + s.t).getTime(); }
+/* does a show pass the time controls («يخلص قبل», «العيال»'s daytime rule) and, with «أخفِ العروض المتقاطعة» on, stay
+   clear of Maghrib and Isha in the visitor's city (prayer.js; no clash is known before adhan has loaded)? */
 function showOk(s, rt) {
   var sp = showSpan(s.t, s.e, rt);
-  if (!endsOk(sp, ST.before) || !lateOk(sp, whoPreset(ST.who).late)) return false;
+  if (!endsOk(sp, ST.before) || ST.who === "kids" && !kidsOk(sp)) return false;
   return !(ST.prayer && ST.hide && clashOf(sp, prayersFor(city, s.d)));
-}
-
-/* «الحين»: a film worth it («يستاهل» or «بين بين») starting inside the window first, nearest then soonest
-   (pickNow); only when none does, any film. shows = [{at, km, v}] */
-function nowPick(shows, n, win) {
-  return pickNow(shows.filter(function (s) { return s.v === "yes" || s.v === "mixed"; }), n, win) || pickNow(shows, n, win);
-}
-/* a film's verdict as its tile on this page carries it */
-var VD = null;
-function verdictOf(fid) {
-  if (!VD) { VD = {}; qa("[data-fid][data-v]").forEach(function (el) { VD[el.getAttribute("data-fid")] = el.getAttribute("data-v"); }); }
-  return VD[fid] || "unknown";
-}
-function renderNow() {
-  var box = q("[data-now]");
-  if (!box || !S) return;
-  var n = NOW.getTime();
-  var s0 = nowPick(S.shows.map(function (s) { return { at: start(s), km: kmTo(s.c), v: verdictOf(s.f), s: s }; }), n, 45);
-  /* the slot keeps its height either way (cinema.css reserves it while the slice loads), so nothing under
-     it jumps: with no show in the window it says so quietly and points at tonight's times */
-  box.hidden = false;
-  box.classList.toggle("quiet", !s0);
-  if (!s0) {
-    q("[data-now-film]", box).textContent = C.now_quiet;
-    q("[data-now-where]", box).textContent = "";
-    var ft = q("[data-now-time]", box); ft.innerHTML = ""; ft.removeAttribute("data-t");
-    box.href = "#all";
-    return;
-  }
-  var s = s0.s, b = best([s]), mins = Math.max(0, Math.round((s0.at - n) / 60000)), bits = [esc(inMinutes(mins, lang))];
-  if (s0.km != null) bits.push(esc(sub(TX.away, { km: kmText(s0.km, lang) })));
-  if (b) bits.push('<span class="num">' + fmt(b.pay) + "</span> " + esc(C.aed) + ppNote(b.r) + asofNote(s.asof));
-  q("[data-now-film]", box).textContent = sub(C.in_cinema, { film: nm(S.films[s.f]), cinema: nm(S.cinemas[s.c]) });
-  q("[data-now-where]", box).innerHTML = bits.join(TX.sep);
-  flipTime(q("[data-now-time]", box), s.t);
-  /* the show itself: the film page opens this show's ticket from the fragment (ticket.js showFromHash) */
-  box.href = C.base + "film/" + s.f + "/#s-" + showKey(s.c, s.d, s.t, s.k);
-}
-
-/* «يبدأ قريب منك» (home): the «الحين» idea as a row — every film's next show in the coming 3 hours, the nearest
-   cinema first when the visitor shared their location (near.js), else the soonest; each with its time, «بعد N»,
-   the cinema, the distance and the price after the card. Hidden when nothing starts in that window. */
-function posterOf(fid) {
-  var im = q('.film[data-fid="' + fid + '"] img, .tile[data-fid="' + fid + '"] img');
-  return im && !(im.complete && !im.naturalWidth && im.currentSrc) ? im.currentSrc || im.getAttribute("src") : "";
-}
-function renderNear() {
-  var row = q("[data-near-row]");
-  if (!row || !S) return;
-  var n = NOW.getTime(), end = n + 3 * 3600e3, pick = {};
-  S.shows.forEach(function (s) {
-    var at = start(s);
-    if (at < n || at > end) return;
-    var km = kmTo(s.c), o = pick[s.f];
-    /* per film: a nearer cinema wins over a sooner one within half an hour of it; unknown distance: the soonest */
-    if (!o || (km != null && o.km != null ? (km < o.km - 0.5 && at - o.at < 1800e3) || (Math.abs(km - o.km) <= 0.5 && at < o.at) : at < o.at)) pick[s.f] = { at: at, km: km, s: s };
-  });
-  var list = Object.keys(pick).map(function (k) { return pick[k]; });
-  list.sort(function (a, b) { return a.at - b.at; });
-  list = list.slice(0, 10);
-  row.hidden = !list.length; row.classList.toggle("gone", !list.length);
-  var cn = C.cities[city] || city, sb = q("[data-near-sub]", row);
-  if (sb) sb.textContent = sub(TX.near_sub, { city: cn, t: hhmm(n) });
-  qa("[data-near]", row).forEach(function (b) { b.hidden = !!LOC; });
-  if (!list.length) return;
-  q("[data-strip]", row).innerHTML = list.map(function (o) {
-    var s = o.s, b = best([s]), mins = Math.max(0, Math.round((o.at - n) / 60000)), po = posterOf(s.f);
-    /* the show itself, as «الحين» links it: the film page opens this show's ticket (ticket.js showFromHash, W0-P3 #23) */
-    return '<a class="nr" href="' + esc(C.base + "film/" + s.f + "/#s-" + showKey(s.c, s.d, s.t, s.k)) + '"><span class="nr-p">' + (po ? '<img src="' + esc(po) + '" alt="" width="56" height="84" loading="lazy" onerror="this.remove()">' : "") + "</span>" +
-      '<span class="nr-b"><span class="nr-tm"><b class="num">' + esc(s.t) + "</b><small>" + esc(inMinutes(mins, lang)) + "</small></span>" +
-      '<span class="nr-t" dir="auto">' + esc(nm(S.films[s.f])) + "</span>" +
-      '<span class="nr-c"><bdi>' + esc(nm(S.cinemas[s.c])) + "</bdi>" + (o.km != null ? ' <span class="num">' + esc(kmText(o.km, lang)) + "</span>" : "") + "</span>" +
-      (b ? '<span class="nr-pr"><span class="num">' + fmt(b.pay) + "</span> " + esc(C.aed) + ppNote(b.r) + "</span>" : "") + "</span></a>";
-  }).join("");
 }
 
 /* the billboard's «من X درهم»: its film's cheapest ticket for this visitor in this city tonight — only from this
@@ -201,53 +147,143 @@ function hoverPanel(el, next) {
   q(".nx", hv).textContent = next || "";
 }
 
-/* a home row that follows the visitor: «الأكثر عرضاً الليلة» by the city's shows, «أرخص لك الليلة» by the price
-   after the card; a film not showing in the city goes to the end of any row */
-function sortRows(count) {
-  qa("[data-rail-sort]").forEach(function (r) {
-    var how = r.getAttribute("data-rail-sort"), box = q("[data-strip]", r);
-    var els = qa(".tile[data-fid]", box), key = function (el) {
-      var off = el.classList.contains("off") ? 1e12 : 0, o = +el.getAttribute("data-o") || 0;
-      if (how === "pay") return off + (+el.getAttribute("data-pay") || 1e9) * 1e3 + o;
-      return off - (count[el.getAttribute("data-fid")] || 0) * 1e3 + o;
-    };
-    var to = els.map(function (e) { return [key(e), e]; }).sort(function (a, b) { return a[0] - b[0]; });
-    if (!to.every(function (p, i) { return p[1] === els[i]; })) to.forEach(function (p) { box.appendChild(p[1]); });
+/* the rows (MASTER-PLAN §2.1): no film sits in the first 3 slots of two rows. lead(seen, r): the fids of row r reordered
+   so its first 3 slots take its films not already up front in an earlier row (`seen`), the rest following in their
+   order; null when r has fewer than 4 films or not 3 new ones (the row steps aside). pages/_core/home.py dedupe() is its
+   twin for the first paint */
+function lead(seen, r) {
+  var fresh = r.filter(function (f) { return !seen[f]; });
+  if (r.length < 4 || fresh.length < 3) return null;
+  var head = fresh.slice(0, 3);
+  return head.concat(r.filter(function (f) { return head.indexOf(f) < 0; }));
+}
+/* a film's poster as the page already draws it (a show card's own, a row tile's or the grid's) */
+function posterOf(fid) {
+  var p = q('[data-film="' + fid + '"] .pst, .tile[data-fid="' + fid + '"] .pst');
+  return p ? p.outerHTML : "";
+}
+/* «أرخص عرض الليلة»: each film's cheapest show for this visitor (after their card) still to start tonight, cheapest
+   first, opening with films no earlier row opens with; one innerHTML for the row. Fewer than 4: the row steps aside */
+function renderCheap(row, idx, n, end, seen, go) {
+  var box = q("[data-strip]", row), picks = [];
+  Object.keys(idx).forEach(function (f) {
+    var b = best(idx[f].all.filter(function (s) { return s.at >= n && s.at < end; }));
+    if (b) picks.push({ f: f, b: b });
   });
-  var cs = q("[data-card-sub]");
-  if (cs) cs.textContent = card && C.cards && C.cards[card] ? sub(C.after_card, { card: C.cards[card] }) : "";
+  picks.sort(function (a, b) { return a.b.pay - b.b.pay || a.b.s.at - b.b.s.at || (a.f < b.f ? -1 : 1); });
+  var fresh = picks.filter(function (p) { return !seen[p.f]; }).slice(0, 3);
+  picks = fresh.concat(picks.filter(function (p) { return fresh.indexOf(p) < 0; })).slice(0, 10);
+  row.hidden = picks.length < 4;
+  if (row.hidden) return [];
+  picks.forEach(function (p) { if (p.b.s.at < NEXT_AT) NEXT_AT = p.b.s.at; });
+  box.innerHTML = picks.map(function (p) {
+    var s = p.b.s;
+    return '<a class="tile shc" href="' + esc(C.base + "film/" + p.f + "/#s-" + showKey(s.c, s.d, s.t, s.k)) + '" data-film="' + esc(p.f) + '"><span class="tp">' + posterOf(p.f) +
+      '</span><span class="vh" dir="auto">' + esc(nm(S.films[p.f])) + '</span><span class="st"><b class="num">' + esc(s.t) + "</b> <bdi>" + esc(nm(S.cinemas[s.c])) +
+      '</bdi></span><span class="m"><span class="p" data-shown="' + fmt(p.b.pay) + '">' + payCell(p.b, go, null) + "</span></span></a>";
+  }).join("");
+  return fresh.map(function (p) { return p.f; });
+}
+/* the rows follow the visitor: «الأكثر عرضاً الليلة» by the city's shows (a film not showing in the city goes to the end),
+   «أرخص عرض الليلة» redrawn from the city's slice, then every row's first 3 slots made unique again (dedupe) */
+function sortRows(count, idx, n, end, go) {
+  var seen = {};
+  qa(".rail [data-strip]").forEach(function (box) {
+    var r = box.closest(".rail");
+    if (r.hasAttribute("data-rail-cheap")) { renderCheap(r, idx, n, end, seen, go).forEach(function (f) { seen[f] = 1; }); return; }
+    var els = qa(".tile[data-fid]", box);
+    if (!els.length) return;
+    if (r.getAttribute("data-rail-sort") === "count") {
+      var key = function (el) { return (el.classList.contains("off") ? 1e12 : 0) - (count[el.getAttribute("data-fid")] || 0) * 1e3 + (+el.getAttribute("data-o") || 0); };
+      els = els.map(function (e) { return [key(e), e]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (p) { return p[1]; });
+    }
+    var fids = els.map(function (el) { return el.getAttribute("data-fid"); }), o = lead(seen, fids);
+    r.hidden = !o;
+    if (!o) return;
+    o.slice(0, 3).forEach(function (f) { seen[f] = 1; });
+    var to = o.map(function (f) { return els[fids.indexOf(f)]; }), was = qa(".tile[data-fid]", box);
+    if (!to.every(function (e, i) { return e === was[i]; })) to.forEach(function (e) { box.appendChild(e); });
+  });
+  /* the cheap row's card door: «بعد خصم فزعة ▾» once a card is chosen, else its own words */
+  qa("[data-door]").forEach(function (b) {
+    b.firstChild.nodeValue = card && C.cards && C.cards[card] ? sub(C.after_card, { card: C.cards[card] }) : b.getAttribute("data-door");
+  });
 }
 
+/* a tile's line (MASTER-PLAN §2.1): with a card, yours after it and the list price struck («33.60 42»); with no card,
+   after 17:00 the next show tonight («التالي 21:30 ريل دبي مول»), by day «من 42»; «السعر في الشباك» with no price;
+   «ما يعرض في دبي» when the city's (arrived) shows have none of it */
+var FX = AR ? { next: "التالي {t} {cin}" } : { next: "Next {t} {cin}" };
+function tileLine(el, showing, fit, b, go, cn) {
+  var box = q("[data-cheap]", el);
+  if (!box) return;
+  if (!showing) { box.innerHTML = '<span class="fw">' + esc(sub(C.not_in_city, { city: cn })) + "</span>"; return; }
+  if (!fit.length) return;   /* filtered out of the grid: hidden, its line left as it was */
+  if (!b) { box.innerHTML = '<span class="na">' + esc(C.box) + "</span>"; return; }
+  var nx = fit[0];
+  if (!card && nowMin() >= 1020 && (nx.d === TODAY || nx.t < "03:00")) {
+    box.innerHTML = '<span class="nx">' + sub(esc(FX.next), { t: esc(nx.t), cin: "<bdi>" + esc(nm(S.cinemas[nx.c])) + "</bdi>" }) + "</span>"; return;
+  }
+  var pe = q(".p", box), was = pe && pe.getAttribute("data-shown");
+  box.innerHTML = esc(TX.from) + ' <span class="p" data-shown="' + fmt(b.pay) + '">' + payCell(b, go, was) + "</span>" + asofNote(b.s.asof);
+}
+
+/* renderHome: every tile of the rows and the grid, redrawn for the visitor's city, card, clock and filters. Rail by rail,
+   the ones on screen first, a yield before each (scheduler.yield, else setTimeout 0), so the city's shows arriving never
+   hold the page in one long frame (MASTER-PLAN §2.1 «Speed», §4.2 #12: it was 1.4 s at 4× CPU). A newer call stops an
+   older one still yielding. */
+var HGEN = 0, NEXT_AT = 9e15;
+function later() { return window.scheduler && scheduler.yield ? scheduler.yield() : new Promise(function (r) { setTimeout(r, 0); }); }
 function renderHome(go) {
   if (!S) return;
-  var cn = C.cities[city] || city, n = NOW.getTime(), count = {};
+  var gen = ++HGEN, cn = C.cities[city] || city, n = NOW.getTime(), count = {}, idx = {}, win = whenWin(ST.when, n), cins = whereSet();
+  var H = 3600e3, d0 = n - (n + 4 * H) % (24 * H), end = d0 + (n - d0 < 3 * H ? 3 : 27) * H;   /* tonight: to 03:00 */
   qa("[data-city-name]").forEach(function (el) { el.textContent = cn; });
   var lab = q("[data-city-label]"); if (lab && page === "home") lab.textContent = "";
-  var up = S.shows.filter(function (s) { return start(s) >= n; }).sort(function (a, b) { return start(a) - start(b); });
-  S.shows.forEach(function (s) { if (s.d === TODAY) count[s.f] = (count[s.f] || 0) + 1; });
-  renderNow(); renderNear();
-  /* every tile: the grid's (filtered by the sheet) and the rows' */
-  qa(".film[data-fid], .tile[data-fid]").forEach(function (el) {
-    if (el.closest(".similar")) return;
-    var fid = el.getAttribute("data-fid"), rt = el.getAttribute("data-runtime");
-    var mine = up.filter(function (s) { return s.f === fid; });
-    var tonight = mine.filter(function (s) { return s.d === TODAY; }), tmr = mine.filter(function (s) { return s.d === TOMORROW; });
-    var pool = tonight.length ? tonight : tmr, fit = pool.filter(function (s) { return showOk(s, rt); });
-    var b = best(fit), box = q("[data-cheap]", el);
-    el.classList.toggle("off", !pool.length);
-    el.setAttribute("data-pay", b ? b.pay : 1e9);
-    el.setAttribute("data-first", fit.length ? start(fit[0]) : 9e15);
-    el.setAttribute("data-fit", fit.length);
-    hoverPanel(el, fit.length ? sub(TX.next, { t: fit[0].t, cin: nm(S.cinemas[fit[0].c]) }) : "");
-    if (!box) return;
-    if (!pool.length) { box.innerHTML = '<span class="fw">' + esc(sub(C.not_in_city, { city: cn })) + "</span>"; return; }
-    if (!b) { box.innerHTML = '<span class="na">' + esc(C.box) + "</span>"; return; }
-    var pe = q(".p", box), was = pe && pe.getAttribute("data-shown");
-    var cell = '<span class="p" data-shown="' + fmt(b.pay) + '">' + payCell(b, go, was) + "</span>";
-    box.innerHTML = AR ? esc(TX.from) + " " + cell + " " + esc(C.aed) + asofNote(b.s.asof) : esc(TX.from) + " " + esc(C.aed) + " " + cell + asofNote(b.s.asof);
+  S.shows.forEach(function (s) {
+    if (s.d === TODAY) count[s.f] = (count[s.f] || 0) + 1;
+    if (s.at < n) return;
+    var o = idx[s.f] || (idx[s.f] = { all: [], today: [], tmr: [] });
+    o.all.push(s); (s.d === TODAY ? o.today : o.tmr).push(s);
   });
+  NEXT_AT = 9e15;
+  function paint(el) {
+    if (el.closest(".similar")) return;
+    var fid = el.getAttribute("data-fid"), rt = el.getAttribute("data-runtime"), o = idx[fid] || { all: [], today: [], tmr: [] };
+    var grid = el.classList.contains("film"), pool = grid && win ? o.all.filter(function (s) { return s.at >= win[0] && s.at < win[1]; })
+      : o.today.length ? o.today : o.tmr;
+    var fit = grid ? pool.filter(function (s) { return showOk(s, rt) && (!cins || cins[s.c]); }) : pool, b = best(fit), showing = !!(o.today.length || o.tmr.length);
+    el.classList.toggle("off", !showing);
+    el.setAttribute("data-pay", b ? b.pay : 1e9);
+    el.setAttribute("data-first", fit.length ? fit[0].at : 9e15);
+    el.setAttribute("data-fit", fit.length);
+    if (fit.length && fit[0].at < NEXT_AT) NEXT_AT = fit[0].at;
+    hoverPanel(el, fit.length ? sub(TX.next, { t: fit[0].t, cin: nm(S.cinemas[fit[0].c]) }) : "");
+    tileLine(el, showing, fit, b, go, cn);
+  }
+  /* the batches: each rail's tiles, then the grid's in 24s; those on screen first */
+  var vh = innerHeight, batches = [];
+  qa(".rail [data-strip], [data-films]").forEach(function (box) {
+    var r = box.getBoundingClientRect(), els = qa(".tile[data-fid]", box), on = r.top < vh && r.bottom > 0;
+    for (var i = 0; i < els.length; i += 24) batches.push({ on: on, els: els.slice(i, i + 24) });
+  });
+  batches.sort(function (a, b) { return b.on - a.on; });
   renderFrom(go);
-  sortRows(count);
-  applyFilters();
-  lows();
+  var p = Promise.resolve();
+  batches.forEach(function (bt) {
+    p = p.then(later).then(function () { if (gen === HGEN) bt.els.forEach(paint); });
+  });
+  return p.then(later).then(function () {
+    if (gen !== HGEN) return;
+    sortRows(count, idx, n, end, go);
+    applyFilters();
+    lows();
+  });
+}
+/* each minute: a city update that failed is asked for again; once the soonest time a tile or a show card names has
+   passed, the tiles move on (a text swap, no motion). Nothing else on them changes by the clock. bindFilters hooks it
+   to «minute» */
+function homeMinute() {
+  if (SLICE_BAD) citySlice();
+  else if (S && NOW.getTime() >= NEXT_AT) renderHome(false);
 }

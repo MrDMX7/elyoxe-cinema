@@ -1,4 +1,26 @@
-/* home rows: the section heads, the sideways strips, their arrows; «الحين»'s landing (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
+/* home rows: the section heads, the sideways strips, their arrows, «بالأرقام», the stale line; «الحين»'s landing (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
+/* ------------------------------------------------ held here when W2-P4 deleted ui-near.css with the near row (its cards,
+   «الحين»'s box): the near line under the header's pills (Kit.me, the city and cinema pages), the flip tiles (flip.js;
+   the board draws its times on them) and the «قريب مني» line. Rules unchanged, one place later in the sheet (no other
+   rule of theirs sits between: checked) */
+.me{position:relative;display:flex;flex-direction:column;gap:8px;padding-block-start:8px}
+.me .near-m{font-size:var(--fs-meta);color:var(--seat)}
+/* flip tiles: 20 px, 2 px night gaps; the colon is the dull part */
+.flip{display:flex;gap:2px;flex:0 0 auto}
+.flip .d{min-inline-size:22px;block-size:34px;display:flex;align-items:center;justify-content:center;background:var(--tile);color:var(--screen);font-weight:600;font-size:20px;
+  background-image:linear-gradient(transparent 49%,rgba(0,0,0,.95) 50%,transparent 51%)}
+.flip .c{color:var(--seat);font-weight:600;font-size:20px;align-self:center}
+.flip .d.go{animation:flip .36s steps(4,end)}
+@media (min-width:1024px){
+  .flip .d{min-inline-size:24px;block-size:38px}
+  .me-city{flex-direction:row;flex-wrap:wrap;align-items:center;gap:16px 20px}
+}
+@media (prefers-reduced-motion:reduce){
+  .flip .d.go{animation:none}
+}
+.near{align-items:baseline;flex-wrap:wrap;gap:4px 12px;font-size:var(--fs-meta);color:var(--seat)}
+.near .lnk{min-block-size:44px}
+.near-m:empty{display:none}
 /* ------------------------------------------------ section heads, poster rows */
 .sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-block:16px 12px}
 .sec-h h2{font-size:var(--fs-h2);flex:0 0 auto}
@@ -13,27 +35,38 @@
 }
 /* rows: a heading line, then a sideways strip from edge to edge (its start in line with the page's text) */
 .rail{margin-block-start:var(--s6)}
-/* «يبدأ قريب منك» fills in once the city's shows arrive: with script its place is held (invisible) from the first
-   paint, so the rows under it never jump down (it was the page's whole CLS); it gives the place back only when
-   nothing starts in the next 3 hours */
-.js .rail[data-near-row][hidden]{display:block;visibility:hidden}
-/* the «الحين» shortcut lands here (/#now): the row's heading clear of the sticky header */
+/* the «الحين» shortcut lands on the board (/#now), clear of the sticky header */
 #now{scroll-margin-block-start:calc(var(--head) + 8px)}
-.js .rail[data-near-row].gone{display:none}
-.rail[data-near-row] .strip{min-block-size:124px}   /* a filled strip is ~121 (a near card 84.5 + 2 × 12, the strip 8 + 4): held and filled alike */
-.rail-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 16px;margin-block-end:12px}
+/* the heading is the link to «الكل»: the whole line, at least 44 px tall (MASTER-PLAN §2.1, §4.2 #15) */
+.rail-h{display:flex;align-items:center;flex-wrap:wrap;column-gap:16px;margin-block-end:4px}
 .rail-h h2{font-size:var(--fs-h2)}
 [lang=en] .rail-h h2{letter-spacing:-.01em}
-.rail-h .sub{font-size:var(--fs-meta);color:var(--seat)}
-.rail-h .all-l{margin-inline-start:auto;font-size:var(--fs-meta);color:var(--seat);text-decoration:none;min-block-size:24px;display:inline-flex;align-items:center}
-.rail-h .all-l:hover{color:var(--screen)}
-.rail-h .near-ask{font-size:var(--fs-meta);min-block-size:24px;margin-inline-start:12px}
-.rail-h .near-m{flex-basis:100%;font-size:var(--fs-meta);color:var(--dim)}
+.rail-a{flex:1 1 auto;min-inline-size:0;display:flex;align-items:center;justify-content:space-between;gap:16px;min-block-size:44px;color:var(--screen);text-decoration:none}
+.rail-a .all-l{flex:0 0 auto;font-size:var(--fs-meta);color:var(--seat)}
+.rail-a .all-l::after{content:" ‹"}
+[dir=ltr] .rail-a .all-l::after{content:" ›"}
+.rail-a:hover .all-l{color:var(--screen)}
+.rail-h .sub{flex-basis:100%;font-size:var(--fs-meta);color:var(--seat)}
+/* the cheap row's card door: 13 px words, a 44 px target */
+.rail-h .door{min-block-size:44px;font-size:var(--fs-meta);color:var(--dim)}
 .js .arr.js-only{display:none!important}
 .strip{--edge:max(var(--gut),calc((100% - var(--max)) / 2 + var(--gut)));display:flex;gap:16px;overflow-x:auto;overscroll-behavior-x:contain;
   scroll-snap-type:x mandatory;padding-inline:var(--edge);scroll-padding-inline:var(--edge);padding-block:8px 4px;scrollbar-width:none}
 .strip::-webkit-scrollbar{display:none}
 .strip > *{flex:0 0 auto;scroll-snap-align:start}
+/* «بالأرقام»: insights' three links, each a 44 px line of its own on a phone, one line from a tablet up */
+.nums-l{display:flex;flex-direction:column;list-style:none;margin:0;padding-block:0}
+.nums-l li{border-block-end:1px solid var(--line)}
+.nums-l a{display:flex;align-items:center;justify-content:space-between;gap:12px;min-block-size:44px;color:var(--screen);text-decoration:none;font-size:var(--fs-title)}
+.nums-l a::after{content:"‹";color:var(--seat)}
+[dir=ltr] .nums-l a::after{content:"›"}
+/* a failed city update (§1.7): one quiet line over the rows; the prices under it are the server's */
+.stale-l{margin-block-start:var(--s6);font-size:var(--fs-meta);color:var(--dim)}
+@media (min-width:768px){
+  .nums-l{flex-direction:row;flex-wrap:wrap;column-gap:24px}
+  .nums-l li{border:0}
+  .nums-l a::after{content:none}
+}
 @media (min-width:1024px){
   .rail{margin-block-start:40px}
   .strip{gap:12px}
@@ -42,7 +75,7 @@
 /* a desktop pointer: the row's arrows, the tile's lift and its panel */
   .js .arr.js-only{display:flex!important;gap:4px;opacity:0;transition:opacity .2s}
   .rail:hover .arr,.rail:focus-within .arr{opacity:1}
-  .arr .icon{inline-size:32px;block-size:32px;border:1px solid var(--line-2)}
+  .arr .icon{inline-size:44px;block-size:44px;border:1px solid var(--line-2)}
   .arr .icon svg{inline-size:16px;block-size:16px}
   .arr .icon:hover{border-color:var(--screen)}
   [dir=rtl] .arr svg{transform:scaleX(-1)}
