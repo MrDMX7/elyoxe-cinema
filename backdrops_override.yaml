@@ -32,3 +32,9 @@ sacrifice: none
 # VIJAYARAGHAVAN") laid over a soft background, too low in contrast for the text detector. 53.3 is the
 # clean close shot of the lead in the crowd.
 pradhama-drishtya-kuttakkar: 53.3
+
+# heart-of-the-beast (trailer bdPnr4mJoIU): Dubai's #1, checked by hand on the W1-D1 fix round's Fold run
+# (2026-09-28). The scorer's screen, t=99.4, is the man catching the leaping dog beside a mossy bank; the
+# window's detail measure put the phone's 2:3 crop on the moss (x 0.75: the sharpest texture, not the
+# subject, who is in motion). x 0.33 frames the man and the dog (portrait 536x804, sharpness 1.20).
+heart-of-the-beast: {x: 0.33}
