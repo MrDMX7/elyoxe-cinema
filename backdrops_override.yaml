@@ -1,16 +1,21 @@
 # Manual override for steps/backdrops.py, when the automatic scorer picks (or would pick) a bad
 # frame from a film's trailer, or there simply isn't a clean one in it.
 #
-#   <fid>: none        -- never show a trailer backdrop for this film; steps/backdrops.py never
-#                          attempts it (or re-attempts it), and Kit.backdrop() always falls back to
-#                          the poster-blur treatment.
-#   <fid>: <seconds>   -- skip scoring entirely and take the frame at exactly this second into the
-#                          trailer (still letterbox-cropped and encoded the normal way). Changing
-#                          the number re-extracts on the next run; the cache is keyed on the value
-#                          itself, not just the fid.
+#   <fid>: none              -- never show a trailer backdrop for this film; steps/backdrops.py never
+#                                attempts it (or re-attempts it), and Kit.backdrop() always falls back to
+#                                the poster treatment.
+#   <fid>: <seconds>         -- skip scoring entirely and take the frame at exactly this second into the
+#                                trailer (still cropped to the trailer's active picture, graded and encoded
+#                                the normal way).
+#   <fid>: {t: <seconds>, x: <0..1>}
+#                             -- the same, plus where the phone's 2:3 portrait window sits on that frame:
+#                                x = 0 its left edge, 1 its right edge, 0.5 centred (the image's own left and
+#                                right, not the page's reading direction). Either key may be left out: {x: 0.3}
+#                                keeps the scored frame and only moves the window.
 #
-# fid must match a film's current fid (site_kit.FID/normalize.film_fid shape); an unknown/malformed
-# key is ignored, never an error.
+# Changing a value re-extracts on the next run; the cache is keyed on the values themselves, not just
+# the fid. fid must match a film's current fid (site_kit.FID/normalize.film_fid shape); an unknown or
+# malformed key is ignored, never an error.
 
 # sacrifice (trailer SEoOcTKx9S4): checked by hand -- this is a distributor-branded promotional cut,
 # not a plain trailer. The "SACRIFICE | IN CINEMAS SEPTEMBER 24" bar is burned into the top of
@@ -21,3 +26,9 @@
 # (task-1-report.md, Fix round 1): the busy background made the scorer's edge-density checks blind
 # to that permanent bar.
 sacrifice: none
+
+# pradhama-drishtya-kuttakkar (trailer hf96obsJIGU): checked by hand on W1-D1's 16 sampled frames
+# (2026-09-28). The scorer's best frame, t=36.3, carries a faint grey actor credit ("...LAI
+# VIJAYARAGHAVAN") laid over a soft background, too low in contrast for the text detector. 53.3 is the
+# clean close shot of the lead in the crowd.
+pradhama-drishtya-kuttakkar: 53.3

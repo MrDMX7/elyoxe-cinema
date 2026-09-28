@@ -22,6 +22,17 @@ def _no_real_override_file(monkeypatch, tmp_path):
     monkeypatch.setattr(bd, "OVERRIDE_PATH", tmp_path / "backdrops_override.yaml")
 
 
+@pytest.fixture(autouse=True)
+def _quick_images(monkeypatch):
+    """These tests are about orchestration (cache, TTLs, cap, prune, overrides) over flat-colour frames:
+    a 320 px analysis copy, one kept frame and libwebp's quickest encode change none of it and keep the
+    suite short on the Fold's hourly run (tests/test_w1_d1.py measures the images themselves)."""
+    monkeypatch.setattr(bd, "ANALYSIS_WIDTH", 320)
+    monkeypatch.setattr(bd, "KEEP", 1)
+    monkeypatch.setattr(bd, "WEBP_METHOD", 0)
+    monkeypatch.setattr(bd, "_mem_available_mb", lambda: None)
+
+
 # -------- score_frame
 
 def _flat(color, size=(320, 180)):
@@ -200,10 +211,12 @@ def test_cache_hit_skips_the_pipeline_entirely(tmp_path, monkeypatch):
         raise AssertionError("must not run any subprocess on a cache hit")
 
     data_dir = tmp_path
+    # "v": the current step version (W1-D1): an entry an older version made is re-made, not a hit
+    # (tests/test_w1_d1.py covers that path)
     (data_dir / "backdrops.json").write_text(json.dumps({
         "film-a": {"trailer": "AAAAAAAAAAA", "w1280": "/posters/bd-film-a-deadbeef01-1280.webp",
                    "w640": "/posters/bd-film-a-deadbeef01-640.webp", "w": 1280, "h": 720,
-                   "t": 5.0, "at": "2026-09-20T12:00:00+00:00"}
+                   "t": 5.0, "at": "2026-09-20T12:00:00+00:00", "v": bd.STEP_VERSION}
     }), encoding="utf-8")
     (data_dir / "posters").mkdir()
     (data_dir / "posters" / "bd-film-a-deadbeef01-1280.webp").write_bytes(b"x")
@@ -224,9 +237,11 @@ def test_content_rejection_is_kind_rejected_and_not_retried_within_seven_days(tm
     monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video, frame_color=(0, 0, 0)))
     data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
     r1 = bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
-    assert r1 == {"new": 1, "failed": 1, "cached": 0}
+    assert {k: r1[k] for k in ("new", "failed", "cached")} == {"new": 1, "failed": 1, "cached": 0}
+    assert r1["why"]["film-a"].startswith("all 16 frames rejected: 16 too dark")   # W1-D1: the reason is logged
     cache1 = json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))
-    assert cache1["film-a"] == {"trailer": "AAAAAAAAAAA", "fail": "2026-09-27T12:00:00+00:00", "kind": "rejected"}
+    assert cache1["film-a"] == {"trailer": "AAAAAAAAAAA", "fail": "2026-09-27T12:00:00+00:00", "kind": "rejected",
+                                "why": r1["why"]["film-a"], "v": bd.STEP_VERSION}
     assert "backdrop" not in data["films"]["film-a"]
 
     def boom(cmd, **kw):
@@ -246,9 +261,11 @@ def test_transient_failure_is_kind_transient_and_retried_after_six_hours_not_sev
     monkeypatch.setattr(bd.subprocess, "run", _fake_run_factory(_write_stub_video, fail_download=True))
     data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
     r1 = bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
-    assert r1 == {"new": 1, "failed": 1, "cached": 0}
+    assert {k: r1[k] for k in ("new", "failed", "cached")} == {"new": 1, "failed": 1, "cached": 0}
+    assert r1["why"]["film-a"].startswith("download: ")
     cache1 = json.loads((tmp_path / "backdrops.json").read_text(encoding="utf-8"))
-    assert cache1["film-a"] == {"trailer": "AAAAAAAAAAA", "fail": "2026-09-27T12:00:00+00:00", "kind": "transient"}
+    assert cache1["film-a"] == {"trailer": "AAAAAAAAAAA", "fail": "2026-09-27T12:00:00+00:00", "kind": "transient",
+                                "why": r1["why"]["film-a"], "v": bd.STEP_VERSION}
 
     # 3 hours later: inside the 6h transient TTL, still not retried
     def boom(cmd, **kw):
@@ -333,7 +350,7 @@ def test_a_films_failure_never_raises_out_of_run(tmp_path, monkeypatch):
     monkeypatch.setattr(bd.subprocess, "run", boom)
     data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
     r = bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
-    assert r == {"new": 1, "failed": 1, "cached": 0}
+    assert r == {"new": 1, "failed": 1, "cached": 0, "why": {"film-a": "download: OSError: yt-dlp not found"}}
 
 
 def test_archived_films_and_films_without_a_trailer_are_never_candidates(tmp_path, monkeypatch):
