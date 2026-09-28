@@ -166,9 +166,24 @@ def pick(rows, now, n, free=False):
     return out
 
 
-def flat(entries):
-    """The rows an island keeps for these entries: each single row, each shared minute's rows."""
-    return [r for e in entries for r in (e["x"] if "x" in e else [e["r"]])]
+XCAP = 3   # a collapsed minute's stored member cap (island size, §5.3 W2-P2 budget; the true count survives as 'gx')
+
+
+def flat(entries, cap=XCAP):
+    """The rows an island keeps for these entries: each single row, each shared minute's rows — capped to `cap`
+    members with the true count stamped on each kept member as 'gx' (row_html/CB.row show gx over the member count
+    when it is set). A peak-hour minute that collapses many films no longer carries every one of them into the
+    island (fix round, review §Important 1-3): the sheet gets the rest once the slice is in (board-live.js's CB.src,
+    which replaces the island's rows with the city's real ones within the first second on every page that has one)."""
+    out = []
+    for e in entries:
+        if "x" in e:
+            members = e["x"]
+            kept = [dict(r, gx=len(members)) for r in members[:cap]] if len(members) > cap else members
+            out.extend(kept)
+        else:
+            out.append(e["r"])
+    return out
 
 
 def href(e, isl):
@@ -192,7 +207,7 @@ def row_html(e, now, isl):
     z = "" if n > 30 else f'<span class="bs">{s["n"].replace("{n}", str(n)) if n > 0 else s["z"]}</span>'
     h = f'<a class="br{" bx" if "x" in e else ""}" href="{href(e, isl)}">{time_html(hm(e["at"]))}<span class="bm">'
     if "x" in e:
-        nx = len(e["x"])
+        nx = e["x"][0].get("gx") or len(e["x"])   # gx: the true count when the island capped the stored members
         return (h + f'<span class="bf">{(s["x11"] if nx > 10 else s["x"]).replace("{n}", str(nx))}</span><span class="bc">'
                 + s["sep"].join(f'<bdi{en(x["f"][2])}>{x["f"][1]}</bdi>' for x in e["x"]) + f'</span></span><span class="be">{z}</span></a>')
     chain = r["c"][3] if len(r["c"]) > 3 else r["c"][0].split("-")[0]
@@ -243,11 +258,20 @@ class Board:
         for b in range(BUCKETS):
             t = now + SPAN * b
             out += flat(pick([r for r in rs if t <= r["at"] < t + SPAN], t, PER))
-        return [x["src"] for x in out]
+        # gx lives on the as_row wrapper (flat()'s copy), never on the cached show dict (self._rows is shared state)
+        return [dict(x["src"], gx=x["gx"]) if "gx" in x else x["src"] for x in out]
 
     def cinema_rows(self, cid):
         """A cinema's island: its next 12 starts, whatever the film (the painter keeps one row per film)."""
         return [r for r in self.rows() if r["cid"] == cid and r["at"] >= self.now][:CINEMA_ROWS]
+
+    def next_at(self, kind, key):
+        """The next future show beyond the window (a city's, or one cinema's), for the honest fallback when the box
+        has nothing left tonight (fix round, review §Important 5): «جاري التحديث…» only while a slice is genuinely
+        pending, never for hours after the city's last show."""
+        rs = ([r["at"] for r in self.rows() if r["cid"] == key and r["at"] >= self.now] if kind == "cinema" else
+              [r["at"] for r in self.rows() if self.city_of(r["cid"]) == key and r["at"] >= self.now])
+        return min(rs) if rs else None
 
     # ------------------------------------------------ the island
     def island(self, lang, groups, n, m=0, scope="city", free=False, names=False, hold=False, nd=0):
@@ -272,9 +296,11 @@ class Board:
                     hi[h] = len(halls); halls.append(list(h))
                 if sh["date"] not in di:
                     di[sh["date"]] = len(dates); dates.append(sh["date"])
-                out.append([di[sh["date"]], sh["time"], fi[fid], ci[cid], hi[h], r["price"], r["key"]])
+                row = [di[sh["date"]], sh["time"], fi[fid], ci[cid], hi[h], r["price"], r["key"]]
+                if "gx" in r: row.append(r["gx"])   # a capped shared-minute member's true count (index 7)
+                out.append(row)
             rows[key] = out
-        s = {k: L(BOARD_T[k], lang) for k in ("z", "n", "x", "x11", "w")} | {"sep": "، " if lang == "ar" else ", "}
+        s = {k: L(BOARD_T[k], lang) for k in ("z", "n", "x", "x11", "w", "at")} | {"sep": "، " if lang == "ar" else ", "}
         if nd: s["h"] = L(BOARD_T["h"], lang)
         isl = {"d": dates, "f": films, "c": cins, "h": halls, "r": rows, "b": P(lang), "g": scope, "n": n, "m": m, "s": s}
         if nd: isl["nd"] = nd
@@ -285,9 +311,14 @@ class Board:
 
     @staticmethod
     def expand(isl, key):
-        """CB.rows's twin: the island's rows for a key as row objects (escaped strings, as the script sees them)."""
-        return [{"at": minute(isl["d"][x[0]], x[1]), "f": isl["f"][x[2]], "c": isl["c"][x[3]], "h": isl["h"][x[4]], "p": x[5], "k": x[6]}
-                for x in isl["r"].get(key, [])]
+        """CB.rows's twin: the island's rows for a key as row objects (escaped strings, as the script sees them).
+        A capped shared-minute member carries the true count as x[7] ('gx')."""
+        out = []
+        for x in isl["r"].get(key, []):
+            r = {"at": minute(isl["d"][x[0]], x[1]), "f": isl["f"][x[2]], "c": isl["c"][x[3]], "h": isl["h"][x[4]], "p": x[5], "k": x[6]}
+            if len(x) > 7: r["gx"] = x[7]
+            out.append(r)
+        return out
 
     def paint_js(self):
         if self._paint is None:
@@ -304,16 +335,21 @@ class Board:
         return '<script type="application/json" data-island>' + data + "</script>"
 
     @staticmethod
-    def rows_html(isl, key, now):
+    def rows_html(isl, key, now, next_at=None):
         """CB.draw's first paint at `now`: the box's rows; with no card the one cheapest price in the box is lit (.lo, the
-        first on a tie). The rows under «اللوحة كاملة» are the script's (with no script the <details> stays hidden)."""
+        first on a tie). The rows under «اللوحة كاملة» are the script's (with no script the <details> stays hidden).
+        With nothing to show, «جاري التحديث…» only stands for a slice genuinely pending; past the city's last show it
+        names the next one instead (`next_at`, fix round review §Important 5)."""
         es = pick(Board.expand(isl, key), now, isl["n"], isl.get("o", 0))
         box = [row_html(e, now, isl) for e in es]
         ps = [(float(e["r"]["p"]), i) for i, e in enumerate(es) if "r" in e and e["r"]["p"]]
         if ps:
             lo = min(ps)[1]
             box[lo] = box[lo].replace('<span class="p" ', '<span class="p lo" ', 1)
-        return "".join(box) or f'<p class="bw">{isl["s"]["w"]}</p>'
+        if box:
+            return "".join(box)
+        msg = isl["s"]["at"].replace("{t}", hm(next_at)) if next_at is not None else isl["s"]["w"]
+        return f'<p class="bw">{msg}</p>'
 
     # ------------------------------------------------ the slots
     def board(self, lang, isl, key, kind, head=False, label=None, inline=False, now_id=False):
@@ -331,8 +367,9 @@ class Board:
         if isl["m"]:
             mo = (f'<details class="bmore" hidden><summary>{esc(L(BOARD_T["more"], lang))}</summary>'
                   f'<div class="brs" data-brs-more></div></details>')
+        nx = self.next_at(kind, key)
         return (f'<section class="board wrap b-{kind}" data-board="{kind}"{attrs} style="--bn:{isl["n"]}">{h}'
-                f'<div class="brs" data-brs data-lo>{self.rows_html(isl, key, self.now)}</div>{mo}{self.script(isl, inline)}</section>')
+                f'<div class="brs" data-brs data-lo>{self.rows_html(isl, key, self.now, nx)}</div>{mo}{self.script(isl, inline)}</section>')
 
     def sheet(self, lang):
         """The shared minute's sheet (a row «21:00 5 أفلام» opens it; board-live.js fills it), once per page."""

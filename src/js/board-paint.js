@@ -26,9 +26,14 @@ var cbPaint = function (I, b) {
   CB.now = function () { return Math.floor((Date.now() + CB.F) / 6e4); };
   CB.at = function (dt, t) { return Date.parse(dt + "T" + t + ":00+04:00") / 6e4; };
   CB.hm = function (x) { return new Date(x * 6e4 + 144e5).toISOString().slice(11, 16); };
-  /* the island's rows for a city or a cinema, as row objects, in the board's order (Python sorted them) */
+  /* the island's rows for a city or a cinema, as row objects, in the board's order (Python sorted them). A capped
+     shared-minute member carries the true count as x[7] ('gx', pages/board.py's flat()) */
   CB.rows = function (key) {
-    return (I.r[key] || []).map(function (x) { return { at: CB.at(I.d[x[0]], x[1]), f: I.f[x[2]], c: I.c[x[3]], h: I.h[x[4]], p: x[5], k: x[6] }; });
+    return (I.r[key] || []).map(function (x) {
+      var r = { at: CB.at(I.d[x[0]], x[1]), f: I.f[x[2]], c: I.c[x[3]], h: I.h[x[4]], p: x[5], k: x[6] };
+      if (x.length > 7) r.gx = x[7];
+      return r;
+    });
   };
   /* what starts next, in the rows' order: one row per film on the whole board; any three rows in a row hold at most
      two of one cinema (unless free: one cinema's own board); a minute three films or more share is one entry
@@ -63,8 +68,11 @@ var cbPaint = function (I, b) {
   CB.row = function (e, now, a) {
     var r = e.r || e.x[0], n = e.at - now, z = n > 30 ? "" : '<span class="bs">' + (n > 0 ? S.n.replace("{n}", n) : S.z) + "</span>";
     var h = '<a class="br' + (e.x ? " bx" : "") + (a || "") + '" href="' + CB.href(e) + '">' + CB.time(CB.hm(e.at)) + '<span class="bm">';
-    if (e.x) return h + '<span class="bf">' + (e.x.length > 10 ? S.x11 : S.x).replace("{n}", e.x.length) + '</span><span class="bc">' +
-      e.x.map(function (x) { return "<bdi" + en(x.f[2]) + ">" + x.f[1] + "</bdi>"; }).join(S.sep) + '</span></span><span class="be">' + z + "</span></a>";
+    if (e.x) {
+      var nx = e.x[0].gx || e.x.length;
+      return h + '<span class="bf">' + (nx > 10 ? S.x11 : S.x).replace("{n}", nx) + '</span><span class="bc">' +
+        e.x.map(function (x) { return "<bdi" + en(x.f[2]) + ">" + x.f[1] + "</bdi>"; }).join(S.sep) + '</span></span><span class="be">' + z + "</span></a>";
+    }
     return h + '<bdi class="bf"' + en(r.f[2]) + ">" + r.f[1] + '</bdi><span class="bc"><bdi' + en(r.c[2]) + ">" + r.c[1] + "</bdi>" +
       (r.km ? S.sep + '<span class="num">' + r.km + "</span>" : "") + '</span></span><span class="be">' + z +
       (r.p ? '<span class="p" data-aed="' + r.p + '" data-chain="' + (r.c[3] || r.c[0].split("-")[0]) + '" data-hall="' + r.h[0] + '" data-hk="' + r.h[1] +
@@ -79,7 +87,7 @@ var cbPaint = function (I, b) {
      and the clock's changed digits turn over. With no card, the box's one cheapest price is lit (.lo), as prices.js
      lows() does after every repricing */
   CB.draw = function (anim) {
-    var now = CB.now(), src = CB.src && CB.src(CB.k), es = CB.pick(src || CB.rows(CB.k), now, N + I.m, I.o), lo = null;
+    var now = CB.now(), src = CB.src && CB.src(CB.k), rowsAll = src || CB.rows(CB.k), es = CB.pick(rowsAll, now, N + I.m, I.o), lo = null;
     var q = function (s) { return b.querySelector(s); }, box = q("[data-brs]"), more = q("[data-brs-more]"), ck = q("[data-board-clock]"), cn = q("[data-board-city]");
     var old = [].map.call(box.querySelectorAll(".br"), function (a) { return a.getAttribute("href"); }), keys = es.slice(0, N).map(CB.href);
     var mv = anim && !RM && old.length && old.join() !== keys.join(), t = CB.hm(now), was = ck && ck.getAttribute("data-t");
@@ -89,7 +97,13 @@ var cbPaint = function (I, b) {
       box.innerHTML = es.slice(0, N).map(function (e, i) {
         var o = old.indexOf(keys[i]);
         return CB.row(e, now, !mv ? "" : o < 0 ? " in" : o > i ? ' mv" style="--dy:' + (o - i) : "");
-      }).join("") || '<p class="bw">' + S.w + "</p>";
+      }).join("");
+      if (!box.innerHTML) {
+        /* nothing left tonight: name the next show instead of claiming a refresh that will not change anything
+           (fix round review §Important 5, honesty §1.2 #8) */
+        var nx = rowsAll.filter(function (r) { return r.at >= now; }).sort(function (a, b) { return a.at - b.at; })[0];
+        box.innerHTML = '<p class="bw">' + (nx ? S.at.replace("{t}", CB.hm(nx.at)) : S.w) + "</p>";
+      }
       if (!ls("card")) [].forEach.call(box.querySelectorAll(".p[data-aed]"), function (p) { if (!lo || +p.getAttribute("data-aed") < +lo.getAttribute("data-aed")) lo = p; });
       if (lo) lo.classList.add("lo");
       if (more) { more.innerHTML = es.slice(N, N + I.m).map(function (e) { return CB.row(e, now); }).join(""); more.parentNode.hidden = !more.firstChild; }
