@@ -8,6 +8,7 @@ chains:
   vox:
     name: VOX Cinemas
     name_ar: فوكس
+    short: VOX
     halls:
       - key: THEATRE
         codes: [THEATRE]
@@ -81,6 +82,7 @@ chains:
   star:
     name: Star Cinemas
     name_ar: ستار
+    short: Star
     halls:
       - key: SUITES
         codes: [SUITES]
@@ -128,6 +130,7 @@ chains:
   novo:
     name: Novo Cinemas
     name_ar: نوفو
+    short: Novo
     halls:
       - key: 7STAR
         codes: [VIP]
@@ -159,6 +162,7 @@ chains:
   roxy:
     name: Roxy Cinemas
     name_ar: روكسي
+    short: Roxy
     halls:
       - key: PLATINUM
         codes: [VIP, SUITES]
@@ -216,6 +220,7 @@ chains:
   reel:
     name: Reel Cinemas
     name_ar: ريل
+    short: Reel
     halls:
       - key: PLATINUM
         codes: [SUITES, VIP]
@@ -263,6 +268,7 @@ chains:
   cineroyal:
     name: Cine Royal
     name_ar: سيني رويال
+    short: Cine Royal
     halls:
       - key: VIP
         codes: [VIP, SUITES]
@@ -295,6 +301,7 @@ chains:
   cinemacity:
     name: Cinemacity
     name_ar: سينما سيتي
+    short: Cinemacity
     halls:
       - key: IMAX
         codes: [IMAX]
@@ -331,3 +338,68 @@ chains:
         what_en: At AlQana, a hall for independent, award-winning and foreign-language films, with recliners.
         source: https://www.cinemacity.ae/experiences/
         confidence: high
+
+# ---------------------------------------------------------------- display labels (W1-D3; legend §1.4 and §4.2 #17)
+# What a hall is called on a time button, the stub and in tables: [Arabic page, English page]. The entries'
+# `name` above stays for /halls/ and the questions; the redesigned places read these (W2-P3 time buttons and the
+# stub, W2-P6 tables) through pages/pulse.py `hall_label()`. No all-caps word in any label except `acronyms`
+# (brands the chains themselves write in capitals: MAX, XXL). A brand word (IMAX, 4DX, ScreenX) stays Latin on
+# the Arabic page too, as the tiles' «في IMAX الليلة» does.
+# Resolution for (chain, hall key): labels[chain][key], then labels.any[key], then the halls.yaml entry
+# (name_ar, name), then the raw label with every non-acronym capital word turned to Title Case.
+# The hall key is site_kit.Halls.key(): an entry key above, a reader's hall code, or a cleaned raw label in capitals.
+labels:
+  acronyms: [IMAX, MAX, 4DX, MX4D, VIP, XXL, PLF, 2D, 3D, 4K]
+  any:
+    Standard: [عادية, Standard]
+    IMAX: [IMAX, IMAX]
+    MAX: [MAX, MAX]
+    4DX: [4DX, 4DX]
+    MX4D: [MX4D, MX4D]
+    SCREENX: [ScreenX, ScreenX]
+    VIP: [VIP, VIP]
+    KIDS: [كيدز, Kids]
+    GOLD: [جولد, Gold]
+    THEATRE: [ثياتر, Theatre]
+    PREMIER: [بريمير, Premier]
+    PREMIUM: [بريميوم, Premium]
+    SUITES: [سويتس, Suites]
+    PLATINUM: [بلاتينيوم, Platinum]
+    DOLBY: [دولبي, Dolby]
+    ATMOS: [دولبي أتموس, Dolby Atmos]
+    COUCH: [كنبة, Couch]
+    SAMSUNG ONYX: [سامسونج أونكس, Samsung Onyx]
+    IMMERSIVE: [إيمرسيف, Immersive]
+  vox:
+    THEATRE: [ثياتر, Theatre]
+    GOLD: [جولد, Gold]
+    PREMIER: [بريمير, Premier]
+    PRIVATE: [سينما خاصة, Private Cinema]
+  star:
+    SUITES: [البلاتينيوم سويتس, Platinum Suites]
+    PREMIUM: [ستار بريميوم, Star Premium]
+    ATMOS: [دولبي أتموس, Dolby Atmos]
+  novo:
+    7STAR: [سفن ستار, 7 Star]
+    IMAX: [IMAX ليزر, IMAX with Laser]
+    SKY: [سكاي, Sky]
+  roxy:
+    PLATINUM: [بلاتينيوم, Platinum]
+    PREMIERE: [بريمير, Premiere]
+    XTREME: [إكستريم, Xtreme]
+    XTRM: [إكستريم, Xtreme]            # a raw «XtrmPremiumView», which site_kit.clean_label cuts to «Xtrm»
+    PRIVATE: [شاشة خاصة, Private Screen]
+    BRONZE: [برونز, Bronze]
+  reel:
+    PLATINUM: [بلاتينيوم سويتس, Platinum Suites]
+    DOLBY: [دولبي سينما, Dolby Cinema]
+    KIDS: [ريل جونيور, Reel Junior]
+    BOUTIQUE: [ذا بوتيك, The Boutique]
+  cineroyal:
+    VIP: [رويال سويتس, Royal Suites]
+    ROYALPLUS: [رويال بلس, Royal Plus]
+    KIDS: [رويال كيدز, Royal Kids]
+  cinemacity:
+    XXL: [شاشة XXL, XXL Screen]
+    VIP: [كراسي VIP, VIP Seats]
+    ARTHOUSE: [آرت هاوس, Arthouse]
