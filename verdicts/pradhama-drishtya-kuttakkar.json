@@ -1,9 +1,14 @@
 {
-  "ar": "Pradhama Drishtya Kuttakkar تشويقي جنائي بالمليالم، بطولة Parvathy Thiruvothu، مدته ساعتين و41 دقيقة. ردود فعل الجمهور إيجابية والفيلم يستاهل المشاهدة.",
-  "basis": "لا يوجد رقم RT/Metacritic متوفر؛ ردود فعل جمهور إيجابية",
+  "ar": "Pradhama Drishtya Kuttakkar تشويقي جنائي بالمليالم، بطولة Parvathy Thiruvothu، مدته 170 دقيقة. ردود فعل الجمهور إيجابية ويستاهل المشاهدة.",
+  "basis": "لا يوجد رقم RT متوفر · ردود فعل الجمهور إيجابية",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": null,
+    "rt_count": null
+  },
   "by": "claude",
-  "en": "Pradhama Drishtya Kuttakkar is a Malayalam investigative crime thriller starring Parvathy Thiruvothu, running 2h41m. Word-of-mouth has been strongly positive, making it worth watching.",
+  "en": "Pradhama Drishtya Kuttakkar is a Malayalam investigative crime thriller starring Parvathy Thiruvothu, running 170 minutes. Word-of-mouth has been strongly positive, making it worth watching.",
   "fid": "pradhama-drishtya-kuttakkar",
   "verdict": "yes",
-  "written": "2026-09-26"
+  "written": "2026-09-28"
 }
