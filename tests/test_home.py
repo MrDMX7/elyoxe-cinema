@@ -152,12 +152,12 @@ def test_no_duplicate_ids_on_any_page_even_with_summer_open(tmp_path):
 
 
 def test_the_near_row_is_deleted(out):
-    """«يبدأ قريب منك» and its script are deleted (W2-P4, MASTER-PLAN §4.2 #20): the board (W2-P2) is its place. Until the
-    board fills home.after_bill, an empty anchor keeps /#now landing under the billboard."""
+    """«يبدأ قريب منك» and its script are deleted (W2-P4, MASTER-PLAN §4.2 #20): the board (W2-P2, now merged too) is
+    its place and claims id="now" itself, so /#now still lands under the billboard."""
     for parts in ((), ("en",)):
         h = read(out, *parts)
         assert "r-near" not in h and "data-near-row" not in h and "data-near-sub" not in h
-        assert h.count('id="now"') == 1 and '<div id="now"></div>' in h
+        assert h.count('id="now"') == 1
     js = open(os.path.join(ROOT, "src", "js", "home.js"), encoding="utf-8").read()
     assert "function renderNear(" not in js and "function renderNow(" not in js and "function nowPick(" not in js
     assert not os.path.exists(os.path.join(ROOT, "src", "css", "ui-near.css"))

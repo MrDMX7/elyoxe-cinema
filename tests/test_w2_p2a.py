@@ -76,15 +76,16 @@ def test_dubai_rows_are_in_home_with_clean_show_links(out):
         assert "?" not in href
 
 
-def test_the_board_id_now_waits_for_the_old_near_row_to_go(out):
-    """MASTER-PLAN §6.1: on the integration branch, before W2-P4 merges, the old near row still owns id="now" and the
-    board does not draw a second one. board.py's own near_row_holds_now() reads the live pages/_core/home.py, so this
-    also proves the docstring's claim is true of the checked-in file, not just asserted in prose."""
+def test_the_board_id_now_takes_over_once_the_old_near_row_is_gone(out):
+    """MASTER-PLAN §6.1: on legend, W2-P4 (merged before this package) already deleted the old near row, so
+    board.py's own near_row_holds_now() (reading the live pages/_core/home.py) returns False and the board claims
+    id="now" itself — no second claimant, no empty placeholder left over."""
     h = read(out, "index.html")
     ids_now = re.findall(r'\bid="now"', h)
     assert len(ids_now) == 1, ids_now
-    assert 'data-near-row id="now"' in h or 'id="now" data-near-row' in h
-    assert board_mod.NEAR_NOW is True
+    assert 'data-near-row' not in h
+    assert re.search(r'<section class="board wrap b-home" data-board="home" id="now"', h)
+    assert board_mod.NEAR_NOW is False
 
 
 def test_feel_js_no_longer_carries_the_data_now_handler():
