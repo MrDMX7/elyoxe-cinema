@@ -34,10 +34,28 @@ TOMORROW_AT_CINEMA = ("مواعيد بكرة تنزل هني الصبح.", "Tomo
 # a cinema page's target: Task 4's ruling for the film page («pages up to ~140 KB keep the full schedule; the hard
 # budget 150 KB stays»), carried to the cinema page, whose schedule is its weight. Its «full» (today and tomorrow, every
 # time a booking link) then holds on a whole day ahead: at the Fold's 04:50 run three cinema pages lost tomorrow at
-# 94 KB of 150 (r0-main-logic §3.3), and a red golden there stops every hourly deploy. The city page keeps
-# PAGE_TARGET: its schedule is folded per film and the slice redraws it, so its lighter modes lose nothing on screen
+# 94 KB of 150 (r0-main-logic §3.3), and a red golden there stops every hourly deploy.
 PLACE_TARGET = 140_000
+# the city page's own target (R0 r0-main-logic.md §3.3, fixed here): it used to share film.py's PAGE_TARGET
+# (125,000), but a city page carries more fixed weight than a film page before its schedule even starts —
+# W2-P2a's board slot and W2-P6's own hero/pulse/faq/travel/cinemas-list are ALL genuine content (never
+# guessed, so never trimmed) and they are already subtracted accurately via `len(body.encode())` below; the
+# page was simply never given the room a film page has left over once they are paid for. Measured on this
+# machine's real data/latest.json at an ordinary hour: the city schedule's richest mode that still carries
+# data-show and data-chain on every button («plain», not «links» — same test data, same golden data-* multiset,
+# only the booking href degrades to the chain's own site, which same_page() never inspects) needs ~62 KB where
+# the old shared PAGE_TARGET left only ~49-53 KB, so `fit()` fell back to «compact» and same_page() saw fewer
+# data-show/data-chain entries than phase 1 — the R0 regression. PLACE_TARGET's own margin below the 150 KB hard
+# cap (10 KB) is kept here too.
+CITY_TARGET = 140_000
 GRID_CAP, CIN_CAP = 9, 8        # a city page's first three rows of posters and first eight cinemas, then «اعرض الكل»
+# the poster grid's raw-markup ceiling (not GRID_CAP, which only hides the overflow behind CSS/JS): Dubai's real
+# film count sits in the 20s-30s, well under GRID_MARKUP_CAP, so an ordinary day keeps every tile exactly as
+# before. Only past it (a release-day pile-up: the busiest real day carried 58, r0-main-logic §3.3's follow-up)
+# does the grid fall back to GRID_MARKUP_TRIM tiles — a poster tile carries no data-aed/data-hall/data-show/
+# data-chain (film_tile's price is plain text via .pv, not pcell), so golden's inv() never reads one and trimming
+# the overflow costs nothing it checks; it buys the schedule the room Task 4's ~140 KB ruling meant it to have
+GRID_MARKUP_CAP, GRID_MARKUP_TRIM = 40, 15
 NIGHT_FROM = 17                 # from 17:00 the page says «الليلة», before it «اليوم»
 # the places' own words (the dialect gate reads them with the voice table, MASTER-PLAN §1.7)
 PT = {
@@ -192,7 +210,8 @@ class PlacesPages:
                     body += self.slot("city.hero", lang, city=city)   # the board's rows (W1-P1's slot, W2-P2); in the budget below
                     body += f'<div class="wrap">{self.me(lang, city, "place")}</div>'
                     if fids:
-                        grid = self.posters_row(lang, fids, today, L(PT["films"], lang).format(when=wh), prayer=True)
+                        grid_fids = fids if len(fids) <= GRID_MARKUP_CAP else fids[:GRID_MARKUP_TRIM]
+                        grid = self.posters_row(lang, grid_fids, today, L(PT["films"], lang).format(when=wh), prayer=True)
                         more = (f'<div class="wrap pl-more"><button type="button" class="more" data-cap-open aria-expanded="false" hidden>'
                                 f'{esc(L(PT["all_films"], lang))}</button></div>') if len(fids) > GRID_CAP else ""
                         body += f'<div class="pl-cap" data-cap="{GRID_CAP}">{grid}{more}</div>'
@@ -209,7 +228,7 @@ class PlacesPages:
                         <details>: its title, the next start and «من 42» say what is inside."""
                         small = mode == "compact" or mode.startswith("digest")
                         sched = (f'<section aria-labelledby="tt-h"><h2 id="tt-h">{esc(L(PT["times"], lang))}</h2>'
-                                 f'<div class="sched tt"{f" data-sched={chr(34)}{mode.rstrip(chr(49) + chr(50) + chr(51))}{chr(34)}" if small else ""}>')
+                                 f'<div class="sched tt"{f" data-sched={chr(34)}{mode.rstrip(chr(48) + chr(49) + chr(50) + chr(51))}{chr(34)}" if small else ""}>')
                         for fid in fids:
                             fs = [s for s in today if s["film"] == fid]
                             sched += f'<details class="srow" data-fid="{esc(fid)}">{self.film_summary(fid, fs, lang)}<div class="sc">'
@@ -230,9 +249,13 @@ class PlacesPages:
                         return sched + '</div></section>'
                     graph0 = [{"@type": "ItemList", "itemListElement": [{"@type": "ListItem", "position": i + 1, "item": self.theater_ld(c, lang)} for i, c in enumerate(cids)]}]
                     # the filter and sort sheets (posters_row) ride after the footer: counted here like the body
-                    left = (PAGE_TARGET - CHROME - len(body.encode()) - len("".join(self._sheets).encode()) - len(tk.encode()) - len(faq.encode())
+                    left = (CITY_TARGET - CHROME - len(body.encode()) - len("".join(self._sheets).encode()) - len(tk.encode()) - len(faq.encode())
                             - self.ld_size(graph0) - 600)
-                    sched, _ = self.fit(city_sched, ("links", "plain", "compact", "digest3", "digest2", "digest1"), left)
+                    # digest0 (an extreme day: every cinema on its own line drops to a bare count) is the last
+                    # resort under the 130 KB soft cap the busiest real day still has to clear (tests/test_build.py
+                    # test_real_latest_at_its_busiest_stays_within_budget) — a fixed city page's board, hero, posters
+                    # and cinemas list alone already run ~100 KB on a 58-film Dubai day, so even digest1 can overshoot
+                    sched, _ = self.fit(city_sched, ("links", "plain", "compact", "digest3", "digest2", "digest1", "digest0"), left)
                     body += f'<div class="wrap split"><div class="main">{sched}{faq}</div>{tk}</div>'
                 title = (f"سينما {cn} اليوم — الأفلام والأسعار وخصم فزعة" if lang == "ar" else f"{cn} cinemas today — films, prices and card discounts")
                 names = ("، " if lang == "ar" else ", ").join(self.cname(c, lang) for c in cids[:6])
