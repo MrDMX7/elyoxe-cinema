@@ -113,6 +113,8 @@ def inv(b):
 
 
 CITY_PAGE = re.compile(r"^(en/)?[a-z-]+/index\.html$")
+# W2-P6 (MASTER-PLAN §2.4): a cinema page, /<city>/<cinema>/ in either language
+CINEMA_PAGE = re.compile(r"^(en/)?(" + "|".join(re.escape(c) for c, _, _ in build.CITIES) + r")/[a-z0-9-]+/index\.html$")
 
 
 def same_page(path, x, y):
@@ -120,10 +122,15 @@ def same_page(path, x, y):
     text, digest) is chosen by the bytes left after everything above it (Kit.fit), and the redesign's lighter tiles
     (UI redesign Task 3 fix round 1: the hover panel left the markup) leave more, so a busy city that phase 1 drew
     compact may now draw every time as a button. Then its showtimes and chains may only be added to, never lost;
-    everything else stays equal."""
+    everything else stays equal.
+    A cinema page likewise (W2-P6): its schedule's mode (today and tomorrow, today only, plain, compact) is chosen the
+    same way, and W2-P6 gave it Task 4's ~140 KB target and deleted its five rows of controls, so a busy cinema phase 1
+    drew for today only may now carry tomorrow too: its showtimes, chains and hall blocks may only be added to. The
+    other way round is the failure this rule never excuses: at the Fold's 04:50 run three cinema pages dropped
+    tomorrow where phase 1 kept it (r0-main-logic §3.3)."""
     if x == y: return True
-    if not CITY_PAGE.match(path): return False
-    rich = ("show", "chain")
+    rich = ("show", "chain") if CITY_PAGE.match(path) else ("show", "chain", "hall") if CINEMA_PAGE.match(path) else None
+    if not rich: return False
     sub = lambda a, b: not (collections.Counter(a) - collections.Counter(b))
     return all(x[k] == y[k] for k in x if k not in rich) and all(sub(x[k], y[k]) for k in rich)
 

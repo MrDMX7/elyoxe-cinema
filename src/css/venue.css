@@ -3,7 +3,7 @@
    .chkd/.prices classes; only the new blocks are styled here. */
 .mall-note,.snacks,.dfeat{padding-block:14px 16px;border-block-end:1px solid var(--line)}
 .mall-note h2,.snacks h2,.dfeat h2{font-size:20px;margin-block-end:6px}
-.mall-late{color:var(--gold);font-size:13px;margin-block-start:8px;line-height:1.6}
+.mall-late{color:var(--dim);font-size:var(--fs-meta);margin-block-start:8px;line-height:1.6}   /* gold is yours only (§1.5): a closing time is not */
 .snacks h3{font-size:15px;font-family:var(--body);font-weight:600;margin-block:12px 4px}
 .snacks .ndesc{display:block;color:var(--seat);font-size:12px;font-weight:400}
 .food-disc{margin:0;padding:0;list-style:none;display:grid;gap:6px}

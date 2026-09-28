@@ -1,0 +1,86 @@
+/* places-page: the city and cinema pages' own sheet (W2-P6, MASTER-PLAN §2.4, §2.5), page-scoped (pages/venue.py
+   PAGE_CSS: /assets/page-city.<hash>.css and page-cinema.<hash>.css), never on the shared sheet every page loads.
+   The lists they share with other pages (.rows, .row, .cf, .sched, the price tables) stay in ui-places.css. */
+/* ------------------------------------------------ W2-P6 (MASTER-PLAN §2.4, §2.5): the city hero. Type and data are the image:
+   «دبي الليلة», the city's clock on 72 px split-flap tiles (the colon the dull part), one pulse sentence, and the
+   velvet glow over it tinted by the hour (--lit, set from the clock by places.js: a colour, never motion) */
+body[data-page=city]::before{block-size:440px;background:radial-gradient(320px 260px at var(--gx) 130px,color-mix(in srgb,var(--velvet) calc(var(--lit,1) * 72%),transparent),transparent)}
+.ch-t{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ch-t .pt{min-inline-size:0;max-inline-size:none;overflow-wrap:anywhere}
+.pl-pick{min-block-size:44px;padding-inline:16px;flex:0 0 auto;font-size:var(--fs-meta)}
+.js .pl-pick[hidden]{visibility:hidden}
+.cclock{display:flex;gap:4px;inline-size:max-content;margin-block-start:16px;font-family:var(--body);font-variant-numeric:tabular-nums lining-nums}
+.cclock .d{min-inline-size:52px;block-size:92px;display:flex;align-items:center;justify-content:center;color:var(--screen);font-weight:600;font-size:72px;line-height:1;
+  background:linear-gradient(var(--tile) calc(50% - 1px),var(--night) calc(50% - 1px) calc(50% + 1px),var(--tile) calc(50% + 1px))}
+.cclock .c{color:var(--seat);font-weight:600;font-size:72px;line-height:92px;padding-inline:2px}
+.cclock .d.go{animation:flip .36s steps(4,end)}
+.pulse{margin-block-start:12px;color:var(--dim);font-size:var(--fs-body);line-height:1.5}
+/* «اعرض كل الأفلام» / «اعرض كل السينمات»: the first three rows of posters and the first eight cinemas, the rest
+   folded in place (with no script nothing is folded). Counted among what the filters left, so a filter never
+   leaves a gap: 9 and 8 are places.py's GRID_CAP and CIN_CAP */
+.js .pl-cap:not(.open) [data-films] > .film:nth-child(n+10 of .film:not(.x)){display:none}
+.js .pl-cap:not(.open) .rows > .row:nth-child(n+9 of .row:not(.x)){display:none}
+.more{min-block-size:44px;margin-block-start:12px;padding-inline:16px;display:inline-flex;align-items:center;background:none;border:1px solid var(--line-2);color:var(--screen);
+  font:inherit;font-size:var(--fs-meta);cursor:pointer}
+.more:hover{border-color:var(--screen)}
+.cins .row{contain-intrinsic-size:auto 76px}
+.cins .row .sub [data-cnext]{color:var(--dim)}
+/* «كل الأوقات»: one line per film (the title isolated, so a long Latin one loses its end, never its start; the next
+   start; «من 42»), its cinemas and times inside. Past times hidden; a closed line holds 49 px, not 200 */
+.tt .srow{display:block;padding-block:0;contain-intrinsic-size:auto 49px}
+.tt .sf{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;align-items:center;gap:12px;min-block-size:48px;padding-block:8px;cursor:pointer;list-style:none}
+.tt .sf::-webkit-details-marker{display:none}
+:root[dir=rtl] .tt .sf .t{text-align:right}   /* a Latin title (dir=ltr) still sits against the line's start */
+.tt .sf .t{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500;font-size:var(--fs-title);line-height:1.35}
+.tt .sf::after{content:"▾";color:var(--seat);font-size:var(--fs-meta)}
+.tt .srow[open] > .sf::after{content:"▴"}
+.tt .nx{color:var(--dim);font-size:var(--fs-meta)}
+.tt .fr{color:var(--seat);font-size:var(--fs-meta);white-space:nowrap}
+.tt .fr .p .num,.tt .fr .p b,.tt .fr .pv .num{font-size:var(--fs-meta)}
+.tt .sc{padding-block:0 16px}
+.tt .tr{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-block-start:8px}
+.tt .tr .hn{flex-basis:100%;color:var(--seat);font-size:var(--fs-meta)}
+.js .srow .tm.past:not(.on){display:none}
+/* ------------------------------------------------ W2-P6: the cinema head: name (and «سينمتي» from W3-P1), the address in the
+   page's language, three 44 px ways there, «المول يسكّر 00:00» and the chain's read time */
+.chead .pt{max-inline-size:none}
+.fav{inline-size:44px;block-size:44px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--line-2);color:var(--screen);cursor:pointer}
+.fav[aria-pressed=true]{color:var(--gold);border-color:var(--gold)}
+.ch-a{margin-block-start:8px;color:var(--dim);font-size:var(--fs-body);line-height:1.5}
+.go-r{display:flex;flex-wrap:wrap;gap:8px;margin-block-start:16px}
+.go-b{min-block-size:44px;display:inline-flex;align-items:center;padding-inline:16px;border:1px solid var(--line-2);color:var(--screen);text-decoration:none;font-size:var(--fs-meta);font-weight:500}
+.go-b:hover{border-color:var(--screen)}
+.chead .meta .closes{color:var(--screen)}
+.chead .mall-late{margin-block-start:8px;color:var(--dim);font-size:var(--fs-meta);line-height:1.6}
+/* «الليلة هنا»: one block per film, upcoming times only; the ones already started fold under «+12 عرض فات»
+   (places.js), shown struck once opened. Tomorrow folds under its heading */
+.here-h{align-items:center;flex-wrap:wrap;row-gap:8px;padding-block:0 12px;border-block-end:1px solid var(--line)}
+.here-h h2{flex:1 1 auto;min-inline-size:0;font-size:var(--fs-h2)}
+.here-h .chip{flex:0 0 auto;min-block-size:44px;padding-inline:16px;gap:8px}
+.here-h .chip svg{inline-size:16px;block-size:16px}
+.js .cf:not(.all-t) .tm.past:not(.on){display:none}
+.js .cf.all-t .hl.x:not(.xf){display:block!important}
+.cf-past{min-block-size:44px;display:inline-flex;align-items:center;background:none;border:0;padding:0;color:var(--seat);font:inherit;font-size:var(--fs-meta);
+  text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:.3em;cursor:pointer}
+details.day{margin-block-start:var(--s5)}
+details.day > summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-block-size:48px;padding-block:8px;border-block-end:1px solid var(--line);cursor:pointer;list-style:none}
+details.day > summary::-webkit-details-marker{display:none}
+details.day > summary::after{content:"▾";color:var(--seat)}
+details.day[open] > summary::after{content:"▴"}
+details.day > summary h2{font-size:var(--fs-h2)}
+/* «القاعات والأسعار»: one table, a hall's name heading its seats; gold on the one cheapest (prices.js lows()) */
+.hp .hh th{padding-block:20px 4px;color:var(--screen);font-weight:500;font-size:var(--fs-title)}
+.hp tbody:first-of-type .hh th{padding-block-start:12px}
+.hp tbody th[scope=row]{color:var(--dim)}
+.hwhat{margin-block-start:16px}
+.hwhat summary{min-block-size:44px;display:flex;align-items:center;cursor:pointer;color:var(--screen);font-size:var(--fs-meta)}
+.hwhat dl{margin:0;display:grid;gap:12px;padding-block:4px 8px}
+.hwhat dt{font-weight:500}
+.hwhat dd{margin:0;color:var(--dim);font-size:var(--fs-body);line-height:var(--lh-body);max-inline-size:62ch}
+/* the questions people ask, answered from the data as text (no FAQPage markup) */
+.faq h3{font-family:var(--body);font-weight:500;font-size:var(--fs-title);line-height:1.35;margin-block:20px 4px}
+.faq p{color:var(--dim);font-size:var(--fs-body);line-height:var(--lh-body);max-inline-size:62ch}
+@media (min-width:1024px){
+  .tt{grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:40px;align-items:start}
+}
+@media (prefers-reduced-motion:reduce){.cclock .d.go{animation:none}}

@@ -1,10 +1,13 @@
 """pages/venue.py — Phase 2 Task 4: "inside the mall" (docs/superpowers/specs/2026-09-27-phase2-design.md,
 C «Planning» + B.46 «Snacks»). Fills one of site_kit.Kit.SLOTS (docs/PLUGINS.md):
 
-  cinema.after_halls  «المول يسكّر HH:MM» + which of today's shows end after that (malls.yaml), the
-                      chain's snack combos (snacks.yaml) and any OFFICIAL card F&B discount already in
+  cinema.after_halls  the chain's snack combos (snacks.yaml) and any OFFICIAL card F&B discount already in
                       discounts.yaml (site.rules — never a new number), each under its card's name, and
                       today's double-feature pairs at this cinema that have not started yet.
+
+«المول يسكّر HH:MM» and the films that end after it (malls.yaml) moved into the cinema page's head (W2-P6,
+MASTER-PLAN §2.4: pages/_core/places.py reads close_minutes, mall_for_cinema and shows_past_closing from here);
+mall_section() stays for any other page that wants the whole block.
 
 The film page's all-cities double feature is deleted (W0-P2, MASTER-PLAN §4.1 #14: 107 pairs, past times,
 above the schedule). On the cinema page a pair leaves the list when its first film starts: the build drops
@@ -26,7 +29,11 @@ from site_kit import L, Plugin, ROOT, dates, esc, human_date, money, num, rule_s
 
 CSS = ("venue",)
 JS = ("plan",)
-LAZY_JS = ("when",)
+# the city and cinema pages' own behaviour and sheet (W2-P6): a lazy chunk and a page-scoped stylesheet, so neither
+# the main bundle nor the shared sheet every page loads carries them (MASTER-PLAN §7.2). Declared here, the places'
+# plug-in, because pages/core.py (the places' pages) is not W2-P6's to edit
+LAZY_JS = ("when", "places-live")
+PAGE_CSS = {"city": ("places-page",), "cinema": ("places-page",)}
 
 MALLS_PATH = os.path.join(ROOT, "malls.yaml")
 SNACKS_PATH = os.path.join(ROOT, "snacks.yaml")
@@ -269,11 +276,9 @@ def future_pairs(kit, cid):
 
 
 def register(site):
-    malls = load_malls()
-
     def after_halls(kit, lang, cid):
         chain = kit.cinemas[cid]["chain"]
-        return (mall_section(kit, lang, cid, malls) + snacks_section(kit, lang, chain)
-                + double_feature_html(kit, lang, future_pairs(kit, cid), kit.today))
+        return snacks_section(kit, lang, chain) + double_feature_html(kit, lang, future_pairs(kit, cid), kit.today)
 
-    return Plugin(slots={"cinema.after_halls": after_halls}, page_js={"cinema": ["when"]})
+    # film.double is not registered (W0-P2, MASTER-PLAN §4.1 #14 and §4.2 #27): the film page has no double feature
+    return Plugin(slots={"cinema.after_halls": after_halls}, page_js={"cinema": ["when", "places-live"], "city": ["places-live"]})

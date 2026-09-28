@@ -219,9 +219,11 @@ def test_counts_read_in_arabic_grammar(out):
     li = lambda city: re.search(rf'<section class="wrap cities" id="{city}"><h2><a href="/{city}/">[^<]+</a> <small>(.*?)</small></h2>', home).group(1)
     assert li("umm-al-quwain") == "سينما وحدة" and li("dubai") == '<span class="num">3</span> سينمات'
     assert "1 سينما" not in home and '<span class="num">1</span> سينما' not in home
-    lead = re.search(r'<p class="lead">(.*?)</p>', read(out, "umm-al-quwain", "index.html")).group(1)
-    assert lead.startswith("سينما وحدة و") and " اليوم." in lead
-    assert re.search(r'<p class="lead">1 cinema and \d+ films? today\.', read(out, "en", "umm-al-quwain", "index.html"))
+    # W2-P6 (MASTER-PLAN §2.5) redesigned the city page hero: the cinema-and-film-count «lead» paragraph is gone,
+    # replaced by the pulse sentence (show counts, from pulse_text/pulse_words), still Arabic-grammar-correct
+    pulse = re.search(r'<p class="pulse"[^>]*>(.*?)</p>', read(out, "umm-al-quwain", "index.html")).group(1)
+    assert re.search(r"^\d+ عروض? باقي(ة|ن)? الليلة", pulse) or "ما في عروض" in pulse
+    assert re.search(r'<p class="pulse"[^>]*>\d+ shows? left tonight', read(out, "en", "umm-al-quwain", "index.html"))
 
 
 # ------------------------------------------------------------------ #10 the ticket's terms, each once

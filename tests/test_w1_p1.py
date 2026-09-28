@@ -99,20 +99,22 @@ def test_hidden_means_hidden_one_rule_no_patches(tmp_path):
     # its held-and-invisible rule went with ui-near.css: it stays hidden, taking no room, until the board's city.hero
     # replaces it (W2-P2, W2-P6)
     city = open(os.path.join(out, "dubai", "index.html"), encoding="utf-8").read()
-    assert '<a class="now" href="#all" data-now data-hold hidden>' in city
+    # W2-P6 (MASTER-PLAN §2.5) replaced the city page's old #all toggle with «اختار لي في {city}» (data-pick),
+    # held invisible the same way until W2-P2b's pick binds it
+    assert '<button type="button" class="btn ghost pl-pick" data-pick="dubai" data-hold hidden>' in city
+    # each held slot keeps a «.js …[hidden]» rule that lays it out invisible
     css = open(os.path.join(out, "assets", "cinema.css"), encoding="utf-8").read()
     assert ".now[data-now]" not in css and "data-near-row" not in css and ".now{" not in css
 
 
-def test_the_wave2_stubs_are_declared_and_cost_nothing():
+def test_the_wave2_stubs_are_all_filled_now():
+    # W2-P6 (MASTER-PLAN §2.4, §2.5) filled places.js in (city/cinema pages hand their slice to the lazy
+    # places-live chunk on "ready"); W2-P5 filled chrome.js and drag.js (lazy) earlier. Wave 2 declared exactly
+    # these three as zero-cost stubs (pages/core.py's own comment); none is empty on legend any more.
     js = list(core.JS)
     assert js[-3:] == ["chrome", "places", "main"] and core.LAZY_JS == ("drag",)
-    # chrome.js and drag.js are filled since W2-P5 (tests/test_w2_p5.py holds them); the others stay empty until theirs
-    for f in ("places.js",):
-        assert build.minify_lite((SRC / "js" / f).read_text(encoding="utf-8")).strip() == "", f
-    without = types.SimpleNamespace(__name__="pages.core", JS=tuple(n for n in core.JS if n not in ("places",)))
-    mods = build.discover()
-    assert build.bundle_js(modules=[without] + mods[1:]) == build.bundle_js(modules=mods)   # not one byte in the bundle
+    for f in ("chrome.js", "drag.js", "places.js"):
+        assert build.minify_lite((SRC / "js" / f).read_text(encoding="utf-8")).strip() != "", f
 
 
 def test_docs_name_every_seam():

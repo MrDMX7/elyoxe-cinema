@@ -55,7 +55,6 @@ table.prices{inline-size:100%;border-collapse:collapse;font-size:var(--fs-body)}
   .split .ticket{margin-block-start:36px}
   .cf{grid-template-columns:96px minmax(0,1fr);gap:20px}
 }
-.cin-h{padding-block:16px 0}
 /* long schedules: a row far below the fold is not laid out or painted until it comes near (Lighthouse's
    main-thread time was two thirds style + layout on a busy cinema page). Paint containment clips at the
    padding box, so each row gets 4 px of inline padding back from a negative margin: a time button's focus
