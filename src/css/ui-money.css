@@ -6,6 +6,11 @@
 .chains{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(16rem,100%),1fr));column-gap:32px}
 .chains li{padding-block:10px;border-block-end:1px solid var(--line);display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
 .chains b{font-weight:500}
+/* a chain's freshness (Kit.fresh on the film, city and cinema pages; /sources/): .age.stale must follow the film page's
+   .cg-m .age, as it did in the one stylesheet, so a failed refresh reads in --dim there too */
+.age{color:var(--seat);font-size:12px;font-weight:400}
+.stale,.age.stale{color:var(--dim);font-size:12px;font-weight:500}
+.age.stale::before{content:"\26A0\FE0E  "}   /* a text marker, not a seventh colour */
 .src,.chkd{color:var(--seat);font-size:12px}
 .weak{color:var(--seat);font-size:12px}
 .crd{grid-template-areas:"nm val" "sub sub"}
