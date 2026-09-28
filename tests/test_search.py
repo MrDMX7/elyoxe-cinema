@@ -62,7 +62,9 @@ def test_films_and_cinemas_indexed_with_rule_generated_keys(index):
     films = {e["p"]: e for e in index if e["t"] == "f"}
     assert "film/spider-man-brand-new-day" in films
     e = films["film/spider-man-brand-new-day"]
-    assert e["a"] and e["e"] and set(e["k"]) == {search.normalize(e["a"]), search.normalize(e["e"])}
+    # W1-D2: the keys are the two names' plus every other sourced Arabic name the film carries (aka_ar)
+    names = [e["a"], e["e"], *json.load(open(DATA, encoding="utf-8"))["films"]["spider-man-brand-new-day"].get("aka_ar", [])]
+    assert e["a"] and e["e"] and set(e["k"]) == {search.normalize(n) for n in names}
     assert "spidermanbrandnewday" in e["k"]
     cinemas = {e["p"] for e in index if e["t"] == "c"}
     assert "dubai/reel-dubai-mall" in cinemas
@@ -138,7 +140,7 @@ def test_closed_panel_css_guards_the_hidden_attribute(out):
 
 def test_every_entry_has_a_name_a_path_and_at_least_one_key(index):
     for e in index:
-        assert e["t"] in ("f", "c", "m", "p")
+        assert e["t"] in ("f", "c", "m", "p", "y", "h", "n")   # W1-D2: city, format or hall, chain
         assert e["a"] or e["e"]
         assert e["p"] and "//" not in e["p"] and not e["p"].startswith("/") and not e["p"].endswith("/")
         assert e["k"]

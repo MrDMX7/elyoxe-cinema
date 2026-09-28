@@ -22,7 +22,34 @@ var STR = AR ? {
     s = String(s == null ? "" : s).normalize("NFKC").toLowerCase();
     s = s.replace(DIA, "").replace(ALEF, "ا");
     s = s.replace(/ة/g, "ه").replace(/ى/g, "ي").replace(/ؤ/g, "و").replace(/ئ/g, "ي").replace(/ء/g, "");
+    s = s.replace(/ڤ/g, "ف").replace(/پ/g, "ب").replace(/گ/g, "ك").replace(/چ/g, "ج");
     return s.replace(KEEP, "");
+  }
+
+  /* W1-D2: the consonant skeleton of an Arabic query (pages/search.py skeleton_ar, the same rule): an Arabic
+     spelling of a Latin name ("أفنجرز", "سبايدر", "اوديسا") meets the name's own skeleton, `s` in the index */
+  /* each word folded by norm(), then every letter U+0621..U+064A read as its class in SKT ("." drops it; a, w and y
+     count only as a word's first letter); Eastern digits become Western (U+0660 and U+06F0 both end in 0) and stay
+     as they are; a repeated class counts once */
+  var SKT = "......ab.ttk.kdtrssxsdtdak......fkklmn.w.y";
+  function skel(raw) {
+    var out = "";
+    String(raw || "").replace(/[٠-٩۰-۹]/g, function (d) { return d.charCodeAt(0) % 16; }).replace(/تش/g, "ش").split(/\s+/).forEach(function (w) {
+      w = norm(w);
+      for (var i = 0, k = "", c; i < w.length; i++) {
+        c = w.charAt(i);
+        if (c > "9") c = SKT.charAt(w.charCodeAt(i) - 1569);
+        if (c === "." || (i && "awy".indexOf(c) >= 0)) c = "";
+        if (c && (c <= "9" || k.slice(-1) !== c)) k += c;
+      }
+      out += k;
+    });
+    return out;
+  }
+  /* 50 when the query's skeleton starts the name's, 45 when it starts at a later word (below a direct match) */
+  function sks(q, s) {
+    for (var w = s.split(" "), i = 0; q.length > 2 && i < w.length; i++) if (!w.slice(i).join("").indexOf(q)) return i ? 45 : 50;
+    return -1;
   }
 
   /* bounded Levenshtein: never explores past `max`, so a bad candidate bails in O(max*len) not O(n*m) */
@@ -90,7 +117,8 @@ var STR = AR ? {
     { key: "cm", label: STR.cinemas },
     { key: "p", label: STR.people }
   ];
-  function groupOf(t) { return t === "c" || t === "m" ? "cm" : t; }
+  /* a city (y) and a format or hall (h) sit with the cinemas; a chain (n) has no row of its own (W2-P8 chips) */
+  function groupOf(t) { return t === "c" || t === "m" || t === "y" || t === "h" ? "cm" : t; }
 
   var panel, input, list, empty, btn, opener = null, activeId = -1, items = [];
 
@@ -129,9 +157,10 @@ var STR = AR ? {
     var query = norm(raw);
     if (!query) { render([]); return; }
     if (!DATA) { load().then(function () { search(raw); }); return; }
-    var scored = [];
+    var scored = [], sq = /[\u0600-\u06ff]/.test(raw) ? skel(raw) : "";
     for (var i = 0; i < DATA.length; i++) {
       var s = score(query, DATA[i].k || []);
+      if (sq && DATA[i].s) s = Math.max(s, sks(sq, DATA[i].s));
       if (s >= 0) scored.push({ s: s, e: DATA[i] });
     }
     /* a showing match always outranks an archived one, whatever their scores -- the archived film is
