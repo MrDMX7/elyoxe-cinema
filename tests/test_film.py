@@ -66,19 +66,20 @@ def test_hero_frame_is_the_lcp_and_poster_fallback_is_one_download(tmp_path):
     build.build(str(p), DISC, o, noindex=False, modules=build.discover(only=("core",)))
     h = read(o, "film", FID)
     assert '<section class="fhero fr">' in h
+    # the frame is full-bleed on a phone too: `100vw` (W2-P1: the old "…, 320px" gave a phone the 640w file)
     assert re.search(r'<link rel="preload" as="image" href="/posters/bd-heart-0123456789-1280\.webp" imagesrcset="[^"]*640w[^"]*1280w" '
-                     r'imagesizes="\(min-width:1024px\) 100vw, 320px" fetchpriority="high">', h)
-    assert 'class="fr"' in h and h.count('fetchpriority="high"') == 2        # the preload and the frame
+                     r'imagesizes="100vw" fetchpriority="high">', h)
+    assert 'class="bd fr"' in h and h.count('fetchpriority="high"') == 2        # the preload and the frame
     assert re.search(r'<span class="pst hero img"[^>]*>.*?loading="lazy"', h)   # the card: desktop only, never fetched on a phone
-    # no frame: the poster blurred (the preloaded 342w file), and the card's `sizes` resolves to that same file on a phone
+    # no frame (W2-P1): no blurred fog; the lit field behind the words, and the poster card is the case, the page's first
+    # poster (eager, fetchpriority high), preloaded with its own srcset and sizes: one download
     h2 = read(o, "film", "sacrifice")
-    assert '<div class="bd pf"' in h2 and 'class="pb"' in h2
-    pb = re.search(r'<img src="([^"]+)" class="pb"', h2).group(1)
+    assert 'class="bd pf"' not in h2 and 'class="pb"' not in h2 and '<div class="bd lit"' in h2
     card = re.search(r'<span class="pst hero img"[^>]*>.*?<img src="([^"]+)"([^>]*)>', h2).group(0)
-    # the card on a phone resolves to the very file the blurred layer fetched: the same src, and if it has a srcset, `1px`
-    # on a phone picks that file's 342w entry
-    assert f'src="{pb}"' in card
-    assert 'srcset=' not in card or ('sizes="(min-width:1024px) 240px, 1px"' in card and f'{pb} 342w' in card)
+    assert 'fetchpriority="high"' in card and 'loading="lazy"' not in card
+    src = re.search(r'<img src="([^"]+)"', card).group(1)
+    assert re.search(r'<link rel="preload" as="image" href="' + re.escape(src) + r'"[^>]*fetchpriority="high">', h2)
+    assert 'srcset=' not in card or 'sizes="(min-width:1024px) 240px, 1px"' in card
 
 
 def test_day_bar_and_its_options_sheet(out):
@@ -283,7 +284,8 @@ def test_unknown_verdict_and_the_hero_without_any_picture(out):
         assert '<section class="fhero np">' in h
         assert re.search(r'<div class="dock"[^>]*hidden>.*?data-dk-open[^>]*>[^<]+</button></div><p class="vh" data-dk-live aria-live="polite"></p>', h)
     css = build.css_source()
-    assert ".fhero.np .fhero-in{padding-block-start:calc(var(--head) + 24px + min(30vw,128px) * 1.5 + 24px)}" in css   # 128: the 4-pt grid (W1-P2)
+    # the typographic tile is the case on a phone as the poster is (W2-P1: .fposter drawn at clamp(120px,20svh,180px))
+    assert ".pst.hero{block-size:clamp(120px,20svh,180px)" in css and ".fhero.fr .fposter{display:none}" in css
     # I1: the «المزيد» rules outrank .lnk (the button no longer carries it); M4: one .cg-m
     assert ".fv-w .fv-m{position:absolute;" in css and css.count(".cg-m{") == 1
     assert 'class="lnk fv-m"' not in read(out, "film", FID)

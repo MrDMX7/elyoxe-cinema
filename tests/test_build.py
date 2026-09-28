@@ -497,31 +497,29 @@ def test_dates_are_human_and_english_runs_marked(site):
 
 
 def test_no_poster_hero_is_not_a_colour_field(site):
-    """The home billboard (UI redesign Task 3, fix round 1 I1) with no trailer frame: the 342w poster as a blurred,
-    darkened full-bleed layer (preloaded, the LCP) and a sharp copy for the desktop's side card that resolves to
-    the same file on a phone; with no poster either, the typographic tile — shown, not hidden by the stylesheet."""
+    """The home billboard with no trailer frame (W2-P1, MASTER-PLAN §1.6): never a blurred fog. The poster stands sharp
+    in the lit case (preloaded with its own srcset and sizes, the LCP); with no poster either, the case is the film's
+    title in Markazi on velvet going to night (a typographic tile, never a flat colour field)."""
     out, _ = site
-    home = read(out)                                   # the fixture's Dubai top tonight (The Paradise) has no poster
+    home = read(out)                                   # the fixture's top tonight (Coyote vs. Acme) has a poster
     bill = home[home.index('<section class="bill"'):home.index("</section>", home.index('<section class="bill"'))]
-    assert '<div class="bd noimg"' in bill and '<span class="pst bd-t"><span class="pst-t" lang="en" dir="ltr">The Paradise</span>' in bill
+    assert re.search(r'<span class="case" style="--pc:#[0-9A-Fa-f]{6}"><img src="/posters/coyote-vs-acme-342\.webp" srcset="[^"]+342w, [^"]+684w" '
+                     r'sizes="\(min-width:1024px\) 240px, 160px"[^>]*fetchpriority="high"', bill)
+    assert re.search(r'<link rel="preload" as="image" href="/posters/coyote-vs-acme-342\.webp" imagesrcset="[^"]+342w, [^"]+684w" '
+                     r'imagesizes="\(min-width:1024px\) 240px, 160px" fetchpriority="high">', home)
+    assert home.count('fetchpriority="high"') == 2      # the preload link and the case's poster: no tile claims it
     css = build.css_source()
-    assert not re.search(r"\.bill \.bd-t\{display:none", css)
-    rule = re.search(r"\.bill \.bd-t\{([^}]*)\}", css).group(1)
-    assert "position:absolute" in rule and "aspect-ratio:2/3" in rule and "opacity:0" not in rule
-    assert re.search(r"\.bill \.bd\.noimg\{background:radial-gradient", css)   # the velvet glow, not the flat --pc
+    assert not re.search(r"\.b(ill|d)[^{}]*\{[^}]*filter:blur", css)   # the fog is gone everywhere
 
     def m(d):
-        d["films"]["the-paradise"].update(poster="https://cinema.elyoxe.com/posters/the-paradise-342.webp",
-                                          poster_2x="https://cinema.elyoxe.com/posters/the-paradise-684.webp")
+        d["films"]["coyote-vs-acme"].update(poster=None, poster_2x=None)
     import tempfile
     h = read(_built(__import__("pathlib").Path(tempfile.mkdtemp()), m))
-    assert re.search(r'<div class="bd pf" style="--pc:#[0-9A-Fa-f]{6}" aria-hidden="true"><img src="/posters/the-paradise-342\.webp" class="pb"[^>]*fetchpriority="high">'
-                     r'<img src="/posters/the-paradise-342\.webp" srcset="[^"]+342w, [^"]+684w" sizes="\(min-width:1024px\) 300px, 1px" class="ps"', h)
-    assert '<link rel="preload" as="image" href="/posters/the-paradise-342.webp" fetchpriority="high">' in h
-    assert h.count('fetchpriority="high"') == 2      # the preload link and the billboard's poster: no tile claims it
-    # blurred beyond reading on every screen (the poster's printed title never fights the headline)
-    blur = re.search(r"\.bill \.bd\.pf img\.pb\{[^}]*filter:blur\((\d+)px\)", css)
-    assert blur and int(blur.group(1)) >= 24
+    bill = h[h.index('<section class="bill"'):h.index("</section>", h.index('<section class="bill"'))]
+    assert re.search(r'<div class="bd noimg" style="--pc:#[0-9A-Fa-f]{6}" aria-hidden="true"></div><div class="trk"><span class="case pst"[^>]*>'
+                     r'<span class="pst-t">كايوتي ضد أكمي</span>', bill)
+    assert re.search(r"\.case\.pst\{[^}]*background:linear-gradient\(180deg,color-mix\(in srgb,var\(--velvet\)", css)
+    assert re.search(r"\.bd\.noimg\{background:radial-gradient", css)   # the velvet glow, not the flat --pc
 
 
 def test_ends_only_when_known(site):
@@ -537,7 +535,8 @@ def test_posters_and_tiles(site):
     # our own posters are root-relative in markup (absolute in og:image and JSON-LD). The billboard is the
     # page's image priority (tests above): no tile has fetchpriority, and all but the first are lazy
     assert re.search(r'<img src="/posters/coyote-vs-acme-342\.webp" srcset="[^"]+-342\.webp 342w, [^"]+-684\.webp 684w" sizes="\(min-width:1024px\) 13vw, 32vw"', home)
-    assert 'fetchpriority="high"' not in home
+    after_bill = home[home.index("</section>", home.index('<section class="bill"')):]
+    assert 'fetchpriority="high"' not in after_bill                               # the billboard's case is the LCP (W2-P1)
     assert home.count('loading="lazy"') >= 1
     # no poster: a typographic tile in the film's colour (or a hue from its id), never a broken image
     assert re.search(r'<span class="pst" style="--pc:#1D2A4A"><span class="pst-t">سبايدر مان', home)

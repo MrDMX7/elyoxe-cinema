@@ -50,10 +50,10 @@ def test_every_core_partial_exists_is_listed_once_and_the_edge_is_page_scoped():
     files = sorted(p.stem for p in (SRC / "css").glob("ui-*.css"))
     assert sorted(listed) == files and len(listed) == len(set(listed))
     assert core.PAGE_CSS == {"404": ("ui-edge",)} and "ui-edge" not in core.CSS
-    for stub in ("ui-lights", "ui-edge"):          # W2-P1 and W2-P10 fill them: no rule yet (W1-P2 filled ui-paper)
+    for stub in ("ui-edge",):          # W2-P10 fills it: no rule yet (W1-P2 filled ui-paper, W2-P1 ui-lights)
         assert build.minify_css((SRC / "css" / f"{stub}.css").read_text(encoding="utf-8")).strip() == ""
     for n in files:
-        if n not in ("ui-lights", "ui-edge"):
+        if n not in ("ui-edge",):
             assert build.minify_css((SRC / "css" / f"{n}.css").read_text(encoding="utf-8")).strip(), n
 
 

@@ -1,16 +1,83 @@
-"""Home's billboard: the slides, the frame or the lit poster, the JSON island bill.js swaps from (pages/core.py's
-billboard family, moved as it was by W1-P1). Owner in Wave 2: W2-P1 «الشاشة» (MASTER-PLAN §6.2).
+"""«الشاشة», home's billboard (W2-P1; MASTER-PLAN §2.1, §1.6, §1.3). Owner in Wave 2: W2-P1 (MASTER-PLAN §6.2).
 
-Methods of pages.core.CorePages: `self` is a Pages, which reads everything else (self.page, self.poster,
-self.shows ...) through to the site."""
+One billboard for every visitor, whatever their city: slide 1 is the UAE's most-shown film tonight under the city-free
+eyebrow «الأكثر عرضاً الليلة» (the server can't know a first visitor's city before paint; the city's own answer is the
+board under it), and nothing on it changes after paint except by the visitor's own hand (a swipe, a card). The other
+slides are films of the country's top 10 that have a trailer frame and are not «تجنّبه» (never promoted); from
+Wednesday 18:00 to Saturday a new release may take slide 2. Every slide is written here, so a phone swipes a CSS
+scroll-snap strip and a desktop cross-fades them (src/js/bill.js); only slide 1's picture loads with the page.
+
+Methods of pages.core.CorePages: `self` is a Pages, which reads everything else (self.page, self.screen, self.shows
+...) through to the site."""
+import datetime as dt
+
 from site_kit import *  # noqa: F401,F403  (the names these pages were written against)
+
+# the billboard's own words (the voice table, MASTER-PLAN §1.7; the dialect gate reviews them in W4)
+BILL_T = {
+    "top": ("الأكثر عرضاً الليلة", "Most shown tonight"),
+    "on": ("يعرض الليلة", "Showing tonight"),
+    "new": ("جديد هالخميس", "New this Thursday"),
+    "eve": ("بكرة ينزل", "Opens tomorrow"),
+    "times": ("الأوقات", "Times"),                       # slide 1 when it is «تجنّبه»: honest, and no price on it
+    "unknown": ("الحكم بعده", "No verdict yet"),          # §1.7: the single short line, no body text
+    "door_no": ("عندك بطاقة؟ شوف سعرك", "Got a card? See your price"),
+    "door_yes": ("السعر بعد خصم {card}", "Price after {card}"),
+    "door_not": ("ما في خصم {card} في {chain}", "No {card} discount at {chain}"),
+    "slide": ("شريحة", "slide"),
+    "of": ("{i} من {n}", "{i} of {n}"),
+}
+PLAY = '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>'
 
 
 class BillPages:
-    # -------------------------------------------------- home: the billboard
+    BILL_N = 5   # slides at most
+
+    # -------------------------------------------------- which films
+    def bill_pick(self, ranked):
+        """The slides from films ranked by tonight's shows: the first as it is, whatever its verdict (its eyebrow and
+        its verdict line say so), then the films of the top 10 that have a trailer frame and are not «تجنّبه»."""
+        if not ranked: return []
+        ok = lambda f: self.frame(f) is not None and self.vcode(f) != "skip"
+        return (ranked[:1] + [f for f in ranked[1:10] if ok(f)])[:self.BILL_N]
+
+    def vcode(self, fid):
+        return (self.films[fid].get("verdict") or {}).get("verdict") or "unknown"
+
+    def bill_new(self, ranked):
+        """Wed 18:00 to Sat (Kit.week_phase): (fid, eyebrow key) of a new release that may take slide 2, else None.
+        Wednesday evening: a film that opens tomorrow and already has shows («بكرة ينزل»); Thursday to Saturday: a film
+        released since this Thursday with shows today («جديد هالخميس»). The most shown of them, never «تجنّبه»."""
+        phase = self.week_phase(self.now)
+        if phase == "rest": return None
+        day = self.now.date()
+        if phase == "wed-eve":
+            want, key = {(day + dt.timedelta(days=1)).isoformat()}, "eve"
+            count = lambda f: len(self._by_film.get(f, []))
+        else:
+            thu = day - dt.timedelta(days=day.weekday() - 3)
+            want, key = {(thu + dt.timedelta(days=i)).isoformat() for i in range((day - thu).days + 1)}, "new"
+            count = lambda f: self.today_count.get(f, 0)
+        coming = self.d.get("coming") if isinstance(self.d.get("coming"), dict) else {}
+        rel = lambda f: self.films[f].get("released") or (coming.get(f) or {}).get("release_date")
+        new = [f for f in self.showing if rel(f) in want and count(f) > 0 and self.vcode(f) != "skip"]
+        new.sort(key=lambda f: (-count(f), f))
+        return (new[0], key) if new else None
+
+    def bill_slides(self, ranked):
+        """[(fid, eyebrow key)]: slide 1 «top», then the calendar's new release (Wed 18:00 to Sat), then «on»."""
+        pick = self.bill_pick(ranked)
+        if not pick: return []
+        out = [(pick[0], "top")]
+        nw = self.bill_new(ranked)
+        if nw and nw[0] != pick[0]: out.append(nw)
+        out += [(f, "on") for f in pick[1:] if not (nw and f == nw[0])]
+        return out[:self.BILL_N]
+
+    # -------------------------------------------------- what each slide says
     def bill_facts(self, fid, lang):
-        """The billboard's facts, each its own span (no dots): the critics' (or audience's) score, the runtime,
-        the rating when the score did not already take its place, two genres."""
+        """The desktop's facts line, each its own span (no dots): the critics' (or audience's) score, the runtime,
+        the rating when the score did not already take its place, two genres. A phone has none (§2.1)."""
         f = self.films[fid]; rt = f.get("rt") or {}
         out = [self.score(f, lang)]
         if f.get("runtime"): out.append(f'{num(f["runtime"])} {L(HOME_T["min"], lang)}')
@@ -20,91 +87,67 @@ class BillPages:
         if g: out.append(esc(("، " if lang == "ar" else ", ").join(g)))
         return [x for x in out if x]
 
-    def bill_film(self, fid, lang):
-        """One film as the billboard's script swaps it in (the JSON island): what the server writes for the first."""
-        f = self.films[fid]; v, vw = self.vword(fid, lang); vd = f.get("verdict") or {}
-        say = vd.get("ar") if lang == "ar" else vd.get("en")
-        bd = f.get("backdrop") if isinstance(f.get("backdrop"), dict) else None
-        o = {"t": self.ftitle(fid, lang), "h": P(lang, "film", fid), "v": v, "w": vw, "x": self.bill_facts(fid, lang),
-             "c": f.get("poster_color") or hue(fid)}
-        if self.title_attr(fid, lang): o["e"] = 1
-        if say and v != "unknown": o["s"] = dates(esc(say))   # no verdict yet: the word alone (Task 4 fix round 1, I4)
-        if f.get("trailer"): o["tr"] = f["trailer"]
-        if bd and bd.get("w1280") and bd.get("w640"): o["b"] = [rel(bd["w640"]), rel(bd["w1280"])]
-        elif f.get("poster"): o["p"] = [rel(f["poster"]), rel(f.get("poster_2x") or f["poster"])]
-        return o
+    def bill_price(self, fid, lang):
+        """The film's cheapest ticket in the whole country among the shows still to come when the page was built (today's,
+        else tomorrow's), as a price cell the visitor's card reprices (prices.js); None when nothing is priced. The same
+        for every visitor: the city-specific answer is the board's."""
+        up = [s for s in self._by_film.get(fid, []) if not self.is_past(s)]
+        for d in (self.today, self.tomorrow):
+            mc = self.min_cell([s for s in up if s["date"] == d], lang)
+            if mc: return mc[0]
+        return None
 
-    # a phone draws the frame darkened under the text: 640w is plenty (at 390 px, 2x, `100vw` took the 1280w file)
-    BILL_BD_SIZES = "(min-width:1024px) 100vw, 320px"
+    def bill_slide(self, i, n, fid, eye, lang):
+        """One slide: the screen (Kit.screen: the frame, or the lit case), then the words — eyebrow, the title by its
+        length, the verdict word opening its sentence, the desktop's facts, the velvet «الأوقات والأسعار من 42» and the
+        icon-only trailer button. Slide 1's picture loads with the page; the others' wait for src/js/bill.js."""
+        f = self.films[fid]; v = self.vcode(fid); ar = lang == "ar"
+        sc = self.screen(fid, lang, first=i == 0)
+        if i == 0 and sc["preload"]: self.site._preload = sc["preload"]
+        h = P(lang, "film", fid); t = self.ftitle(fid, lang)
+        vd = f.get("verdict") or {}; say = (vd.get("ar") if ar else vd.get("en")) if v != "unknown" else None
+        word = L(BILL_T["unknown"], lang) if v == "unknown" else L(VERDICT[v], lang)
+        verdict = (f'<p class="bill-v"><b class="v-{v}">{esc(word)}{"." if say else ""}</b>'
+                   + (f" {dates(esc(say))}" if say else "") + "</p>")
+        cell = None if v == "skip" and i == 0 else self.bill_price(fid, lang)
+        go = (f'{esc(L(HOME_T["times"], lang))} <span class="from">{esc(L(HOME_T["from"], lang))} {cell}</span>' if cell
+              else esc(L(BILL_T["times"] if v == "skip" and i == 0 else HOME_T["times"], lang)))
+        tr = f.get("trailer")
+        trailer = (f'<a class="btn ghost bill-tr" href="https://www.youtube-nocookie.com/embed/{esc(tr)}" data-trailer="{esc(tr)}" rel="noopener"'
+                   f' target="_blank" aria-label="{esc(L(HOME_T["trailer"], lang))}">{PLAY}<span class="tr-w" aria-hidden="true">{esc(L(HOME_T["trailer"], lang))}</span></a>'
+                   if tr else "")
+        facts = "".join(f"<span>{x}</span>" for x in self.bill_facts(fid, lang))
+        spill = f' data-spill="{";".join(sc["spill"])}"' if sc["spill"] else ""
+        label = L(BILL_T["of"], lang).format(i=i + 1, n=n)
+        return (f'<div class="slide {sc["kind"]}{" on" if i == 0 else ""}" role="group" aria-roledescription="{esc(L(BILL_T["slide"], lang))}"'
+                f' aria-label="{esc(label)}"{spill}>{sc["layer"]}<div class="trk">{sc["case"]}</div>'
+                f'<div class="bill-in"><p class="eyebrow">{esc(L(BILL_T[eye], lang))}</p>'
+                f'<h2 class="bill-t" style="--tsize:{self.tsize(t)}px"><a href="{h}"{self.title_attr(fid, lang)}>{esc(t)}</a></h2>'
+                f'{verdict}' + (f'<p class="bill-f">{facts}</p>' if facts else "")
+                + f'<p class="cta"><a class="btn velvet bill-go" href="{h}">{go}</a>{trailer}</p></div></div>')
 
-    def bill_pick(self, ranked):
-        """A city's five slides (fix round 1, I1): the first is its real most-shown film tonight, whatever it looks
-        like (the eyebrow says so); the other four prefer the films of its top 10 that have a trailer frame, then
-        the rest in order."""
-        if not ranked: return []
-        has = lambda f: isinstance(self.films[f].get("backdrop"), dict)
-        rest = ranked[1:10]
-        return (ranked[:1] + [f for f in rest if has(f)] + [f for f in ranked[1:] if not (f in rest and has(f))])[:5]
-
-    def bill_frame(self, fid, o, lang):
-        """The billboard's picture: the trailer frame (Kit.backdrop, 640w on a phone); with none yet, the poster — a
-        heavily blurred, darkened full-bleed layer (the 342w file: blurred, its size does not show) and, on a
-        desktop, a sharp copy at the inline end with the velvet glow (`sizes` 1px on a phone, so there it resolves
-        to the same 342w file: one download); with no poster either, the film's typographic tile over the velvet
-        glow (Kit.backdrop's fallback, shown). src/js/bill.js draws the same for the next films (fix round 1, I1)."""
-        if o.get("b") or not o.get("p"): return self.backdrop(fid, hero=True, sizes=self.BILL_BD_SIZES, lang=lang)
-        p342, p684 = esc(o["p"][0]), esc(o["p"][1])
-        self.site._preload = f'<link rel="preload" as="image" href="{p342}" fetchpriority="high">'
-        return (f'<div class="bd pf" style="--pc:{esc(o["c"])}" aria-hidden="true"><img src="{p342}" class="pb" alt="" width="342" height="513" decoding="async" fetchpriority="high">'
-                f'<img src="{p342}" srcset="{p342} 342w, {p684} 684w" sizes="(min-width:1024px) 300px, 1px" class="ps" alt="" width="342" height="513" decoding="async"></div>')
-
-    def bill_price(self, fid, shows):
-        """[aed, chain, hall, hall key, cinema, table date]: the film's cheapest ticket among `shows`, the price
-        cell's inputs (cinema.js reprices it after the visitor's card), or None."""
-        b = self.min_price([s for s in shows if s["film"] == fid])
-        if not b: return None
-        aed, s = b; code, _ = self.hall_code_label(s)
-        return [money(aed), self.cinemas[s["cinema"]]["chain"], code, self.hkey(s), s["cinema"], self.table_date(s)]
-
+    # -------------------------------------------------- the billboard
     def billboard(self, lang, tops, today):
-        """The first of the default city's top 5, server-rendered over its trailer frame (Kit.backdrop, the page's
-        LCP, preloaded), and the top 5 of every city as a JSON island: src/js/bill.js swaps the slide when the
-        city changes and every 6 s (never under reduced motion; paused on hover, focus and a hidden tab)."""
-        city = "dubai" if tops.get("dubai") else "*"
-        fids = tops[city]; fid = fids[0]; o = self.bill_film(fid, lang)
-        cn = L(CITY["dubai"], lang)
-        eye = L(HOME_T["top_in"], lang).format(city=cn) if city != "*" else L(HOME_T["top"], lang)
-        in_city = [s for s in today if self.cinemas[s["cinema"]].get("city") == "dubai"] if city != "*" else today
-        if o.get("b"):
-            self.site._preload = (f'<link rel="preload" as="image" href="{esc(o["b"][1])}" imagesrcset="{esc(o["b"][0])} 640w, {esc(o["b"][1])} 1280w"'
-                                  f' imagesizes="{self.BILL_BD_SIZES}" fetchpriority="high">')
-        mc = self.min_cell(in_city and [s for s in in_city if s["film"] == fid] or self._by_film.get(fid, []), lang)
-        frm = (f'<span class="from" data-from="{esc(fid)}">{esc(L(HOME_T["from"], lang))} {mc[0]}</span>' if mc
-               else f'<span class="from" data-from="{esc(fid)}" hidden></span>')
-        tr = o.get("tr")
-        trailer = (f'<a class="btn ghost" data-bill-tr href="{"https://www.youtube-nocookie.com/embed/" + esc(tr) if tr else "#"}"'
-                   + (f' data-trailer="{esc(tr)}"' if tr else " hidden") + ' rel="noopener" target="_blank">'
-                   f'<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>{esc(L(HOME_T["trailer"], lang))}</a>')
-        say = f' {o["s"]}' if o.get("s") else ""
-        slide = (f'<p class="eyebrow" data-bill-eye>{esc(eye)}</p>'
-                 f'<h2 class="bill-t"><a href="{o["h"]}" data-bill-a{self.title_attr(fid, lang)}>{esc(o["t"])}</a></h2>'
-                 f'<p class="bill-v" data-bill-v><b class="v-{o["v"]}">{esc(o["w"])}{"." if lang == "ar" or say else ""}</b>{say}</p>'
-                 f'<p class="bill-f" data-bill-f>{"".join(f"<span>{x}</span>" for x in o["x"])}</p>'
-                 f'<p class="cta"><a class="btn main" href="{o["h"]}" data-bill-go>{esc(L(HOME_T["times"], lang))}{frm}</a>{trailer}</p>')
-        dots = "".join(f'<button type="button" aria-label="{esc(self.ftitle(x, lang))}" aria-pressed="{"true" if i == 0 else "false"}"><i></i></button>'
-                       for i, x in enumerate(fids))
-        # the island: each film once, then per city its top 5 with each one's cheapest ticket there
-        by_city = {}
-        for c, ids in tops.items():
-            if not ids: continue   # nothing tonight there: bill.js shows the country's ("*")
-            shows = today if c == "*" else [s for s in today if self.cinemas[s["cinema"]].get("city") == c]
-            by_city[c] = [[x, self.bill_price(x, shows)] for x in ids]
-        ffs = {x: self.bill_film(x, lang) for ids in tops.values() for x in ids}
-        island = json.dumps({"f": ffs, "c": by_city}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-        return (f'<section class="bill" data-bill aria-roledescription="{"عرض" if lang == "ar" else "carousel"}" aria-label="{esc(L(HOME_T["slides"], lang))}">'
-                f'<div class="bill-bd" data-bill-bd>{self.bill_frame(fid, o, lang)}</div>'
-                f'<div class="wrap bill-w"><div class="bill-in" data-bill-slide>{slide}</div>'
-                f'<div class="bill-nav js-only"><button type="button" class="bill-pp" data-bill-pp aria-pressed="false"{"" if len(fids) > 1 else " hidden"}>'
-                f'<span class="vh">{esc(L(HOME_T["pause"], lang))}</span></button>'
-                f'<div class="dots" data-bill-dots role="group" aria-label="{esc(L(HOME_T["slides"], lang))}">{dots if len(fids) > 1 else ""}</div></div></div>'
-                f'<script type="application/json" id="bill-data">{island}</script></section>')
+        """Home's first screen: every slide, the card door (the screen's one door, next to its first price) with the
+        indicators at its inline end, the desktop's pause, and the screen's spill. `tops["*"]` ranks the country's
+        films by tonight's shows (pages/_core/home.py); the cities' lists are not read (one billboard for everyone)."""
+        ranked = [f for f in (tops.get("*") or []) if f in self.films]
+        if not ranked: return ""
+        slides = self.bill_slides(ranked)
+        n = len(slides)
+        body = "".join(self.bill_slide(i, n, fid, eye, lang) for i, (fid, eye) in enumerate(slides))
+        dots = "".join(f'<button type="button" aria-label="{esc(self.ftitle(fid, lang))}" aria-pressed="{"true" if i == 0 else "false"}"><i></i></button>'
+                       for i, (fid, _) in enumerate(slides)) if n > 1 else ""
+        door = (f'<a class="door js-only" href="{P(lang, "cards")}" data-sheet-open="sheet-card" data-bill-door'
+                f' data-no="{esc(L(BILL_T["door_no"], lang))}" data-yes="{esc(L(BILL_T["door_yes"], lang))}" data-not="{esc(L(BILL_T["door_not"], lang))}">'
+                f'<span data-door-t>{esc(L(BILL_T["door_no"], lang))}</span> ▾</a>')
+        nav = ("" if n < 2 else
+               f'<div class="bill-nav js-only"><button type="button" class="bill-pp" data-bill-pp aria-pressed="false">'
+               f'<span class="vh">{esc(L(HOME_T["pause"], lang))}</span></button>'
+               f'<div class="dots" data-bill-dots role="group" aria-label="{esc(L(HOME_T["slides"], lang))}">{dots}</div></div>')
+        # the screen's spill: slide 1's frame colours, written here so the first paint has them (bill.js follows a swipe)
+        sp = (self.frame(slides[0][0]) or {}).get("spill")
+        spill = (' data-spill style="' + "".join(f"--sp{k + 1}:{c};" for k, c in enumerate(sp)) + '"') if sp else ""
+        return (f'<section class="bill" data-bill aria-roledescription="{"عرض" if lang == "ar" else "carousel"}" aria-label="{esc(L(HOME_T["slides"], lang))}"'
+                f'{spill}><div class="bill-s" data-bill-s>{body}</div>'
+                f'<div class="bill-foot">{door}{nav}</div><i class="bill-spill" aria-hidden="true"></i></section>')

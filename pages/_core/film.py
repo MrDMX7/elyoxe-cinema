@@ -8,10 +8,8 @@ from site_kit import *  # noqa: F401,F403  (the names these pages were written a
 
 class FilmPages:
     # -------------------------------------------------- film (UI redesign Task 4): hero → day bar → schedule + ticket → tabs
-    # a phone draws the trailer frame darkened under the words: the 640w file (as the home billboard)
-    FILM_BD_SIZES = "(min-width:1024px) 100vw, 320px"
-    # the hero's poster card is a desktop thing: on a phone `1px` resolves to the 342w file the blurred layer already
-    # fetched (one download), and with a trailer frame it is display:none there (lazy, so never fetched)
+    # the hero's poster card: on a phone the lit case (99–113 px wide, so `1px` resolving to the 342w file is sharp at
+    # DPR 3), on a desktop the 240 px card; with a trailer frame a phone does not draw it (lazy, so never fetched)
     FILM_POSTER_SIZES = "(min-width:1024px) 240px, 1px"
 
     def film_rates(self, fid, lang):
@@ -48,20 +46,10 @@ class FilmPages:
         lines, «المزيد» opens the rest), the facts, and the actions: الإعلان، شارك (pages/og.py), قارن."""
         f = self.films[fid]; v = (f.get("verdict") or {}).get("verdict") or "unknown"
         t = self.ftitle(fid, lang); attr = self.title_attr(fid, lang); ar = lang == "ar"
-        bd = f.get("backdrop"); frame = isinstance(bd, dict) and bd.get("w1280") and bd.get("w640")
-        pc = esc(f.get("poster_color") or hue(fid))
-        if frame:
-            w640, w1280 = esc(rel(bd["w640"])), esc(rel(bd["w1280"]))
-            self.site._preload = (f'<link rel="preload" as="image" href="{w1280}" imagesrcset="{w640} 640w, {w1280} 1280w"'
-                                  f' imagesizes="{self.FILM_BD_SIZES}" fetchpriority="high">')
-            pic = self.backdrop(fid, hero=True, sizes=self.FILM_BD_SIZES, lang=lang)
-        elif f.get("poster"):
-            p342 = esc(rel(f["poster"]))
-            self.site._preload = f'<link rel="preload" as="image" href="{p342}" fetchpriority="high">'
-            pic = (f'<div class="bd pf" style="--pc:{pc}" aria-hidden="true"><img src="{p342}" class="pb" alt="" width="342" height="513"'
-                   f' decoding="async" fetchpriority="high" onerror="this.remove()"></div>')
-        else:
-            pic = self.backdrop(fid, hero=True, lang=lang)
+        # «الشاشة» (W2-P1, kit/media.py): the graded frame (its portrait crop on a phone), preloaded; with none, the lit
+        # field, and the poster card below is the case (src/css/ui-fhero.css), preloaded as the page's first poster
+        frame = self.frame(fid) is not None
+        pic = self.backdrop(fid, hero=frame, lang=lang)
         card = self.poster(fid, lang, "pst hero", eager=not frame, lazy=bool(frame), size=(342, 513), sizes=self.FILM_POSTER_SIZES)
         yr = f'<span class="num">{esc(f["year"])}</span>' if f.get("year") and not f.get("rerelease") else ""
         en = f'<bdi lang="en" dir="ltr">{esc(f["title"])}</bdi>' if ar and f.get("title_ar") and f.get("title") else ""

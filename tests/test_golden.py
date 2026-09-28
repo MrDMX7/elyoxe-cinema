@@ -97,10 +97,14 @@ def inv(b):
     one = lambda rx, s=h: re.findall(rx, s, re.S)
     lat = W1D2_LATIN.sub("", h)
     m = h[h.index("<main"):h.index("</main>")] if "<main" in h else ""
-    # the home's featured «من X درهم» (data-from) is left out on purpose: UI redesign Task 3 made the featured film
-    # the default city's (Dubai's) most shown tonight, priced from its cheapest ticket THERE, where phase 1 took the
-    # country's most shown and its cheapest ticket anywhere — the same kind of cell, a different film and show
+    # the home's featured «من X درهم» is left out on purpose: UI redesign Task 3 made the featured film the default
+    # city's (Dubai's) most shown tonight, priced from its cheapest ticket THERE; W2-P1 made it the UAE-wide most
+    # shown, priced from its cheapest ticket ANYWHERE (§2.1) — in both cases the same kind of cell, a different film
+    # and show. Task 3's build tagged that cell `data-from="<fid>"` for a client-side re-lookup; W2-P1's billboard
+    # computes the price at build time and carries no such tag, so the cell is found by its home in `.bill-go`
+    # (`class="btn velvet bill-go"`) instead.
     m = re.sub(r'(data-from="[^"]*"[^>]*>[^<]*<span class="p") data-aed="[^"]*" data-chain="[^"]*" data-hall="[^"]*"', r"\1", m)
+    m = re.sub(r'(bill-go"[^>]*>[^<]*<span class="from">[^<]*<span class="p") data-aed="[^"]*" data-chain="[^"]*" data-hall="[^"]*"', r"\1", m)
     cells = lambda attr: sorted(re.findall(r'\sdata-' + attr + r'="([^"]*)"', m))
     return {"links": one(r'<link rel="(?:canonical|alternate)"[^>]*>'), "title": one(r"<title>(.*?)</title>", lat),
             "desc": one(r'<meta name="description"[^>]*>', lat), "robots": one(r'<meta name="robots"[^>]*>'),
