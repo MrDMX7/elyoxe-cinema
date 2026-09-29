@@ -166,22 +166,23 @@ fi
 ./deploy.sh || fail "deploy.sh فشل بعد تحديث ناجح — الموقع على النسخة السابقة" 3 deploy
 ok_now deploy "النشر رجع يشتغل"
 
-# verdicts/*.json written this run (new films, templates replaced, merged-away files folded) go back
-# to origin, so the laptop and the next run see the same set. Only verdicts/ — never anything else
-# in the tree. A conflict aborts just this commit; the deploy already happened.
+# verdicts/*.json and intel/*.json (UNIT r3-film: filmintel.py, the same cached-once-per-film shape) written
+# this run (new films, templates replaced, merged-away files folded) go back to origin, so the laptop and the
+# next run see the same set. Only these two dirs — never anything else in the tree. A conflict aborts just
+# this commit; the deploy already happened.
 commit_verdicts() {
-  git add -A -- verdicts/ || return 1
-  if git diff --cached --quiet -- verdicts/; then echo "verdicts: nothing new"; return 0; fi
-  local n; n=$(git diff --cached --name-only -- verdicts/ | wc -l)
-  git commit -q -m "chore(verdicts): auto $(date '+%F %H:%M')" -- verdicts/ || return 1
+  git add -A -- verdicts/ intel/ || return 1
+  if git diff --cached --quiet -- verdicts/ intel/; then echo "verdicts/intel: nothing new"; return 0; fi
+  local n; n=$(git diff --cached --name-only -- verdicts/ intel/ | wc -l)
+  git commit -q -m "chore(verdicts,intel): auto $(date '+%F %H:%M')" -- verdicts/ intel/ || return 1
   if ! git pull --rebase --autostash -q origin main; then
     git rebase --abort >/dev/null 2>&1
-    git reset -q --soft HEAD~1 && git reset -q -- verdicts/
-    echo "verdicts: pull --rebase conflicted — commit undone, files kept for the next run"
+    git reset -q --soft HEAD~1 && git reset -q -- verdicts/ intel/
+    echo "verdicts/intel: pull --rebase conflicted — commit undone, files kept for the next run"
     return 2
   fi
-  git push -q origin HEAD:main || { echo "verdicts: push failed — the local commit stays ahead of origin; the next run's pull --ff-only still works and its push carries both"; return 3; }
-  echo "verdicts: committed and pushed $n file(s)"
+  git push -q origin HEAD:main || { echo "verdicts/intel: push failed — the local commit stays ahead of origin; the next run's pull --ff-only still works and its push carries both"; return 3; }
+  echo "verdicts/intel: committed and pushed $n file(s)"
 }
 vrc=0; commit_verdicts || vrc=$?
 if [ "$vrc" -eq 0 ]; then
