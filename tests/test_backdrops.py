@@ -583,3 +583,23 @@ def test_override_trailer_key_swaps_the_trailer_used_for_the_frame(tmp_path, mon
     ov = bd._load_overrides(p)
     assert ov["resident-evil"] == {"t": 22.7, "x": None, "trailer": "mNd1gb19A-c", "hd": True}
     assert "bad" not in ov
+
+
+def test_a_frame_from_the_override_trailer_is_attached_to_the_film(tmp_path, monkeypatch):
+    """`trailer:` in backdrops_override.yaml: the frame comes from another trailer than the film's own listed
+    one, and it must still be attached (it was made and uploaded, but the page kept the poster)."""
+    ov = tmp_path / "ov.yaml"
+    ov.write_text("film-a: {trailer: BBBBBBBBBBB}\n", encoding="utf-8")
+    monkeypatch.setattr(bd, "OVERRIDE_PATH", ov)
+    (tmp_path / "backdrops.json").write_text(json.dumps({
+        "film-a": {"trailer": "BBBBBBBBBBB", "w1280": "/posters/bd-film-a-deadbeef01-1280.webp",
+                   "w640": "/posters/bd-film-a-deadbeef01-640.webp", "w": 1280, "h": 720,
+                   "t": 5.0, "at": "2026-09-20T12:00:00+00:00", "v": bd.STEP_VERSION}
+    }), encoding="utf-8")
+    (tmp_path / "posters").mkdir()
+    (tmp_path / "posters" / "bd-film-a-deadbeef01-1280.webp").write_bytes(b"x")
+    (tmp_path / "posters" / "bd-film-a-deadbeef01-640.webp").write_bytes(b"x")
+    monkeypatch.setattr(bd.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(AssertionError("cache hit")))
+    data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
+    bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
+    assert data["films"]["film-a"]["backdrop"]["w1280"] == "/posters/bd-film-a-deadbeef01-1280.webp"

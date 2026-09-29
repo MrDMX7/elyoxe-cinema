@@ -1156,8 +1156,8 @@ def run(data: dict, ctx: dict | None = None) -> dict:
         entry = cache.get(fid)
         if not isinstance(entry, dict) or entry.get("fail") or not entry.get("w1280"):
             continue
-        if entry.get("trailer") != f.get("trailer"):
-            continue   # the trailer changed since this frame was cached: not this film's backdrop any more
+        if entry.get("trailer") != candidates.get(fid, f.get("trailer")):
+            continue   # the trailer changed since this frame was cached (an override's `trailer:` counts as the film's)
         if not ((out_dir / os.path.basename(entry["w1280"])).is_file()
                 and (out_dir / os.path.basename(entry["w640"])).is_file()):
             continue   # the cache says so but the file is gone (e.g. VERSION bump, manual cleanup)
