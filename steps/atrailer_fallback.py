@@ -38,12 +38,25 @@ from pathlib import Path
 YT = re.compile(r"^[A-Za-z0-9_-]{11}$")
 CHECK_CAP = 4                      # fresh yt-dlp calls (probe + search combined) per run
 RECHECK_DAYS = 21                  # re-probe a trailer last confirmed ok this long ago
-RECHECK_DAYS_DEAD = 45             # re-probe (in case the original came back) once this stale
+RECHECK_DAYS_DEAD = 45             # re-probe (in case the original came back) once this stale, but
+                                    # only once a replacement is actually on file (see RECHECK_DAYS_NO_REPLACEMENT)
+RECHECK_DAYS_NO_REPLACEMENT = 1    # a dead trailer with NO replacement found retries roughly daily,
+                                    # not 45 days -- a transient search failure (or budget exhaustion)
+                                    # must not lock the film out of a fix for a month and a half
 SEARCH_COUNT = 6                   # ytsearch<N>: results asked for
 DUR_MIN, DUR_MAX = 60, 240         # an official trailer's plausible runtime, seconds
 PROBE_TIMEOUT = 25.0
 SEARCH_TIMEOUT = 40.0
 TITLE_HINT = re.compile(r"official trailer|trailer #?\d*$", re.I)
+# a candidate is rejected outright when its title or channel names it as not-official footage --
+# fan edits and reaction/concept videos regularly satisfy the duration+"trailer" checks otherwise
+BAD_HINT = re.compile(r"fan[\s-]?made|fanmade|reaction|concept\s*trailer|parody|leak(ed)?|\bedit\b|fan\s*edit", re.I)
+OFFICIAL_CHANNEL_HINT = re.compile(r"official|pictures|studios?|entertainment|films?\b", re.I)
+_STRIP = re.compile(r"[^a-z0-9؀-ۿ\s]")
+
+
+def _norm(s: str) -> str:
+    return re.sub(r"\s+", " ", _STRIP.sub(" ", (s or "").lower())).strip()
 # a probe error naming the video itself as gone — never a throttle/network wobble, which must not
 # trigger a search (retried plain next run instead, same as backdrops.py's own "transient" class)
 YT_UNAVAILABLE = re.compile(
@@ -75,8 +88,11 @@ def _probe(trailer_id: str, run=None) -> str:
 
 
 def _search(title: str, year, run=None):
-    """-> (id, why) | (None, why). Asks yt-dlp for SEARCH_COUNT candidates' id/title/channel/duration and
-    picks the first whose runtime fits and whose title (or an official-sounding channel) says trailer."""
+    """-> (id, why) | (None, why). Asks yt-dlp for SEARCH_COUNT candidates' id/title/channel/duration,
+    rejects any that read as fan-made/reaction/concept, requires the film's own (normalised) title to
+    appear in the video's title -- a generic query like "Him official trailer" can otherwise surface
+    a different film or a reaction video entirely -- then, among what's left, prefers a result whose
+    channel reads as an official studio/distributor over the search's own relevance order."""
     run = run or subprocess.run
     q = f"{title} {year} official trailer".strip() if year else f"{title} official trailer"
     query = f"ytsearch{SEARCH_COUNT}:{q}"
@@ -88,6 +104,8 @@ def _search(title: str, year, run=None):
         return None, f"search: {type(e).__name__}: {e}"[:200]
     if getattr(r, "returncode", 1) != 0:
         return None, f"search: yt-dlp exit {getattr(r, 'returncode', '?')}"
+    title_norm = _norm(title)
+    candidates = []
     for line in _text(getattr(r, "stdout", "")).splitlines():
         parts = line.split("\t")
         if len(parts) != 4:
@@ -101,10 +119,19 @@ def _search(title: str, year, run=None):
             continue
         if not (DUR_MIN <= dur_s <= DUR_MAX):
             continue
+        if BAD_HINT.search(vtitle) or BAD_HINT.search(channel):
+            continue
         if not (TITLE_HINT.search(vtitle) or TITLE_HINT.search(channel) or "trailer" in vtitle.lower()):
             continue
-        return vid, None
-    return None, "search: no candidate matched duration/title"
+        if title_norm and title_norm not in _norm(vtitle):
+            continue
+        candidates.append((vid, channel))
+    if not candidates:
+        return None, "search: no candidate matched duration/title/channel"
+    for vid, channel in candidates:
+        if OFFICIAL_CHANNEL_HINT.search(channel):
+            return vid, None
+    return candidates[0][0], None
 
 
 def _candidates(data: dict) -> dict[str, dict]:
@@ -135,7 +162,13 @@ def _due(entry: dict | None, now: datetime, orig: str) -> bool:
         checked = None
     if checked is None:
         return True
-    ttl = timedelta(days=RECHECK_DAYS_DEAD if entry.get("status") == "dead" else RECHECK_DAYS)
+    if entry.get("status") == "dead":
+        # a dead trailer WITH a replacement on file is stable -- re-probe rarely, in case the
+        # original came back. One with NO replacement is not fixed at all, so it must not wait
+        # the same 45 days: a transient search failure or a budget-starved run gets retried daily.
+        ttl = timedelta(days=RECHECK_DAYS_DEAD if entry.get("replacement") else RECHECK_DAYS_NO_REPLACEMENT)
+    else:
+        ttl = timedelta(days=RECHECK_DAYS)
     return now - checked >= ttl
 
 
@@ -172,11 +205,12 @@ def run(data, ctx):
                 cache[fid] = {"orig": orig, "checked_at": now.isoformat(), "status": "ok",
                               "replacement": None, "why": None}
             elif status == "dead":
-                repl, why = (None, "search skipped: no budget left") if budget <= 0 else _search(
-                    f.get("title") or f.get("title_ar") or fid, f.get("year"))
-                if repl is not None:
+                if budget <= 0:
+                    repl, why = None, "search skipped: no budget left"
+                else:
+                    repl, why = _search(f.get("title") or f.get("title_ar") or fid, f.get("year"))
                     searched += 1
-                    budget -= 1
+                    budget -= 1               # the call itself costs budget, found or not
                 cache[fid] = {"orig": orig, "checked_at": now.isoformat(), "status": "dead",
                               "replacement": repl, "why": why}
             else:  # unknown: transient, kept as-is, retried plain next run (checked_at not written)

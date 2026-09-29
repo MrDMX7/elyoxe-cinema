@@ -50,6 +50,10 @@ def _trim(entry: dict, keep_from: str) -> None:
     entry["days"] = sorted(set(days))
 
 
+def _show_key(s: dict) -> str:
+    return "|".join(str(s.get(k) or "") for k in ("cinema", "film", "date", "time", "hall_label"))
+
+
 def best_time(entry: dict) -> dict | None:
     """{"part", "occ"} for `entry` (one cinema's history), or None if it hasn't seen enough yet."""
     days = entry.get("days") or []
@@ -74,6 +78,14 @@ def run(data, ctx):
     hist, _status = statefile.load_state_json(path, path.with_name(path.name + ".bak"))
     hist = {k: v for k, v in hist.items() if isinstance(v, dict)} if isinstance(hist, dict) else {}
 
+    # a same-sample re-fold guard: occupancy.py keeps a fresh sample attached to a show for up to
+    # 90 minutes (its own FRESH_MIN), so a manual re-run inside that window would otherwise see the
+    # exact same seats reading again and fold it a second time, double-weighting one observation.
+    # Keyed by show (never per-run), valued by the sample's own "at" -- only a genuinely new sample
+    # (a different "at") is folded for a show already seen.
+    seen = hist.get("_folded")
+    seen = dict(seen) if isinstance(seen, dict) else {}
+
     today = str(ctx.get("now") or "")[:10]
     folded = 0
     for s in data.get("shows") or []:
@@ -86,11 +98,17 @@ def run(data, ctx):
         cid, hhmm, date = s.get("cinema"), s.get("time"), s.get("date")
         if not cid or not hhmm or not date:
             continue
+        at = e.get("at")
+        key = _show_key(s)
+        if at and seen.get(key) == at:
+            continue
         occ = max(0.0, min(1.0, 1 - free / total))
         part = ph.part_of_day(hhmm)
         entry = hist.setdefault(cid, {})
         _fold(entry, part, occ, date)
         folded += 1
+        if at:
+            seen[key] = at
 
     keep_from = today
     if today:
@@ -100,9 +118,13 @@ def run(data, ctx):
         except ValueError:
             pass
     for cid in list(hist):
+        if cid == "_folded":
+            continue
         _trim(hist[cid], keep_from)
         if not hist[cid].get("days"):
             del hist[cid]
+    # the ledger ages out the same way: a key's own date (index 2 of _show_key's join) past keep_from
+    hist["_folded"] = {k: v for k, v in seen.items() if len(k.split("|")) < 3 or k.split("|")[2] >= keep_from}
 
     statefile.write_state_json(path, path.with_name(path.name + ".bak"), hist)
 

@@ -448,7 +448,7 @@ class PlacesPages:
         if isinstance(photo, dict) and photo.get("w1280") and photo.get("w640"):
             bd = (f'<div class="chead-bd" aria-hidden="true"><picture>'
                   f'<source media="(min-width:768px)" srcset="{esc(rel(photo["w1280"]))}">'
-                  f'<img src="{esc(rel(photo["w640"]))}" alt="" loading="lazy" decoding="async" '
+                  f'<img src="{esc(rel(photo["w640"]))}" alt="" loading="eager" fetchpriority="high" decoding="async" '
                   f'width="{photo.get("w") or 640}" height="{photo.get("h") or 360}"></picture></div>')
         out = (f'<section class="head wrap chead{" chead-photo" if bd else ""}">{bd}{self.crumbs(lang, (cn, P(lang, city)), (name, None))}'
                f'<div class="ch-t"><h1 class="pt"{" lang=\"en\"" if self.cname_is_en(cid, lang) else ""}>{esc(name)}</h1>{fav}</div>')

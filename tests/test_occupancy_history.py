@@ -82,3 +82,36 @@ def test_run_never_raises_on_malformed_history(tmp_path):
     data = {"cinemas": {"c1": {}}, "shows": [_show("c1", "2026-09-08", "09:00", 90, 100)]}
     out = oh.run(data, {"now": "2026-09-08T10:00:00+04:00", "data_dir": str(tmp_path)})
     assert out["folded"] == 1
+
+
+def _show_at(cid, date, time, free, total, at):
+    s = _show(cid, date, time, free, total)
+    s["seats"]["at"] = at
+    return s
+
+
+def test_run_does_not_refold_the_same_sample_within_freshness_window(tmp_path):
+    """occupancy.py keeps a fresh sample attached for up to 90 min: a manual re-run inside that
+    window must not fold the exact same seats reading a second time (double-weighting one show)."""
+    data = {"cinemas": {"c1": {}},
+            "shows": [_show_at("c1", "2026-09-08", "09:00", 90, 100, "2026-09-08T08:50:00+04:00")]}
+    out1 = oh.run(data, {"now": "2026-09-08T09:00:00+04:00", "data_dir": str(tmp_path)})
+    assert out1["folded"] == 1
+    data2 = {"cinemas": {"c1": {}},
+             "shows": [_show_at("c1", "2026-09-08", "09:00", 90, 100, "2026-09-08T08:50:00+04:00")]}
+    out2 = oh.run(data2, {"now": "2026-09-08T09:20:00+04:00", "data_dir": str(tmp_path)})
+    assert out2["folded"] == 0
+    saved = json.loads((tmp_path / "occupancy_history.json").read_text())
+    assert saved["c1"]["parts"]["morning"]["n"] == 1
+
+
+def test_run_folds_a_genuinely_new_sample_for_the_same_show(tmp_path):
+    data = {"cinemas": {"c1": {}},
+            "shows": [_show_at("c1", "2026-09-08", "09:00", 90, 100, "2026-09-08T08:50:00+04:00")]}
+    oh.run(data, {"now": "2026-09-08T09:00:00+04:00", "data_dir": str(tmp_path)})
+    data2 = {"cinemas": {"c1": {}},
+             "shows": [_show_at("c1", "2026-09-08", "09:00", 85, 100, "2026-09-08T08:55:00+04:00")]}
+    out2 = oh.run(data2, {"now": "2026-09-08T09:05:00+04:00", "data_dir": str(tmp_path)})
+    assert out2["folded"] == 1
+    saved = json.loads((tmp_path / "occupancy_history.json").read_text())
+    assert saved["c1"]["parts"]["morning"]["n"] == 2

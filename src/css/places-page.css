@@ -54,7 +54,7 @@ body[data-page=city]::before{block-size:440px;background:radial-gradient(320px 2
 .chead .mall-late,.chead .best-time{margin-block-start:8px;color:var(--dim);font-size:var(--fs-meta);line-height:1.6}
 /* the cinema's own photo (cinema_photos.py), darkened, full-bleed behind the head only — never a card,
    never lit on its own (MASTER-PLAN: زنجار is «حيّ» only, gold is the price alone) */
-.chead.chead-photo{position:relative;isolation:isolate;padding-block:20px}
+.chead.chead-photo{position:relative;isolation:isolate;overflow-x:hidden;padding-block:20px}
 .chead-bd{position:absolute;inset-block:0;inset-inline-start:50%;inline-size:100vw;margin-inline-start:-50vw;z-index:-1;overflow:hidden}
 .chead-bd img{inline-size:100%;block-size:100%;object-fit:cover;display:block}
 .chead-bd::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,11,12,.45) 0,var(--night) 96%)}
