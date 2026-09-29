@@ -1,9 +1,14 @@
 {
-  "ar": "Pressure حاطنه 72 ساعة قبل D-Day واللي كله متعلق بتوقّع الطقس. RT 87%، وأداء Andrew Scott مع التوتر المتصاعد يستاهل المشاهدة.",
-  "basis": "RT 87% debut",
+  "ar": "بريشر حاطنه 72 ساعة قبل D-Day وكله متعلق بتوقّع الطقس. RT 87%، وأداء Andrew Scott مع التوتر المتصاعد يستاهل المشاهدة.",
+  "basis": "RT 87%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 87,
+    "rt_count": null
+  },
   "by": "claude",
   "en": "Pressure covers the 72 hours before D-Day, riding on a critical weather forecast. RT 87%, with Andrew Scott's performance and mounting tension praised.",
   "fid": "pressure",
   "verdict": "yes",
-  "written": "2026-09-26"
+  "written": "2026-09-29"
 }
