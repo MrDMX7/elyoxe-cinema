@@ -18,7 +18,7 @@ import re
 
 import price_history as ph
 import similar as simmod
-from site_kit import (SITE, L, P, Page, Pages, Plugin, after, ar_count, esc, genre_label, human_date,
+from site_kit import (SITE, L, NavItem, P, Page, Pages, Plugin, after, ar_count, esc, genre_label, human_date,
                       lang_words, money, num)
 
 CSS = ("insights",)
@@ -59,7 +59,12 @@ def register(site):
     ins = Insights(site)
     pages = [Page(("prices",), lang, lambda lang=lang: ins.prices(lang)) for lang in ("ar", "en")]
     pages += [Page(("boxoffice",), lang, lambda lang=lang: ins.boxoffice(lang)) for lang in ("ar", "en")]
+    # r3-home 2026-09-30 (owner call): the home page drops its «بالأرقام» row (pages/_core/home.py strip_nums), so
+    # /prices/ and /boxoffice/ need their own footer NavItems to stay reachable (kit/chrome.nav_links) — before this
+    # they were reachable only through that row's paragraph.
     return Plugin(pages=pages, data={"data/compare.json": ins.compare_data},
+                  nav=[NavItem("prices", href=lambda lang: P(lang, "prices"), label=PRICES),
+                       NavItem("boxoffice", href=lambda lang: P(lang, "boxoffice"), label=BOX)],
                   slots={"film.similar": ins.film_similar, "film.compare": ins.film_compare, "home.after_tonight": ins.home_links})
 
 

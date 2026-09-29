@@ -103,11 +103,14 @@ CHROME_T = {"city": ("المدينة", "City"), "card": ("البطاقة", "Card
             "bank": ("بنوك", "Banks"), "pick_city": ("وين أنت؟", "Where are you?"), "pick_card": ("شو عندك من بطاقة؟", "Which card do you have?"),
             "all_cards": ("خصم كل بطاقة في كل سينما", "Every card’s discount at every cinema"),
             "all_cities": ("كل السينمات حسب المدينة", "Every cinema by city")}
-# the home page's words (UI redesign Task 3)
+# the home page's words (UI redesign Task 3; r3-home 2026-09-30: the billboard alone carries «الأكثر عرضاً الليلة»
+# now, so the row's own heading is gone; «يستاهل» renamed «الأعلى تقييماً» and «نازل الخميس» renamed «قريباً في
+# السينما», both owner calls 2026-09-30)
 HOME_T = {"top": ("الأكثر عرضاً الليلة", "Most shown tonight"), "top_in": ("الأكثر عرضاً في {city} الليلة", "Most shown in {city} tonight"),
-          "yes": ("يستاهل", "Worth it"), "yes_sub": ("حكمنا من تقييمات النقاد والجمهور", "Our call, from critics and audiences"),
+          "yes": ("الأعلى تقييماً", "Top rated"), "yes_sub": ("حكمنا من تقييمات النقاد والجمهور", "Our call, from critics and audiences"),
           "cheap": ("أرخص لك الليلة", "Cheapest for you tonight"), "family": ("للعائلة", "For the family"),
-          "coming": ("نازل الخميس", "Out Thursday"), "last": ("آخر فرصة", "Last chance"), "arabic": ("عربي", "Arabic"),
+          "coming": ("قريباً في السينما", "Coming soon"), "last": ("آخر فرصة", "Last chance"), "arabic": ("عربي", "Arabic"),
+          "stars": ("نجوم الليلة", "Tonight's stars"),
           "near": ("يبدأ قريب منك", "Starting near you"), "all": ("الكل", "See all"), "all_films": ("كل الأفلام", "All films"),
           "filter": ("تصفية", "Filter"), "sort": ("الترتيب", "Sort"), "sort_default": ("الأكثر عرضاً", "Most shown"),
           "genre": ("النوع", "Genre"), "who": ("مع منو رايح؟", "Who’s coming?"), "before": ("لازم يخلص قبل", "Has to end by"),

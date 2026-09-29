@@ -10,16 +10,21 @@ from site_kit import *  # noqa: F401,F403  (the names these pages were written a
 
 # the rows' words that are this package's (MASTER-PLAN §2.1; the dialect gate reviews them, §1.7)
 ROW_T = {"cheap": ("أرخص عرض الليلة", "Cheapest show tonight"), "arabic": ("عربي وخليجي", "Arabic and Gulf"),
-         "nums": ("بالأرقام", "By the numbers"),
+         "bollywood": ("بوليوود وجنوب الهند", "Bollywood and South India"),
          # the row's card door (§2.0, §2.1): with a card chosen home.js writes «بعد خصم فزعة» (CT after_card)
          "door": ("عندك بطاقة؟ شوف سعرك", "Got a card? See your price"),
          # §1.7: a failed city update keeps the server's prices and says so once
          "stale": ("ما قدرنا نحدّث الأوقات، هذي آخر نسخة من {t}", "Couldn’t refresh the times. This is the {t} copy.")}
 N = 10          # tiles in a row
 FIRST = 3       # a film already in an earlier row's first 3 slots starts at slot 4 or later (§2.1 de-duplication)
-# insights' three links in the home.after_tonight slot (pages/insights.py home_links, untouched): made one «بالأرقام» row
+# insights' three links in the home.after_tonight slot (pages/insights.py home_links, untouched): r3-home 2026-09-30
+# drops the «بالأرقام» row from home (owner call) — the paragraph is cut from the slot, and the links stay reachable
+# from the footer (pages/insights.py's NavItems, kit/chrome.nav_links); the rest of the slot (the scores island, a
+# seasonal banner) still passes through as it was.
 NUMS = _re.compile(r'<section class="wrap insx"><p class="links more">(.*?)</p></section>', _re.S)
-NUMS_A = _re.compile(r'<a href="([^"]+)">([^<]+)</a>')
+# a film's lead actor with a Wikimedia-licensed photo (People's own PHOTO check, pages/people.py, duplicated here to
+# avoid importing the plugin: home.py only reads data["people"] and film["cast"], never People's page-building)
+PHOTO = _re.compile(r"^/posters/people/[A-Za-z0-9._-]+\.webp$")
 
 
 def dedupe(rows, first=FIRST):
@@ -41,8 +46,9 @@ def dedupe(rows, first=FIRST):
 class HomePages:
     # ================================================================ pages
     def home(self):
-        """The home page (UI redesign Task 3; MASTER-PLAN §2.1): the billboard, the board (W2-P2's home.after_bill slot),
-        the Thursday band (W2-P7's home.after_board), the rows, «بالأرقام», then «كل الأفلام» with the filter sheet.
+        """The home page (UI redesign Task 3; MASTER-PLAN §2.1, reordered by r3-home 2026-09-30): the billboard, the
+        board (W2-P2's home.after_bill slot), the Thursday band (W2-P7's home.after_board), the rows, «نجوم الليلة»,
+        then «كل الأفلام» collapsed behind one button with the filter sheet inside it. «بالأرقام» is gone (strip_nums).
         The cities grid, the cards list and the chains' freshness live in the header's sheets, /cinemas/, /cards/ and
         /sources/ now."""
         films = sorted(self.showing, key=lambda fid: (-self.today_count.get(fid, 0), fid))
@@ -66,8 +72,9 @@ class HomePages:
             # a failed city update keeps the server's prices and says so, once (§1.7; home.js shows it, never .off tiles)
             body += f'<p class="stale-l wrap" data-stale hidden>{esc(L(ROW_T["stale"], lang).format(t=self.uae_now().strftime("%H:%M")))}</p>'
             body += self.home_rows(lang, films)
-            body += self.home_nums(lang, self.slot("home.after_tonight", lang))
-            body += self.posters_row(lang, films, self.shows, L(HOME_T["all_films"], lang), prayer=True, yes=True)
+            body += self.strip_nums(self.slot("home.after_tonight", lang))
+            body += self.stars_row(lang, films)
+            body += self.posters_row(lang, films, self.shows, L(HOME_T["all_films"], lang), prayer=True, yes=True, collapse=True)
             hn = self.first_city_show(self.shows, ["dubai"])
             body += self.ticket(hn, lang, hidden=True) if hn else self.ticket_shell()
             title = ("سينما الإمارات اليوم — الأفلام والأسعار وخصم فزعة وإسعاد" if lang == "ar"
@@ -121,33 +128,33 @@ class HomePages:
         return 1 if str(f.get("rating") or "").upper().replace(" ", "") in ("G", "PG") else 0
 
     def home_rows(self, lang, films):
-        """The rows, in the spec's order (MASTER-PLAN §2.1), each from the data the site already keeps: «الأكثر عرضاً
-        الليلة» (Dubai's count first: the script re-sorts it by the visitor's city), «يستاهل», «أرخص عرض الليلة» (show
-        cards), «للعائلة» (the «مع منو: العايلة» rule, kit/filters.who_fits, the best suited first), «نازل الخميس»
-        (Sunday to Wednesday 18:00: from then to Saturday the Thursday band, W2-P7, says it), «عربي وخليجي». A film
-        already in the first 3 slots of an earlier row starts at slot 4 or later, and a row with fewer than 4 films (or
-        too few new ones to open with) is not drawn. No tag repeats its row's name. «آخر فرصة» and the «آخر أسبوع» tags
-        are deleted (§4.2 #23: the data behind them flags every film older than 14 days). The heading is the link to
-        «الكل»: a page, or «كل الأفلام» with the matching sort or filter chosen (?sort= / ?f= / ?who= / ?fl=, read by
-        src/js/filters.js)."""
+        """The rows, in the spec's order (r3-home, owner reorder 2026-09-30; MASTER-PLAN §2.1 otherwise): the old
+        separate «الأكثر عرضاً الليلة» row is gone — the billboard's slide 1 already carries it (pages/_core/bill.py
+        bill_pick), so the row said the same thing twice. So: «الأعلى تقييماً» (renamed «يستاهل»), «أرخص عرض الليلة»
+        (show cards), «للعائلة» (the «مع منو: العايلة» rule, kit/filters.who_fits, the best suited first), «قريباً في
+        السينما» (renamed «نازل الخميس»; Sunday to Wednesday 18:00 — from then to Saturday the Thursday band, W2-P7,
+        says it), «عربي وخليجي», «بوليوود وجنوب الهند» (pages/bollywood.py's languages). A film already in the first 3
+        slots of an earlier row starts at slot 4 or later, and a row with fewer than 4 films (or too few new ones to
+        open with) is not drawn. No tag repeats its row's name. «آخر فرصة» and the «آخر أسبوع» tags are deleted (§4.2
+        #23: the data behind them flags every film older than 14 days). The heading is the link to «الكل»: a page, or
+        «كل الأفلام» with the matching sort or filter chosen (?sort= / ?f= / ?who= / ?fl=, read by src/js/filters.js)."""
         home = P(lang)
         keys = {it.key for it in self.nav_items}
         from kit.filters import who_fits
-        dubai = {}
-        for s in self.shows:
-            if s["date"] == self.today and self.cinemas[s["cinema"]].get("city") == "dubai": dubai[s["film"]] = dubai.get(s["film"], 0) + 1
         cheap = self.cheap_shows("dubai")
         by = {s["film"]: s for s in cheap}
         door = (f'<button type="button" class="lnk door" data-sheet-open="sheet-card" data-door="{esc(L(ROW_T["door"], lang))}">'
                 f'{esc(L(ROW_T["door"], lang))}<span aria-hidden="true"> ▾</span></button>')
         family = sorted((f for f in films if "family" in who_fits(self.films[f]).split()), key=lambda f: -self.family_fit(f))
-        spec = [("top", HOME_T["top"], sorted(films, key=lambda f: (-dubai.get(f, 0), -self.today_count.get(f, 0), f)), home + "#all", "", ' data-rail-sort="count"'),
-                ("yes", HOME_T["yes"], [f for f in films if (self.films[f].get("verdict") or {}).get("verdict") == "yes"],
+        from pages.bollywood import LANG_KEYS as BW_LANGS
+        spec = [("yes", HOME_T["yes"], [f for f in films if (self.films[f].get("verdict") or {}).get("verdict") == "yes"],
                  home + "?f=yes#all", esc(L(HOME_T["yes_sub"], lang)), ""),
                 ("cheap", ROW_T["cheap"], [s["film"] for s in cheap], home + "?sort=price#all", door, " data-rail-cheap"),
                 ("family", HOME_T["family"], family, home + "?who=family#all", "", ""),
                 ("arabic", ROW_T["arabic"], [f for f in films if str(self.films[f].get("lang") or "").lower() in ("arabic", "ar")],
-                 P(lang, "arabic") if "arabic" in keys else home + "?fl=Arabic#all", "", "")]
+                 P(lang, "arabic") if "arabic" in keys else home + "?fl=Arabic#all", "", ""),
+                ("bollywood", ROW_T["bollywood"], [f for f in films if str(self.films[f].get("lang") or "").lower() in BW_LANGS],
+                 P(lang, "bollywood") if "bollywood" in keys else home + "#all", "", "")]
         out = {}
         for (key, title, _, more, sub, attrs), o in zip(spec, dedupe([x[2] for x in spec])):
             if not o: continue
@@ -160,18 +167,61 @@ class HomePages:
             items = sorted(fold_near_duplicates(coming), key=lambda kv: (not kv[1].get("release_date"), kv[1].get("release_date") or "", kv[1]["title"]))
             items = [(k, f) for k, f in items if not f.get("release_date") or f["release_date"] >= self.today]
             if len(items) >= 4:
-                # no «الخميس» tag: the row is «نازل الخميس», and each tile says its date
+                # no «الخميس» tag: the row is «قريباً في السينما», and each tile says its own date
                 out["coming"] = self.rail(lang, "coming", L(HOME_T["coming"], lang), "".join(self.coming_tile(k, f, lang) for k, f in items[:N]),
                                           more=P(lang, "coming"))
-        return "".join(out[k] for k in ("top", "yes", "cheap", "family", "coming", "arabic") if k in out)
+        return "".join(out[k] for k in ("yes", "cheap", "family", "coming", "arabic", "bollywood") if k in out)
 
-    def home_nums(self, lang, slot):
-        """«بالأرقام» (MASTER-PLAN §2.1, §4.2 #42): the home.after_tonight slot's run-on paragraph of insights' three links
-        (/prices/, /boxoffice/, /q/, 17 px targets) becomes one row of three items, each at least 44 px tall. The rest of
-        the slot (the scores island, a seasonal banner) passes through as it is. Without the insights module: nothing."""
+    def strip_nums(self, slot):
+        """r3-home 2026-09-30 (owner call): the home.after_tonight slot's «بالأرقام» paragraph (insights' three links,
+        /prices/, /boxoffice/, /q/) is cut from the home page — those pages stay reachable from the footer
+        (pages/insights.py's NavItems, kit/chrome.nav_links). The rest of the slot (the scores island, a seasonal
+        banner) still passes through as it was."""
         m = NUMS.search(slot)
-        if not m: return slot
-        items = "".join(f'<li><a href="{h}">{t}</a></li>' for h, t in NUMS_A.findall(m.group(1)))
-        row = (f'<section class="rail nums" aria-labelledby="r-nums"><div class="rail-h wrap"><h2 id="r-nums">{esc(L(ROW_T["nums"], lang))}</h2></div>'
-               f'<ul class="nums-l wrap">{items}</ul></section>')
-        return slot[:m.start()] + row + slot[m.end():]
+        return slot[:m.start()] + slot[m.end():] if m else slot
+
+    # -------------------------------------------------- home: «نجوم الليلة»
+    def _lead(self, fid, lang, seen_q):
+        """The first name in a film's cast with a real (Wikimedia-licensed) photo and a name, else None — a film with
+        no such actor is skipped (owner rule), never filled with an initials box."""
+        people = self.d.get("people") or {}
+        for q in (self.films[fid].get("cast") or []):
+            if not isinstance(q, str) or q in seen_q: continue
+            p = people.get(q)
+            if not isinstance(p, dict): continue
+            ph = p.get("photo") or {}
+            if not (PHOTO.match(str(ph.get("src") or "")) and PHOTO.match(str(ph.get("src2x") or ""))): continue
+            nm = (p.get("name_ar") if lang == "ar" else p.get("name_en")) or p.get("name_en") or p.get("name_ar")
+            if not nm: continue
+            return q, ph, nm
+        return None
+
+    def star_tile(self, fid, ph, nm, lang):
+        """One «نجوم الليلة» tile: a square (no radius, the workspace rule) portrait, the actor's name, the film's
+        title under it. It links to the film (not the person page): a pick here is a way into tonight's show, not a
+        detour to a filmography."""
+        return (f'<a class="tile star" href="{P(lang, "film", fid)}">'
+                f'<span class="tp"><img src="{esc(ph["src"])}" srcset="{esc(ph["src"])} 160w, {esc(ph["src2x"])} 320w" sizes="120px"'
+                f' width="160" height="160" alt="" loading="lazy" decoding="async"></span>'
+                f'<span class="t">{esc(nm)}</span><span class="m">{esc(self.ftitle(fid, lang))}</span></a>')
+
+    def stars_row(self, lang, films):
+        """«نجوم الليلة» (r3-home, owner idea 2026-09-30): the lead actor of tonight's most-shown film, then of its
+        top-rated («الأعلى تقييماً») film — each only when they have a real photo (self._lead skips a film without
+        one, moving to the next candidate rather than falling back to initials). Sits right before «كل الأفلام», the
+        row's own doorway into the grid."""
+        if not films: return ""
+        yes = [f for f in films if (self.films[f].get("verdict") or {}).get("verdict") == "yes"]
+        seen_f, seen_q, picks = set(), set(), []
+        for pool in (films, yes):
+            for fid in pool:
+                if fid in seen_f: continue
+                lead = self._lead(fid, lang, seen_q)
+                if not lead: continue
+                q, ph, nm = lead
+                seen_f.add(fid); seen_q.add(q)
+                picks.append((fid, ph, nm))
+                break
+        if not picks: return ""
+        tiles = "".join(self.star_tile(fid, ph, nm, lang) for fid, ph, nm in picks)
+        return self.rail(lang, "stars", L(HOME_T["stars"], lang), tiles)

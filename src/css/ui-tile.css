@@ -48,6 +48,11 @@
 .shc .st{display:flex;flex-direction:column;margin-block-start:8px;min-inline-size:0}
 .shc .st b{font-size:var(--fs-time);font-weight:600;line-height:1.35}
 .shc .st bdi{font-size:var(--fs-meta);line-height:1.5;color:var(--seat);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* «نجوم الليلة» (r3-home, owner idea 2026-09-30): a square portrait, no radius (the workspace rule), the actor's
+   name over the film's title — same tile skeleton as .film/.tile, only the image's aspect changes */
+.tile.star .tp{aspect-ratio:1}
+.tile.star .tp img{position:absolute;inset:0;inline-size:100%;block-size:100%;object-fit:cover}
+.tile.star .t{font-weight:600}
 @media (max-width:1023px){
   /* a phone's tile is 100-130 px wide: «التالي 21:30» keeps the time, the cinema is on the film page one tap away */
   .tile .m .nx bdi{display:none}

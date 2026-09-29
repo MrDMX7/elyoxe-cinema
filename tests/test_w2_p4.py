@@ -131,7 +131,7 @@ def test_the_real_rows_hold_the_rule_and_tell_different_stories(real):
     three posters opening the rows 4 times on the first 4 screens, §4.2 #8)."""
     for parts in ((), ("en",)):
         rows = rows_of(read(real, *parts))
-        assert {"top", "cheap"} <= set(rows), rows.keys()
+        assert {"yes", "cheap"} <= set(rows), rows.keys()
         check_rows(rows)
 
 
@@ -237,21 +237,21 @@ process.stdout.write(JSON.stringify(out));
     assert got[3] == '<span class="fw">ما يعرض في دبي</span>'
 
 
-# ---------------------------------------------------------------- «بالأرقام» (§2.1, §4.2 #42)
-def test_the_numbers_row_is_three_44px_links_not_a_paragraph(out):
+# ---------------------------------------------------------------- «بالأرقام» removed from home (r3-home, owner call
+# 2026-09-30): the row itself is gone; /prices/, /boxoffice/ and /q/ stay reachable from the footer instead
+# (pages/insights.py's own NavItems now, plus /q/'s from pages/questions.py, kit/chrome.nav_links).
+def test_the_numbers_row_is_gone_but_its_links_stay_in_the_footer(out):
     h = read(out)
-    row = re.search(r'<section class="rail nums" aria-labelledby="r-nums">.*?</section>', h, re.S).group(0)
-    assert "بالأرقام" in row
-    links = re.findall(r'<li><a href="([^"]+)">([^<]+)</a></li>', row)
-    assert [x[0] for x in links] == ["/prices/", "/boxoffice/", "/q/"]
+    assert 'aria-labelledby="r-nums"' not in h and "بالأرقام" not in main_of(h)
     assert 'class="wrap insx"' not in main_of(h) and '<p class="links more"><a href="/prices/">' not in h
-    css = (CSS / "ui-rows.css").read_text(encoding="utf-8")
-    assert re.search(r"\.nums-l a\{[^}]*min-block-size:44px", css)
-    assert "/en/prices/" in read(out, "en")
+    foot = h[h.index("<footer"):]
+    assert '<a href="/prices/"' in foot and '<a href="/boxoffice/"' in foot and '<a href="/q/"' in foot
+    assert '<a href="/en/prices/"' in read(out, "en")[read(out, "en").index("<footer"):]
 
 
-def test_the_numbers_row_reads_insights_own_markup():
-    """insights.py is W2-P9's and stays as it is: the row is made from its home_links output, so a change there shows here."""
+def test_the_numbers_paragraph_is_still_cut_from_insights_own_markup():
+    """insights.py is W2-P9's and stays as it is: strip_nums (pages/_core/home.py) only removes its NUMS paragraph
+    from the slot, so a change to that paragraph still shows up as removed here."""
     from pages.insights import Insights
     html = Insights.home_links(None, None, "ar")
     assert NUMS.search(html) and len(re.findall(r'<a href="', html)) == 3
@@ -263,7 +263,7 @@ def test_the_stale_line_is_in_the_page_hidden(out):
     m = re.search(r'<p class="stale-l wrap" data-stale hidden>([^<]+)</p>', h)
     assert m and m.group(1) == "ما قدرنا نحدّث الأوقات، هذي آخر نسخة من 18:00"
     assert "Couldn’t refresh the times. This is the 18:00 copy." in read(out, "en")
-    assert main_of(h).index("data-stale") < main_of(h).index('aria-labelledby="r-top"')
+    assert main_of(h).index("data-stale") < main_of(h).index('aria-labelledby="r-cheap"')
 
 
 @needs_node

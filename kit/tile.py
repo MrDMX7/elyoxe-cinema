@@ -81,14 +81,18 @@ class TileKit:
         who = who_fits(f)
         return a + (f' data-fits="{who}"' if who else "") + (f' data-rating="{esc(f["rating"])}"' if "family" in who and f.get("rating") else "")
 
-    def posters_row(self, lang, fids, shows, heading, city_label="", prayer=False, tags=None, yes=False):
+    def posters_row(self, lang, fids, shows, heading, city_label="", prayer=False, tags=None, yes=False, collapse=False):
         """«كل الأفلام» (UI redesign Task 3; the home and city pages): every film's tile in a grid (3 columns on
         a phone, 7 on a desktop) under two chips — «تصفية» (the filter sheet; its badge counts what is filtering)
         and the sort. The controls that sat in rows over the list are in the sheet, the one question on top
         (kit/filters.py); src/js/filters.js drives them. When nothing is left the line says so (§1.7), and under
         «العيال» after 20:00 it offers tomorrow morning instead.
         The two sheets go after the footer with the header's (self._sheets, emptied by page()) — once per page,
-        like the section's ids: /summer/ draws one grid per city (fix round 1, I2); the later grids share them."""
+        like the section's ids: /summer/ draws one grid per city (fix round 1, I2); the later grids share them.
+        `collapse` (r3-home, owner call 2026-09-30, home only): the grid sits behind one native `<details>` closed
+        by default — a single «كل الأفلام (N)» button that expands the whole section in place, no script needed. A
+        link to `#all` still opens it: the fragment target (the inner `<section id="all">`) sits inside the
+        `<details>`, which browsers auto-open for a same-document fragment navigation into a collapsed one."""
         first = not self._grid
         tiles = "".join(self.film_tile(fid, lang, shows, i=i, live=True, tag=(tags or {}).get(fid)) for i, fid in enumerate(fids))
         hid = ' id="all-h"' if first else ""
@@ -101,9 +105,13 @@ class TileKit:
         if first: self._sheets.append(self.filter_sheet(lang, fids, prayer, yes) + self.sort_sheet(lang))
         self._grid = True
         sec = ' id="all" aria-labelledby="all-h"' if first else ""
-        return (f'<section class="all wrap"{sec}>{head}<div class="grid" data-films>{tiles}</div>'
-                f'<p class="empty" data-empty hidden>{esc(L(EMPTY, lang))} <button type="button" class="lnk" data-reset>{esc(L(RESET, lang))}</button></p>'
-                f'<p class="empty" data-kids-late hidden>{esc(L(KIDS_LATE, lang))} <button type="button" class="lnk" data-kids-am>{esc(L(KIDS_AM, lang))}</button></p></section>')
+        section = (f'<section class="all wrap"{sec}>{head}<div class="grid" data-films>{tiles}</div>'
+                   f'<p class="empty" data-empty hidden>{esc(L(EMPTY, lang))} <button type="button" class="lnk" data-reset>{esc(L(RESET, lang))}</button></p>'
+                   f'<p class="empty" data-kids-late hidden>{esc(L(KIDS_LATE, lang))} <button type="button" class="lnk" data-kids-am>{esc(L(KIDS_AM, lang))}</button></p></section>')
+        if collapse and first:
+            summary = f'<summary class="allg-sum wrap">{esc(heading)} <span class="num">({len(fids)})</span></summary>'
+            return f'<details class="allg">{summary}{section}</details>'
+        return section
 
     @staticmethod
     def lo(cells):

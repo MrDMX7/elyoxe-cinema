@@ -58,3 +58,17 @@
   [data-films] > .film{contain-intrinsic-block-size:auto calc((100cqi - 96px) / 7 * 1.5 + 90.2px)}
   .all{margin-block-start:56px}
 }
+/* «كل الأفلام» collapsed behind one button (r3-home, owner call 2026-09-30): a native <details>, no script — the
+   grabber pattern of ui-sched.css's .fcity, reused so the chevron and the tap target read the same everywhere */
+.allg{margin-block-start:44px}
+.allg .all{margin-block-start:20px}
+.allg-sum{display:flex;align-items:center;gap:8px;min-block-size:52px;padding-block:16px;font-size:var(--fs-h2);
+  font-family:var(--display);font-weight:var(--dw);cursor:pointer;list-style:none}
+.allg-sum::-webkit-details-marker{display:none}
+.allg-sum .num{font-family:var(--body);font-weight:400;font-size:var(--fs-meta);color:var(--seat)}
+.allg-sum::after{content:"";margin-inline-start:auto;align-self:center;inline-size:7px;block-size:7px;
+  border-right:1.5px solid var(--seat);border-bottom:1.5px solid var(--seat);transform:rotate(45deg)}
+.allg[open] .allg-sum::after{transform:rotate(-135deg)}
+@media (min-width:1024px){
+  .allg{margin-block-start:56px}
+}
