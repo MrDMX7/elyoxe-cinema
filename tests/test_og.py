@@ -68,7 +68,8 @@ def test_renders_once_and_is_deterministic(cache):
     data = _data()
     ctx = {"data_dir": str(cache), "now": data["generated"]}
     r1 = og_step.run(data, ctx)
-    assert r1["rendered"] == 2 and r1["skipped"] == 0        # ar + en
+    assert r1["rendered"] == 4 and r1["skipped"] == 0        # og ar+en + the r3-seo Stories card ar+en
+    assert "test-film" in data["films"] and data["films"]["test-film"]["og_story"].keys() == {"ar", "en"}
     name_ar = data["films"]["test-film"]["og"]["ar"]
     png1 = (cache / "og" / name_ar).read_bytes()
     mtime1 = (cache / "og" / name_ar).stat().st_mtime_ns
@@ -91,7 +92,7 @@ def test_regenerates_when_the_price_changes_and_keeps_dubai_the_loudest_city(cac
     d2 = _data(price=50)
     r2 = og_step.run(d2, {**ctx1, "now": d2["generated"]})
     name2 = d2["films"]["test-film"]["og"]["ar"]
-    assert name2 != name1 and r2["rendered"] == 2
+    assert name2 != name1 and r2["rendered"] == 4              # og ar+en + the Stories card ar+en, all re-priced
     assert r2["cities"]["test-film"] == "dubai"                # 2 of 3 shows are in Dubai
     assert not (cache / "og" / name1).exists()                 # the stale render is pruned
 
@@ -198,6 +199,34 @@ def test_a_card_renders_fast_once_fonts_are_warm(cache):
     assert (time.perf_counter() - t) / 2 < 0.5
 
 
+def test_story_card_is_1080x1920_and_has_no_city_in_its_price_line(cache):
+    """r3-seo: the Stories card names no city (it isn't tied to one place the way the 1200x630 card is) —
+    only «من {price} درهم» / "From AED {price}", the cheapest confirmed price among ALL of today's shows."""
+    data = _data()   # 2 Dubai shows (35, 55) + 1 Sharjah show (40): cheapest overall is 35
+    og_step.run(data, {"data_dir": str(cache), "now": data["generated"]})
+    name_ar = data["films"]["test-film"]["og_story"]["ar"]
+    im = Image.open(cache / "og" / name_ar)
+    assert im.size == (og_step.SW, og_step.SH) == (1080, 1920)
+
+
+def test_story_card_pruned_and_rerendered_when_the_cheapest_price_changes(cache):
+    d1 = _data(price=35)
+    og_step.run(d1, {"data_dir": str(cache), "now": d1["generated"]})
+    name1 = d1["films"]["test-film"]["og_story"]["ar"]
+
+    d2 = _data(price=50)
+    og_step.run(d2, {"data_dir": str(cache), "now": d2["generated"]})
+    name2 = d2["films"]["test-film"]["og_story"]["ar"]
+    assert name2 != name1
+    assert not (cache / "og" / name1).exists()                  # pruned with the 1200x630 card's stale render
+
+
+def test_archived_film_gets_no_story_card(cache):
+    data = _data(archived=True)
+    og_step.run(data, {"data_dir": str(cache), "now": data["generated"]})
+    assert "og_story" not in data["films"]["test-film"]
+
+
 def test_missing_poster_is_skipped_not_crashed(tmp_path):
     data = _data()
     r = og_step.run(data, {"data_dir": str(tmp_path / "data"), "now": data["generated"]})
@@ -227,6 +256,29 @@ def test_film_page_og_image_points_at_the_rendered_file(tmp_path, cache):
     # I2: the rendered card is 1200x630, so the page says so
     assert '<meta property="og:image:width" content="1200">' in html
     assert '<meta property="og:image:height" content="630">' in html
+
+
+def test_film_page_links_the_story_card_from_the_share_actions(tmp_path, cache):
+    """r3-seo: pages/og.py copies data/og/*-story-*.png into out/og/ and the film hero's share actions get a
+    second, plain download link pointing at it (no new share flow, no new button style)."""
+    data = _data()
+    og_step.run(data, {"data_dir": str(cache), "now": data["generated"]})
+    name_story = data["films"]["test-film"]["og_story"]["ar"]
+
+    disc_path = os.path.join(ROOT, "fixtures", "sample_discounts.yaml")
+    out = str(tmp_path / "out")
+    monkey_root = og_page.ROOT
+    try:
+        og_page.ROOT = str(cache.parent)
+        site = build.Site(data, build.load_discounts(disc_path), build.Halls(os.path.join(ROOT, "halls.yaml")), out,
+                           modules=build.discover(only={"core", "og"}))
+        site.run()
+    finally:
+        og_page.ROOT = monkey_root
+    assert os.path.isfile(os.path.join(out, "og", name_story))
+    html = open(os.path.join(out, "film", "test-film", "index.html"), encoding="utf-8").read()
+    assert f'href="{site_kit.SITE}/og/{name_story}" download' in html
+    assert "ستوري إنستقرام" in html
 
 
 def test_og_dims_only_for_1200x630_images(tmp_path):

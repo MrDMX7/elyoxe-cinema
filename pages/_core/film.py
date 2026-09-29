@@ -257,14 +257,21 @@ class FilmPages:
         days = [(self.today, ("اليوم", "Today"))] + ([(self.tomorrow, ("بكرة", "Tomorrow"))] if mode in ("full", "compact") else [])
         out = []
         shows = self.live_halls([s for s in shows if s["date"] in {d for d, _ in days}], lambda s: (s["cinema"], self.hkey(s)))
+        fid = shows[0]["film"] if shows else None
+        seo = getattr(self, "city_seo_urls", None)   # pages/seo_city.py: {(fid, city)} it actually built a page for
         # Dubai (the script's default city) first, as the script will show it: no city moves above it at start-up (CLS)
         for city in sorted(cities, key=lambda c: c != "dubai"):
             cs = [s for s in shows if self.cinemas[s["cinema"]].get("city") == city]
             if not cs: continue
             cids = list(dict.fromkeys(s["cinema"] for s in cs))
             n = ar_count(len(cids), FILM_T["n_cin"][0]) if lang == "ar" else f'{len(cids)} {FILM_T["n_cin"][1][len(cids) != 1]}'
+            # a link to pages/seo_city.py's own page for this pair (never inside <summary>: interactive
+            # content can't nest inside it, and its click would just toggle the disclosure instead of navigating)
+            seo_link = (f'<p class="fc-seo"><a href="{P(lang, "film", fid, city)}">'
+                        f'{"الأوقات والأسعار في " + esc(L(CITY[city], lang)) if lang == "ar" else "Showtimes and prices in " + esc(L(CITY[city], lang))}</a></p>'
+                        if seo and fid and (fid, city) in seo else "")
             out.append(f'<details class="fcity{" here" if city == "dubai" else ""}" data-city="{city}"{" open" if city == "dubai" else ""}><summary><h2>{esc(L(CITY[city], lang))}</h2>'
-                       f'<span class="fc-n">{esc(n)}</span></summary>')
+                       f'<span class="fc-n">{esc(n)}</span></summary>{seo_link}')
             for cid in cids:
                 chain = self.cinemas[cid]["chain"]
                 ss = [s for s in cs if s["cinema"] == cid]

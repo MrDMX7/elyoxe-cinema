@@ -35,6 +35,15 @@ libraries are unavailable, is simply skipped for this run — never a crash, nev
 film page keeps the site-wide default `assets/og-<lang>.png` until a later run can render it.
 
 run(data, ctx) -> {"rendered": n, "skipped": n, "cities": {fid: city_slug, ...}}
+
+Story images (r3-seo, roadmap #256/#258): the same pipeline also renders one 1080x1920 PNG per showing film
+per day — "<fid>-<lang>-story-<hash>.png" in the same data/og/ cache, same prune pass, same skip-on-failure
+rule — poster full-bleed top, title, and a price line «من {price} درهم» (ar) / "From AED {price}" (en), the
+cheapest confirmed no-card price for the film ANYWHERE today (a Stories card names no city, so it is never
+tied to one city's price the way the 1200x630 card is). An archived film gets no story card (nothing to sell
+a ticket for) rather than a stale placeholder. data["films"][fid]["og_story"] = {"ar": "<name>.png", "en": ...},
+read by pages/og.py the same way as ["og"]; pages/og.py links it from the film hero's share actions
+(«ستوري إنستقرام»/"Instagram Story") as a plain download link — no separate share flow, no new button style.
 """
 from __future__ import annotations
 
@@ -88,6 +97,106 @@ def _cheapest_and_city(shows, cinemas, fid, today):
         return None, city               # this city has no priced show today: no price line, ever
     price = int(min(prices)) if float(min(prices)).is_integer() else round(min(prices), 2)
     return price, city
+
+
+SW, SH = 1080, 1920   # Instagram/TikTok Stories canvas
+
+
+def _cheapest_today(shows, fid, today):
+    """The lowest confirmed no-card price among ALL of today's shows for `fid`, any city (a Stories card
+    names no city, unlike the 1200x630 card's `_cheapest_and_city` — so it is never tied to one city)."""
+    prices = [p["aed"] for s in shows if s.get("film") == fid and s.get("date") == today
+              for p in (s.get("prices") or []) if (p.get("aed") or 0) > 0]
+    if not prices:
+        return None
+    return int(min(prices)) if float(min(prices)).is_integer() else round(min(prices), 2)
+
+
+@functools.lru_cache(maxsize=1)
+def _story_backdrop():
+    """The night backdrop with a soft velvet glow low in the frame, behind the title/price block — drawn once
+    (identical for every story card), same technique as `_backdrop` scaled to the Stories canvas."""
+    from PIL import Image, ImageDraw, ImageFilter
+    im = Image.new("RGB", (SW, SH), NIGHT)
+    glow = Image.new("RGB", (SW, SH), NIGHT)
+    g = ImageDraw.Draw(glow)
+    cy = int(SH * 0.72)
+    for r in range(560, 0, -8):
+        k = (1 - r / 560) ** 1.6
+        c = tuple(int(NIGHT[i] + (VELVET[i] - NIGHT[i]) * k * .7) for i in range(3))
+        g.ellipse((SW / 2 - r, cy - r * .6, SW / 2 + r, cy + r * .6), fill=c)
+    return Image.blend(im, glow.filter(ImageFilter.GaussianBlur(60)), 1.0)
+
+
+def _story_card(lang, title, price, wordmark, poster_path):
+    """Build one 1080x1920 PNG (bytes): poster full-width top, title, «من {price} درهم» price line (dropped
+    when there is none), wordmark at the foot. Same run-splitting/font rules as `_card` (draw_line below is
+    the same routine, just centered instead of edge-anchored). Raises on any Pillow/font failure — the
+    caller (run()) decides what that means (skip this film/lang, never abort the whole step)."""
+    from PIL import Image, ImageDraw, features
+
+    raqm = features.check("raqm")
+    font = _font
+    is_ar = lang == "ar"
+    im = _story_backdrop().copy()
+    d = ImageDraw.Draw(im)
+
+    def draw_center(y, text, ar_font, other_font, fill):
+        runs = _visual_runs(text, lang)
+        fonts = [ar_font if ar else other_font for ar, _ in runs]
+        widths = [f.getlength(t) for f, (_, t) in zip(fonts, runs)]
+        cx = (SW - sum(widths)) / 2
+        for f, (ar, t), w in zip(fonts, runs, widths):
+            d.text((cx, y), t, font=f, fill=fill, anchor="lm", direction="rtl" if (ar and raqm) else None)
+            cx += w
+
+    poster_bottom = 0
+    if poster_path:
+        try:
+            pst = Image.open(poster_path).convert("RGB")
+            pw, ph = pst.size
+            target_w = SW
+            target_h = round(ph * target_w / pw)
+            cap = round(SH * 0.66)   # never past two-thirds down: the title/price block needs the lower third
+            pst = pst.resize((target_w, target_h))
+            if target_h > cap:
+                pst = pst.crop((0, 0, target_w, cap))
+                target_h = cap
+            im.paste(pst, (0, 0))
+            d = ImageDraw.Draw(im)
+            poster_bottom = target_h
+        except Exception:
+            pass  # a poster that fails to open still leaves the typographic card intact
+
+    ar_name, other_name = ("markazi-700-arabic.woff2", "markazi-700-latin.woff2") if is_ar else (None, "readex-latin.woff2")
+    size, avail = 88 if is_ar else 76, SW - 120
+
+    def width(t, sz):
+        return sum((font(ar_name, sz) if ar else font(other_name, sz)).getlength(r) for ar, r in _runs(t) if (ar_name or not ar))
+
+    title = title[:60]
+    while size > 48 and width(title, size) > avail:
+        size -= 4
+    while width(title, size) > avail and " " in title.strip():
+        title = title.rstrip(". ").rsplit(" ", 1)[0] + "..."
+    tt_ar = font(ar_name, size) if ar_name else None
+    tt_other = font(other_name, size)
+
+    y = max(poster_bottom + 110, round(SH * 0.72))
+    draw_center(y, title, tt_ar, tt_other, SCREEN)
+    y += size + 40
+    if price is not None:
+        line = f"من {price} درهم" if is_ar else f"From AED {price}"
+        body_ar, body_lat = font("readex-arabic.woff2", 54), font("readex-latin.woff2", 54)
+        draw_center(y, line, body_ar, body_lat, GOLD)
+        y += 80
+    wm_ar, wm_other = (font("markazi-700-arabic.woff2", 64), font("markazi-700-latin.woff2", 64)) if is_ar else (None, font("readex-latin.woff2", 52))
+    draw_center(SH - 90, wordmark[:60], wm_ar, wm_other, SEAT)
+
+    import io as _io
+    buf = _io.BytesIO()
+    im.save(buf, "PNG", compress_level=6)
+    return buf.getvalue()
 
 
 def _poster_path(data_dir, url):
@@ -321,6 +430,30 @@ def run(data: dict, ctx: dict) -> dict | None:
             f["og"] = og_field
             if city:
                 cities[fid] = city
+
+        # the Stories card: showing films only, one per film per day (its hash already folds in today's date)
+        if not archived:
+            story_price = _cheapest_today(shows, fid, today)
+            og_story = f.get("og_story") if isinstance(f.get("og_story"), dict) else {}
+            for lang in ("ar", "en"):
+                title = str((f.get("title_ar") or f.get("title")) if lang == "ar" else (f.get("title") or f.get("title_ar")) or fid)
+                wordmark = "سينما" if lang == "ar" else "Cinema"
+                h = _hash(RENDER_VERSION, "story", fid, lang, title, story_price, today, st.st_size, st.st_mtime_ns)
+                name = f"{fid}-{lang}-story-{h}.png"
+                keep.add(name)
+                dest = out_dir / name
+                if dest.is_file():
+                    og_story[lang] = name
+                    continue
+                try:
+                    png = _story_card(lang, title, story_price, wordmark, poster)
+                    dest.write_bytes(png)
+                    og_story[lang] = name
+                    rendered += 1
+                except Exception:  # noqa: BLE001 - same rule as the 1200x630 card: skip, never abort the step
+                    skipped += 1
+            if og_story:
+                f["og_story"] = og_story
 
     # prune yesterday's renders for films whose price/city/date changed today (never let data/og/ grow forever)
     for p in out_dir.glob("*.png"):
