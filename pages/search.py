@@ -28,7 +28,14 @@ The index learns Arabic (W1-D2, MASTER-PLAN §2.7):
 
 The header carries the search button and the phone tab bar a «بحث» link (both `[data-search]`, UI redesign
 Task 2), and the chunk loads on every page through `page_js["*"]` — the two gaps task-A5-report.md flagged
-(no header-button hook, a per-kind list going stale) are closed."""
+(no header-button hook, a per-kind list going stale) are closed.
+
+W2-P8 (MASTER-PLAN §2.7): search is a browse surface, not just a lookup box. Before typing, the panel shows
+recent searches (local, clearable) and, reusing the same `h`/`n` index entries and the same row markup as a
+real search, the formats and chains — never fetching a city's own schedule slice for that empty state. A
+time word («الحين»، «الليلة»، «بعد العشا»، «بكرة») navigates the schedule at once with `cinema.when` already
+set and `?t=<word>` on the URL, so no extra tap is needed. All of this stays client-side in src/js/search.js;
+this module (the index and its build-time normalize/skeleton rules) is unchanged by it."""
 import os
 import re
 import unicodedata

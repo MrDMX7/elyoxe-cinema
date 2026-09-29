@@ -32,4 +32,14 @@ html.srch-open{overflow:hidden}
 .srch-i-p::before{border-radius:50%}
 .srch-arc{color:var(--seat);font-size:11px;margin-inline-start:auto;white-space:nowrap}
 .srch-empty{margin:0;padding:0 16px 14px;color:var(--dim);font-size:13px}
+/* the empty state (W2-P8, §2.7): before typing, search helps you type and nothing else -- recent searches
+   as clearable chips, and a browse row of formats and chains drawn with render()'s own row markup (.srch-r,
+   above); never cards or radii */
+.srch-g{position:relative}
+.srch-clr{position:absolute;inset-inline-end:16px;inset-block-start:8px;background:transparent;border:0;
+  color:var(--seat);font-size:12px;cursor:pointer;min-block-size:32px;padding-inline:4px}
+.srch-chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0;padding:0 16px 14px}
+.srch-chip{display:inline-flex;align-items:center;min-block-size:36px;padding:0 12px;border:1px solid var(--line-2);
+  background:transparent;color:var(--screen);font-size:13px;text-decoration:none;cursor:pointer}
+.srch-chip:hover{background:var(--tint);color:var(--gold-hi)}
 @media (max-width:560px){.srch{padding-block-start:6vh}}
