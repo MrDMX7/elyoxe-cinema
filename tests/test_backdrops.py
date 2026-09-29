@@ -574,3 +574,12 @@ def test_real_step_is_quick_and_offline_over_the_sample_fixture():
     r = bd.run(data, {"offline": True, "now": data["generated"], "data_dir": os.path.join(ROOT, "data")})
     assert r["offline"] is True
     assert time.monotonic() - t0 < 2
+
+
+def test_override_trailer_key_swaps_the_trailer_used_for_the_frame(tmp_path, monkeypatch):
+    import steps.backdrops as bd
+    p = tmp_path / "ov.yaml"
+    p.write_text('resident-evil: {trailer: mNd1gb19A-c, t: 22.7, hd: true}\nbad: {trailer: "not an id"}\n', encoding="utf-8")
+    ov = bd._load_overrides(p)
+    assert ov["resident-evil"] == {"t": 22.7, "x": None, "trailer": "mNd1gb19A-c", "hd": True}
+    assert "bad" not in ov
