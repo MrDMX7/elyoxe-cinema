@@ -1091,7 +1091,14 @@ def run(data: dict, ctx: dict | None = None) -> dict:
         return False
 
     try:
-        for fid, is_upgrade in [(f, False) for f in work] + [(f, True) for f in upgrades]:
+        # a hand pick in backdrops_override.yaml (t/x/trailer changed) goes first: it is the owner's explicit
+        # choice, and behind the per-run cap of new films it could wait for hours
+        def _picked(f):
+            e, o = cache.get(f) or {}, overrides.get(f) or {}
+            return (e.get("override_t"), e.get("override_x")) != (o.get("t"), o.get("x"))
+        picked = [f for f in upgrades if _picked(f)]
+        rest = [f for f in upgrades if f not in picked]
+        for fid, is_upgrade in [(f, True) for f in picked] + [(f, False) for f in work] + [(f, True) for f in rest]:
             if blocked():
                 if is_upgrade:
                     cached += 1   # its older frame stays attached; a later run re-makes it
