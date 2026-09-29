@@ -74,7 +74,12 @@ PT = {
     "halls_all": ("كل القاعات المميزة في الإمارات، مقارنة", "Every premium hall in the UAE, compared"),
     "faq": ("أسئلة", "Questions"),
     "tmr": ("بكرة", "Tomorrow"),
+    "best_time": ("أفضل وقت تروح: {part}، أقل ازدحام على القاعات", "Best time to go: {part}, the halls run least full"),
 }
+# «أفضل وقت تروح» (steps/occupancy_history.py): the same morning/afternoon/evening/night bins price_history.py
+# buckets prices with, worded for a visit rather than a ticket price
+BEST_TIME_PART = {"morning": ("الصبح", "the morning"), "afternoon": ("العصر", "the afternoon"),
+                  "evening": ("المسا", "the evening"), "night": ("الليل", "at night")}
 # «عرض واحد باقي» · «عرضين باقيين» · «5 عروض باقية» · «18 عرض باقي»: places.js's plLeft is the twin
 LEFT_AR = ("عرض واحد باقي", "عرضين باقيين", "عروض باقية", "عرض باقي")
 PAST_AR = ("عرض واحد فات", "عرضين فاتوا", "عروض فاتت", "عرض فات")
@@ -438,7 +443,14 @@ class PlacesPages:
                 'focusable="false"><path d="M6 3h12v18l-6-4-6 4z"/></svg>')
         fav = (f'<button type="button" class="fav" data-fav="{esc(cid)}" aria-pressed="false" hidden>{mark}'
                f'<span class="vh">{esc(L(PT["mine"], lang))}</span></button>')
-        out = (f'<section class="head wrap chead">{self.crumbs(lang, (cn, P(lang, city)), (name, None))}'
+        photo = c.get("photo")
+        bd = ""
+        if isinstance(photo, dict) and photo.get("w1280") and photo.get("w640"):
+            bd = (f'<div class="chead-bd" aria-hidden="true"><picture>'
+                  f'<source media="(min-width:768px)" srcset="{esc(rel(photo["w1280"]))}">'
+                  f'<img src="{esc(rel(photo["w640"]))}" alt="" loading="lazy" decoding="async" '
+                  f'width="{photo.get("w") or 640}" height="{photo.get("h") or 360}"></picture></div>')
+        out = (f'<section class="head wrap chead{" chead-photo" if bd else ""}">{bd}{self.crumbs(lang, (cn, P(lang, city)), (name, None))}'
                f'<div class="ch-t"><h1 class="pt"{" lang=\"en\"" if self.cname_is_en(cid, lang) else ""}>{esc(name)}</h1>{fav}</div>')
         a_ar = (self.names.get(cid) or {}).get("address_ar")
         a_en = c.get("address") or ("" if cid in self.names else c.get("mall")) or ""
@@ -460,6 +472,10 @@ class PlacesPages:
                 films = sorted({self.ftitle(s["film"], lang) for s in late})
                 names = ("، " if ar else ", ").join(f"<bdi>{esc(t)}</bdi>" for t in films[:4])   # a Latin title in an Arabic line
                 out += f'<p class="mall-late">{esc(L(PT["late"], lang)).replace("{films}", names)}</p>'
+        bt = c.get("best_time")
+        if isinstance(bt, dict) and bt.get("part") in BEST_TIME_PART:
+            part = esc(L(BEST_TIME_PART[bt["part"]], lang))
+            out += f'<p class="best-time">{esc(L(PT["best_time"], lang)).replace("{part}", part)}</p>'
         return out + '</section>'
 
     def halls_table(self, cid, chain, pr, lang):

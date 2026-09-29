@@ -176,3 +176,20 @@ def week_films(lines: dict, end: str, span: int = 7) -> tuple[dict, list]:
             t = tot.setdefault(fid, [0, 0])
             t[0] += int(n); t[1] = max(t[1], int(c))
     return tot, used
+
+
+def week_over_week(lines: dict, end: str, span: int = 7) -> tuple[dict, list, dict, list]:
+    """(this week's totals, its dates, last week's totals, its dates) — the same `span`-day window ending
+    at `end`, and the `span` days immediately before it. Used for /boxoffice/'s week-over-week arrows: a
+    film's last-week rank comes from ranking `prev_tot` the same way the caller ranks `tot`."""
+    tot, used = week_films(lines, end, span)
+    prev_end = (dt.date.fromisoformat(end) - dt.timedelta(days=span)).isoformat()
+    prev_tot, prev_used = week_films(lines, prev_end, span)
+    return tot, used, prev_tot, prev_used
+
+
+def ranked_fids(tot: dict) -> list:
+    """fids ordered the way /boxoffice/ ranks them: most shows, then most cinemas, then fid — the same key
+    pages/insights.py's Insights.week() sorts `tot` with, so a rank computed here and one computed there
+    agree without either importing the other."""
+    return [f for f, _ in sorted(tot.items(), key=lambda kv: (-kv[1][0], -kv[1][1], kv[0]))]
