@@ -81,7 +81,7 @@ const { chromium } = require(process.env.PLAYWRIGHT || "C:/Users/requi/workspace
       const pr = await p.$eval("[data-dk-p]", e => e.textContent);
       if (pr !== dk.pr) { moved = [c, dk.pr, pr]; break; }
     }
-    if (moved) ok("a card reprices the dock (and says «بعد <card>»)", /بعد|after/.test(await p.$eval("[data-dk-s]", e => e.textContent)), moved);
+    if (moved) ok("a card reprices the dock (and says «بعد <card>»)", /بعد|after/.test(await p.$eval("[data-dk-p]", e => e.textContent)), moved);
     else skip("card reprices the dock", "no card discounts this show");
     await p.evaluate(() => document.querySelector('#sheet-card button[data-card=""]').click());
     await p.waitForTimeout(200);

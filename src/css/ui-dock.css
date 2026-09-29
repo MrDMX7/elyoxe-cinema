@@ -1,17 +1,35 @@
-/* the phone's dock: the chosen time on paper over the tab bar (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
-/* the dock: the chosen time on paper, over the tab bar; «التفاصيل والحجز» opens the ticket sheet. On paper a price is
-   ink, and yours (after a card) velvet: gold never goes on paper (1.6:1) */
-.dock{position:fixed;inset-inline:0;inset-block-end:calc(60px + env(safe-area-inset-bottom));z-index:31;background:var(--screen);color:var(--ink);
-  padding:12px var(--gut);display:flex;align-items:center;gap:12px}
-.dk-t{min-inline-size:0;flex:1 1 auto}
-.dk-p{font-size:var(--fs-h2);font-weight:600;line-height:1.1}
+/* the phone's dock: a paper stub floating over the tab bar (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN
+   §2.3, §6.2). «التفاصيل» opens the full ticket sheet; «احجز» is the tap-count win — it books straight from the
+   stub (no extra tap through a details screen: rivals-uae §14, MASTER-PLAN §5 #10). On paper a price is ink, and
+   yours (after a card) velvet: gold never goes on paper (1.6:1) */
+.dock{position:fixed;inset-inline:0;inset-block-end:calc(60px + env(safe-area-inset-bottom));z-index:31;
+  padding:12px var(--gut) 16px;box-shadow:0 -1px 0 var(--rule-p)}
+.dock.stub{block-size:auto}
+.dk-t{min-inline-size:0;padding-inline-end:12px;display:flex;flex-direction:column;justify-content:center;gap:4px}
+.dk-time{font-weight:600;font-size:var(--fs-h2);line-height:1.1}
+.dk-s{font-size:var(--fs-meta);color:var(--ink-2);line-height:1.4}
+.dk-act{display:flex;align-items:center;gap:12px;margin-block-start:4px}
+.dk-more{font-size:var(--fs-meta);color:var(--ink-2);text-decoration:underline;text-underline-offset:2px;background:none;border:0;padding:0;min-block-size:32px;cursor:pointer}
+.dk-b{flex:1 1 auto;white-space:nowrap;background:var(--velvet);color:var(--screen);text-decoration:none;min-block-size:44px;
+  display:flex;align-items:center;justify-content:center;padding-inline:16px;font-size:var(--fs-body);font-weight:500;cursor:pointer;text-align:center}
+.dk-b.box{background:var(--ink)}
+.dk-b:focus-visible{outline:2px solid var(--screen);outline-offset:-4px}
+.dk-p{padding-inline-start:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  font-size:var(--fs-h2);font-weight:600;line-height:1.15}
 .dk-p .num{color:var(--velvet)}
 .dk-p .per,.dk-p .na{font-size:var(--fs-meta);font-weight:400;color:var(--ink-2)}
-.dk-s{font-size:var(--fs-meta);color:var(--ink-2);line-height:1.5}
-.dk-b{margin-inline-start:auto;flex:0 0 auto;white-space:nowrap;background:var(--velvet);color:var(--screen);min-block-size:44px;padding-inline:16px;font-size:var(--fs-body);font-weight:500;cursor:pointer}
-.dk-b:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-body.docked{padding-block-end:calc(140px + env(safe-area-inset-bottom))}
+/* the stamp: «رايح» with the date, on the perforation only — it intersects neither the price nor any text (§2.3
+   moments). aria-hidden, and invisible until film.js sets data-stamped after «احجز» is tapped */
+.dock .perf{align-self:stretch}
+.dk-stamp{position:absolute;inset-inline-start:50%;inset-block-end:8px;transform:translateX(-50%) rotate(-9deg);
+  inline-size:68px;block-size:20px;display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--ink-3);color:var(--ink-3);font-size:11px;font-weight:600;white-space:nowrap;opacity:0}
+.dock[data-stamped] .dk-stamp{opacity:1}
+body.docked{padding-block-end:calc(152px + env(safe-area-inset-bottom))}
 @media (min-width:1024px){
   .dock,body.docked .dock{display:none}
   body.docked{padding-block-end:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .dk-stamp{transition:none}
 }

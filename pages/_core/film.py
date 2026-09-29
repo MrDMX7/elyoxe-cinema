@@ -187,9 +187,15 @@ class FilmPages:
                 # «اختر وقت» (the desktop column with nothing chosen) and the phone's dock (film.js fills it)
                 empty = (f'<div class="tk-empty" data-tk-empty hidden><p class="k">{esc(L(FILM_T["pick"], lang))}</p>'
                          f'<p>{esc(L(FILM_T["pick_s"], lang))}</p></div>')
-                dock = (f'<div class="dock" data-dock role="region" aria-label="{esc(L(FILM_T["chosen"], lang))}" hidden><div class="dk-t">'
-                        f'<p class="dk-p" data-dk-p></p><p class="dk-s" data-dk-s></p></div>'
-                        f'<button type="button" class="btn dk-b" data-dk-open aria-haspopup="dialog">{esc(L(FILM_T["details"], lang))}</button>'
+                # the dock as a paper stub (§2.3): main part (time, cinema/hall, «التفاصيل» and «احجز» on the stub
+                # itself), a perforation with square notches («رايح» stamps there on tap, never on the price), and
+                # the tear-off price after the card. film.js fills it; the live region outside it is M5's (Task 4)
+                dock = (f'<div class="dock paper stub" data-dock role="region" aria-label="{esc(L(FILM_T["chosen"], lang))}" hidden>'
+                        f'<div class="dk-t"><b class="dk-time" dir="ltr" data-dk-time></b><p class="dk-s" data-dk-s></p>'
+                        f'<div class="dk-act"><button type="button" class="lnk dk-more" data-dk-open aria-haspopup="dialog">{esc(L(FILM_T["details"], lang))}</button>'
+                        f'<a class="dk-b" data-dk-book rel="noopener nofollow" target="_blank"></a></div></div>'
+                        f'<div class="perf" aria-hidden="true"><span class="dk-stamp" data-dk-stamp></span></div>'
+                        f'<div class="dk-p" data-dk-p></div>'
                         f'</div><p class="vh" data-dk-live aria-live="polite"></p>')   # the live region outside the dock: always rendered (M5)
                 graph = [self.movie_ld(fid, lang)] + [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:30] + [self.breadcrumb_ld(lang, (t, P(lang, "film", fid)))]
                 none = f'<p class="lead">{esc(L(FILM_T["none"], lang))}</p>'

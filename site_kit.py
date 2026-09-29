@@ -125,7 +125,7 @@ FILM_T = {"about": ("عن الفيلم", "About"), "cast": ("الطاقم", "Cas
           "pick": ("اختر وقت", "Pick a time"),
           "pick_s": ("اختر وقت من المواعيد، وتطلع لك تذكرته هني: سعر كل مقعد بعد خصم بطاقتك، والحجز والاتجاهات.",
                      "Pick a showtime and its ticket shows here: every seat’s price after your card, booking and directions."),
-          "details": ("التفاصيل والحجز", "Details and booking"), "chosen": ("الوقت المختار", "Chosen time"),
+          "details": ("التفاصيل", "Details"), "chosen": ("الوقت المختار", "Chosen time"),
           "n_cin": (("سينما وحدة", "سينمتين", "سينمات", "سينما"), ("cinema", "cinemas")),
           "none": ("ما لقينا عروض لهذا الفيلم في اليومين الجايين.", "No shows for this film in the next two days.")}
 WEEKDAYS = (("الاثنين", "Mon"), ("الثلاثاء", "Tue"), ("الأربعاء", "Wed"), ("الخميس", "Thu"), ("الجمعة", "Fri"), ("السبت", "Sat"), ("الأحد", "Sun"))
