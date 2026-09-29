@@ -37,4 +37,8 @@ pradhama-drishtya-kuttakkar: 53.3
 # (2026-09-28). The scorer's screen, t=99.4, is the man catching the leaping dog beside a mossy bank; the
 # window's detail measure put the phone's 2:3 crop on the moss (x 0.75: the sharpest texture, not the
 # subject, who is in motion). x 0.33 frames the man and the dog (portrait 536x804, sharpness 1.20).
-heart-of-the-beast: {x: 0.33}
+# 2026-09-29 owner pick «Heart A»: the man and the dog crossing the fallen trunk (sharp; the old t=99.4 was motion-blurred).
+heart-of-the-beast: {t: 95.7, x: 0.6}
+# resident-evil: 2026-09-29 owner pick «B new»: the runner in the burning snowy street, from Sony's official
+# trailer (mNd1gb19A-c) at 4K -- the listed teaser (s-NEt5sCi6A) is mostly dark and its frames were soft.
+resident-evil: {trailer: mNd1gb19A-c, t: 129.54, x: 0.5, hd: true}

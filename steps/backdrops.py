@@ -110,6 +110,10 @@ STEP_VERSION = 2
 # the best video-only SDR stream up to 1080 rows (an HDR stream decoded without tone mapping comes out grey)
 FORMAT = ("bv[height<=1080][dynamic_range!^=?HDR][ext=mp4]/bv[height<=1080][dynamic_range!^=?HDR]"
           "/bv*[height<=1080]")
+# `hd: true` in backdrops_override.yaml: this film only, the best SDR stream up to 2160 rows (a 1080p
+# stream is too soft for its hand-picked frame). Downloaded once, deleted after, like any other.
+FORMAT_HD = ("bv[height<=2160][dynamic_range!^=?HDR][ext=mp4]/bv[height<=2160][dynamic_range!^=?HDR]"
+             "/bv*[height<=2160]")
 SAMPLE_COUNT = 16
 START_FRAC, END_FRAC = 0.12, 0.80
 WIDTHS = (1280, 640)
@@ -433,7 +437,7 @@ YT_THROTTLED = re.compile(r"not a bot|HTTP Error 429|Too Many Requests|rate.limi
 THROTTLED_WHY = "download: YouTube is throttling this address"
 
 
-def _yt_dlp_download(trailer_id: str, work_dir: Path, fid: str, run=None):
+def _yt_dlp_download(trailer_id: str, work_dir: Path, fid: str, run=None, fmt=None):
     """-> (video path | None, why | None). FORMAT first; on failure once more with node as the JS runtime
     when node is on PATH (yt-dlp enables only deno by default) -- unless YouTube answered with a throttle
     (YT_THROTTLED) or the first attempt timed out: no JS runtime fixes a slow link, and a second 240 s wait
@@ -444,7 +448,7 @@ def _yt_dlp_download(trailer_id: str, work_dir: Path, fid: str, run=None):
     run = run or subprocess.run
     template = work_dir / f"{fid}.%(ext)s"
     url = f"https://www.youtube.com/watch?v={trailer_id}"
-    base = ["-f", FORMAT, "--no-playlist", "--no-progress", "-o", str(template), url]
+    base = ["-f", fmt or FORMAT, "--no-playlist", "--no-progress", "-o", str(template), url]
     attempts = [["yt-dlp", *base]]
     if shutil.which("node"):
         attempts.append(["yt-dlp", "--js-runtimes", "node", *base])
@@ -753,7 +757,8 @@ def _pick(samples: list, duration) -> tuple:
     return kept, floor, summary
 
 
-def process_film(fid: str, trailer_id: str, work_dir: Path, out_dir: Path, run=None, forced_t=None, forced_x=None):
+def process_film(fid: str, trailer_id: str, work_dir: Path, out_dir: Path, run=None, forced_t=None, forced_x=None,
+                 hd=False):
     """-> (entry, None, None) on success, else (None, kind, why): kind "transient" (download/ffprobe failed,
     or every ffmpeg seek failed) or "rejected" (frames came back fine, every one was rejected). Always deletes
     whatever it downloaded for this fid.
@@ -764,7 +769,7 @@ def process_film(fid: str, trailer_id: str, work_dir: Path, out_dir: Path, run=N
     t0 = time.monotonic()
     work_dir.mkdir(parents=True, exist_ok=True)
     try:
-        video, why = _yt_dlp_download(trailer_id, work_dir, fid, run=run)
+        video, why = _yt_dlp_download(trailer_id, work_dir, fid, run=run, fmt=FORMAT_HD if hd else None)
         if not video or not video.is_file():
             return None, "transient", why or "download: no file"
         duration = _ffprobe_duration(video, run=run)
@@ -926,8 +931,11 @@ def _load_overrides(path: Path | None = None) -> dict:
             out[fid] = None
         elif isinstance(v, dict):
             t, x = num(v.get("t"), 0, math.inf), num(v.get("x"), 0, 1)
-            if t is not None or x is not None:
-                out[fid] = {"t": t, "x": x}
+            tr = v.get("trailer")
+            tr = tr if isinstance(tr, str) and YT.match(tr) else None
+            hd = v.get("hd") is True
+            if t is not None or x is not None or tr or hd:
+                out[fid] = {"t": t, "x": x, **({"trailer": tr} if tr else {}), **({"hd": True} if hd else {})}
         else:
             t = num(v, 0, math.inf)
             if t is not None:
@@ -1041,6 +1049,9 @@ def run(data: dict, ctx: dict | None = None) -> dict:
     cache = _load(cache_path)
     candidates = _candidates(data)
     overrides = _load_overrides()
+    for fid, ov in overrides.items():   # `trailer:` takes the frame from another (e.g. the official) trailer
+        if ov and ov.get("trailer") and fid in candidates:
+            candidates[fid] = ov["trailer"]
     counts = show_counts(data)
     films = data.get("films") or {}
     order = sorted(candidates, key=lambda f: (-counts.get(f, 0), f))
@@ -1090,7 +1101,7 @@ def run(data: dict, ctx: dict | None = None) -> dict:
             new_count += 1
             try:
                 result, kind, reason = process_film(fid, trailer, work_dir, out_dir,
-                                                    forced_t=ov.get("t"), forced_x=ov.get("x"))
+                                                    forced_t=ov.get("t"), forced_x=ov.get("x"), hd=bool(ov.get("hd")))
             except Exception as e:   # noqa: BLE001 - one film's failure must never fail the step
                 result, kind, reason = None, "transient", f"exception: {type(e).__name__}: {e}"[:200]
             marks = {k: v for k, v in (("override_t", ov.get("t")), ("override_x", ov.get("x"))) if v is not None}
