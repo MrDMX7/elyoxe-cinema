@@ -603,3 +603,26 @@ def test_a_frame_from_the_override_trailer_is_attached_to_the_film(tmp_path, mon
     data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"}})
     bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
     assert data["films"]["film-a"]["backdrop"]["w1280"] == "/posters/bd-film-a-deadbeef01-1280.webp"
+
+
+def test_a_hand_picked_frame_is_remade_before_new_films_under_the_cap(tmp_path, monkeypatch):
+    ov = tmp_path / "ov.yaml"
+    ov.write_text("film-z: {t: 5.0}\n", encoding="utf-8")
+    monkeypatch.setattr(bd, "OVERRIDE_PATH", ov)
+    (tmp_path / "backdrops.json").write_text(json.dumps({
+        "film-z": {"trailer": "ZZZZZZZZZZZ", "w1280": "/posters/bd-film-z-deadbeef01-1280.webp",
+                   "w640": "/posters/bd-film-z-deadbeef01-640.webp", "w": 1280, "h": 720, "t": 9.0,
+                   "at": "2026-09-20T12:00:00+00:00", "v": bd.STEP_VERSION}}), encoding="utf-8")
+    (tmp_path / "posters").mkdir()
+    for n in ("1280", "640"):
+        (tmp_path / "posters" / f"bd-film-z-deadbeef01-{n}.webp").write_bytes(b"x")
+    seen = []
+    def fake(fid, trailer, *a, **k):
+        seen.append(fid)
+        return None, "transient", "stub"
+    monkeypatch.setattr(bd, "process_film", fake)
+    monkeypatch.setenv("CINEMA_BACKDROPS_MAX", "1")
+    data = _data(films={"film-a": {"status": "showing", "trailer": "AAAAAAAAAAA"},
+                        "film-z": {"status": "showing", "trailer": "ZZZZZZZZZZZ"}})
+    bd.run(data, {"data_dir": str(tmp_path), "now": "2026-09-27T12:00:00+00:00"})
+    assert seen == ["film-z"]
