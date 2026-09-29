@@ -1,0 +1,240 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  «سينما» — the privacy-first visit counter (plan §3.2 R15 / W3-P6) and Web Push for saved
+  films (owner request 2026-09-30, unit r3-backend). Its own stack (elyoxe-cinema-counter),
+  ap-south-1, separate from the site stack (elyoxe-cinema) — deploy: infra/counter/deploy.sh.
+  Nothing here touches the site bucket, the CloudFront distributions or DNS. No cookie, no id,
+  no IP is stored anywhere in this stack: the ingest Lambda never reads requestContext.http.sourceIp
+  and never logs the raw event; the only "identity" is a daily-rotating salted hash the client
+  computes on-device and sends as an opaque string (`uid`), used solely to count same-day returns
+  and expired after 2 days by DynamoDB TTL.
+
+Parameters:
+  AllowedOrigins:
+    Type: CommaDelimitedList
+    Default: "https://cinema.elyoxe.com"
+  VapidPublicKey:
+    Type: String
+    Description: Web Push VAPID public key (uncompressed P-256 point, base64url) — safe to expose to the client
+  VapidSubject:
+    Type: String
+    Default: mailto:hello@elyoxe.com
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 10
+    MemorySize: 128
+    Architectures: [x86_64]
+
+Resources:
+  # ---- data --------------------------------------------------------------------------------
+  MetricsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: elyoxe-cinema-metrics
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: d, AttributeType: S }
+        - { AttributeName: k, AttributeType: S }
+      KeySchema:
+        - { AttributeName: d, KeyType: HASH }   # date "YYYY-MM-DD" (Dubai), or "_meta" for housekeeping items
+        - { AttributeName: k, KeyType: RANGE }  # "<page_kind>#<event>" e.g. "film#view", "_#return#2-7", "_#ttb#0-3s"
+
+  UniquesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: elyoxe-cinema-uniques
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: d, AttributeType: S }
+        - { AttributeName: h, AttributeType: S }
+      KeySchema:
+        - { AttributeName: d, KeyType: HASH }   # date "YYYY-MM-DD"
+        - { AttributeName: h, KeyType: RANGE }  # the client's daily-rotating salted hash — opaque, never an id across days
+      TimeToLiveSpecification: { AttributeName: ttl, Enabled: true }
+
+  PushSubsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: elyoxe-cinema-push-subs
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: endpoint, AttributeType: S }
+      KeySchema:
+        - { AttributeName: endpoint, KeyType: HASH }
+
+  # ---- Web Push code (bundles cryptography + py-vapid + pywebpush; layer built by deploy.sh
+  # via `pip download --platform manylinux2014_x86_64`, not committed — infra/counter/layer/.gitignore) ----
+  WebPushLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: elyoxe-cinema-webpush
+      ContentUri: layer/
+      CompatibleRuntimes: [python3.12]
+      RetentionPolicy: Delete
+
+  # ---- functions -----------------------------------------------------------------------------
+  IngestRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: lambda.amazonaws.com }, Action: sts:AssumeRole }]
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole]
+      Policies:
+        - PolicyName: metrics-write
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - { Effect: Allow, Action: dynamodb:UpdateItem, Resource: !GetAtt MetricsTable.Arn }
+              - { Effect: Allow, Action: dynamodb:PutItem, Resource: !GetAtt UniquesTable.Arn }
+
+  IngestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: elyoxe-cinema-ingest
+      CodeUri: lambdas/
+      Handler: ingest.handler
+      Role: !GetAtt IngestRole.Arn
+      Environment:
+        Variables:
+          METRICS_TABLE: !Ref MetricsTable
+          UNIQUES_TABLE: !Ref UniquesTable
+          ALLOWED_ORIGINS: !Join [",", !Ref AllowedOrigins]
+      Events:
+        Events:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /events, Method: POST }
+        EventsOptions:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /events, Method: OPTIONS }
+
+  StatsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: lambda.amazonaws.com }, Action: sts:AssumeRole }]
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole]
+      Policies:
+        - PolicyName: stats-read
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - { Effect: Allow, Action: dynamodb:Query, Resource: [!GetAtt MetricsTable.Arn, !GetAtt UniquesTable.Arn] }
+              - { Effect: Allow, Action: ssm:GetParameter, Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/elyoxe/cinema/counter/*" }
+
+  StatsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: elyoxe-cinema-stats
+      CodeUri: lambdas/
+      Handler: stats.handler
+      Role: !GetAtt StatsRole.Arn
+      Environment:
+        Variables:
+          METRICS_TABLE: !Ref MetricsTable
+          UNIQUES_TABLE: !Ref UniquesTable
+          SECRET_PARAM: /elyoxe/cinema/counter/stats-secret
+      Events:
+        Stats:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /stats, Method: GET }
+
+  PushSubscribeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: lambda.amazonaws.com }, Action: sts:AssumeRole }]
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole]
+      Policies:
+        - PolicyName: subs-write
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - { Effect: Allow, Action: [dynamodb:PutItem, dynamodb:DeleteItem], Resource: !GetAtt PushSubsTable.Arn }
+
+  PushSubscribeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: elyoxe-cinema-push-subscribe
+      CodeUri: lambdas/
+      Handler: push_subscribe.handler
+      Role: !GetAtt PushSubscribeRole.Arn
+      Environment:
+        Variables:
+          SUBS_TABLE: !Ref PushSubsTable
+          ALLOWED_ORIGINS: !Join [",", !Ref AllowedOrigins]
+          VAPID_PUBLIC_KEY: !Ref VapidPublicKey
+      Events:
+        Subscribe:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /push/subscribe, Method: POST }
+        SubscribeOptions:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /push/subscribe, Method: OPTIONS }
+        Unsubscribe:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /push/subscribe, Method: DELETE }
+
+  PushWeeklyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: lambda.amazonaws.com }, Action: sts:AssumeRole }]
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole]
+      Policies:
+        - PolicyName: push-send
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - { Effect: Allow, Action: [dynamodb:Scan, dynamodb:DeleteItem], Resource: !GetAtt PushSubsTable.Arn }
+              - { Effect: Allow, Action: [dynamodb:GetItem, dynamodb:PutItem], Resource: !GetAtt MetricsTable.Arn }
+              - { Effect: Allow, Action: ssm:GetParameter, Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/elyoxe/cinema/counter/*" }
+
+  PushWeeklyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: elyoxe-cinema-push-weekly
+      CodeUri: lambdas/
+      Handler: push_weekly.handler
+      Role: !GetAtt PushWeeklyRole.Arn
+      Timeout: 60
+      Layers: [!Ref WebPushLayer]
+      Environment:
+        Variables:
+          SUBS_TABLE: !Ref PushSubsTable
+          METRICS_TABLE: !Ref MetricsTable
+          VAPID_PRIVATE_PARAM: /elyoxe/cinema/counter/vapid-private
+          VAPID_SUBJECT: !Ref VapidSubject
+          COMING_URL: https://cinema.elyoxe.com/data/coming.json
+      Events:
+        Weekly:
+          # Thursday 12:00 Asia/Dubai (UTC+4, no DST) = Thursday 08:00 UTC.
+          Type: Schedule
+          Properties: { Schedule: "cron(0 8 ? * THU *)", Name: elyoxe-cinema-push-weekly, Description: "weekly new-releases push, Thursday noon Dubai" }
+
+  # ---- API ------------------------------------------------------------------------------------
+  Api:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Name: elyoxe-cinema-counter
+      CorsConfiguration:
+        AllowOrigins: !Ref AllowedOrigins
+        AllowMethods: [GET, POST, DELETE, OPTIONS]
+        AllowHeaders: [content-type]
+        MaxAge: 86400
+      # No AccessLogSettings on purpose: HTTP API execution logs are off by default, and we never
+      # turn them on for this API — that's where a client IP would otherwise land.
+
+Outputs:
+  Endpoint:
+    Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com/
+  MetricsTableName:
+    Value: !Ref MetricsTable
+  PushSubsTableName:
+    Value: !Ref PushSubsTable
