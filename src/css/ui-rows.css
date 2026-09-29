@@ -50,7 +50,7 @@
 /* the cheap row's card door: 13 px words, a 44 px target */
 .rail-h .door{min-block-size:44px;font-size:var(--fs-meta);color:var(--dim)}
 .js .arr.js-only{display:none!important}
-.strip{--edge:max(var(--gut),calc((100% - var(--max)) / 2 + var(--gut)));display:flex;gap:16px;overflow-x:auto;overscroll-behavior-x:contain;
+.strip{--edge:max(var(--gut),calc((100% - var(--max)) / 2 + var(--gut)));position:relative;display:flex;gap:16px;overflow-x:auto;overscroll-behavior-x:contain;
   scroll-snap-type:x mandatory;padding-inline:var(--edge);scroll-padding-inline:var(--edge);padding-block:8px 4px;scrollbar-width:none}
 .strip::-webkit-scrollbar{display:none}
 .strip > *{flex:0 0 auto;scroll-snap-align:start}
