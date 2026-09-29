@@ -7,6 +7,20 @@
 .cs-n{font-weight:600;color:var(--screen)}
 .cs-ar{color:var(--dim);font-size:.85em}
 .cs-meta,.cs-chains{color:var(--dim);font-size:.85em}
-.cs-cd{color:var(--gold);font-weight:600;font-size:.9em}
 .cs-act{display:flex;gap:8px;margin-top:4px}
-.cs-week h2{margin-bottom:10px}
+.cs-week h2{margin-bottom:2px}
+/* the countdown prints once per week heading, in --dim, never in gold on a card (§2.6) */
+.cs-cd{display:block;color:var(--dim);font-weight:400;font-size:.85em;margin:0 0 10px}
+/* the masthead marquee (§2.6): the /coming/ page's own paper.lit band, ≤ 240 px on a phone --
+   one Markazi word plus three short lines, no card grid inside it */
+.cs-mast{padding:20px 16px;margin:0 auto 20px;text-align:center}
+.cs-mast-w{margin:0;font-family:var(--display);font-weight:var(--dw);font-size:96px;line-height:1}
+@media (min-width:1024px){.cs-mast-w{font-size:160px}}
+.cs-mast-d,.cs-mast-i,.cs-mast-n{margin:4px 0 0;font-size:.95em}
+.cs-mast-i{color:var(--ink-2)}
+.cs-mast-n{color:var(--ink-2);font-size:.8em}
+/* the home band (home.after_board, §1.2 #2): the compact twin, only in the two live phases */
+.cs-band{display:flex;align-items:center;gap:12px;padding:12px 16px;text-decoration:none;color:var(--ink)}
+.cs-band-w{font-family:var(--display);font-weight:var(--dw);font-size:40px;line-height:1;flex:none}
+.cs-band-d{flex:1;font-size:.95em}
+.cs-band .all-l{flex:none;font-size:.85em;color:var(--ink-2)}
