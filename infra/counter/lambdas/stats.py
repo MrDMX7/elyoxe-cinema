@@ -5,6 +5,7 @@ accepted here). `?format=json` returns the same numbers as JSON for the Monday r
 noindex, no client-side JS, nothing cached (CloudFront never sees this path — it is called
 directly against the API's own URL, never through the site's distribution).
 """
+import hmac
 import json
 import os
 from datetime import datetime, timedelta, timezone
@@ -51,7 +52,7 @@ def check_secret(qs):
     except Exception:
         return False
     got = (qs or {}).get("secret", "")
-    return bool(got) and got == want
+    return bool(got) and hmac.compare_digest(got, want)
 
 
 def render_json(totals7, uniq7, totals30, uniq30):

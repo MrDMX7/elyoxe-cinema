@@ -54,9 +54,13 @@ def build_payload(thursday_iso, coming):
     for film in coming.values():
         if film.get("release_date") == thursday_iso:
             titles.append(film.get("title_ar") or film.get("title") or "")
-    titles = [t for t in titles if t][:3]
-    if titles:
-        body = "الخميس: " + "، ".join(titles) + (" وغيرها" if len(coming) > 3 else "")
+    titles = [t for t in titles if t]
+    # "وغيرها" counts this Thursday's own matches, not the whole (116-entry) coming.json —
+    # otherwise a Thursday with a single release still claims "and others" (review r3-backend,
+    # Important #5).
+    shown, rest = titles[:3], titles[3:]
+    if shown:
+        body = "الخميس: " + "، ".join(shown) + (" وغيرها" if rest else "")
     else:
         body = "أفلام جديدة هالخميس — شوف القائمة"
     return {"title": "سينما", "body": body, "url": "https://cinema.elyoxe.com/coming/"}
@@ -109,7 +113,11 @@ def handler(_event, _ctx):
     payload = build_payload(thursday_iso, coming)
     private_key = vapid_private_key()
     sent, failed, pruned = send_all(payload, private_key)
-    mark_sent(thursday_iso)
+    # Only mark this Thursday "sent" if at least one push went out (or there was simply nothing
+    # to send to). A week where every send failed retries on the next EventBridge fire instead of
+    # being silently skipped for the rest of the week (review r3-backend, Minor).
+    if failed == 0 or sent > 0:
+        mark_sent(thursday_iso)
     try:
         metrics.update_item(Key={"d": thursday_iso, "k": "_#push#sent"},
                              UpdateExpression="ADD n :n", ExpressionAttributeValues={":n": sent})

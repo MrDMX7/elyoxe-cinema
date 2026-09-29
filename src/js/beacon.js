@@ -22,7 +22,10 @@
     if (!API || API.indexOf("__") === 0) return;
     var body = Object.assign({ page: window.cinemaPageKind || "_", event: event, uid: salt() }, extra || {});
     try {
-      var blob = new Blob([JSON.stringify(body)], { type: "application/json" });
+      // text/plain, not application/json: sendBeacon is cross-origin and application/json is not
+      // CORS-safelisted, so Chromium refuses (or throws on) the beacon. ingest.py parses the body
+      // as JSON regardless of Content-Type (review r3-backend, Important #4).
+      var blob = new Blob([JSON.stringify(body)], { type: "text/plain" });
       if (navigator.sendBeacon) navigator.sendBeacon(API + "events", blob);
     } catch (e) {}
   };

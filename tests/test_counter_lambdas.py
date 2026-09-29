@@ -8,6 +8,12 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "infra", "counter", "lambdas"))
+# boto3 resolves a region at import time (Resource/Client construction below, at each lambda's
+# module scope) — the phone's own shell has no default region set (deploy.sh passes --region
+# explicitly instead), so collecting this file with no region set raises
+# botocore.exceptions.NoRegionError before any test runs, exit code 2, and stops `pytest -q -x`
+# cold before refresh/build/S3 (review r3-backend, Critical #1).
+os.environ.setdefault("AWS_DEFAULT_REGION", "ap-south-1")
 os.environ.setdefault("METRICS_TABLE", "test-metrics")
 os.environ.setdefault("UNIQUES_TABLE", "test-uniques")
 os.environ.setdefault("SUBS_TABLE", "test-subs")

@@ -9,9 +9,10 @@ below ever reach `print()`. The client sends one JSON body per beacon:
      "ttb_bucket": "0-3s"|"3-10s"|"10-30s"|"30s+",  # optional, only on a "book_click" (landing -> tapped «احجز»)
      "uid": "<opaque daily-rotating salted hash, client-computed, <=128 chars>"}  # optional
 
-`uid` is never a cookie and never persists across days — it is a hash the client re-salts every
-day (plan §3.2 R15), stored here only long enough (2-day TTL, UniquesTable) to answer "how many
-distinct hashes did we see today", never "who is this".
+`uid` is never a cookie and never persists across days — it is an opaque, client-generated id
+(date + a random value, no server-side salt or hash) that the client itself re-rolls every day
+(plan §3.2 R15), stored here only long enough (2-day TTL, UniquesTable) to answer "how many
+distinct ids did we see today", never "who is this".
 """
 import json
 import os
