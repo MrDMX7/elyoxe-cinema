@@ -1,4 +1,4 @@
-"""A cinema-format dictionary (301, r4-home, owner idea 2026-09-30): /formats/ (+ /en/formats/) «وش الفرق؟» —
+"""A cinema-format dictionary (301, r4-home, owner idea 2026-09-30): /formats/ (+ /en/formats/) «شو الفرق؟» —
 IMAX, 4DX, MX4D, ScreenX, Dolby Cinema/Atmos, the luxury-seating tiers (VIP/Platinum/Gold/Theatre/Suites) and
 kids halls, each in one or two plain lines, which UAE chains have it (from halls.yaml, the same file /halls/
 reads), the price range our own price data shows today, and which kind of film it suits. `site_kit.FORMAT_SLUGS`
@@ -15,15 +15,15 @@ mid-copy)."""
 from site_kit import CITY, FORMAT_SLUGS, L, NavItem, P, Page, Pages, Plugin, esc, human_date, money, num
 
 CSS = ("formats",)   # src/css/formats.css, appended to /assets/cinema.css
-TITLE = ("وش الفرق؟", "What's the difference?")
-HUB_DESC = ("IMAX، 4DX، MX4D، ScreenX، Dolby، القاعات الفاخرة وقاعات الأطفال — شو فيها فعلاً، مين عنده، وتستاهل لأي فيلم.",
+TITLE = ("شو الفرق؟", "What's the difference?")
+HUB_DESC = ("IMAX، 4DX، MX4D، ScreenX، Dolby، القاعات الفاخرة وقاعات الأطفال — شو فيها فعلا، منو عنده، وتستاهل لأي فيلم.",
             "IMAX, 4DX, MX4D, ScreenX, Dolby, the luxury tiers and kids halls — what's actually inside, who has it, and which films they suit.")
 
 # (slug, name_ar, name_en, hall keys it groups, what[ar,en], best-for[ar,en], source | None)
 # — None means the entry cites the matched halls.yaml chain sources instead (no single manufacturer behind it)
 FORMAT_DEFS = [
     ("imax", "آيماكس (IMAX)", "IMAX", ("IMAX",),
-     ("شاشة IMAX أطول من العادية وتغطي نظرك أكثر، وبعض الأفلام تُصوَّر لها خصيصاً فتطلع لك صورة أكبر فوق وتحت. النسخة "
+     ("شاشة IMAX أطول من العادية وتغطي نظرك أكثر، وبعض الأفلام تُصوَّر لها خصيصا فتطلع لك صورة أكبر فوق وتحت. النسخة "
       "الأحدث «آيماكس ليزر» فيها عرض ليزر بدقة أعلى وصوت من 12 قناة — نوفو تشغّلها في سينما آي إم جي وورلدز بدبي.",
       "A taller IMAX screen that fills more of your view; some films are shot specifically for it, showing more of "
       "the frame. The newer «IMAX with Laser» adds sharper laser projection and 12-channel sound — Novo runs it at "
@@ -32,7 +32,7 @@ FORMAT_DEFS = [
       "Worth it for action, sci-fi and adventure films built around the big picture."),
      ("IMAX", "https://www.imax.com/")),
     ("4dx", "فور دي إكس (4DX)", "4DX", ("4DX",),
-     ("كراسي تتحرك وياك فوق وتحت ويمين ويسار، مع هوا وماي ودخان وأحياناً ريحة — أكثر من 20 مؤثر ممكن يشتغلون سوا.",
+     ("كراسي تتحرك وياك فوق وتحت ويمين ويسار، مع هوا وماي ودخان وأحيانا ريحة — أكثر من 20 مؤثر ممكن يشتغلون سوا.",
       "Seats that move with the film in three directions, plus wind, water, fog and sometimes scent — over 20 "
       "effects can run together."),
      ("حلو لأفلام الأكشن والإثارة السريعة، ومب مريح لفيلم طويل هادي.",
@@ -47,11 +47,11 @@ FORMAT_DEFS = [
       "The same call as 4DX: a fast action film, not a quiet one."),
      ("MediaMation", "https://www.mediamation.com/mx4d-flying-efx-theatre/")),
     ("screenx", "سكرين إكس (ScreenX)", "ScreenX", ("SCREENX",),
-     ("الصورة تمتد من الشاشة الوسط على جدارين جنب بزاوية 270 درجة — بس في مشاهد مختارة صوّرها المخرج لها خصيصاً، "
+     ("الصورة تمتد من الشاشة الوسط على جدارين جنب بزاوية 270 درجة — بس في مشاهد مختارة صوّرها المخرج لها خصيصا، "
       "مب الفيلم كامل.",
       "The picture spills from the centre screen onto both side walls, a 270-degree view — only in scenes the "
       "director shot for it, not the whole film."),
-     ("يستاهل لأفلام فيها مشاهد أكشن أو طبيعة واسعة اتصوّرت خصيصاً له.",
+     ("يستاهل لأفلام فيها مشاهد أكشن أو طبيعة واسعة اتصوّرت خصيصا له.",
       "Worth it for action or wide nature scenes shot specifically for the format."),
      ("CJ 4DPLEX", "https://cj4dplex.com/")),
     ("dolby", "دولبي سينما وأتموس (Dolby Cinema / Atmos)", "Dolby Cinema / Atmos", ("DOLBY", "ATMOS"),
@@ -68,12 +68,12 @@ FORMAT_DEFS = [
       "Not a projection technology — wider, fully reclining leather seats and food to your seat. Every chain "
       "names it differently: VIP at Cine Royal, Platinum at Reel and Roxy, GOLD and THEATRE at VOX, Suites at "
       "Star."),
-     ("يستاهل لأي فيلم تبيه مرتاح لين النهاية، خصوصاً لو طويل — مب مرتبط بنوع فيلم معيّن.",
+     ("يستاهل لأي فيلم تباه مرتاح لين النهاية، خصوصا لو طويل — مب مرتبط بنوع فيلم معيّن.",
       "Worth it for any film you want to watch in comfort, especially a long one — not tied to a particular kind "
       "of film."),
      None),
     ("kids", "قاعات الأطفال (Kids)", "Kids halls", ("KIDS",),
-     ("قاعة مخصصة للعيال، كراسي وأحياناً أرضية ملونة، وما يعرض فيها إلا أفلام أنيميشن وعائلية.",
+     ("قاعة مخصصة للعيال، كراسي وأحيانا أرضية ملونة، وما يعرض فيها إلا أفلام أنيميشن وعائلية.",
       "A hall built for children — colourful seating, sometimes a play floor — showing only animation and family "
       "films."),
      ("لأفلام الأطفال والعائلة بس.", "For children's and family films only."),
@@ -158,7 +158,7 @@ class Formats(Pages):
                 ", ".join(f'<a href="{esc(u)}" rel="noopener" target="_blank">{esc(n)}</a>' for u, n in sources.items())
             body += (f'<section class="wrap fsrc"><p class="hint small">{"المصادر: " if ar else "Sources: "}{src_list}. '
                      f'{"الأسعار من بيانات عروضنا اليوم، قبل خصم أي بطاقة." if ar else "Prices from today’s show data, before any card discount."}</p></section>')
-        title = ("قاموس قاعات السينما في الإمارات — وش الفرق بين IMAX و4DX ودولبي والقاعات الفاخرة؟" if ar
+        title = ("قاموس قاعات السينما في الإمارات — شو الفرق بين IMAX و4DX ودولبي والقاعات الفاخرة؟" if ar
                  else "UAE cinema formats explained — IMAX vs 4DX vs Dolby vs luxury seating")
         desc = L(HUB_DESC, lang)
         graph = [self.breadcrumb_ld(lang, (L(TITLE, lang), P(lang, "formats")))]

@@ -129,9 +129,9 @@ class FiltersKit:
         top_l = [k for k, n in sorted(langs.items(), key=lambda kv: (-kv[1], kv[0])) if n >= 2][:5]
         lg = b('data-flang=""', "الكل" if ar else "All", True) + "".join(b(f'data-flang="{esc(k)}"', L(LANGS.get(k, (k, k)), lang)) for k in top_l)
         sort = "".join(b(f'data-sort="{k}"', a if ar else e) for k, a, e in self.SORTS)
-        # «وش الفرق؟» (301, r4-home): IMAX vs 4DX vs Dolby vs the luxury tiers, one link out of the sheet — never
+        # «شو الفرق؟» (301, r4-home): IMAX vs 4DX vs Dolby vs the luxury tiers, one link out of the sheet — never
         # a filter itself (the sheet has none by hall/format; this only answers what a hall label means)
-        fmt_link = f'<p class="hint sfmt"><a href="{P(lang, "formats")}">{"وش الفرق بين القاعات؟" if ar else "What’s the difference between the halls?"}</a></p>'
+        fmt_link = f'<p class="hint sfmt"><a href="{P(lang, "formats")}">{"شو الفرق بين القاعات؟" if ar else "What’s the difference between the halls?"}</a></p>'
         body = (self.ask(lang) + sec("genre", genre) + sec("before", before)
                 + (sec("lang", lg) if len(top_l) > 1 else "") + sec("sort", sort) + fmt_link
                 + (f'<div class="sec">{self.prayer_switch(lang)}</div>' if prayer else "")
