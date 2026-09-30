@@ -28,7 +28,7 @@ def out(tmp_path_factory):
 
 def test_coming_page_groups_by_release_thursday_and_dated_countdown(out):
     h = read(out, "coming", "index.html")
-    assert "نازل الخميس" in h
+    assert "نازل قريب" in h
     assert "1 أكتوبر 2026" in h        # Verity's release_date (2026-10-01) is itself a Thursday
     assert "التاريخ لاحقاً" in h        # Gatto has no release_date
     assert "cs-card" in h and h.count("cs-card") == 2
@@ -37,7 +37,7 @@ def test_coming_page_groups_by_release_thursday_and_dated_countdown(out):
 
 def test_coming_page_english_variant(out):
     h = read(out, "en", "coming", "index.html")
-    assert "Out Thursday" in h and "Date to be announced" in h
+    assert "Coming soon" in h and "Date to be announced" in h
 
 
 def test_thursday_nav_link_repoints_to_coming(out):

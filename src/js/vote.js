@@ -2,8 +2,12 @@
    No backend: the choice travels in the link itself, #<city>.<date>.<showkey>.<fid>+... (2-4 of them), each
    key naming one city-day slice -- the same /data/<city>-<date>.json files home and city pages already
    publish -- so a first-time visit from WhatsApp fetches only the slices its own keys name, never the
-   visitor's own saved city or card (those never travel in this link at all). "أنا مع هذا" opens WhatsApp
-   with that option's own time as the reply key, no numbering: the chat itself is the ballot box. */
+   visitor's own saved city or card (those never travel in this link at all). The city in the key is the
+   SHOW's own cinema city (needed to find its data slice at all, since data is partitioned by city), never
+   the sender's saved/home city -- the plan's "no city" acceptance line is about the visitor's own state,
+   not the film's screening location (review Minor: flagged for the owner to confirm this reading).
+   "أنا مع هذا" opens WhatsApp with that option's own time as the reply key, no numbering: the chat itself
+   is the ballot box. */
 (function () {
   var tray = K.q("[data-v-tray]"), empty = K.q("[data-v-empty]");
   if (!tray) return;
@@ -42,9 +46,10 @@
     join: "I'm in", from: "From {p} AED", ask_group: "Ask the group"
   };
 
+  function dubaiDay(d) { return new Date(d.getTime() + 4 * 3600e3).toISOString().slice(0, 10); }   // core.js's day(), inlined:
+    // comparing raw UTC ISO dates put every show after 20:00 Dubai time (= 00:00 UTC next day) a day off
   function waLine(o) {
-    var d = new Date(o.date + "T" + o.time + ":00+04:00"), today = K.now();
-    var same = d.toISOString().slice(0, 10) === today.toISOString().slice(0, 10);
+    var same = o.date === dubaiDay(K.now());
     var when = same ? o.time : (o.time + " " + o.date);
     return (K.AR ? "أنا مع " : "I'm in for ") + when + (K.AR ? " " : " ") + o.title + (K.AR ? "، " : ", ") + o.cin;
   }
@@ -58,7 +63,7 @@
       var join = started ? "" :
         '<a class="btn velvet v-join" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(line) + '">' + K.esc(W.join) + "</a>";
       return '<li class="v-opt' + (started ? " v-past" : "") + '"><p class="v-t">' + K.esc(o.title) + "</p>"
-        + '<p class="v-m">' + K.esc(o.time) + " · " + K.esc(o.cin) + price + "</p>"
+        + '<p class="v-m">' + K.esc(o.time) + (K.AR ? "، " : ", ") + K.esc(o.cin) + price + "</p>"
         + (started ? '<span class="v-done">' + K.esc(W.past) + "</span>" : join) + "</li>";
     }).join("");
     tray.hidden = false;
@@ -79,7 +84,7 @@
     var by = {};
     slices.forEach(function (s) { by[s.c + "|" + s.d] = s.j; });
     var opts = keys.map(function (k) { return resolve(k, by[k.city + "|" + k.date]); }).filter(Boolean);
-    if (opts.length < 2) { if (empty) empty.hidden = false; return; }
+    if (opts.length < 2) { if (empty) { empty.textContent = W.empty; empty.hidden = false; } return; }
     draw(opts);
   });
 })();

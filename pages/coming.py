@@ -21,7 +21,8 @@ from genres import GENRES, genre_keys
 from normalize import film_fid
 from site_kit import FILMS_AR, HOME_T, Emit, L, NavItem, P, Page, Pages, Plugin, ar_count, esc, hue, human_date, rel
 
-TITLE = ("نازل الخميس", "Out Thursday")
+TITLE = ("نازل قريب", "Coming soon")   # matches the site's own nav label (site_kit.s_thursday); the page
+                                        # itself still said «نازل الخميس» in its <title>/crumbs (review Important #3)
 CSS = ("coming",)
 LAZY_JS = ()
 DIRS = ("coming", "cal")
@@ -178,9 +179,14 @@ class ComingPages(Pages):
     def _week_summary(self):
         """The nearest dated release week (today or later): (thursday-iso, [(fid, film)...]), or (None, [])
         when every announced film still reads "date to be announced". The masthead's and the home band's
-        one real number (§2.6): never a fabricated screen count, only what the chains themselves gave."""
+        one real number (§2.6): never a fabricated screen count, only what the chains themselves gave.
+        Floored on the current release week's own Thursday (`_thursday_of(self.today)`), not on
+        `self.today` itself -- on Friday/Saturday `self.today` is already past this week's Thursday, so
+        a literal `key >= self.today` skipped the live week and jumped to next Thursday (fix round,
+        review Important #5)."""
+        floor = _thursday_of(self.today)
         for key, items in self._groups().items():
-            if key and key >= self.today:
+            if key and key >= floor:
                 return key, items
         return None, []
 
@@ -214,11 +220,20 @@ class ComingPages(Pages):
         if not headline:
             return ""
         note = "الأحكام تنزل من الخميس للسبت." if lang == "ar" else "Verdicts land Thursday to Saturday."
+        # the .ics subscribe link (§2.6, cal_ics below): iPhone-only, because Android's Google Calendar
+        # can't subscribe by a plain URL. `hidden` by default; a tiny inline check reveals it only on
+        # iPhone/iPad, never announced to anyone else (review Important #7 -- the file was correct and
+        # deployed, just never linked from this page).
+        ics = "تابع الخميس بالتقويم" if lang == "ar" else "Subscribe to Thursdays"
         return ('<div class="cs-mast paper lit">'
                 f'<p class="cs-mast-w">{esc(word)}</p>'
                 f'<p class="cs-mast-d">{esc(headline)}</p>'
                 + (f'<p class="cs-mast-i">{esc(intro)}</p>' if intro else "")
-                + f'<p class="cs-mast-n">{esc(note)}</p></div>')
+                + f'<p class="cs-mast-n">{esc(note)}</p>'
+                + f'<p class="cs-mast-ics" hidden><a href="/cal/thursday.ics">{esc(ics)}</a></p>'
+                + '<script>(function(d){if(/iPhone|iPad/.test(navigator.userAgent)){'
+                + 'd=document.currentScript.previousElementSibling;if(d)d.hidden=false}})()</script>'
+                + '</div>')
 
     def _band(self, lang):
         """home.after_board (§1.2 #2, §2.6): the compact Thursday band, only in the two live phases
@@ -243,16 +258,16 @@ class ComingPages(Pages):
             if not key or key < self.today:
                 continue
             titles = [f.get("title_ar") or f["title"] for _, f in items]
-            summary = "نازل الخميس: " + "، ".join(titles[:3]) + (f" و{len(titles) - 3} غيرها" if len(titles) > 3 else "")
+            summary = "نازل قريب: " + "، ".join(titles[:3]) + (f" و{len(titles) - 3} غيرها" if len(titles) > 3 else "")
             known = [(f.get("verdict") or {}).get("verdict") for _, f in items if (f.get("verdict") or {}).get("verdict") not in (None, "unknown")]
-            desc = "الأحكام بعده" if not known else f"{len(known)} من {len(items)} صدر حكمهم"
+            desc = "الحكم بعده" if not known else f"{len(known)} من {len(items)} صدر حكمهم"
             dt_ = key.replace("-", "")
             events += ["BEGIN:VEVENT", f"UID:{key}-thursday@cinema.elyoxe.com",
                        f"DTSTAMP:{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%S')}Z",
                        f"DTSTART;TZID=Asia/Dubai:{dt_}T100000", f"DTEND;TZID=Asia/Dubai:{dt_}T110000",
                        f"SUMMARY:{_ics_esc(summary)}", f"DESCRIPTION:{_ics_esc(desc)}", "END:VEVENT"]
         lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Elyoxe//Cinema//AR", "CALSCALE:GREGORIAN",
-                 f"X-WR-CALNAME:{_ics_esc('نازل الخميس — سينما')}",
+                 f"X-WR-CALNAME:{_ics_esc('نازل قريب — سينما')}",
                  "BEGIN:VTIMEZONE", "TZID:Asia/Dubai", "BEGIN:STANDARD", "DTSTART:19700101T000000",
                  "TZOFFSETFROM:+0400", "TZOFFSETTO:+0400", "END:STANDARD", "END:VTIMEZONE",
                  *events, "END:VCALENDAR"]

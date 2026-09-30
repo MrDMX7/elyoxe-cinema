@@ -8,4 +8,6 @@
 .v-join{align-self:flex-start;margin-top:4px}
 .v-past{opacity:.55}
 .v-done{align-self:flex-start;color:var(--dim);font-size:.85em}
-.v-empty{display:none}
+/* .v-empty starts hidden via the server's own `hidden` attribute (pages/vote.py); no CSS `display:none`
+   here, because that would out-rank vote.js's `empty.hidden = false` and the error text would never
+   show (review Important #2) */

@@ -36,7 +36,7 @@ class VotePages(Pages):
         desc = L(T["desc"], lang)
         body = (f'<section class="head wrap"><h1 class="pt">{esc(L(T["ask"], lang))}</h1></section>'
                 f'<ul class="v-tray wrap" data-v-tray hidden></ul>'
-                f'<p class="v-empty wrap" data-v-empty>{esc(L(T["empty"], lang))}</p>')
+                f'<p class="v-empty wrap" data-v-empty hidden>{esc(L(T["empty"], lang))}</p>')
         # never in the sitemap, so never a hreflang pair either -- an explicit `path` matching the default
         # location (site_kit.Kit.page: `if lang == "ar" and path is None: self.urls.append(parts)`)
         dest = os.path.join(self.out, *(["en"] if lang == "en" else []), "v", "index.html")
