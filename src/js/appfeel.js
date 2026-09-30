@@ -5,14 +5,23 @@
    - iOS Safari never fires beforeinstallprompt (pwa.js's own Android install bar): from the second visit on,
      a one-time hint toward the Share sheet, dismissible, never shown again once dismissed. K.C.ios_install/
      ios_ok are site_kit.py's T strings, not cinema.js's TX, for the same budget reason.
+   - iosSafariEligible is a pure UA/engine check (tests/test_appfeel_ios_gate.py runs it standalone in node):
+     the iPhone/iPad UA family alone is not enough — a spoofed UA (any Chromium browser told to pretend to be
+     Safari, which is exactly what the QA screenshot rig's `userAgent` override does) still carries `window.chrome`
+     and a Google `navigator.vendor`, neither of which a UA override touches, so real Safari is the only engine
+     that passes both. Caught 2026-09-30: the hint was firing on every QA still because the old check only read
+     navigator.userAgent.
    - The film page's day bar: swiping the schedule left/right moves a day at a time. Decided on touchend, not
      mid-gesture, so it never fights the page's own vertical scroll or a sheet's own drag; a swipe short of
      60px or steeper than it is wide is not a swipe, and touchmove is never listened to, so pull-to-refresh
      stays entirely native. */
+function iosSafariEligible(ua, platform, maxTouchPoints, hasWindowChrome, vendor) {
+  return (/iP(hone|od|ad)/.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1)) &&
+    /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Android/.test(ua) &&
+    !hasWindowChrome && /Apple/.test(vendor || "");
+}
 if (+K.get("visits") >= 2 && !K.get("noiosinstall") && !window.navigator.standalone) {
-  var ua = navigator.userAgent;
-  if ((/iP(hone|od|ad)/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)) &&
-      /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Android/.test(ua)) {
+  if (iosSafariEligible(navigator.userAgent, navigator.platform, navigator.maxTouchPoints, !!window.chrome, navigator.vendor)) {
     var bar = document.createElement("div");
     bar.className = "inst"; bar.setAttribute("role", "region"); bar.setAttribute("aria-label", K.C.ios_install);
     bar.innerHTML = "<span>" + K.esc(K.C.ios_install) + '</span><button type="button" class="lnk" data-io="1">' + K.esc(K.C.ios_ok) + "</button>";

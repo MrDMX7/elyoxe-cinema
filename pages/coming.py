@@ -21,8 +21,8 @@ from genres import GENRES, genre_keys
 from normalize import film_fid
 from site_kit import FILMS_AR, HOME_T, Emit, L, NavItem, P, Page, Pages, Plugin, ar_count, esc, hue, human_date, rel
 
-TITLE = ("نازل قريب", "Coming soon")   # matches the site's own nav label (site_kit.s_thursday); the page
-                                        # itself still said «نازل الخميس» in its <title>/crumbs (review Important #3)
+TITLE = ("قريباً في السينما", "Coming soon")   # owner rename 2026-09-30 (site_kit.s_thursday_h matches; the
+                                                # phone tab bar keeps the short «قريباً», no room for this at 344px)
 CSS = ("coming",)
 LAZY_JS = ()
 DIRS = ("coming", "cal")
@@ -258,7 +258,7 @@ class ComingPages(Pages):
             if not key or key < self.today:
                 continue
             titles = [f.get("title_ar") or f["title"] for _, f in items]
-            summary = "نازل قريب: " + "، ".join(titles[:3]) + (f" و{len(titles) - 3} غيرها" if len(titles) > 3 else "")
+            summary = "قريباً في السينما: " + "، ".join(titles[:3]) + (f" و{len(titles) - 3} غيرها" if len(titles) > 3 else "")
             known = [(f.get("verdict") or {}).get("verdict") for _, f in items if (f.get("verdict") or {}).get("verdict") not in (None, "unknown")]
             desc = "الحكم بعده" if not known else f"{len(known)} من {len(items)} صدر حكمهم"
             dt_ = key.replace("-", "")
@@ -267,7 +267,7 @@ class ComingPages(Pages):
                        f"DTSTART;TZID=Asia/Dubai:{dt_}T100000", f"DTEND;TZID=Asia/Dubai:{dt_}T110000",
                        f"SUMMARY:{_ics_esc(summary)}", f"DESCRIPTION:{_ics_esc(desc)}", "END:VEVENT"]
         lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Elyoxe//Cinema//AR", "CALSCALE:GREGORIAN",
-                 f"X-WR-CALNAME:{_ics_esc('نازل قريب — سينما')}",
+                 f"X-WR-CALNAME:{_ics_esc('قريباً في السينما')}",
                  "BEGIN:VTIMEZONE", "TZID:Asia/Dubai", "BEGIN:STANDARD", "DTSTART:19700101T000000",
                  "TZOFFSETFROM:+0400", "TZOFFSETTO:+0400", "END:STANDARD", "END:VTIMEZONE",
                  *events, "END:VCALENDAR"]

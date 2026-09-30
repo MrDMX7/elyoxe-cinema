@@ -87,7 +87,7 @@ SOURCE_GONE = re.compile(r"not found|\b404\b", re.I)
 SOURCE_GONE_AR = "صفحة العرض الرسمية انحذفت، فما نعرض الخصم"
 UI = {
     "s_mark": ("سينما", "Cinema"), "s_films": ("الرئيسية", "Home"), "s_cinemas": ("السينمات", "Cinemas"),
-    "s_thursday": ("نازل قريب", "Coming soon"), "s_cards": ("البطاقات", "Cards"), "s_halls": ("القاعات", "Halls"),
+    "s_thursday": ("قريباً", "Coming soon"), "s_cards": ("البطاقات", "Cards"), "s_halls": ("القاعات", "Halls"),
     "s_alt": ("English", "العربية"), "s_nav": ("الأقسام", "Sections"), "s_skip": ("تخطَّ إلى المحتوى", "Skip to content"),
     "s_footer": ("سينما من Elyoxe. الأسعار من السينمات نفسها، والخصومات متحقَّق منها بتاريخها.",
                  "Cinema by Elyoxe. Prices from the cinemas themselves; discounts checked and dated."),
@@ -95,6 +95,8 @@ UI = {
     # the chrome (UI redesign Task 2): header tools, the phone tab bar, the footer's links
     "s_search": ("بحث", "Search"), "s_tabs": ("التنقل", "Navigation"), "s_more": ("روابط الموقع", "Site links"),
     "s_cards_h": ("الأسعار والبطاقات", "Prices and cards"),   # the header's label for the cards link (crumbs keep s_cards)
+    "s_thursday_h": ("قريباً في السينما", "Coming soon"),   # the header's full label for the coming-soon link (owner
+    # rename 2026-09-30); the phone tab bar keeps the short "s_thursday" — no room for the long form at 344px
     "s_cards_f": ("البطاقات والخصومات", "Cards and discounts"), "s_sources": ("من وين الأسعار", "Where prices come from"),
 }
 # the chrome's own words (not in the template's {{…}} table)
