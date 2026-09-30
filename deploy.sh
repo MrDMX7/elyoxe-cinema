@@ -64,9 +64,11 @@ KEEP=(--exclude "posters/*" --exclude "state/*")   # posters/: `posters.py --upl
 SHORT=(--include "*.html" --include "*.xml" --include "*.txt" --include "sw.js")
 
 # 1) assets (immutable) — also the --delete pass for everything that is neither short-lived nor data
+# (*.ics excluded: W2-P7's /cal/thursday.ics is a subscribed feed, never immutable, or it would never
+# see a new Thursday — pass 5 below gives it its own short cache and content type)
 aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete \
   --exclude "*.html" --exclude "*.xml" --exclude "*.txt" --exclude "sw.js" --exclude "*.webmanifest" \
-  --exclude "data/*" "${NEVER[@]}" "${KEEP[@]}" \
+  --exclude "data/*" --exclude "*.ics" "${NEVER[@]}" "${KEEP[@]}" \
   --cache-control "public, max-age=31536000, immutable" --only-show-errors
 # 2) data slices, 10 min (with --delete: yesterday's <city>-<date>.json disappear)
 aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" --include "data/*" "${KEEP[@]}" \
@@ -77,6 +79,10 @@ aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" "${SHORT[@
 # 4) the web manifest, 5 min, with its own content type (mimetypes does not know .webmanifest)
 aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" --include "*.webmanifest" "${NEVER[@]}" "${KEEP[@]}" \
   --content-type "application/manifest+json" --cache-control "public, max-age=300" --only-show-errors
+# 5) /cal/thursday.ics, 5 min, its own content type (W2-P7 §2.6: a subscribed calendar must see a new
+# Thursday quickly, and mimetypes does not know .ics either)
+aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" --include "*.ics" "${NEVER[@]}" "${KEEP[@]}" \
+  --content-type "text/calendar; charset=utf-8" --cache-control "public, max-age=300" --only-show-errors
 
 INV=$(aws cloudfront create-invalidation --distribution-id "$DIST" --paths "/*" --query Invalidation.Id --output text)
 echo "synced $SRC to $DEST, invalidation $INV on $DIST"
