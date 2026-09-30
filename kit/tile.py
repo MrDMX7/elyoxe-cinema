@@ -45,7 +45,7 @@ class TileKit:
             return "جديد" if lang == "ar" else "New"
         return f"الأسبوع {wk}" if lang == "ar" else f"Week {wk}"
 
-    def film_tile(self, fid, lang, shows, big=False, i=99, live=False, row=False, tag=None):
+    def film_tile(self, fid, lang, shows, big=False, i=99, live=False, row=False, tag=None, srcset=True):
         """A film tile: the poster (2:3), the title in two lines (their height held, so tiles line up), and the line
         that differs between films. A `live` tile (home and city: its line is redrawn by src/js/home.js for the
         visitor's city, card and clock, MASTER-PLAN §2.1): «من 42» by day, «التالي 21:30 ريل دبي مول» after 17:00,
@@ -72,7 +72,7 @@ class TileKit:
         sizes = POSTER_SIZES["tile row"] if row else POSTER_SIZES["tile"]
         word = (f'<span class="vw">{esc(L(TILE_V.get(v, (vw, vw)), lang))}</span>' if live and not row else "")   # its colour: the tile's v-*
         return (f'<a class="{"tile" if row else "film tile"} v-{v}" href="{P(lang, "film", fid)}"{attrs}>'
-                + f'<span class="tp">{self.poster(fid, lang, eager=not row, lazy=row or i >= 1, sizes=sizes, srcset=not row, label=False)}'
+                + f'<span class="tp">{self.poster(fid, lang, eager=not row, lazy=row or i >= 1, sizes=sizes, srcset=srcset and not row, label=False)}'
                 + (f'<span class="tag">{esc(tag)}</span>' if tag else "")
                 + (f'<span class="tag wk">{esc(wk)}</span>' if wk else "") + '</span>'
                 + f'<span class="t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>'
@@ -135,7 +135,8 @@ class TileKit:
         (`?sort=`/`?f=`/`?who=`/`?fl=`) or an `#all` hash targets it, and again before the «اعرض N» sheet button's
         scroll — fix round, review Important #3."""
         first = not self._grid
-        tiles = "".join(self.film_tile(fid, lang, shows, i=i, live=True, tag=(tags or {}).get(fid)) for i, fid in enumerate(fids))
+        tiles = "".join(self.film_tile(fid, lang, shows, i=i, live=True, tag=(tags or {}).get(fid), srcset=not collapse)
+                        for i, fid in enumerate(fids))
         hid = ' id="all-h"' if first else ""
         head = (f'<div class="all-h"><h2{hid}>{esc(heading)}<span class="h-city" data-city-label>{esc(city_label)}</span> '
                 f'<span class="all-n num" data-all-n>{len(fids)}</span></h2>'
