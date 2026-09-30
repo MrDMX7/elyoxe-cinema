@@ -27,6 +27,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+from datetime import timedelta
 from pathlib import Path
 
 import yaml
@@ -39,7 +40,46 @@ OUT_DIR = ROOT / "data" / "posters"          # same directory (and so the same S
 SOURCES_PATH = ROOT / "cinema_photos.yaml"
 WIDTHS = (640, 1280)
 MIN_LANDSCAPE = 0.9   # width / height must be at least this — a portrait/square source is skipped
-CHECK_CAP = 3         # fresh network downloads a run (the owner's phone: one heavy process, capped)
+MIN_WIDTH = 1000      # a full-width band on a 390 px phone at DPR 2.5+: a 250 px thumbnail stretched is mush, skip it
+CHECK_CAP = 10        # fresh network downloads a run (round3-gaps: was 3 — 27 sources would take 9 runs to show)
+MAX_BYTES = 20 * 1024 * 1024   # Star publishes 12–18 MB phone photos of its cinemas (posters.py's 8 MB is for posters)
+REVALIDATE = timedelta(days=30)   # a cinema's photo changes rarely (posters.py re-checks weekly)
+
+
+def _fetch(url: str) -> bytes:
+    """One streamed GET with Chrome's TLS fingerprint (Roxy sits behind bot protection), stopped at MAX_BYTES. The
+    Content-Type is NOT trusted either way (Cine Royal serves its photos as multipart/form-data): Pillow decides."""
+    from curl_cffi import requests as cr
+
+    pm.check_url(url)
+    r = cr.get(url, impersonate="chrome", timeout=60, stream=True)
+    try:
+        if r.status_code != 200:
+            raise OSError(f"HTTP {r.status_code}")
+        buf = bytearray()
+        for chunk in r.iter_content():
+            buf.extend(chunk)
+            if len(buf) > MAX_BYTES:
+                raise pm.Rejected(f"body over {MAX_BYTES} bytes")
+        return bytes(buf)
+    finally:
+        r.close()
+
+
+def _open(blob: bytes):
+    """posters.py's decode guards with this module's own byte ceiling."""
+    import io
+    import warnings
+
+    if len(blob) > MAX_BYTES:
+        raise pm.Rejected(f"body over {MAX_BYTES} bytes")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", pm.Image.DecompressionBombWarning)
+        img = pm.Image.open(io.BytesIO(blob))
+        if img.width * img.height > pm.MAX_PIXELS:
+            raise pm.Rejected(f"{img.width}x{img.height} over {pm.MAX_PIXELS} px")
+        img.load()
+    return img.convert("RGB") if img.mode not in ("RGB", "L") else img
 
 
 def load_sources(path=SOURCES_PATH) -> dict:
@@ -59,7 +99,7 @@ def mirror(data: dict, sources_path=None, cache_path=None, out_dir=None,
     cache_path = cache_path if cache_path is not None else CACHE_PATH
     out_dir = out_dir if out_dir is not None else OUT_DIR
     cap = CHECK_CAP if cap is None else cap
-    fetch = fetch or pm._default_fetch
+    fetch = fetch or _fetch
     cache_path, out_dir = Path(cache_path), Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     cache = pm._load(cache_path)
@@ -76,7 +116,7 @@ def mirror(data: dict, sources_path=None, cache_path=None, out_dir=None,
         stats["cinemas"] += 1
         key = pm._h(url)
         src = cache["sources"].get(key)
-        due = not (src and ((src.get("ok") and pm._age_under(src, pm.REVALIDATE))
+        due = not (src and ((src.get("ok") and pm._age_under(src, REVALIDATE))
                             or (not src.get("ok") and pm._age_under(src, pm.RETRY_FAILED))))
         if due and budget <= 0:
             stats["skipped_cap"] += 1
@@ -84,10 +124,12 @@ def mirror(data: dict, sources_path=None, cache_path=None, out_dir=None,
         try:
             if due:
                 blob = fetch(pm.check_url(url))
-                img = pm._open(blob)
+                img = _open(blob)
                 budget -= 1
                 if img.width < MIN_LANDSCAPE * img.height:
                     raise pm.Rejected(f"not landscape enough: {img.width}x{img.height}")
+                if img.width < MIN_WIDTH:
+                    raise pm.Rejected(f"too small for a full-width band: {img.width}x{img.height}")
                 import hashlib
                 sha = hashlib.sha1(blob).hexdigest()[:12]
                 src = {"url": url, "ok": True, "w": img.width, "h": img.height, "at": pm.datetime.now(pm.timezone.utc).isoformat(), "sha": sha}
@@ -95,6 +137,7 @@ def mirror(data: dict, sources_path=None, cache_path=None, out_dir=None,
                 base = f"cin-{cid}-{pm._h(url, sha)}"
                 names = [f"{base}-{w}.webp" for w in WIDTHS]
                 for w, n in zip(WIDTHS, names):
+                    w = min(w, img.width)   # never upscaled: a 1075 px source stays 1075 px wide in its «1280» file
                     h = round(img.height * w / img.width)
                     img.resize((w, h), pm.Image.LANCZOS).save(out_dir / n, "WEBP", quality=pm.QUALITY, method=6)
                 img.close()

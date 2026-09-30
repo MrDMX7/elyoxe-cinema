@@ -22,12 +22,13 @@ class TileKit:
             self._tile_release_seed_v = s
         return s
 
-    def week_tag(self, fid, lang):
-        """«جديد» for a film in its first week, «الأسبوع N» after — poster TILE views only (owner idea #284,
-        round 3 QA), never the film page (film_about already shows the full release date there; this is not
-        a replacement for it). Same `released`-over-`first_seen` preference and seed-date guard as the film
-        page's own week line, so the two never disagree. Never an «آخر عرض» countdown: no chain feeds a
-        last-showing date, so nothing here is ever inferred from one."""
+    def release_week(self, fid):
+        """(release date "YYYY-MM-DD", week N) for a showing film, or None — the ONE rule behind the tile's
+        «جديد»/«الأسبوع N» (week_tag), the film page hero's «في السينما من …، الأسبوع N» and «عن الفيلم»'s own line,
+        so the three never disagree. `released` (a chain's coming-soon date, kept once the film opens — refresh.py)
+        is preferred over `first_seen` (when our own refresh first noticed it). None for an archived film, for a bare
+        `first_seen` that equals the data's seed date (an artifact of when tracking began, not a release date), and
+        before the date (a preview night ahead of the release). Never a last-showing date: no chain feeds one."""
         f = self.films.get(fid) or {}
         if f.get("status") == "archived":
             return None
@@ -39,11 +40,28 @@ class TileKit:
         except ValueError:
             return None
         wk = (self.now.date() - d0).days // 7 + 1
-        if wk < 1:
+        return (str(rel), wk) if wk >= 1 else None
+
+    def week_tag(self, fid, lang):
+        """«جديد» for a film in its first week, «الأسبوع N» after — poster TILE views only (owner idea #284,
+        round 3 QA). release_week() is the rule; the film page shows the full date with the same week number."""
+        rw = self.release_week(fid)
+        if not rw:
             return None
+        wk = rw[1]
         if wk == 1:
             return "جديد" if lang == "ar" else "New"
         return f"الأسبوع {wk}" if lang == "ar" else f"Week {wk}"
+
+    def release_line(self, fid, lang):
+        """«في السينما من 30 سبتمبر، الأسبوع 1» / "In cinemas since 30 September, week 1" (escaped, digits marked),
+        or "" — release_week()'s date and week."""
+        rw = self.release_week(fid)
+        if not rw:
+            return ""
+        hd = human_date(rw[0], lang)
+        say = f"في السينما من {hd}، الأسبوع {rw[1]}" if lang == "ar" else f"In cinemas since {hd}, week {rw[1]}"
+        return dates(esc(say))
 
     def film_tile(self, fid, lang, shows, big=False, i=99, live=False, row=False, tag=None):
         """A film tile: the poster (2:3), the title in two lines (their height held, so tiles line up), and the line
@@ -170,8 +188,10 @@ class TileKit:
         is the target, at least 44 px tall, MASTER-PLAN §2.1 and §4.2 #15), an optional line under it (a door, a
         note), and — on a desktop pointer — two arrow buttons that page the strip. The strip scrolls sideways with a
         finger, a wheel or trackpad, or Tab through its tiles."""
-        arrows = (f'<span class="arr js-only"><button type="button" class="icon" data-rail="-1" aria-label="{esc(L(HOME_T["prev"], lang))}">{icon("prev")}</button>'
-                  f'<button type="button" class="icon" data-rail="1" aria-label="{esc(L(HOME_T["next"], lang))}">{icon("next")}</button></span>')
+        # the chevrons are drawn by CSS (ui-rows.css .arr .icon::before), not two inline SVGs per row (round3-gaps: 8 rows
+        # x 2 icons were ~3 KB of the home page's 150 KB, which the wider «نجوم الليلة» row needed)
+        arrows = (f'<span class="arr js-only"><button type="button" class="icon" data-rail="-1" aria-label="{esc(L(HOME_T["prev"], lang))}"></button>'
+                  f'<button type="button" class="icon" data-rail="1" aria-label="{esc(L(HOME_T["next"], lang))}"></button></span>')
         h = f'<h2 id="r-{key}">{esc(title)}</h2>'
         head = (f'<a class="rail-a" href="{esc(more)}">{h}<span class="all-l">{esc(L(HOME_T["all"], lang))}</span></a>' if more else h)
         return (f'<section class="rail" aria-labelledby="r-{key}"{attrs}><div class="rail-h wrap">{head}{arrows}'

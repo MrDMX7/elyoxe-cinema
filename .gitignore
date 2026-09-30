@@ -22,3 +22,4 @@ data/backdrops_work/
 data/*.bak
 data/*.corrupt-*
 data/.req-hash
+tmp/

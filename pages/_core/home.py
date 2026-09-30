@@ -200,28 +200,47 @@ class HomePages:
         """One «نجوم الليلة» tile: a square (no radius, the workspace rule) portrait, the actor's name, the film's
         title under it. It links to the film (not the person page): a pick here is a way into tonight's show, not a
         detour to a filmography."""
+        # one file, the 320 px one (a 120 px square at DPR 2–3): no srcset/sizes — eight of these had to fit the home's
+        # 150 KB (round3-gaps)
         return (f'<a class="tile star" href="{P(lang, "film", fid)}">'
-                f'<span class="tp"><img src="{esc(ph["src"])}" srcset="{esc(ph["src"])} 160w, {esc(ph["src2x"])} 320w" sizes="120px"'
-                f' width="160" height="160" alt="" loading="lazy" decoding="async"></span>'
+                f'<span class="tp"><img src="{esc(ph["src2x"])}" width="160" height="160" alt="" loading="lazy"></span>'
                 f'<span class="t">{esc(nm)}</span><span class="m">{esc(self.ftitle(fid, lang))}</span></a>')
 
+    STARS_MAX = 8   # «نجوم الليلة» (round3-gaps): 6–8 faces, not the 2 the first version stopped at
+
+    def _rating(self, fid):
+        """A film's «الأعلى تقييماً» number on one 0–10 scale: the higher of RT critics / 10 and IMDb (omdb.py); 0 none."""
+        f = self.films[fid]; rt = f.get("rt") if isinstance(f.get("rt"), dict) else {}
+        c = rt.get("critics"); s = f.get("imdb_score")
+        return max(c / 10 if isinstance(c, (int, float)) else 0, s if isinstance(s, (int, float)) else 0)
+
+    def star_order(self, films):
+        """The films «نجوم الليلة» draws from, in turn: tonight's most-shown (films, as home sorts them) and the
+        top-rated (a «يستاهل» verdict first, then _rating), alternating — so the row is neither only the busiest
+        films nor only the acclaimed ones. Each film once."""
+        rated = sorted((f for f in films if self._rating(f) > 0 or (self.films[f].get("verdict") or {}).get("verdict") == "yes"),
+                       key=lambda f: ((self.films[f].get("verdict") or {}).get("verdict") != "yes", -self._rating(f), f))
+        out, seen = [], set()
+        for i in range(max(len(films), len(rated))):
+            for pool in (films, rated):
+                if i < len(pool) and pool[i] not in seen:
+                    seen.add(pool[i]); out.append(pool[i])
+        return out
+
     def stars_row(self, lang, films):
-        """«نجوم الليلة» (r3-home, owner idea 2026-09-30): the lead actor of tonight's most-shown film, then of its
-        top-rated («الأعلى تقييماً») film — each only when they have a real photo (self._lead skips a film without
-        one, moving to the next candidate rather than falling back to initials). Sits right before «كل الأفلام», the
-        row's own doorway into the grid."""
+        """«نجوم الليلة» (r3-home, owner idea 2026-09-30; widened by round3-gaps): the lead actors of tonight's
+        most-shown and top-rated films (star_order), one face per film and each actor once, up to STARS_MAX — each
+        only when they have a real photo (self._lead skips a film without one, moving to the next candidate rather
+        than falling back to initials). Every tile links to the actor's film. Sits right before «كل الأفلام»."""
         if not films: return ""
-        yes = [f for f in films if (self.films[f].get("verdict") or {}).get("verdict") == "yes"]
-        seen_f, seen_q, picks = set(), set(), []
-        for pool in (films, yes):
-            for fid in pool:
-                if fid in seen_f: continue
-                lead = self._lead(fid, lang, seen_q)
-                if not lead: continue
-                q, ph, nm = lead
-                seen_f.add(fid); seen_q.add(q)
-                picks.append((fid, ph, nm))
-                break
+        seen_q, picks = set(), []
+        for fid in self.star_order(films):
+            lead = self._lead(fid, lang, seen_q)
+            if not lead: continue
+            q, ph, nm = lead
+            seen_q.add(q)
+            picks.append((fid, ph, nm))
+            if len(picks) >= self.STARS_MAX: break
         if not picks: return ""
         tiles = "".join(self.star_tile(fid, ph, nm, lang) for fid, ph, nm in picks)
         return self.rail(lang, "stars", L(HOME_T["stars"], lang), tiles)

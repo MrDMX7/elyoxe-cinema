@@ -34,6 +34,8 @@
 .tk-act .book{flex:1 1 auto;min-block-size:52px;display:flex;align-items:center;justify-content:center;background:var(--velvet);color:var(--screen);text-decoration:none;font-weight:600;padding-inline:12px;text-align:center}
 .tk-act .book.off{color:var(--dim);font-weight:400}
 .tk-act .share{min-inline-size:120px;min-block-size:52px;display:flex;align-items:center;justify-content:center;background:var(--ink);color:var(--screen);text-decoration:none;font-weight:600;padding-inline:12px}
+/* round3-gaps: at 344 px «احجز من موقع سيني رويال» and «أرسلها للقروب» wrap to two lines: keep both inside their box */
+.tk-act .book,.tk-act .share{line-height:1.25;padding-block:4px;overflow-wrap:anywhere}
 .tk-x{position:absolute;inset-block-start:0;inset-inline-end:0;inline-size:36px;block-size:36px;border:0;background:transparent;cursor:pointer}
 .tk-x::before,.tk-x::after{content:"";position:absolute;inset-inline-start:9px;inset-block-start:17px;inline-size:18px;block-size:2px;background:var(--ink);transform:rotate(45deg)}
 .tk-x::after{transform:rotate(-45deg)}

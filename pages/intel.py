@@ -9,7 +9,24 @@ Everything here is a plain <details>/<summary> (no script): expanding a spoiler 
 حرق" default is simply every <details> closed, so a first-time visitor sees only the closed, labelled
 buttons. A film with no intel file (no basis yet, or the run hasn't reached it) renders nothing extra — never
 an empty or broken section (honesty rule, feedback_emirati_dialect.md)."""
+import re
+
 from site_kit import Plugin, dates, esc, num
+
+DEC = re.compile(r"(?<![\w\">.])(\d+\.\d)(?![\d%])")   # «7.6 من 10»: a decimal score, set in the digits' face like any number
+
+
+def _decimals(h):
+    return DEC.sub(lambda m: f'<span class="num">{m.group(1)}</span>', h)
+
+# round3-gaps (2026-09-30): «ليش يستاهل؟» moved out of the «عن الفيلم» tab into the hero, one tap-to-open line
+# right under the verdict (the film.why slot) — and a film with no intel file yet (most of them: the generator
+# only writes one once a film has a basis, INTEL_CAP a run) gets the same line built from the numbers the page
+# already carries (fallback_reasons: RT critics and audience, IMDb) instead of nothing. A film with none of those
+# numbers still gets nothing (its verdict word already says «ما في تقييم كافي»). The two spoiler disclosures now
+# sit under a visible «بدون حرق» switch, on by default: while it is on, an opened disclosure shows only its
+# warning and how to turn the switch off (CSS :has, no script); an old browser without :has simply shows the text
+# behind the warning, as before.
 
 CSS = ("intel",)
 
@@ -24,7 +41,77 @@ L = {
     "qa_btn": ("أسئلة عن الفيلم", "Questions about this film"),
     "spoiler_warn": ("تحذير: يحرق الفيلم — اضغط بس إذا شفته", "Spoiler warning — tap only if you've seen it"),
     "no_answer": ("ما عندنا جواب أكيد للحين.", "We don't have a solid answer yet."),
+    "why_yes": ("ليش يستاهل؟", "Why it's worth it"),
+    "why_skip": ("ليش لا؟", "Why not"),
+    "why_mixed": ("ليش يستاهل وليش لا؟", "Why (and why not)"),
+    "nospoil": ("بدون حرق", "No spoilers"),
+    "gate": ("«بدون حرق» شغّال — طفّه فوق عشان تقرا الجواب.", "“No spoilers” is on — switch it off above to read this."),
 }
+
+
+def _pct(v):
+    try:
+        v = int(round(float(v)))
+    except (TypeError, ValueError):
+        return None
+    return v if 0 <= v <= 100 else None
+
+
+def fallback_reasons(film, lang):
+    """[(text, pos: True | False | None)] from the numbers the film already carries — RT critics (with the review
+    count), RT audience, IMDb (omdb.py) — for a film with no intel file. Western digits, Emirati on the Arabic
+    page (no tanween), one line per number, never a number the data does not have. [] when it has none of them."""
+    ar = lang == "ar"
+    rt = film.get("rt") if isinstance(film.get("rt"), dict) else {}
+    bn = (film.get("verdict") or {}).get("basis_numbers") or {}
+    out = []
+    c = _pct(rt.get("critics") if rt.get("critics") is not None else bn.get("rt"))
+    n = rt.get("critics_count") if rt.get("critics_count") else bn.get("rt_count")
+    if c is not None:
+        cnt = (f" من {int(n)} مراجعة" if ar else f" from {int(n)} reviews") if isinstance(n, (int, float)) and n > 0 else ""
+        if c >= 60:
+            out.append((f"النقاد عطوه {c}%{cnt} على Rotten Tomatoes" if ar else f"Critics gave it {c}%{cnt} on Rotten Tomatoes", True))
+        else:
+            out.append((f"النقاد ما تحمّسوا له: {c}%{cnt} على Rotten Tomatoes" if ar else f"Critics were cool on it: {c}%{cnt} on Rotten Tomatoes", False))
+    a = _pct(rt.get("audience"))
+    if a is not None:
+        if a >= 70:
+            out.append((f"الجمهور حبّوه: {a}%" if ar else f"Audiences loved it: {a}%", True))
+        elif a >= 50:
+            out.append((f"الجمهور منقسمين عليه: {a}%" if ar else f"Audiences are split: {a}%", None))
+        else:
+            out.append((f"الجمهور ما عجبهم: {a}% بس" if ar else f"Audiences didn't like it: only {a}%", False))
+    s = film.get("imdb_score")
+    if isinstance(s, (int, float)) and 0 < s <= 10:
+        v = f"{s:.1f}"
+        if s >= 7:
+            out.append((f"تقييمه على IMDb عالي: {v} من 10" if ar else f"High on IMDb: {v} out of 10", True))
+        elif s >= 5.5:
+            out.append((f"تقييمه على IMDb عادي: {v} من 10" if ar else f"Middling on IMDb: {v} out of 10", None))
+        else:
+            out.append((f"تقييمه على IMDb ضعيف: {v} من 10" if ar else f"Low on IMDb: {v} out of 10", False))
+    return out
+
+
+def _why(site, lang, fid):
+    """The hero's «ليش يستاهل؟» (film.why): the film's own intel reasons (Arabic prose, so / only), else
+    fallback_reasons() — one <details> whose summary is the single line under the verdict. "" with nothing."""
+    film = site.films.get(fid) or {}
+    intel = film.get("intel") if isinstance(film.get("intel"), dict) else None
+    items = []
+    src = "intel"
+    if intel and lang == "ar" and intel.get("reasons"):
+        items = [(r.get("text", ""), bool(r.get("pos"))) for r in intel["reasons"] if r.get("text")]
+    if not items:
+        items, src = fallback_reasons(film, lang), "numbers"
+    if not items:
+        return ""
+    v = (film.get("verdict") or {}).get("verdict")
+    head = L["why_yes"] if v == "yes" else L["why_skip"] if v == "skip" else L["why_mixed"]
+    cls = lambda pos: "pos" if pos is True else "neg" if pos is False else "mid"
+    lis = "".join(f'<li class="{cls(pos)}">{_decimals(dates(esc(t)))}</li>' for t, pos in items)
+    return (f'<details class="fwhy" data-why="{src}"><summary><span>{esc(head[0 if lang == "ar" else 1])}</span></summary>'
+            f'<ul class="i-list">{lis}</ul></details>')
 
 
 def _score_row(film, lang, intel=None):
@@ -47,15 +134,6 @@ def _score_row(film, lang, intel=None):
     if not out:
         return ""
     return f'<div class="i-scores"><h3 class="i-h">{esc(L["scores"][0 if lang == "ar" else 1])}</h3>{out}</div>'
-
-
-def _reasons(intel, lang):
-    reasons = intel.get("reasons") or []
-    if not reasons:
-        return ""
-    items = "".join(f'<li class="{"pos" if r.get("pos") else "neg"}">{dates(esc(r.get("text", "")))}</li>' for r in reasons)
-    return (f'<details class="i-d i-reasons"><summary>{esc(L["why"][0 if lang == "ar" else 1])}</summary>'
-            f'<ul class="i-list">{items}</ul></details>')
 
 
 def _audience(intel, lang):
@@ -83,8 +161,9 @@ def _spoiler(intel, lang):
     warn = esc(L["spoiler_warn"][0 if lang == "ar" else 1])
     ending = intel.get("ending") if has_plot else None
     ending_body = dates(esc(ending)) if ending else esc(L["no_answer"][0 if lang == "ar" else 1])
+    gate = f'<p class="i-gate">{esc(L["gate"][0 if lang == "ar" else 1])}</p>'
     end_d = (f'<details class="i-d i-spoiler"><summary>{esc(L["ending_btn"][0 if lang == "ar" else 1])}</summary>'
-             f'<p class="i-warn">{warn}</p><p>{ending_body}</p></details>')
+             f'<p class="i-warn">{warn}</p>{gate}<div class="i-body"><p>{ending_body}</p></div></details>')
     qa = (intel.get("qa") or []) if has_plot else []
     if qa:
         qa_body = "".join(f'<div class="i-qa"><p class="q">{dates(esc(x.get("q", "")))}</p>'
@@ -92,8 +171,12 @@ def _spoiler(intel, lang):
     else:
         qa_body = f'<p>{esc(L["no_answer"][0 if lang == "ar" else 1])}</p>'
     qa_d = (f'<details class="i-d i-spoiler"><summary>{esc(L["qa_btn"][0 if lang == "ar" else 1])}</summary>'
-            f'<p class="i-warn">{warn}</p>{qa_body}</details>')
-    return end_d + qa_d
+            f'<p class="i-warn">{warn}</p>{gate}<div class="i-body">{qa_body}</div></details>')
+    # «بدون حرق»: a visible switch right above the two disclosures, on by default (see the module note)
+    switch = (f'<label class="i-ns"><input type="checkbox" checked data-nospoil>'
+              f'<span>{esc(L["nospoil"][0 if lang == "ar" else 1])}</span></label>')
+    return f'<div class="i-sp" data-spoilers>{switch}{end_d}{qa_d}</div>'
+
 
 
 def _film_info(site, lang, fid):
@@ -105,9 +188,10 @@ def _film_info(site, lang, fid):
     intel = film.get("intel")
     out = _score_row(film, lang, intel)
     if intel and lang == "ar":
-        out += _reasons(intel, lang) + _audience(intel, lang) + _fact(intel, lang) + _spoiler(intel, lang)
-    return f'<div class="i-wrap">{out}</div>' if out else ""
+        # the reasons are the hero's now (film.why, _why): never twice on one page
+        out += _audience(intel, lang) + _fact(intel, lang) + _spoiler(intel, lang)
+    return f'<div class="i-wrap" data-intel="{"1" if intel else "0"}">{out}</div>' if out else ""
 
 
 def register(site):
-    return Plugin(slots={"film.info": _film_info})
+    return Plugin(slots={"film.info": _film_info, "film.why": _why})
