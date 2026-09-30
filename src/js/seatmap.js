@@ -7,6 +7,9 @@ var W_SEAT = ["مقعد واحد", "مقعدين", "مقاعد", "مقعد"], W_
 
 function arN(n, w) { return n === 1 ? w[0] : n === 2 ? w[1] : n >= 3 && n <= 10 ? n + " " + w[2] : n + " " + w[3]; }
 function leftText(n, lg) { return lg === "en" ? n + (n === 1 ? " seat left" : " seats left") : "باقي " + arN(n, W_SEAT); }
+/* «مزحوم ولا فاضي؟»: a question kicker before the live count, only for a sample under 90 minutes old — the count
+   itself answers it, so the kicker is read out with the rest of the caption, not as its own live region */
+function busyQ(lg) { return lg === "en" ? "Busy or quiet?" : "مزحوم ولا فاضي؟"; }
 function summary(free, total, row, live, lg) {
   var en = lg === "en";
   if (!live) {
@@ -88,6 +91,7 @@ function drawTicket(tk, c, f) {
   var fig = document.createElement("figure");
   fig.className = "tk-hall"; fig.setAttribute("data-tk-hall", "");
   fig.innerHTML = '<div class="tk-hall-d">' + hallSVG(shape, live ? e[7] : null, best) + "</div><figcaption>" +
+    (live ? '<b class="q">' + K.esc(busyQ(K.lang)) + "</b> " : "") +
     K.esc(summary(live ? e[4] : null, total, best && best[0], live, K.lang)) +
     (live ? '<small class="ago">' + K.esc(agoText(nowS() - e[6], K.lang)) + "</small>" : "") + "</figcaption>";
   var tbl = K.q(".tk-seats", tk);

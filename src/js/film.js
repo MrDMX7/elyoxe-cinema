@@ -168,18 +168,37 @@ function fsPicked(btn, x) {
   if (desk()) { tk.hidden = false; return; }
   if (!x.quiet) fsDock(true);
 }
+/* d/m from an ISO date, for the stamp («رايح 30/9»): the stub's own dating, never the full ticket's day words */
+function dkDMY(iso) { var p = String(iso || "").split("-"); return p.length === 3 ? +p[2] + "/" + +p[1] : iso; }
 function fsDock(say) {
   var dk = q("[data-dock]"), x = FS.x;
   if (!dk || !x || FS.auto) return;
   var low = (x.p || []).reduce(function (m, p) { return m == null || p[1] < m ? p[1] : m; }, null);
-  var known = x.hall != null && x.hk != null, r = card && D && known && low != null ? after(low, x.chain, x.hall, card, x.hk, x.cin) : { a: null };
-  q("[data-dk-p]", dk).innerHTML = low != null ? '<span class="num">' + fmt(r.a != null ? r.a : low) + "</span> " + esc(C.aed) + (r.a != null && ppNote(r.r) ? " " + ppNote(r.r) : "")
-    : '<span class="na">' + esc(C.box) + "</span>";
-  var bits = [x.t + " " + x.cname];
+  var known = x.hall != null && x.hk != null, r = card && D && known && low != null ? after(low, x.chain, x.hall, card, x.hk, x.cin) : { a: null, st: null, r: null };
+  /* a card with no confirmed rule at this chain at all («card door»): the existing honest state words, never a
+     made-up line; excluded (a rule that does not cover this hall) reads the same way as the price grid does */
+  var note = low != null && card && r.st && r.st !== "ok" && C[r.st] ? C[r.st] : "";
+  q("[data-dk-p]", dk).innerHTML = low == null ? '<span class="na">' + esc(C.box) + "</span>"
+    : note ? '<span class="num">' + fmt(low) + "</span> " + esc(C.aed) + '<small class="per">' + esc(note) + "</small>"
+    : '<span class="num">' + fmt(r.a != null ? r.a : low) + "</span> " + esc(C.aed) +
+      (r.a != null ? '<small class="per">' + esc(sub(TX.after_c, { card: C.cards[card] })) + "</small>" + ppNote(r.r) : "");
+  q("[data-dk-time]", dk).textContent = x.t;
+  var bits = [x.cname];
   if (x.hk && x.hn) bits.push(x.hn);
-  if (r.a != null) bits.push(sub(TX.after_c, { card: C.cards[card] }));
-  q("[data-dk-s]", dk).textContent = dayName(x.d) + " " + bits.join(TX.sep);
-  dk.hidden = false; body.classList.add("docked");
+  q("[data-dk-s]", dk).textContent = dayName(x.d) + TX.sep + bits.join(TX.sep);
+  var box = !!(r.r && r.r.box_office_only && r.a != null), bk = q("[data-dk-book]", dk);
+  if (bk) {
+    bk.classList.toggle("box", box);
+    if (box) {
+      bk.textContent = TK.box; bk.href = mapsTo(x.cin);
+      if (!G) geo().then(function () { if (FS.x === x && bk.classList.contains("box")) bk.href = mapsTo(x.cin); });
+    } else {
+      /* the show's own booking link, else the chain's site (book_url never leaves this at "#": kit/sched.py) */
+      bk.textContent = sub(C.book_at, { chain: chainName(x.chain) }); bk.href = x.book || "";
+    }
+  }
+  dk.hidden = false; dk.removeAttribute("data-stamped"); body.classList.add("docked");
+  emit("stub", "open");
   /* said once the dock is on screen (a live region filled in the task that shows it can go unsaid, fix round 1 M5);
      the region itself sits outside the dock, always rendered */
   var live = q("[data-dk-live]");
@@ -188,13 +207,23 @@ function fsDock(say) {
     requestAnimationFrame(function () { live.textContent = sub(TX.ticket, { film: x.film, cin: x.cname, t: x.t }); });
   }
 }
+/* «احجز» tapped: the chain opens in a new tab (the anchor's own href/target do that — nothing to prevent here) and
+   the stub stamps «رايح» with the date on the perforation, aria-hidden, never touching the price or any text; it
+   emits 'plan' for the memory layer (chrome.js's haptic already listens for it) */
+function fsStamp(x) {
+  var dk = q("[data-dock]"); if (!dk) return;
+  dk.setAttribute("data-stamped", "");
+  var s = q("[data-dk-stamp]", dk); if (s) s.textContent = (AR ? "رايح " : "Going ") + dkDMY(x && x.d);
+  emit("plan", x);
+}
 /* nothing chosen (or the chosen time went out of sight: another day, another city, filtered, folded): a phone drops
    the dock; the desktop column says «اختر وقت» until fsAuto finds the next show */
 function fsClear() {
   qa(".tm.on").forEach(function (o) { o.classList.remove("on"); o.removeAttribute("aria-current"); });
   FS.btn = null; FS.x = null; FS.auto = false;
-  var dk = q("[data-dock]"); if (dk) dk.hidden = true;
+  var dk = q("[data-dock]"); if (dk) { dk.hidden = true; dk.removeAttribute("data-stamped"); }
   body.classList.remove("docked");
+  emit("stub", "close");
   if (tk && tk.classList.contains("open")) closeTicket();
   if (tk) tk.hidden = true;
   var em = q("[data-tk-empty]"); if (em) em.hidden = false;
@@ -251,6 +280,10 @@ function bindFilm() {
   document.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-dk-open]");
     if (b && tk) tkOpen(b);
+    /* «احجز» on the stub itself (the tap-count win, §2.3): the anchor's own href/target open the chain, nothing
+       to prevent; a box-office-only card link goes to directions instead and is never stamped */
+    var bk = e.target.closest && e.target.closest("[data-dk-book]");
+    if (bk && !bk.classList.contains("box") && bk.getAttribute("href")) fsStamp(FS.x);
     /* the visitor's city is the schedule, not a fold: its heading does not close it */
     if (e.target.closest && e.target.closest(".fcity.here > summary")) e.preventDefault();
   });

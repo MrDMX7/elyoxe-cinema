@@ -117,9 +117,14 @@ def test_schedule_by_city_ticket_column_and_dock(out):
     col = sec[sec.index('<div class="tkcol">'):]
     assert col.startswith('<div class="tkcol"><div class="tk-empty" data-tk-empty hidden><p class="k">اختر وقت</p>')
     assert '<aside class="ticket" id="ticket" data-ticket' in col
-    # the dock: hidden, filled by film.js
-    assert re.search(r'<div class="dock" data-dock role="region" aria-label="الوقت المختار" hidden>.*data-dk-p.*data-dk-s.*'
-                     r'<button type="button" class="btn dk-b" data-dk-open aria-haspopup="dialog">التفاصيل والحجز</button>', m)
+    # the dock: hidden, a paper stub (§2.3) with «التفاصيل» and «احجز» on the stub itself, its perforation and the
+    # tear-off price — all filled by film.js
+    assert re.search(r'<div class="dock paper stub" data-dock role="region" aria-label="الوقت المختار" hidden>'
+                     r'<div class="dk-t"><b class="dk-time" dir="ltr" data-dk-time></b><p class="dk-s" data-dk-s></p>'
+                     r'<div class="dk-act"><button type="button" class="lnk dk-more" data-dk-open aria-haspopup="dialog">التفاصيل</button>'
+                     r'<a class="dk-b" data-dk-book rel="noopener nofollow" target="_blank"></a></div></div>'
+                     r'<div class="perf" aria-hidden="true"><span class="dk-stamp" data-dk-stamp></span></div>'
+                     r'<div class="dk-p" data-dk-p></div></div>', m)
     assert '<p class="nc" data-nc hidden></p>' in m and "data-empty hidden" in m
 
 
@@ -317,7 +322,7 @@ def test_unknown_verdict_and_the_hero_without_any_picture(out):
     for parts in (("film", "crawlers"), ("en", "film", "crawlers")):
         h = read(out, *parts)
         assert '<section class="fhero np">' in h
-        assert re.search(r'<div class="dock"[^>]*hidden>.*?data-dk-open[^>]*>[^<]+</button></div><p class="vh" data-dk-live aria-live="polite"></p>', h)
+        assert re.search(r'<div class="dock[^"]*"[^>]*hidden>.*?data-dk-open[^>]*>[^<]+</button>.*?</div><p class="vh" data-dk-live aria-live="polite"></p>', h)
     css = build.css_source()
     # the typographic tile is the case on a phone as the poster is (W2-P1: .fposter drawn at clamp(120px,20svh,180px))
     assert ".pst.hero{block-size:clamp(120px,20svh,180px)" in css and ".fhero.fr .fposter{display:none}" in css

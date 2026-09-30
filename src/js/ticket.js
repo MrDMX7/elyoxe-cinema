@@ -1,7 +1,7 @@
 /* the ticket: a tapped time fills the page's one ticket. Phone (< 1024 px): a bottom sheet — a modal
    dialog with its focus kept inside, closed by ×, Esc, the scrim or the back button, focus going back to
-   the time (on a film page the time first shows the dock, src/js/film.js, whose «التفاصيل والحجز» opens the
-   sheet). Desktop: the side panel changes in place and a live region says so.
+   the time (on a film page the time first shows the dock, src/js/film.js, whose «التفاصيل» opens the
+   sheet — «احجز» books straight from the stub). Desktop: the side panel changes in place and a live region says so.
    tkOpen, not sheetOpen: the bundle is one scope, and sheet.js's sheetOpen(id) (later in it) would win. */
 var PL = (function () { var el = document.getElementById("cinema-p"); try { return el ? JSON.parse(el.textContent) : []; } catch (e) { return []; } })();
 var tk = q("[data-ticket]"), tkFrom = null, tkPushed = false, scrim = null, tkInert = [];
@@ -266,7 +266,13 @@ function fillTicket(btn, x) {
 }
 
 function focusables() { return qa('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])', tk).filter(function (e) { return e.offsetParent !== null || e === document.activeElement; }); }
+/* the dock/history race (w2-p3a-review-lean.md #4): history.back() is async. If the sheet reopens before its
+   popstate lands, a naive pushState would race the pending pop, which then closes the new sheet instead of the
+   old one. tkClosing marks that a pop is in flight; a tkOpen while it is in flight is queued (tkReopen) and runs
+   only once that pop has landed, so the reopen never races it. */
+var tkClosing = false, tkReopen = null;
 function tkOpen(btn) {
+  if (tkClosing) { tkReopen = btn; return; }
   tkFrom = btn;
   tk.setAttribute("role", "dialog"); tk.setAttribute("aria-modal", "true"); tk.setAttribute("tabindex", "-1");
   if (!scrim) { scrim = document.createElement("div"); scrim.className = "scrim"; scrim.addEventListener("click", closeTicket); document.body.appendChild(scrim); }
@@ -282,8 +288,8 @@ function closeTicket(fromPop) {
   tk.classList.remove("open"); tk.removeAttribute("aria-modal");
   inertOff();
   if (scrim) scrim.classList.remove("on");
-  if (tkPushed && fromPop !== true) { tkPushed = false; try { history.back(); } catch (e) {} }
-  tkPushed = false;
+  if (tkPushed && fromPop !== true) { tkPushed = false; tkClosing = true; try { history.back(); } catch (e) { tkClosing = false; } }
+  else tkPushed = false;
   if (tkFrom) { tkFrom.focus(); tkFrom = null; }
 }
 function bindTicket() {
@@ -312,7 +318,11 @@ function bindTicket() {
     if (e.shiftKey && (document.activeElement === a || !tk.contains(document.activeElement))) { e.preventDefault(); z.focus(); }
     else if (!e.shiftKey && (document.activeElement === z || !tk.contains(document.activeElement))) { e.preventDefault(); a.focus(); }
   });
-  window.addEventListener("popstate", function () { if (tk.classList.contains("open")) { tkPushed = false; closeTicket(true); } });
+  window.addEventListener("popstate", function () {
+    tkClosing = false;
+    if (tk.classList.contains("open")) { tkPushed = false; closeTicket(true); }
+    if (tkReopen) { var b = tkReopen; tkReopen = null; tkOpen(b); }
+  });
   window.addEventListener("hashchange", showFromHash);
   ticketStart();
 }
