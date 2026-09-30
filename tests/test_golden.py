@@ -59,6 +59,11 @@ REDESIGN_ADDED = re.compile(r"^(en/)?(cinemas|sources)/index\.html$")
 SEAMS_ADDED = re.compile(r"^assets/(drag\.[0-9a-f]{10}\.js|page-[\w-]+\.[0-9a-f]{10}\.css)$")
 # W1-P2 (MASTER-PLAN §5.2): the system's two tiny Markazi faces (tools/subset_digits.py), fonts only, added
 SYSTEM_ADDED = re.compile(r"^assets/fonts/markazi-700-(digits|mark)\.woff2$")
+# 425: static/* is copied to the out/ root unchanged regardless of which page modules are loaded (build.py's
+# Site.assets() runs for a core-only build too), so phase1 never wrote it — it's site infrastructure
+# (the Search Console verification file), not a page
+STATIC_PASSTHROUGH_ADDED = {f for f in os.listdir(os.path.join(ROOT, "static")) if f != "README" and not f.startswith(".")} \
+    if os.path.isdir(os.path.join(ROOT, "static")) else set()
 REDESIGN_CHANGED = re.compile(r"(\.html|^assets/cinema\.css)$")
 # round3 (2026-09-30): r3-backend's Web Push (push_subscribe.py, push_weekly.py; tests/test_counter_lambdas.py
 # covers the lambdas) added a "push" and a "notificationclick" listener to the service worker — a real behaviour
@@ -226,7 +231,7 @@ def test_core_build_is_byte_identical_to_phase1(phase1, tmp_path, name, data, di
     data = live_input(data, tmp_path)
     before = files(run_build(phase1, data, disc, str(tmp_path / "before")))
     after = files(run_build(ROOT, data, disc, str(tmp_path / "after"), "core"))
-    assert sorted(before) == sorted(p for p in after if not REDESIGN_ADDED.match(p) and not SEAMS_ADDED.match(p) and not SYSTEM_ADDED.match(p))
+    assert sorted(before) == sorted(p for p in after if not REDESIGN_ADDED.match(p) and not SEAMS_ADDED.match(p) and not SYSTEM_ADDED.match(p) and p not in STATIC_PASSTHROUGH_ADDED)
     assert len(before) > 50
     bundle = "assets/cinema.HASH.js"
     diff = [p for p in before if p not in (bundle, "sitemap.xml") and not REDESIGN_CHANGED.search(p) and not GOLDEN_CHANGED.match(p) and before[p] != after[p]]
