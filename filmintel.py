@@ -46,7 +46,7 @@ import verdicts as vd
 INTEL_DIR = Path(__file__).resolve().parent / "intel"
 MODEL = vd.MODEL
 MAX_ATTEMPTS = 4
-INTEL_CAP = 8   # per refresh run — at most one or two Claude calls per new film, light on the phone, never fails the run
+INTEL_CAP = 20   # per refresh run (raised from 8, 2026-09-30 — item 293) — light on the phone, never fails the run
 RECHECK_DAYS = 3   # backoff before retrying a skip/failed film, or re-checking whether a plot now exists — a
                     # persistently-failing or pre-release film always sorts first in dict order, and without
                     # this it would eat the whole cap every run and starve every film after it (round-1 review)
