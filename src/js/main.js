@@ -179,6 +179,7 @@ function bindRails() {
     D = j; renderPrices(false);
     if (S) renderHome(false);
     if (tk) renderTerms(tk.getAttribute("data-chain"));
+    emit("rules", D);   /* a lazy chunk that needed a card-adjusted price (K.after) before this landed redraws now */
   });
   if (page === "home" || page === "city") citySlice();
   /* a show link (#s-…) opens its ticket; else the desktop column moves off a show that has started (on a film page

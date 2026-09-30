@@ -3,6 +3,9 @@
    (/data/seats/<cinema>.json). Drawn screen on top whatever end the chain draws it on; aisles keep their width.
    Colour is never the only signal: the caption says the same in words. */
 var FRESH_S = 90 * 60, OCC = null;
+/* «باقي N مقعد» is scarcity, not a seat counter (R4 §300): a healthy hall (> 15 free) says nothing, on a time
+   button or on the ticket — the same cap pages/seats.py already applies to the no-script badge */
+var SEATS_LEFT_MAX = 15;
 var W_SEAT = ["مقعد واحد", "مقعدين", "مقاعد", "مقعد"], W_MIN = ["دقيقة", "دقيقتين", "دقايق", "دقيقة"];
 
 function arN(n, w) { return n === 1 ? w[0] : n === 2 ? w[1] : n >= 3 && n <= 10 ? n + " " + w[2] : n + " " + w[3]; }
@@ -74,7 +77,7 @@ function annotate() {
   K.qa(".tm[data-start]:not(.past):not([data-occ])").forEach(function (b) {
     b.setAttribute("data-occ", "");
     var c = where(b), e = pick(OCC.o[c.cin + "|" + c.fid + "|" + c.d + "|" + c.t], c.hk);
-    if (!e || !fresh(e[3]) || !(e[1] > 0)) return;
+    if (!e || !fresh(e[3]) || !(e[1] > 0) || e[1] > SEATS_LEFT_MAX) return;
     var s = document.createElement("small"); s.className = "lf"; s.textContent = leftText(e[1], K.lang);
     b.appendChild(s);
   });
@@ -96,8 +99,14 @@ function drawTicket(tk, c, f) {
     (live ? '<small class="ago">' + K.esc(agoText(nowS() - e[6], K.lang)) + "</small>" : "") + "</figcaption>";
   var tbl = K.q(".tk-seats", tk);
   if (tbl && tbl.parentNode) tbl.parentNode.insertBefore(fig, tbl.nextSibling); else tk.appendChild(fig);
+  /* the ticket's own simple badge (kit/ticket.py's, filled first from the button's build-time data-left): once
+     the live sample is in hand it always has the last word, scarce (timestamped «قبل X دقيقة», R4 §300) or not
+     (hidden — a show that was scarce at build time but has since freed up says nothing false) */
   var le = K.q("[data-tk-seats]", tk);
-  if (le && live && e[4] > 0) { le.hidden = false; le.textContent = leftText(e[4], K.lang); }
+  if (le && live) {
+    if (e[4] > 0 && e[4] <= SEATS_LEFT_MAX) { le.hidden = false; le.textContent = leftText(e[4], K.lang) + (K.AR ? "، " : ", ") + agoText(nowS() - e[6], K.lang); }
+    else { le.hidden = true; le.textContent = ""; }
+  }
 }
 
 /* the core fills the ticket after its own click handler (maybe after a slice fetch): wait for this time */

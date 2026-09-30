@@ -1,0 +1,7 @@
+/* «وين أرخص؟» (R4 §299): the compact cinema-compare table on a film page (src/js/cinecompare.js draws it).
+   .matrix/.xwrap are ui-money.css's price-table look, already shared with /prices/ and the film-vs-film compare
+   (insights.css's .cmp-t) — this file is only what that shared look does not already cover. */
+.cheap-cmp{margin-block:32px}
+.cheap-t td a{color:inherit;text-decoration-color:var(--seat)}
+.cheap-t td small{display:block;color:var(--seat);font-size:12px}
+.cheap-cmp [data-cheap-all]{margin-block-start:8px}
