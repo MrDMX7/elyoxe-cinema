@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "رانر نزل بـ9% بس من النقاد، وحتى الجمهور ما تفاعل وياه غير 33%. حبكة ركض مستمر بلندن ما طلعت مثيرة، طلعت مرهقة بس.",
+  "basis": "RT 9% (54 نقد) · الجمهور 33%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 9,
+    "rt_count": 54
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "The Runner scored a dismal 9% with critics and only 33% with audiences. Its real-time London chase gimmick lands flat rather than thrilling.",
   "fid": "runner",
-  "verdict": "unknown",
-  "written": "2026-09-26"
+  "verdict": "skip",
+  "written": "2026-09-30"
 }

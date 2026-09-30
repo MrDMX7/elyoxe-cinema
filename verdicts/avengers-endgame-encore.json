@@ -1,9 +1,14 @@
 {
-  "ar": "Avengers: Endgame Encore عرض ثاني للفيلم اللي عرفه الكل، مدته 3 ساعات ودقيقة. لو فاتك بالسينما أول مرة هذي فرصتك تعيش اللحظة الجماعية من يديد.",
-  "basis": "Gulf News: يستاهل لمن فاته بالسينما",
+  "ar": "المنتقمون: نهاية اللعبة حاصل 94% من النقاد، والجمهور معطيه 96%. خاتمة قوية وعاطفية لملحمة مارفل الطويلة.",
+  "basis": "RT 94% (553 نقد) · الجمهور 96%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 94,
+    "rt_count": 553
+  },
   "by": "claude",
-  "en": "Avengers: Endgame Encore brings the 2019 hit back to cinemas, runtime 3h01. A solid pick if you missed the original run or want the big-screen crowd moment again.",
+  "en": "Avengers: Endgame scores 94% with critics and 96% with audiences. An exciting, emotionally satisfying finale to Marvel's Infinity Saga.",
   "fid": "avengers-endgame-encore",
   "verdict": "yes",
-  "written": "2026-09-26"
+  "written": "2026-09-30"
 }
