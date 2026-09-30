@@ -96,6 +96,8 @@ BANNED_WORDS.update(_LEXICON.get("words", {}))
 BANNED_WORDS.update({
     "مو": "مب",          # «مو الأقوى» — not Emirati (fix wave, 2026-09-26)
     "ترّى": "تريّا",      # «ترّى شوي» — not the owner's Emirati
+    "شنو": "شو",         # «شنو سبب...» shipped in intel/interstellar.json (r3-film fix round) — the owner's
+                          # rule is «شو»، not the Gulf-wide «شنو»
 })
 
 BANNED_PHRASES = {

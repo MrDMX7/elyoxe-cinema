@@ -27,13 +27,13 @@ L = {
 }
 
 
-def _score_row(film, lang):
+def _score_row(film, lang, intel=None):
+    """IMDb only here — critics/audience already show on the same page via film_rates(), so repeating them
+    here was pure clutter (review, Minor). The consensus line is the Arabic paraphrase filmintel.py wrote
+    (intel["consensus_ar"]), never the raw English rt["consensus"] (review, Important #2) — it never renders
+    on the /en/ mirror, since it is Arabic prose (Important #6)."""
     rt = film.get("rt") or {}
     rows = []
-    if rt.get("critics") is not None:
-        rows.append(("النقاد" if lang == "ar" else "Critics", num(str(rt["critics"]) + "%")))
-    if rt.get("audience") is not None:
-        rows.append(("الجمهور" if lang == "ar" else "Audience", num(str(rt["audience"]) + "%")))
     imdb_score = film.get("imdb_score")
     if isinstance(imdb_score, (int, float)):
         rows.append((L["imdb"][0 if lang == "ar" else 1], num(f"{imdb_score:.1f}")))
@@ -41,8 +41,9 @@ def _score_row(film, lang):
     if rows:
         out += ('<dl class="facts scores">'
                 + "".join(f'<div><dt>{esc(a)}</dt><dd>{v}</dd></div>' for a, v in rows) + '</dl>')
-    if rt.get("consensus"):
-        out += f'<p class="consensus"><b>{esc(L["consensus"][0 if lang == "ar" else 1])}:</b> {esc(rt["consensus"])}</p>'
+    consensus_ar = (intel or {}).get("consensus_ar")
+    if lang == "ar" and consensus_ar:
+        out += f'<p class="consensus"><b>{esc(L["consensus"][0])}:</b> {esc(consensus_ar)}</p>'
     if not out:
         return ""
     return f'<div class="i-scores"><h3 class="i-h">{esc(L["scores"][0 if lang == "ar" else 1])}</h3>{out}</div>'
@@ -96,10 +97,14 @@ def _spoiler(intel, lang):
 
 
 def _film_info(site, lang, fid):
+    """The score row (numbers, language-neutral) renders on both / and /en/. Everything else here — reasons,
+    audience opinion, fun fact, the two spoiler disclosures — is written in Arabic only (filmintel.py's
+    dialect gate targets Arabic prose specifically), so it renders only for lang == "ar"; showing it under
+    English headings on /en/ would put RTL Arabic text inside an LTR page (review, Important #6)."""
     film = site.films.get(fid) or {}
     intel = film.get("intel")
-    out = _score_row(film, lang)
-    if intel:
+    out = _score_row(film, lang, intel)
+    if intel and lang == "ar":
         out += _reasons(intel, lang) + _audience(intel, lang) + _fact(intel, lang) + _spoiler(intel, lang)
     return f'<div class="i-wrap">{out}</div>' if out else ""
 
