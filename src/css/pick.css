@@ -1,0 +1,26 @@
+/* «اختار لي»: the pick's stub (legend W2-P2b; MASTER-PLAN §1.1, §1.5, §3.1). It lands as `.paper` (screen light,
+   ink text, MASTER-PLAN §1.5: gold never touches paper — the after-card price stays velvet here, .paper .p:has(s) b
+   already sets that). No radius, no card shadow (§1.2 #2): a flat sheet, not a floating panel. The tear line under
+   the body is the perforation's own dashed rule (--rule), not a shadow. */
+/* the entry point (pages/board.py `pick_btn`): next to the board's head (home), or its own line above the box
+   with no head to sit beside (the 404); §1.2 #10's one door — this is the board's, not a second one */
+.bh-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.bh-top h2{flex:1}
+.bh-nolabel{min-block-size:0}
+.pl-pick{min-block-size:44px;flex:0 0 auto}
+.pk-stub{margin-block-start:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.pk-h{margin:0;font-size:var(--fs-meta);color:var(--ink-2);text-transform:none}
+.pk-when{margin:4px 0 0;font-size:var(--fs-h2);font-weight:600;line-height:1.2;display:flex;align-items:baseline;gap:8px}
+.pk-when b{font-size:30px;font-family:inherit}   /* the stub time (MASTER-PLAN §1.4 object sizes: 30 px in a dock) */
+.pk-cin{margin:2px 0 0;font-size:var(--fs-meta);color:var(--ink-2)}
+.pk-p{margin:6px 0 0;font-size:var(--fs-time)}
+.pk-why{margin:6px 0 0;font-size:var(--fs-meta);line-height:1.5;color:var(--ink-2)}
+.pk-why b{color:var(--ink);font-weight:600}
+.pk-act{display:flex;gap:8px;padding-block-start:12px;border-block-start:1px dashed var(--rule)}
+.pk-act .btn{flex:1;min-block-size:44px}
+.pk-empty{margin:12px 0 0;padding:16px;font-size:var(--fs-meta);color:var(--dim)}
+/* the flaps: the session's first pick only, ≤ 900 ms, skippable by any tap (§1.3) — a fade/rise stands in for the
+   split-flap read of a departures board without redrawing every digit tile for one card */
+.pk-flap{animation:pk-in .32s var(--ease-out) both}
+@keyframes pk-in{from{opacity:0;transform:translateY(10px)}}
+@media (prefers-reduced-motion:reduce){.pk-flap{animation:none}}

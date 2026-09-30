@@ -40,11 +40,13 @@ import re
 
 from site_kit import CITIES, CITY, HOME_T, L, P, Plugin, esc, minify_lite, money
 
-CSS = ("board",)
+CSS = ("board", "pick")
 JS = ("board",)                       # the bundle: only the helpers the lazy half reads (K.bd)
-LAZY_JS = ("board-paint", "board-live")
-PAGE_JS = {"home": ("board-live",), "404": ("board-live",), "film": ("board-live",),
-           "city": ("board-paint", "board-live"), "cinema": ("board-paint", "board-live")}
+LAZY_JS = ("board-paint", "board-live", "pick")
+# «اختار لي» (W2-P2b, §3.1) rides the same K.bd it reads here: home and the 404 hold its button (below); a city
+# page already holds one of its own (pages/_core/places.py's city_hero), so it gets the chunk too, for free
+PAGE_JS = {"home": ("board-live", "pick"), "404": ("board-live", "pick"), "film": ("board-live",),
+           "city": ("board-paint", "board-live", "pick"), "cinema": ("board-paint", "board-live")}
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PAINT = os.path.join(ROOT, "src", "js", "board-paint.js")
@@ -64,6 +66,8 @@ BOARD_T = {
     "first": ("أقرب عرض لك", "Your nearest show"),            # film.first
     "city": ("أقرب العروض في {city}", "Next shows in {city}"),   # a city page's board (the page's hero is its head)
     "cinema": ("أقرب العروض هني", "Next shows here"),         # a cinema page's board
+    "pick": ("اختار لي", "Pick for me"),                      # the pick's entry (W2-P2b, §2.1, §3.1): held until
+                                                               # pick.js binds it (data-hold hidden), then it answers
 }
 
 HOME_N, HOME_ND, HOME_M = 3, 6, 5   # rows in the fixed box (a desktop: two columns of 3), rows under «اللوحة كاملة»
@@ -351,18 +355,30 @@ class Board:
         msg = isl["s"]["at"].replace("{t}", hm(next_at)) if next_at is not None else isl["s"]["w"]
         return f'<p class="bw">{msg}</p>'
 
+    @staticmethod
+    def pick_btn(lang):
+        """«اختار لي» (W2-P2b, §2.1, §3.1): held invisible (never absent, so nothing moves when pick.js binds it,
+        the same contract as places.py's city button) until that chunk decides a show and shows itself. Its
+        `data-pick` is empty, meaning "the visitor's own city" (places.py's own button instead names its city)."""
+        return (f'<button type="button" class="btn ghost pl-pick" data-pick="" data-hold hidden>'
+                f'{esc(L(BOARD_T["pick"], lang))}</button>')
+
     # ------------------------------------------------ the slots
-    def board(self, lang, isl, key, kind, head=False, label=None, inline=False, now_id=False):
+    def board(self, lang, isl, key, kind, head=False, label=None, inline=False, now_id=False, pick=False):
         """The board's markup: a head (or only a label), the fixed box, «اللوحة كاملة» (when the island has more rows
-        for it), the island (with the renderer, inline)."""
+        for it), the island (with the renderer, inline). `pick`: the board also holds «اختار لي» (home, the 404,
+        §3.1 "used by") — inside the head next to its h2 when there is one, else its own line above the rows."""
         attrs = (' id="now"' if now_id else "") + (' aria-labelledby="bh-t"' if head else f' aria-label="{esc(label)}"')
         h = ""
         if head:
             t = hm(self.now)
-            h = (f'<div class="bh"><h2 id="bh-t">{esc(L(BOARD_T["head"], lang))}</h2>'
+            h = (f'<div class="bh"><div class="bh-top"><h2 id="bh-t">{esc(L(BOARD_T["head"], lang))}</h2>'
+                 + (self.pick_btn(lang) if pick else "") + '</div>'
                  f'<p class="bh-s"><i class="bh-l" aria-hidden="true"></i><span class="bh-c"><span data-board-city>{esc(L(CITY[key], lang))}</span>'
                  f'{"، " if lang == "ar" else ", "}{esc(L(BOARD_T["now"], lang))}</span>'
                  f'<span class="bk" data-board-clock data-t="{t}">{time_html(t)}</span><span class="bh-n" data-board-n></span></p></div>')
+        elif pick:
+            h = f'<div class="bh bh-nolabel">{self.pick_btn(lang)}</div>'
         mo = ""
         if isl["m"]:
             mo = (f'<details class="bmore" hidden><summary>{esc(L(BOARD_T["more"], lang))}</summary>'
@@ -379,7 +395,7 @@ class Board:
         groups = {c: self.city_rows(c) for c, _, _ in CITIES}
         isl = self.island(lang, groups, HOME_N, HOME_M, names=True, hold=True, nd=HOME_ND)
         self.sheet(lang)
-        return self.board(lang, isl, "dubai", "home", head=True, inline=True, now_id=not NEAR_NOW)
+        return self.board(lang, isl, "dubai", "home", head=True, inline=True, now_id=not NEAR_NOW, pick=True)
 
     def city(self, site, lang, city):
         isl = self.island(lang, {city: self.city_rows(city)}, CITY_N, scope=city)
@@ -396,7 +412,7 @@ class Board:
         groups = {c: self.city_rows(c) for c, _, _ in CITIES}
         isl = self.island(lang, groups, NF_N, names=True)
         self.sheet(lang)
-        return self.board(lang, isl, "dubai", "404", label=L(BOARD_T["head"], lang), inline=True)
+        return self.board(lang, isl, "dubai", "404", label=L(BOARD_T["head"], lang), inline=True, pick=True)
 
     def film_first(self, site, lang, fid):
         """«أقرب عرض لك»: a held 56 px box when the film shows in the visitor's city (decided before the first paint by a
