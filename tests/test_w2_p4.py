@@ -70,6 +70,9 @@ def check_rows(rows):
     firsts = {}
     for key, fids in rows.items():
         if key in ("coming",): continue                       # announced films, never in another row
+        # «نجوم الليلة» (r3-home) is a row of people, by the owner's rule the leads of the most-shown and the top-rated
+        # film: at most two tiles, and those two films open other rows on purpose (round3 QA: failed only on real data)
+        if key in ("stars",): continue
         assert len(fids) >= 4, (key, fids)
         for f in fids[:FIRST]:
             assert f not in firsts, (f, key, firsts.get(f))
