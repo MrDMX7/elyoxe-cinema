@@ -4,5 +4,5 @@
 /* /bollywood/'s language tabs (r3-home, owner idea 2026-09-30): anchors to each server-rendered section — no script,
    the browser's own scroll does the "tab" */
 .bw-tabs{display:flex;flex-wrap:wrap;gap:8px 16px;margin-block-start:12px}
-.bw-tabs a{min-block-size:36px;display:inline-flex;align-items:center;padding-inline:12px;border:1px solid var(--line-2);color:var(--screen);text-decoration:none;font-size:var(--fs-meta)}
+.bw-tabs a{min-block-size:44px;display:inline-flex;align-items:center;padding-inline:12px;border:1px solid var(--line-2);color:var(--screen);text-decoration:none;font-size:var(--fs-meta)}
 .bw-tabs .num{color:var(--seat);margin-inline-start:4px}

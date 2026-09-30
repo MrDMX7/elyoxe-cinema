@@ -91,8 +91,12 @@ class TileKit:
         like the section's ids: /summer/ draws one grid per city (fix round 1, I2); the later grids share them.
         `collapse` (r3-home, owner call 2026-09-30, home only): the grid sits behind one native `<details>` closed
         by default — a single «كل الأفلام (N)» button that expands the whole section in place, no script needed. A
-        link to `#all` still opens it: the fragment target (the inner `<section id="all">`) sits inside the
-        `<details>`, which browsers auto-open for a same-document fragment navigation into a collapsed one."""
+        link to `#all` still opens it for a reader with no script: the fragment target (the inner `<section
+        id="all">`) sits inside the `<details>`, which Chromium auto-opens for a same-document fragment navigation
+        into a collapsed one. iPhone Safari (the owner's device) does not do this reliably, so with script,
+        filters.js's bindFilters forces `details.allg.open = true` itself whenever a «الكل» row link's query
+        (`?sort=`/`?f=`/`?who=`/`?fl=`) or an `#all` hash targets it, and again before the «اعرض N» sheet button's
+        scroll — fix round, review Important #3."""
         first = not self._grid
         tiles = "".join(self.film_tile(fid, lang, shows, i=i, live=True, tag=(tags or {}).get(fid)) for i, fid in enumerate(fids))
         hid = ' id="all-h"' if first else ""

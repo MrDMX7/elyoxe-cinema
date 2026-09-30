@@ -10,7 +10,7 @@ DIRS = ("bollywood",)
 # a film's lang field, as seen in the data (English words, sometimes ISO codes): canonical key -> (label, match set)
 TABS = [("hindi", ("هندي", "Hindi"), {"hindi", "hi"}),
         ("malayalam", ("مالايالام", "Malayalam"), {"malayalam", "ml"}),
-        ("tamil", ("تاميل", "Tamil"), {"tamil", "ta"}),
+        ("tamil", ("تاميلي", "Tamil"), {"tamil", "ta"}),
         ("telugu", ("تيلوغو", "Telugu"), {"telugu", "te"})]
 LANG_KEYS = {k for _, _, ks in TABS for k in ks}
 
