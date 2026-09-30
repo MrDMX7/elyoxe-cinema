@@ -253,6 +253,8 @@ def test_the_bundle_half_of_board_carries_only_the_bridge():
 def test_board_paint_and_board_live_are_declared_lazy_not_bundled():
     """§7.2 (the bundle's headroom): the renderer and the live half are LAZY_JS, so build.bundle_js() (the initial
     bundle) never carries CB.pick or the src()/load() machinery — only board.js's thin bridge does."""
-    assert set(board_mod.LAZY_JS) == {"board-paint", "board-live"}
+    # W2-P2b added "pick" to the same tuple (pages/board.py, tests/test_pick.py owns its own chunk's checks);
+    # the board half's own two chunks still are, both, lazy
+    assert {"board-paint", "board-live"} <= set(board_mod.LAZY_JS)
     js = build.bundle_js(modules=build.discover(only=("core", "board")))
     assert "CB.pick" not in js and "function attach(CB)" not in js and "cbPaint" not in js
