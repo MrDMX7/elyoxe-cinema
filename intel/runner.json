@@ -1,6 +1,7 @@
 {
-  "by": "skip",
+  "by": "failed",
   "fid": "runner",
   "next_check": "2026-10-03",
+  "reason": "could not produce compliant output after 4 attempts (last: tanwin (ً/ٌ/ٍ) in spoken text — never tanwin in the spoken register)",
   "written": "2026-09-30"
 }

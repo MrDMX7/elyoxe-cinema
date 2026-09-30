@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "ذا ويت 93% من النقاد فراتن توميترز، وإيثان هوك يسرق العرض بأداء قوي. 115 دقيقة أكشن ودراما ما تندم عليها.",
+  "basis": "RT 93% (122 نقد) · الجمهور 83%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 93,
+    "rt_count": 122
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "The Weight scores 93% from critics on Rotten Tomatoes, with Ethan Hawke's performance leading a gripping thriller. Runtime is 115 minutes.",
   "fid": "the-weight",
-  "verdict": "unknown",
-  "written": "2026-09-26"
+  "verdict": "yes",
+  "written": "2026-09-30"
 }

@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "الانتفاضة يرجعك لثورة الفلاحين بإنجلترا سنة 1381 بإخراج Paul Greengrass. تقييم النقاد منقسم، 55% بس من 98 نقد.",
+  "basis": "RT 55% (98 نقد) · الجمهور 64%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 55,
+    "rt_count": 98
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "The Uprising retells England's 1381 Peasants' Revolt, directed by Paul Greengrass. Critics are split, with RT sitting at 55% from 98 reviews.",
   "fid": "the-uprising",
-  "verdict": "unknown",
-  "written": "2026-09-26"
+  "verdict": "mixed",
+  "written": "2026-09-30"
 }

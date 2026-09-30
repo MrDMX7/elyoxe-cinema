@@ -1,6 +1,22 @@
 {
-  "by": "skip",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "red-flag",
+  "fun_fact": null,
+  "has_plot": false,
   "next_check": "2026-10-03",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "كوميدي رومانسي بمدة 100 دقيقة، مناسب لسهرة خفيفة"
+    },
+    {
+      "pos": false,
+      "text": "ما فيه تقييمات نقدية أو أرقام كافية للحكم عليه للحين"
+    }
+  ],
   "written": "2026-09-30"
 }

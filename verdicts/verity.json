@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "فيريتي إثارة نفسية ورومانسية بالإنجليزي، تقييم النقاد 54% بس من 28 نقد. مب سيء بس مب لازم تستعجل تشوفه.",
+  "basis": "RT 54% (28 نقد)",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 54,
+    "rt_count": 28
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "Verity is an English-language psychological thriller/romance with a mixed 54% critics score from 28 reviews. Not bad, but no rush to watch it.",
   "fid": "verity",
-  "verdict": "unknown",
+  "verdict": "mixed",
   "written": "2026-09-30"
 }

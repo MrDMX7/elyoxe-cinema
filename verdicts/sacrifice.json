@@ -1,9 +1,14 @@
 {
-  "ar": "27% بس من النقاد على Rotten Tomatoes من 15 مراجعة في TIFF 2025. النقاد شافوه ساتير طموح بس مشتت التركيز، فالأفضل تتجنبه.",
-  "basis": "RT 27% (15 نقد)",
+  "ar": "التضحية لين تقييم النقاد عنده 36% بس، يعني آراء متضاربة أكثر منها مدح. باقة نجوم وايد قوية بس النتيجة النقدية ما جابت زين.",
+  "basis": "RT 36% (36 نقد)",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 36,
+    "rt_count": 36
+  },
   "by": "claude",
-  "en": "Sacrifice debuted at 27% on Rotten Tomatoes from 15 reviews at TIFF 2025. Critics called it an ambitious but unfocused satire — best to skip.",
+  "en": "Sacrifice sits at a mixed 36% with critics. Strong ensemble cast but the reviews aren't kind.",
   "fid": "sacrifice",
-  "verdict": "skip",
-  "written": "2026-09-26"
+  "verdict": "mixed",
+  "written": "2026-09-30"
 }
