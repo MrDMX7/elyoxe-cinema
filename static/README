@@ -1,0 +1,4 @@
+Files here are copied to the root of out/ unchanged on every build (build.py's Site.assets(),
+"static passthrough" — same pattern as saas/football/site/build.cjs), so they survive deploy.sh's
+sync with --delete. Used for the Google Search Console verification file (google<token>.html) and
+any future IndexNow key (<key>.txt).

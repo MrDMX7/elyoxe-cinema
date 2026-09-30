@@ -36,9 +36,14 @@ def read(out, *p):
     return open(os.path.join(out, *p), encoding="utf-8").read()
 
 
+STATIC_PASSTHROUGH = {f for f in os.listdir(os.path.join(ROOT, "static")) if f != "README" and not f.startswith(".")} \
+    if os.path.isdir(os.path.join(ROOT, "static")) else set()
+
+
 def pages(out):
     for dp, _, fs in os.walk(out):
         for f in fs:
+            if dp == out and f in STATIC_PASSTHROUGH: continue
             if f.endswith(".html"): yield os.path.join(dp, f)
 
 

@@ -168,6 +168,14 @@ class Site(Kit):
         # PWA: the worker must sit at the root to control every page; the manifest names the icons
         self.write(os.path.join(self.out, "sw.js"), open(os.path.join(SRC, "sw.js"), encoding="utf-8").read().replace("__V__", self.v))
         self.write(os.path.join(self.out, "manifest.webmanifest"), open(os.path.join(SRC, "manifest.webmanifest"), encoding="utf-8").read())
+        # 425 (tifo precedent, saas/football/site/build.cjs): static/* is copied to the out/ root unchanged on
+        # every build, skipping README and dotfiles — this is where Search Console's google<token>.html and any
+        # IndexNow key live, so they survive deploy.sh's --delete sync (reproduced every build, not a one-off upload)
+        sdir = os.path.join(ROOT, "static")
+        for f in os.listdir(sdir) if os.path.isdir(sdir) else []:
+            if f == "README" or f.startswith("."): continue
+            src = os.path.join(sdir, f)
+            if os.path.isfile(src): shutil.copy2(src, os.path.join(self.out, f))
         idir = os.path.join(SRC, "icons")
         os.makedirs(os.path.join(adir, "icons"), exist_ok=True)
         for f in os.listdir(idir) if os.path.isdir(idir) else []:
