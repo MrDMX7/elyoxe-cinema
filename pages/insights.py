@@ -262,32 +262,66 @@ class Insights(Pages):
                 f'<div class="xwrap"><table class="matrix"><thead><tr>{"".join(f"<th>{esc(x)}</th>" for x in th)}</tr></thead><tbody>{rows}</tbody></table></div></section>')
 
     # -------------------------------------------------- /boxoffice/
+    WEEK_SPAN = 7
+
     def week(self):
         end = max((d for d in self.full if d <= self.tomorrow), default=None)
-        if not end: return [], []
-        tot, used = ph.week_films(self.full, end)
+        if not end: return [], [], {}, False
+        tot, used, prev_tot, prev_used = ph.week_over_week(self.full, end, self.WEEK_SPAN)
         ranked = sorted(((f, v) for f, v in tot.items() if f in self.films), key=lambda kv: (-kv[1][0], -kv[1][1], kv[0]))
-        return ranked[:20], used
+        # honesty (MASTER-PLAN): a film can only be «جديد» or «طلع/نزل» against a previous window we
+        # actually have a full span of — a thin or empty previous window (site just launched) would
+        # otherwise label almost every film «جديد», a claim the data doesn't support.
+        have_prev = len(prev_used) >= self.WEEK_SPAN
+        prev_rank = {f: i + 1 for i, f in enumerate(ph.ranked_fids(prev_tot)) if f in self.films} if have_prev else {}
+        return ranked[:20], used, prev_rank, have_prev
+
+    @staticmethod
+    def rank_move(rank_now, prev_rank, lang):
+        """The week-over-week arrow's text for one row: «جديد» (never ranked last week), «بدون تغيير»
+        (same spot), or «طلع/نزل N مرتبة» — never a colour (MASTER-PLAN identity: زنجار is «حيّ» only,
+        and an up move is not a live signal)."""
+        ar = lang == "ar"
+        if prev_rank is None:
+            return ("new", "جديد" if ar else "New")
+        d = prev_rank - rank_now
+        if d == 0:
+            return ("same", "بدون تغيير" if ar else "No change")
+        forms = ("مرتبة", "مرتبتين", "مراتب", "مرتبة")
+        n = ar_count(abs(d), forms) if ar else f'{abs(d)} spot{"s" if abs(d) != 1 else ""}'
+        if ar:
+            return ("up", f"طلع {n}") if d > 0 else ("down", f"نزل {n}")
+        return ("up", f"Up {n}") if d > 0 else ("down", f"Down {n}")
 
     def boxoffice(self, lang):
         ar = lang == "ar"
-        ranked, used = self.week()
+        ranked, used, prev_rank, have_prev = self.week()
         body = self.head(lang, BOX, "الأكثر عرضاً هالأسبوع في سينمات الإمارات" if ar else "Most shown in UAE cinemas this week",
-                         esc("ترتيب الأفلام بعدد عروضها في جداول السينمات وبعدد السينمات اللي تعرضها. هذا عدد عروض، مب عدد تذاكر: ما نعرف كم تذكرة انباعت." if ar
-                             else "Films ranked by how many shows the cinemas scheduled and how many cinemas show them. These are shows, not tickets sold: we do not know how many tickets were sold."))
+                         esc(("ترتيب الأفلام بعدد عروضها في جداول السينمات وبعدد السينمات اللي تعرضها، وطلوعها ونزولها عن الأسبوع اللي قبله. هذا عدد عروض، مب عدد تذاكر: ما نعرف كم تذكرة انباعت." if have_prev
+                              else "ترتيب الأفلام بعدد عروضها في جداول السينمات وبعدد السينمات اللي تعرضها. هذا عدد عروض، مب عدد تذاكر: ما نعرف كم تذكرة انباعت.") if ar
+                             else (("Films ranked by how many shows the cinemas scheduled and how many cinemas show them, and their move from last week. These are shows, not tickets sold: we do not know how many tickets were sold." if have_prev
+                                    else "Films ranked by how many shows the cinemas scheduled and how many cinemas show them. These are shows, not tickets sold: we do not know how many tickets were sold."))))
         if ranked:
             span = (f'من {human_date(used[0], lang)} إلى {human_date(used[-1], lang)}، {ar_count(len(used), DAYS)}' if ar
                     else f'{human_date(used[0], lang)} to {human_date(used[-1], lang)}, {len(used)} day{"s" if len(used) != 1 else ""}')
             items = ""
-            for fid, (n, c) in ranked:
+            for i, (fid, (n, c)) in enumerate(ranked):
                 v, vw = self.vword(fid, lang)
                 live = fid in self.showing and fid in self._by_film
+                mv_span = ""
+                if have_prev:
+                    mv, mv_text = self.rank_move(i + 1, prev_rank.get(fid), lang)
+                    mv_span = f'<span class="bo-m bo-m-{mv}">{esc(mv_text)}</span>'
                 items += (f'<li data-fid="{esc(fid)}"><a href="{P(lang, "film", fid)}">{self.poster(fid, lang, "pst sm")}'
                           f'<span class="bo-t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span></a>'
                           f'<span class="bo-n">{self.count(n, ("عرض واحد", "عرضين", "عروض", "عرض"), ("show", "shows"), lang)}</span>'
                           f'<span class="bo-c">{self.count(c, ("سينما وحدة", "سينمتين", "سينمات", "سينما"), ("cinema", "cinemas"), lang)}</span>'
+                          f'{mv_span}'
                           f'<span class="vw v-{v}">{esc(vw) if live else ""}</span></li>')
-            body += (f'<section class="wrap bo-w"><p class="hint">{esc(span)}. {esc("السينمات: أكثر عدد سينمات عرضته في يوم واحد." if ar else "Cinemas: the most cinemas showing it on a single day.")}</p>'
+            hint = (f'{esc(span)}. {esc("السينمات: أكثر عدد سينمات عرضته في يوم واحد. المرتبة: مقارنة بالأسبوع اللي قبله." if ar else "Cinemas: the most cinemas showing it on a single day. The move: compared with the week before it.")}'
+                    if have_prev else
+                    f'{esc(span)}. {esc("السينمات: أكثر عدد سينمات عرضته في يوم واحد." if ar else "Cinemas: the most cinemas showing it on a single day.")}')
+            body += (f'<section class="wrap bo-w"><p class="hint">{hint}</p>'
                      f'<ol class="bo">{items}</ol></section>')
         body += self.compare_box(lang, "")
         title = "الأكثر عرضاً هالأسبوع — أفلام السينما في الإمارات" if ar else "Most shown films this week — UAE cinemas"

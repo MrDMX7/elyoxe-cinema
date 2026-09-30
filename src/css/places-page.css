@@ -51,7 +51,14 @@ body[data-page=city]::before{block-size:440px;background:radial-gradient(320px 2
 .go-b{min-block-size:44px;display:inline-flex;align-items:center;padding-inline:16px;border:1px solid var(--line-2);color:var(--screen);text-decoration:none;font-size:var(--fs-meta);font-weight:500}
 .go-b:hover{border-color:var(--screen)}
 .chead .meta .closes{color:var(--screen)}
-.chead .mall-late{margin-block-start:8px;color:var(--dim);font-size:var(--fs-meta);line-height:1.6}
+.chead .mall-late,.chead .best-time{margin-block-start:8px;color:var(--dim);font-size:var(--fs-meta);line-height:1.6}
+/* the cinema's own photo (cinema_photos.py), darkened, full-bleed behind the head only — never a card,
+   never lit on its own (MASTER-PLAN: زنجار is «حيّ» only, gold is the price alone) */
+.chead.chead-photo{position:relative;isolation:isolate;overflow-x:hidden;padding-block:20px}
+.chead-bd{position:absolute;inset-block:0;inset-inline-start:50%;inline-size:100vw;margin-inline-start:-50vw;z-index:-1;overflow:hidden}
+.chead-bd img{inline-size:100%;block-size:100%;object-fit:cover;display:block}
+.chead-bd::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,11,12,.45) 0,var(--night) 96%)}
+.chead.chead-photo .ch-a{color:var(--screen)}
 /* «الليلة هنا»: one block per film, upcoming times only; the ones already started fold under «+12 عرض فات»
    (places.js), shown struck once opened. Tomorrow folds under its heading */
 .here-h{align-items:center;flex-wrap:wrap;row-gap:8px;padding-block:0 12px;border-block-end:1px solid var(--line)}

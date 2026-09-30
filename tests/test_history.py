@@ -104,6 +104,21 @@ def test_series_cheapest_time_and_week():
     assert used == ["2026-09-20", "2026-09-26"] and tot == {"a": [15, 4], "b": [7, 1]}
 
 
+def test_week_over_week_and_ranked_fids():
+    """/boxoffice/'s arrows: the previous span is the `span` dates immediately before the current one, and
+    ranked_fids sorts exactly the way pages/insights.py's Insights.week() sorts `tot` (most shows, then most
+    cinemas, then fid) so a rank computed from either side agrees."""
+    W = {"2026-09-13": line("2026-09-13", 1, films={"a": [20, 3], "b": [5, 1]}),   # previous week
+         "2026-09-20": line("2026-09-20", 1, films={"a": [10, 3]}),                # current week
+         "2026-09-26": line("2026-09-26", 1, films={"a": [5, 4], "b": [7, 1]})}
+    tot, used, prev_tot, prev_used = ph.week_over_week(W, "2026-09-26")
+    assert used == ["2026-09-20", "2026-09-26"]
+    assert prev_used == ["2026-09-13"]
+    assert prev_tot == {"a": [20, 3], "b": [5, 1]}
+    assert ph.ranked_fids(prev_tot) == ["a", "b"]           # a: 20 shows beats b's 5
+    assert ph.ranked_fids(tot) == ["a", "b"]                # tied differently this week (15 vs 7), same order
+
+
 # ---------------------------------------------------------------- the step
 @pytest.fixture
 def step(monkeypatch, tmp_path):

@@ -21,13 +21,14 @@
 .chart-t{margin-block:12px}
 .chart-t summary{cursor:pointer;color:var(--dim)}
 .bo{list-style:none;counter-reset:bo;padding:0;margin:8px 0 0}
-.bo li{counter-increment:bo;display:grid;grid-template-columns:2.2em 1fr auto auto;grid-template-areas:"n f s c" "n f v v";gap:2px 16px;align-items:center;padding-block:10px;border-block-end:1px solid var(--line)}
+.bo li{counter-increment:bo;display:grid;grid-template-columns:2.2em 1fr auto auto;grid-template-areas:"n f s c" "n f m m" "n f v v";gap:2px 16px;align-items:center;padding-block:10px;border-block-end:1px solid var(--line)}
 .bo li::before{content:counter(bo);grid-area:n;font-family:var(--body);color:var(--seat);font-size:18px}
 .bo li>a{grid-area:f;display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--screen);min-inline-size:0}
 .bo .pst.sm,.sim .pst.sm{inline-size:48px;flex:none}
 .bo-t,.sim-t{font-family:var(--display);font-weight:var(--dw);font-size:19px;line-height:1.2}
 .bo-n{grid-area:s;color:var(--dim);font-size:13px}
 .bo-c{grid-area:c;color:var(--seat);font-size:13px}
+.bo-m{grid-area:m;color:var(--seat);font-size:12px}
 .bo .vw{grid-area:v;font-size:12px;text-align:end}
 .sim-l{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(15rem,100%),1fr));gap:10px 20px}
 .sim-l li{display:flex;flex-direction:column;gap:2px;padding-block:6px;border-block-end:1px solid var(--line)}
