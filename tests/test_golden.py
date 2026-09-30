@@ -118,6 +118,7 @@ def inv(b):
 
 
 CITY_PAGE = re.compile(r"^(en/)?[a-z-]+/index\.html$")
+FILM_PAGE = re.compile(r"^(en/)?film/[a-z0-9-]+/index\.html$")
 # W2-P6 (MASTER-PLAN §2.4): a cinema page, /<city>/<cinema>/ in either language
 CINEMA_PAGE = re.compile(r"^(en/)?(" + "|".join(re.escape(c) for c, _, _ in build.CITIES) + r")/[a-z0-9-]+/index\.html$")
 
@@ -134,7 +135,9 @@ def same_page(path, x, y):
     other way round is the failure this rule never excuses: at the Fold's 04:50 run three cinema pages dropped
     tomorrow where phase 1 kept it (r0-main-logic §3.3)."""
     if x == y: return True
-    rich = ("show", "chain") if CITY_PAGE.match(path) else ("show", "chain", "hall") if CINEMA_PAGE.match(path) else None
+    # a film page too (2026-09-30): FILM_TARGET (140 KB) lets a busy film phase 1 drew compact keep every time as a
+    # button — showtimes and chains may only be added to; a film page LOSING them stays the failure
+    rich = ("show", "chain") if CITY_PAGE.match(path) or FILM_PAGE.match(path) else ("show", "chain", "hall") if CINEMA_PAGE.match(path) else None
     if not rich: return False
     sub = lambda a, b: not (collections.Counter(a) - collections.Counter(b))
     return all(x[k] == y[k] for k in x if k not in rich) and all(sub(x[k], y[k]) for k in rich)

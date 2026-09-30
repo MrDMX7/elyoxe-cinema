@@ -4,6 +4,9 @@ family, moved as it was by W1-P1). Owner in Wave 2: W2-P3; W2-P1 the hero's pict
 Methods of pages.core.CorePages: `self` is a Pages, which reads everything else (self.page, self.poster,
 self.shows ...) through to the site."""
 from site_kit import *  # noqa: F401,F403  (the names these pages were written against)
+# a film page's own target (like places.py's CITY_TARGET/PLACE_TARGET): a busy film tipped the shared 125 KB target
+# into «compact» (no data-show), which fails the phase-1 golden and froze every deploy on 2026-09-29. Hard cap stays 150 KB.
+FILM_TARGET = 140_000
 
 
 class FilmPages:
@@ -237,7 +240,7 @@ class FilmPages:
                     fixed = len((hero + first + tabs + bar0 + sheet0).encode())
                     # the ticket as it will be drawn (measured, where this used to reserve 4.5 KB), the page's wrappers
                     tk0 = len((self.ticket(nxt, lang) if nxt else self.ticket_shell()).encode())
-                    left = PAGE_TARGET - CHROME - fixed - self.ld_size(graph) - tk0 - len((empty + dock).encode()) - 1200
+                    left = FILM_TARGET - CHROME - fixed - self.ld_size(graph) - tk0 - len((empty + dock).encode()) - 1200
                     # full, else compact: both keep today AND tomorrow (a page built late at night still has the next
                     # day's times when the visitor's «اليوم» has moved on)
                     sched, mode = self.fit(lambda m: self.film_schedule(shows, cities, lang, m, self.sid(nxt) if nxt else None), ("full", "compact"), left)
