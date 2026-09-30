@@ -26,9 +26,17 @@ def read(out, *parts):
     return open(os.path.join(out, *parts, "index.html"), encoding="utf-8").read()
 
 
+# static/* is copied to the out/ root unchanged (build.py's Site.assets(), the Search Console
+# verification file lives there) — it's not a rendered page, so the page-shape assertions below
+# (body tag, og:image meta, ...) don't apply to it.
+STATIC_PASSTHROUGH = {f for f in os.listdir(os.path.join(ROOT, "static")) if f != "README" and not f.startswith(".")} \
+    if os.path.isdir(os.path.join(ROOT, "static")) else set()
+
+
 def all_files(out):
     for dp, _, fs in os.walk(out):
         for f in fs:
+            if dp == out and f in STATIC_PASSTHROUGH: continue
             yield os.path.join(dp, f)
 
 
