@@ -55,3 +55,30 @@ self.addEventListener("fetch", function (e) {
     }));
   }
 });
+
+/* Web Push (review r3-backend, Important #2): without these two handlers Chrome falls back to a
+   generic "site updated in background" notification, and iOS Safari revokes a subscription that
+   receives pushes with no notification shown — so both handlers are required, not cosmetic.
+   Payload comes from push_weekly.py's build_payload(): {title, body, url}. */
+self.addEventListener("push", function (e) {
+  var data = { title: "سينما", body: "أفلام جديدة هالخميس", url: "https://cinema.elyoxe.com/coming/" };
+  try { if (e.data) data = Object.assign(data, e.data.json()); } catch (err) {}
+  e.waitUntil(self.registration.showNotification(data.title, {
+    body: data.body,
+    icon: "/assets/icon-192.png",
+    badge: "/assets/badge-72.png",
+    data: { url: data.url },
+    tag: "cinema-weekly"
+  }));
+});
+
+self.addEventListener("notificationclick", function (e) {
+  e.notification.close();
+  var url = (e.notification.data && e.notification.data.url) || "https://cinema.elyoxe.com/coming/";
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].url === url && "focus" in list[i]) return list[i].focus();
+    }
+    if (self.clients.openWindow) return self.clients.openWindow(url);
+  }));
+});
