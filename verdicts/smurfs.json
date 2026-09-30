@@ -1,0 +1,14 @@
+{
+  "ar": "السنافر نقاده يعطونه 21% بس، والنقاد يقولون الحركة زايدة بلا متعة حقيقية. الجمهور أرحم شوي بـ64% لكن الفيلم مب اللي بيسوي فرق.",
+  "basis": "RT 21% (100 نقد) · الجمهور 64%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 21,
+    "rt_count": 100
+  },
+  "by": "claude",
+  "en": "Smurfs scores just 21% with critics, who call it antic and zany without being fun. Audiences are kinder at 64%, but it's not a must-see.",
+  "fid": "smurfs",
+  "verdict": "skip",
+  "written": "2026-09-30"
+}
