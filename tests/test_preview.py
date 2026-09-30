@@ -16,9 +16,14 @@ DISC = os.path.join(ROOT, "fixtures", "sample_discounts.yaml")
 META = '<meta name="robots" content="noindex,nofollow">'
 
 
+STATIC_PASSTHROUGH = {f for f in os.listdir(os.path.join(ROOT, "static")) if f != "README" and not f.startswith(".")} \
+    if os.path.isdir(os.path.join(ROOT, "static")) else set()
+
+
 def pages(out):
     for d, _, fs in os.walk(out):
         for f in fs:
+            if d == out and f in STATIC_PASSTHROUGH: continue
             if f.endswith(".html"):
                 yield os.path.join(d, f)
 

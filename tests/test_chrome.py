@@ -31,9 +31,16 @@ def read(out, *parts):
     return open(os.path.join(out, *parts), encoding="utf-8").read()
 
 
+# static/* is copied to the out/ root unchanged (build.py's Site.assets(), the Search Console
+# verification file lives there) — it carries no site chrome, so it's not a "page" here.
+STATIC_PASSTHROUGH = {f for f in os.listdir(os.path.join(ROOT, "static")) if f != "README" and not f.startswith(".")} \
+    if os.path.isdir(os.path.join(ROOT, "static")) else set()
+
+
 def pages(out):
     for dp, _, fs in os.walk(out):
         for f in fs:
+            if dp == out and f in STATIC_PASSTHROUGH: continue
             if f.endswith(".html"):
                 yield os.path.relpath(os.path.join(dp, f), out).replace(os.sep, "/")
 
