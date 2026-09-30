@@ -117,8 +117,9 @@ const has = (h, re) => re.test(h);
   check("cinema-photos", withPhoto.length > 0, `${withPhoto.length}/${cins.length} cinema pages open on a real photo of the cinema`);
 
   /* 10a. story cards: linked from the hero's share row, 1080x1920 WebP */
-  const storyLinks = showing.map((x) => (hero(x.h).match(/<a class="btn ghost" href="([^"]+-story-[0-9a-f]{12}\.webp)" download/) || [])[1]).filter(Boolean);
-  let storyOk = false, storyDetail = `${storyLinks.length}/${showing.length} showing films link a Stories card next to «شارك»`;
+  // hero-clean (2026-09-30): the card moved from the hero row into the «شارك» sheet — look for it anywhere on the page
+  const storyLinks = showing.map((x) => (x.h.match(/href="([^"]+-story-[0-9a-f]{12}\.webp)"/) || [])[1]).filter(Boolean);
+  let storyOk = false, storyDetail = `${storyLinks.length}/${showing.length} showing films link a Stories card in the «شارك» sheet`;
   if (storyLinks.length) {
     const u = storyLinks[0].replace(/^https:\/\/cinema\.elyoxe\.com/, LIVE ? "https://cinema.elyoxe.com" : BASE);
     const r = await fetchBuf(u), sz = webpSize(r.buf);
