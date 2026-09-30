@@ -24,6 +24,17 @@
 .tk-seats .p:has(s) b{color:var(--velvet)}
 .tk-seats .p s.num{color:var(--ink-2);font-size:var(--fs-meta)}
 .tk-seats .p small,.tk-seats .na,.ticket .per,.ticket .asof{color:var(--ink-2)}
+/* «كم بتكلفني الطلعة؟» (R4 §298): the ticket-count stepper and its total, in the same paper ink as the seats table */
+.tk-qty{padding:8px 16px 0;display:flex;flex-direction:column;gap:6px}
+.tk-q-l{font-size:var(--fs-meta);color:var(--ink-2)}
+.tk-q-c{display:flex;align-items:center;gap:12px}
+.tk-q-b{inline-size:36px;block-size:36px;flex:0 0 auto;border:1px solid var(--rule);background:transparent;color:var(--ink);font-size:18px;line-height:1;padding:0;cursor:pointer}
+.tk-q-b:disabled{color:var(--ink-3);border-color:var(--rule-p);cursor:default}
+.tk-q-b:active:not(:disabled){background:var(--paper-2)}
+.tk-q-n{min-inline-size:22px;text-align:center;font-size:var(--fs-time)}
+.tk-q-t{font-size:var(--fs-body)}
+.tk-q-t b{color:var(--velvet)}
+.tk-q-t small{display:block;color:var(--ink-2);font-size:var(--fs-meta)}
 .tk-terms{padding:8px 16px 0;font-size:var(--fs-meta);color:var(--ink-2)}
 /* the calendar and «when to leave» links (plan.js) on ticket paper: ink, not the night's screen light */
 .ticket .plan-add{padding:8px 16px 0;font-size:var(--fs-meta)}
@@ -55,6 +66,7 @@
   .tk-stub{inline-size:104px}
   .tk-seats{margin-inline:20px;inline-size:calc(100% - 40px)}
   .tk-seats th,.tk-seats td{block-size:48px}
+  .tk-qty{padding:12px 20px 0}
   .tk-terms{padding:12px 20px 0;line-height:1.6}
   .tk-act{flex-direction:column;margin-block-start:16px}
   .tk-act .book{min-block-size:56px}

@@ -16,6 +16,11 @@ import seats as seatsmod
 CSS = ("seatmap",)
 LAZY_JS = ("seatmap",)
 KINDS = ("home", "city", "cinema", "film")
+# «باقي N مقعد» is a scarcity flag, not a seat counter: > 15 free is not shown anywhere (R4 §300). The no-script
+# page can only ever be as fresh as the build that wrote it (seatsmod.fresh() below judges that at build time,
+# the same tolerance every other live figure on this site already carries); a script-enabled visitor gets the
+# live, timestamped version instead (seatmap.js re-checks freshness against the visitor's own clock).
+SEATS_LEFT_MAX = 15
 
 
 def private_off(shows):
@@ -39,9 +44,14 @@ def build_data(site):
     for s in site.shows:
         cid, hk = s["cinema"], site.hkey(s)
         key = f"{s['film']}|{s['date']}|{s['time']}"
-        o = s.get("seats") if isinstance(s.get("seats"), dict) else None
-        if o and not (seatsmod.fresh(o, ref) and o.get("m") in maps):
-            o = None
+        raw = s.get("seats") if isinstance(s.get("seats"), dict) else None
+        fresh = bool(raw) and seatsmod.fresh(raw, ref)
+        # s["seats_left"] (R4 §300): kit/sched.py's data-left on the time button and kit/ticket.py's own badge
+        # both already read this — it was declared and never set. A fresh, scarce sample only: never a healthy
+        # hall (noise, not help) and never a stale one (the freshness gate this file already had for the seat map).
+        if fresh and isinstance(raw.get("free"), int) and 0 < raw["free"] <= SEATS_LEFT_MAX:
+            s["seats_left"] = raw["free"]
+        o = raw if fresh and raw.get("m") in maps else None
         mkey = o["m"] if o else (s.get("seatmap") if s.get("seatmap") in maps else None)
         if not mkey:
             continue

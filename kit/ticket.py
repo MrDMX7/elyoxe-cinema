@@ -43,6 +43,10 @@ class TicketKit:
                 f'<p class="tk-when" data-tk-when>{"".join(lines)}</p>{left}</div>'
                 f'<div class="tk-stub"><span data-tk-day>{esc(day)}</span><b dir="ltr" data-tk-time>{esc(s["time"])}</b></div></div>'
                 f'<table class="tk-seats"><tbody data-tk-rows>{seats}</tbody></table>'
+                # «كم بتكلفني الطلعة؟» (R4 §298): the ticket-count stepper and its total after the card — script-only
+                # (the stepper itself needs a tap; a no-script visitor already has each seat's own price above),
+                # so cinema.js draws its rows and total entirely; this is only its slot, always in the same place
+                f'<div class="tk-qty" data-tk-qty hidden></div>'
                 f'<p class="tk-terms" data-tk-terms hidden></p><p class="tk-go" data-tk-go>{self.directions(self.cinemas[cid], lang)}</p>'
                 f'<p class="vh" data-tk-live aria-live="polite"></p>'
                 f'<div class="tk-act">{book}<a class="share" href="{esc(share)}" rel="noopener" target="_blank" data-tk-share data-share="{esc(msg)}">{esc(L(T["share"], lang))}</a>'

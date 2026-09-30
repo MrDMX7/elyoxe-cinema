@@ -253,9 +253,12 @@ class FilmPages:
                 days = [d for d in days if f'data-d="{d}"' in sched]
                 bar = self.film_bar(lang, days) if cities and days else ""
                 ticket = self.ticket(nxt, lang) if nxt else self.ticket_shell()
+                # «وين أرخص؟» (R4 §299): the same schedule, compared across this city's cinemas — cinecompare.js reads
+                # it from the .cgs markup just rendered, so its container carries no rows of its own (js-only)
+                cheap = '<div class="wrap cheap-cmp" data-cheapest hidden></div>' if cities and days else ""
                 body = (hero + first + f'<section class="fsched" id="times" aria-labelledby="times-h"><h2 class="vh" id="times-h">{esc(L(FILM_T["times"], lang))}</h2>'
                         f'{bar}<div class="wrap lay"><div class="cgs"><p class="nc" data-nc hidden></p>{sched}<p class="empty" data-empty hidden></p></div>'
-                        f'<div class="tkcol">{empty}{ticket}</div></div></section>{tabs}{dock}')
+                        f'<div class="tkcol">{empty}{ticket}</div></div></section>{cheap}{tabs}{dock}')
                 title = (f"فيلم {tl} في سينما الإمارات — المواعيد والأسعار، ويستاهل؟" if lang == "ar" else f"{t} in UAE cinemas — showtimes, prices and is it worth it?")
                 desc = (f"{tl}: {vword}. مواعيد العرض في سينمات الإمارات اليوم وبكرة، سعر التذكرة لكل قاعة، والسعر بعد خصم بطاقتك." if lang == "ar"
                         else f"{t}: {vword}. Showtimes in UAE cinemas today and tomorrow, ticket prices per hall, and the price after your card discount.")

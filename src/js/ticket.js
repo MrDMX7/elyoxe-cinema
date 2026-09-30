@@ -39,6 +39,7 @@ function renderTerms(chain) {
 /* strings this file adds (the voice table, plan §1.7) */
 var TK = AR ? { gone: "هالعرض بدأ، هذي الأوقات الجاية", box: "الخصم من الشباك بس", pick: "اختار وقت" }
   : { gone: "That show has started. Here are the next ones.", box: "Discount at the box office only.", pick: "Pick a time" };
+
 /* a card whose discount is given only at the box office (Star or Cine Royal with Fazaa…): the price the ticket
    shows is not what the chain's site charges, so the button says so and leads to the cinema, not the site */
 function mapsTo(cin) {
@@ -249,6 +250,7 @@ function fillTicket(btn, x) {
   }).join("") : '<tr><td colspan="2"><span class="na">' + esc(C.box) + "</span></td></tr>", true);
   qa(".p[data-aed]", tk).forEach(function (el) { el.innerHTML = priceHTML(el, false); });
   tk.setAttribute("data-chain", x.chain); tk.setAttribute("data-cin", x.cin);
+  emit("ticket", x);   /* the qty-stepper chunk (R4 §298, tkqty.js): a new show, its default follows «مع منو» again */
   renderTerms(x.chain);
   /* the booking link is this show's, else its chain's site: never the last show's */
   var book = q("[data-tk-book]", tk);
