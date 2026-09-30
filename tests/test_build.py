@@ -534,7 +534,9 @@ def test_posters_and_tiles(site):
     # a grid tile's poster: img with width descriptors and the size the grid draws it at (3 columns / 7);
     # our own posters are root-relative in markup (absolute in og:image and JSON-LD). The billboard is the
     # page's image priority (tests above): no tile has fetchpriority, and all but the first are lazy
-    assert re.search(r'<img src="/posters/coyote-vs-acme-342\.webp" srcset="[^"]+-342\.webp 342w, [^"]+-684\.webp 684w" sizes="\(min-width:1024px\) 13vw, 32vw"', home)
+    # the collapsed «كل الأفلام» grid carries the 342w file only (2026-09-30: 83 films pushed home past 150 KB; the
+    # grid is closed by default, so its tiles drop srcset); film pages and other grids keep the 342/684 srcset
+    assert re.search(r'<img src="/posters/coyote-vs-acme-342\.webp" width="342" height="513"', home)
     after_bill = home[home.index("</section>", home.index('<section class="bill"')):]
     assert 'fetchpriority="high"' not in after_bill                               # the billboard's case is the LCP (W2-P1)
     assert home.count('loading="lazy"') >= 1
