@@ -44,7 +44,7 @@
 .bmore summary::after{content:"▾"}
 .bmore[open] summary::after{content:"▴"}
 /* a first visit: the box and its head hold their place (visibility, never display) until /geo names the city */
-.geo-wait .bh-c,.geo-wait [data-brs],.geo-wait .bmore{visibility:hidden}
+.geo-wait .bh-c,.geo-wait .bh-city,.geo-wait [data-brs],.geo-wait .bmore{visibility:hidden}
 /* «أقرب عرض لك» on a film page: laid out before the first paint when the visitor's city has this film (no shift) */
 .js .bff.hold[hidden]{display:block;visibility:hidden;block-size:56px}
 .bff{margin-block:8px}

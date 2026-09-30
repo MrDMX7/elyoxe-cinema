@@ -72,7 +72,7 @@ class TileKit:
         sizes = POSTER_SIZES["tile row"] if row else POSTER_SIZES["tile"]
         word = (f'<span class="vw">{esc(L(TILE_V.get(v, (vw, vw)), lang))}</span>' if live and not row else "")   # its colour: the tile's v-*
         return (f'<a class="{"tile" if row else "film tile"} v-{v}" href="{P(lang, "film", fid)}"{attrs}>'
-                + f'<span class="tp">{self.poster(fid, lang, eager=not row, lazy=row or i >= 1, sizes=sizes, srcset=not row, label=False)}'
+                + f'<span class="tp">{self.poster(fid, lang, eager=not row, lazy=row or i >= 1, sizes=sizes, srcset=not row, label=False, backdrop_fallback=True)}'
                 + (f'<span class="tag">{esc(tag)}</span>' if tag else "")
                 + (f'<span class="tag wk">{esc(wk)}</span>' if wk else "") + '</span>'
                 + f'<span class="t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>'
@@ -86,7 +86,7 @@ class TileKit:
         fid, cid = s["film"], s["cinema"]
         pr = min(p["aed"] for p in s["prices"] if p.get("aed") and p["aed"] > 0)
         return (f'<a class="tile shc" href="{P(lang, "film", fid)}#s-{self.show_key_of(s)}" data-film="{esc(fid)}">'
-                + f'<span class="tp">{self.poster(fid, lang, lazy=True, sizes=POSTER_SIZES["tile row"], srcset=False, label=False)}</span>'
+                + f'<span class="tp">{self.poster(fid, lang, lazy=True, sizes=POSTER_SIZES["tile row"], srcset=False, label=False, backdrop_fallback=True)}</span>'
                 + f'<span class="vh"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>'
                 + f'<span class="st"><b class="num">{esc(s["time"])}</b> <bdi>{esc(self.cname(cid, lang))}</bdi></span>'
                 + f'<span class="m"><span class="pv"><span class="num">{money(pr)}</span></span></span></a>')

@@ -54,6 +54,7 @@ PAINT = os.path.join(ROOT, "src", "js", "board-paint.js")
 # the board's words (MASTER-PLAN §1.7 voice; the new ones are listed in the package report for the dialect gate)
 BOARD_T = {
     "head": HOME_T["near"],                                   # «يبدأ قريب منك»
+    "in": (" في ", " in "),                                   # 297, r4-home: joins the head to the chosen city
     "now": ("الحين", "now"),
     "more": ("اللوحة كاملة", "The whole board"),
     "z": ("يبدأ الحين", "starting now"),
@@ -372,10 +373,13 @@ class Board:
         h = ""
         if head:
             t = hm(self.now)
-            h = (f'<div class="bh"><div class="bh-top"><h2 id="bh-t">{esc(L(BOARD_T["head"], lang))}</h2>'
+            # the chosen city sits in the heading itself, not a separate line («يبدأ قريب منك في العين», 297,
+            # r4-home) — data-board-city still updates live when the city pill changes (board-paint.js CB.draw);
+            # .bh-city hides with the rest of .bh-c while a first visit waits on /geo (board.css .geo-wait)
+            h = (f'<div class="bh"><div class="bh-top"><h2 id="bh-t">{esc(L(BOARD_T["head"], lang))}'
+                 f'<span class="bh-city" data-board-city-wrap>{esc(L(BOARD_T["in"], lang))}<span data-board-city>{esc(L(CITY[key], lang))}</span></span></h2>'
                  + (self.pick_btn(lang) if pick else "") + '</div>'
-                 f'<p class="bh-s"><i class="bh-l" aria-hidden="true"></i><span class="bh-c"><span data-board-city>{esc(L(CITY[key], lang))}</span>'
-                 f'{"، " if lang == "ar" else ", "}{esc(L(BOARD_T["now"], lang))}</span>'
+                 f'<p class="bh-s"><i class="bh-l" aria-hidden="true"></i><span class="bh-c">{esc(L(BOARD_T["now"], lang))}</span>'
                  f'<span class="bk" data-board-clock data-t="{t}">{time_html(t)}</span><span class="bh-n" data-board-n></span></p></div>')
         elif pick:
             h = f'<div class="bh bh-nolabel">{self.pick_btn(lang)}</div>'

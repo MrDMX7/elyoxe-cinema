@@ -11,6 +11,14 @@
 .pst.img{padding:0}
 .pst.img .pst-t{visibility:hidden}
 .pst img{z-index:1}
+/* a poster-less tile with a trailer backdrop (296, r4-home): the frame's own 2:3 window (kit/media.py .frame's
+   `x`), darkened so the title (kept visible, unlike .pst.img) reads over it — the flat colour tile stays the
+   fallback only when the film has neither a poster nor a backdrop */
+.pst.bd{padding:12px;background:var(--night)}
+.pst.bd img{object-position:var(--x,50%) center;filter:brightness(.55)}
+.pst.bd::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(rgba(15,11,12,0) 35%,rgba(15,11,12,.9))}
+.pst.bd .pst-t{position:relative;z-index:2}
 /* the verdict word (§1.4): Markazi, «يستاهل» gold, «تجنّبه» seat grey */
 .vw{font-family:var(--display);font-weight:var(--dw);color:var(--seat)}
 .v-yes .vw,.vw.v-yes{color:var(--gold)}

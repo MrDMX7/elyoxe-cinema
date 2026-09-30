@@ -26,8 +26,14 @@ def _int(v, d):
 
 class MediaKit:
     # -------- posters
-    def poster(self, fid, lang, cls="pst", eager=False, size=(342, 513), lazy=True, sizes=None, srcset=True, label=True):
-        """The poster, or — when there is none (or it fails to load) — a typographic tile in the film's colour."""
+    def poster(self, fid, lang, cls="pst", eager=False, size=(342, 513), lazy=True, sizes=None, srcset=True, label=True,
+               backdrop_fallback=False):
+        """The poster, or — when there is none (or it fails to load) — a typographic tile in the film's colour.
+        `backdrop_fallback` (296, r4-home): a film with no poster but a trailer backdrop (steps/backdrops.py) draws
+        a 2:3 crop of that frame instead — the portrait crop `p` when W1-D1 wrote one (already graded 2:3 for
+        exactly this box), else the landscape frame (`w640`/`w1280`) cover-cropped by CSS at its own window `x`.
+        The flat colour tile stays the fallback when there is neither (callers that place the tile inside a link
+        already wrapping the whole card pass this; a poster still wins when the film has one)."""
         f = self.films[fid]
         pc = f.get("poster_color") or hue(fid)
         img = ""
@@ -45,6 +51,22 @@ class MediaKit:
             # (a tile names the film under its poster already: `label=False` leaves the hidden copy out)
             return (f'<span class="{cls} img" style="--pc:{pc}">' + (f'<span class="pst-t" aria-hidden="true"{self.title_attr(fid, lang)}>'
                     f'{esc(self.ftitle(fid, lang))}</span>' if label else "") + f'{img}</span>')
+        if backdrop_fallback:
+            fr = self.frame(fid)
+            if fr:
+                lazy_attr = ' loading="lazy"' if lazy else ""
+                if fr.get("p"):
+                    # the portrait crop is already 2:3, graded for exactly this box: no srcset needed
+                    style, img = f'--pc:{pc}', (f'<img src="{esc(fr["p"])}" width="{fr["pw"]}" height="{fr["ph"]}" alt="" decoding="async"{lazy_attr}>')
+                else:
+                    # the landscape frame, CSS cover-cropped to 2:3 at its own window `x` (ui-tile.css .pst.bd)
+                    ss2 = (f' srcset="{esc(fr["w640"])} 640w, {esc(fr["w1280"])} 1280w" sizes="{sizes or POSTER_SIZES.get(cls, POSTER_SIZES["pst"])}"'
+                           if srcset else "")
+                    x = f';--x:{round(fr["x"] * 100, 1):g}%' if "x" in fr else ""
+                    style = f'--pc:{pc}{x}'
+                    img = f'<img src="{esc(fr["w640"])}"{ss2} width="{fr["w"]}" height="{fr["h"]}" alt="" decoding="async"{lazy_attr}>'
+                return (f'<span class="{cls} bd img" style="{style}">' + (f'<span class="pst-t"{self.title_attr(fid, lang)}>'
+                        f'{esc(self.ftitle(fid, lang))}</span>' if label else "") + f'{img}</span>')
         return (f'<span class="{cls}" style="--pc:{pc}"><span class="pst-t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span></span>')
 
     # -------- «الشاشة»

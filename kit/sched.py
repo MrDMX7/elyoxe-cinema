@@ -73,7 +73,7 @@ class SchedKit:
                 hs = [s for s in ds if self.hkey(s) == k]
                 ts = " ".join(sorted({s["time"] for s in hs}))
                 if tag and k != "Standard":
-                    runs.append(f'<span class="tl" data-hk="{esc(k)}"><small>{self.hall_html(hs[0], lang)}</small> {ts}</span>')
+                    runs.append(f'<span class="tl" data-hk="{esc(k)}"><small>{self.hall_html(hs[0], lang, link=True)}</small> {ts}</span>')
                 else:
                     runs.append(f'<span class="tl">{ts}</span>')
             out.append(f'<div class="times" data-d="{d}">{lab}{"".join(runs)}</div>')
