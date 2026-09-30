@@ -21,6 +21,7 @@ T = {
     "desc": ("رابط أرسله لك أحد من قروبك عشان تختارون العرض سوا.",
               "A link a friend sent so the group can pick a show together."),
     "empty": ("ما فهمنا الرابط. اطلب رابط جديد من اللي بعثه.", "This link didn't parse. Ask whoever sent it for a new one."),
+    "resend": ("أرسل للقروب", "Send to the group"),
 }
 
 
@@ -36,6 +37,7 @@ class VotePages(Pages):
         desc = L(T["desc"], lang)
         body = (f'<section class="head wrap"><h1 class="pt">{esc(L(T["ask"], lang))}</h1></section>'
                 f'<ul class="v-tray wrap" data-v-tray hidden></ul>'
+                f'<p class="v-act wrap" data-v-act hidden><button type="button" class="btn ghost" data-v-resend>{esc(L(T["resend"], lang))}</button></p>'
                 f'<p class="v-empty wrap" data-v-empty hidden>{esc(L(T["empty"], lang))}</p>')
         # never in the sitemap, so never a hreflang pair either -- an explicit `path` matching the default
         # location (site_kit.Kit.page: `if lang == "ar" and path is None: self.urls.append(parts)`)

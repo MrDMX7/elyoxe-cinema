@@ -23,6 +23,10 @@
 .cs-mast-n{color:var(--ink-2);font-size:.8em}
 .cs-mast-ics{margin:10px 0 0}
 .cs-mast-ics a{color:var(--seat);font-size:.85em;text-decoration:underline}
+/* the push opt-in row (r3-backend): revealed by src/js/push.js once it confirms the browser supports
+   Push -- stays hidden (no layout shift after paint) everywhere else, same treatment as .cs-mast-ics */
+.cs-mast-push{margin:10px 0 0}
+.cs-mast-push .btn{font-size:.85em;padding:6px 14px}
 /* the home band (home.after_board, §1.2 #2): the compact twin, only in the two live phases */
 .cs-band{display:flex;align-items:center;gap:12px;padding:12px 16px;text-decoration:none;color:var(--ink)}
 .cs-band-w{font-family:var(--display);font-weight:var(--dw);font-size:40px;line-height:1;flex:none}
