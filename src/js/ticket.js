@@ -299,6 +299,7 @@ function bindTicket() {
     var b = e.target.closest && e.target.closest(".tm[data-start]");
     if (b) {
       if (b.classList.contains("past")) { e.preventDefault(); return; }
+      haptic();
       if (q("[data-tk-rows]", tk)) { e.preventDefault(); tkFrom = b; if (tkPicking) tkAuto = b; else tkUser = true; openTicket(b); }
       return;
     }
