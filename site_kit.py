@@ -161,6 +161,10 @@ T = {  # strings shared with cinema.js (window.CT)
     "ends": ("يخلص تقريباً {t}", "Ends around {t}"), "today": ("اليوم", "Today"), "tomorrow": ("بكرة", "Tomorrow"),
     "book_at": ("احجز من موقع {chain}", "Book on the {chain} site"), "share": ("أرسلها للقروب", "Send to the group"),
     "after_card": ("بعد خصم {card}", "after {card}"), "in_cinema": ("{film} في {cinema}", "{film} at {cinema}"),
+    # r3-app: the one-time iOS Safari «أضفه للشاشة الرئيسية» hint (src/js/appfeel.js, a lazy chunk — these two
+    # strings live here, not in cinema.js's TX, so they cost the page's own JSON, never the shared bundle's budget)
+    "ios_install": ("ثبّت سينما: اضغط زر المشاركة، وبعدين اختار «أضف للشاشة الرئيسية»", "Add Cinema: tap Share, then “Add to Home Screen”"),
+    "ios_ok": ("تمام", "Got it"),
 }
 RERELEASE = ("إعادة عرض", "Re-release")
 DATE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")

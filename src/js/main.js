@@ -136,7 +136,7 @@ function bindRails() {
     });
   });
   qa("button[data-card]").forEach(function (b) {
-    b.addEventListener("click", function () { pickCard(b.getAttribute("data-card")); if (b.closest("[role=dialog]")) sheetClose(); });
+    b.addEventListener("click", function () { haptic(); pickCard(b.getAttribute("data-card")); if (b.closest("[role=dialog]")) sheetClose(); });
   });
   qa("[data-city-name]").forEach(function (el) { if (C.cities && C.cities[city]) el.textContent = C.cities[city]; });
   qa("[data-near]").forEach(function (b) { b.addEventListener("click", askNear); });
