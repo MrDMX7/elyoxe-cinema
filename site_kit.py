@@ -451,6 +451,14 @@ def rule_terms(r, lang):
 
 
 # ---------------------------------------------------------------- halls
+# hall/format keys with a /formats/ dictionary entry (301, r4-home): Kit.hall_html(link=True) points a
+# recognised label at its anchor; pages/formats.py builds the page from this same table, so the two never
+# disagree. DOLBY and ATMOS share one entry (the same underlying Dolby Cinema/Atmos tech); the five luxury-
+# seating keys share «luxury» (no third-party manufacturer behind a chain's own GOLD/THEATRE/SUITES naming).
+FORMAT_SLUGS = {"IMAX": "imax", "4DX": "4dx", "MX4D": "mx4d", "SCREENX": "screenx", "DOLBY": "dolby", "ATMOS": "dolby",
+                "VIP": "luxury", "GOLD": "luxury", "THEATRE": "luxury", "SUITES": "luxury", "PLATINUM": "luxury", "KIDS": "kids"}
+
+
 class Halls:
     def __init__(self, path):
         self.y = (yaml.safe_load(open(path, encoding="utf-8")) or {}).get("chains", {}) if path and os.path.exists(path) else {}
@@ -841,9 +849,17 @@ class Kit(MediaKit, TileKit, SchedKit, TicketKit, ChromeKit, FiltersKit):
         n = esc(self.cname(cid, lang))
         return f'<bdi lang="en">{n}</bdi>' if self.cname_is_en(cid, lang) else n
 
-    def hall_html(self, s, lang):
+    def hall_html(self, s, lang, link=False):
+        """`link` (301, r4-home): a recognised hall/format key becomes a link to its /formats/ dictionary entry
+        (FORMAT_SLUGS, pages/formats.py builds the page these anchors point at). Only a caller whose hall label
+        does not already sit inside an outer link passes it — a time button's own `<a>` (kit/sched.py's tbtn)
+        cannot nest a second one, so it keeps the default."""
         n = self.hname(s, lang)
-        return f'<bdi lang="en">{esc(n)}</bdi>' if lang == "ar" and re.search(r"[A-Za-z]", n) else esc(n)
+        inner = f'<bdi lang="en">{esc(n)}</bdi>' if lang == "ar" and re.search(r"[A-Za-z]", n) else esc(n)
+        if link:
+            slug = FORMAT_SLUGS.get(self.hkey(s))
+            if slug: return f'<a class="hfmt" href="{P(lang, "formats")}#{slug}">{inner}</a>'
+        return inner
 
     def score(self, f, lang):
         rt = f.get("rt") or {}

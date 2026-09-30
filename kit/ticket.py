@@ -18,7 +18,7 @@ class TicketKit:
         hidden = " hidden" if hidden else ""
         day = L(T["today"] if s["date"] == self.today else T["tomorrow"] if s["date"] == self.tomorrow else (s["date"], s["date"]), lang)
         lines = []
-        if hk != "Standard": lines.append(f'<span class="tk-h">{self.hall_html(s, lang)}</span>')
+        if hk != "Standard": lines.append(f'<span class="tk-h">{self.hall_html(s, lang, link=True)}</span>')
         if s.get("ends"): lines.append(f'<span>{esc(L(T["ends"], lang).format(t=s["ends"]))}</span>')
         lg = s.get("lang") or self.films[s["film"]].get("lang")
         if lg:

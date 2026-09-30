@@ -1,0 +1,18 @@
+/* /formats/ «وش الفرق؟» (301, r4-home): the jump nav, each format's section, the bottom source block */
+.fjump{display:flex;flex-wrap:wrap;gap:8px 16px;margin-block:24px;font-size:var(--fs-meta)}
+.fjump a{text-decoration-color:var(--seat)}
+.fentry{padding-block:24px;border-block-start:1px solid var(--velvet)}
+.fentry:first-of-type{border-block-start:0}
+.fentry h2{font-size:var(--fs-h2);margin:0}
+.fentry .what{margin-block-start:8px;max-inline-size:62ch;line-height:var(--lh-body)}
+.fentry .have{color:var(--seat);font-size:var(--fs-meta);margin-block-start:8px}
+.fentry .rng{font-size:var(--fs-meta);margin-block-start:4px}
+.fentry .rng .dim{color:var(--dim)}
+.fentry .best{margin-block-start:12px;font-size:var(--fs-meta);max-inline-size:62ch}
+.fentry .best b{font-weight:600}
+.fsrc{padding-block-start:16px}
+.fsrc .small{font-size:12px;color:var(--seat);line-height:1.6}
+.fsrc .small a{color:inherit}
+/* a hall label linked to its /formats/ entry (site_kit.Kit.hall_html link=True): same look as any inline link,
+   just not bold -- the ticket and the compact time buttons keep their own type scale */
+.hfmt{font-weight:inherit}
