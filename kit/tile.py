@@ -12,6 +12,39 @@ TILE_V = {"unknown": ("الحكم بعده", "No verdict yet")}
 
 
 class TileKit:
+    def _tile_release_seed(self):
+        """Same idea as pages/_core/film.py's FilmPages._release_seed (the earliest `first_seen` across
+        every film) -- kept as its own small copy here since TileKit methods run with `self` bound to the
+        Site, not to a CorePages instance, so that mixin's method isn't reachable from here."""
+        s = getattr(self, "_tile_release_seed_v", None)
+        if s is None:
+            s = min((str(x.get("first_seen")) for x in self.films.values() if x.get("first_seen")), default="")
+            self._tile_release_seed_v = s
+        return s
+
+    def week_tag(self, fid, lang):
+        """«جديد» for a film in its first week, «الأسبوع N» after — poster TILE views only (owner idea #284,
+        round 3 QA), never the film page (film_about already shows the full release date there; this is not
+        a replacement for it). Same `released`-over-`first_seen` preference and seed-date guard as the film
+        page's own week line, so the two never disagree. Never an «آخر عرض» countdown: no chain feeds a
+        last-showing date, so nothing here is ever inferred from one."""
+        f = self.films.get(fid) or {}
+        if f.get("status") == "archived":
+            return None
+        rel = f.get("released") or f.get("first_seen")
+        if not rel or (not f.get("released") and str(rel) == self._tile_release_seed()):
+            return None
+        try:
+            d0 = dt.date.fromisoformat(str(rel))
+        except ValueError:
+            return None
+        wk = (self.now.date() - d0).days // 7 + 1
+        if wk < 1:
+            return None
+        if wk == 1:
+            return "جديد" if lang == "ar" else "New"
+        return f"الأسبوع {wk}" if lang == "ar" else f"Week {wk}"
+
     def film_tile(self, fid, lang, shows, big=False, i=99, live=False, row=False, tag=None):
         """A film tile: the poster (2:3), the title in two lines (their height held, so tiles line up), and the line
         that differs between films. A `live` tile (home and city: its line is redrawn by src/js/home.js for the
@@ -29,7 +62,10 @@ class TileKit:
         ar = lang == "ar"
         if live: price = f'{L(HOME_T["from"], lang)} {cell}' if mc else self.box(lang)
         else: price = (f'{L(HOME_T["from"], lang)} {cell} {esc(L(T["aed"], lang))}' if ar else f'{L(HOME_T["from"], lang)} {esc(L(T["aed"], lang))} {cell}') if mc else self.box(lang)
+        # tag precedence: an explicit tag the caller passed, then «إعادة عرض», then the جديد/الأسبوع N micro-label
+        # (round 3 QA, owner idea #284) -- never stacked, so the corner never gets cluttered with two badges
         tag = tag or (L(RERELEASE, lang) if f.get("rerelease") else None)
+        wk = None if (tag or row) else self.week_tag(fid, lang)   # not on a curated home row: no tag there (test_home)
         attrs = (f' data-fid="{esc(fid)}"' if row else self.film_attrs(fid, fits=live)) + f' data-v="{v}"'
         attrs += f' data-runtime="{int(f["runtime"])}"' if f.get("runtime") else ""
         if not row and f.get("lang"): attrs += f' data-lang="{esc(f["lang"])}"'
@@ -37,7 +73,8 @@ class TileKit:
         word = (f'<span class="vw">{esc(L(TILE_V.get(v, (vw, vw)), lang))}</span>' if live and not row else "")   # its colour: the tile's v-*
         return (f'<a class="{"tile" if row else "film tile"} v-{v}" href="{P(lang, "film", fid)}"{attrs}>'
                 + f'<span class="tp">{self.poster(fid, lang, eager=not row, lazy=row or i >= 1, sizes=sizes, srcset=not row, label=False)}'
-                + (f'<span class="tag">{esc(tag)}</span>' if tag else "") + '</span>'
+                + (f'<span class="tag">{esc(tag)}</span>' if tag else "")
+                + (f'<span class="tag wk">{esc(wk)}</span>' if wk else "") + '</span>'
                 + f'<span class="t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>'
                 + word + f'<span class="m" data-cheap>{price}</span></a>')
 
@@ -81,14 +118,22 @@ class TileKit:
         who = who_fits(f)
         return a + (f' data-fits="{who}"' if who else "") + (f' data-rating="{esc(f["rating"])}"' if "family" in who and f.get("rating") else "")
 
-    def posters_row(self, lang, fids, shows, heading, city_label="", prayer=False, tags=None, yes=False):
+    def posters_row(self, lang, fids, shows, heading, city_label="", prayer=False, tags=None, yes=False, collapse=False):
         """«كل الأفلام» (UI redesign Task 3; the home and city pages): every film's tile in a grid (3 columns on
         a phone, 7 on a desktop) under two chips — «تصفية» (the filter sheet; its badge counts what is filtering)
         and the sort. The controls that sat in rows over the list are in the sheet, the one question on top
         (kit/filters.py); src/js/filters.js drives them. When nothing is left the line says so (§1.7), and under
         «العيال» after 20:00 it offers tomorrow morning instead.
         The two sheets go after the footer with the header's (self._sheets, emptied by page()) — once per page,
-        like the section's ids: /summer/ draws one grid per city (fix round 1, I2); the later grids share them."""
+        like the section's ids: /summer/ draws one grid per city (fix round 1, I2); the later grids share them.
+        `collapse` (r3-home, owner call 2026-09-30, home only): the grid sits behind one native `<details>` closed
+        by default — a single «كل الأفلام (N)» button that expands the whole section in place, no script needed. A
+        link to `#all` still opens it for a reader with no script: the fragment target (the inner `<section
+        id="all">`) sits inside the `<details>`, which Chromium auto-opens for a same-document fragment navigation
+        into a collapsed one. iPhone Safari (the owner's device) does not do this reliably, so with script,
+        filters.js's bindFilters forces `details.allg.open = true` itself whenever a «الكل» row link's query
+        (`?sort=`/`?f=`/`?who=`/`?fl=`) or an `#all` hash targets it, and again before the «اعرض N» sheet button's
+        scroll — fix round, review Important #3."""
         first = not self._grid
         tiles = "".join(self.film_tile(fid, lang, shows, i=i, live=True, tag=(tags or {}).get(fid)) for i, fid in enumerate(fids))
         hid = ' id="all-h"' if first else ""
@@ -101,9 +146,13 @@ class TileKit:
         if first: self._sheets.append(self.filter_sheet(lang, fids, prayer, yes) + self.sort_sheet(lang))
         self._grid = True
         sec = ' id="all" aria-labelledby="all-h"' if first else ""
-        return (f'<section class="all wrap"{sec}>{head}<div class="grid" data-films>{tiles}</div>'
-                f'<p class="empty" data-empty hidden>{esc(L(EMPTY, lang))} <button type="button" class="lnk" data-reset>{esc(L(RESET, lang))}</button></p>'
-                f'<p class="empty" data-kids-late hidden>{esc(L(KIDS_LATE, lang))} <button type="button" class="lnk" data-kids-am>{esc(L(KIDS_AM, lang))}</button></p></section>')
+        section = (f'<section class="all wrap"{sec}>{head}<div class="grid" data-films>{tiles}</div>'
+                   f'<p class="empty" data-empty hidden>{esc(L(EMPTY, lang))} <button type="button" class="lnk" data-reset>{esc(L(RESET, lang))}</button></p>'
+                   f'<p class="empty" data-kids-late hidden>{esc(L(KIDS_LATE, lang))} <button type="button" class="lnk" data-kids-am>{esc(L(KIDS_AM, lang))}</button></p></section>')
+        if collapse and first:
+            summary = f'<summary class="allg-sum wrap">{esc(heading)} <span class="num">({len(fids)})</span></summary>'
+            return f'<details class="allg">{summary}{section}</details>'
+        return section
 
     @staticmethod
     def lo(cells):

@@ -93,7 +93,7 @@ def test_builtin_nav_repointed_and_unknown_slot_refused(tmp_path):
     out = str(tmp_path / "o")
     build.build(DATA, DISC, out, noindex=False, modules=build.discover(only=("core",)) + [coming])
     nav = re.search(r'<nav class="nav".*?</nav>', read(out, "index.html"), re.S).group(0)
-    assert '<a href="/coming/">نازل قريب</a>' in nav
+    assert '<a href="/coming/">قريباً في السينما</a>' in nav
     bad = types.SimpleNamespace(__name__="bad", register=lambda site: Plugin(slots={"nowhere": lambda s, lang: "x"}))
     with pytest.raises(ValueError, match="unknown slot"):
         build.build(DATA, DISC, str(tmp_path / "b"), noindex=False, modules=build.discover(only=("core",)) + [bad])

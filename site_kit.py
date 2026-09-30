@@ -87,7 +87,7 @@ SOURCE_GONE = re.compile(r"not found|\b404\b", re.I)
 SOURCE_GONE_AR = "صفحة العرض الرسمية انحذفت، فما نعرض الخصم"
 UI = {
     "s_mark": ("سينما", "Cinema"), "s_films": ("الرئيسية", "Home"), "s_cinemas": ("السينمات", "Cinemas"),
-    "s_thursday": ("نازل قريب", "Coming soon"), "s_cards": ("البطاقات", "Cards"), "s_halls": ("القاعات", "Halls"),
+    "s_thursday": ("قريباً", "Coming soon"), "s_cards": ("البطاقات", "Cards"), "s_halls": ("القاعات", "Halls"),
     "s_alt": ("English", "العربية"), "s_nav": ("الأقسام", "Sections"), "s_skip": ("تخطَّ إلى المحتوى", "Skip to content"),
     "s_footer": ("سينما من Elyoxe. الأسعار من السينمات نفسها، والخصومات متحقَّق منها بتاريخها.",
                  "Cinema by Elyoxe. Prices from the cinemas themselves; discounts checked and dated."),
@@ -95,6 +95,8 @@ UI = {
     # the chrome (UI redesign Task 2): header tools, the phone tab bar, the footer's links
     "s_search": ("بحث", "Search"), "s_tabs": ("التنقل", "Navigation"), "s_more": ("روابط الموقع", "Site links"),
     "s_cards_h": ("الأسعار والبطاقات", "Prices and cards"),   # the header's label for the cards link (crumbs keep s_cards)
+    "s_thursday_h": ("قريباً في السينما", "Coming soon"),   # the header's full label for the coming-soon link (owner
+    # rename 2026-09-30); the phone tab bar keeps the short "s_thursday" — no room for the long form at 344px
     "s_cards_f": ("البطاقات والخصومات", "Cards and discounts"), "s_sources": ("من وين الأسعار", "Where prices come from"),
 }
 # the chrome's own words (not in the template's {{…}} table)
@@ -103,11 +105,14 @@ CHROME_T = {"city": ("المدينة", "City"), "card": ("البطاقة", "Card
             "bank": ("بنوك", "Banks"), "pick_city": ("وين أنت؟", "Where are you?"), "pick_card": ("شو عندك من بطاقة؟", "Which card do you have?"),
             "all_cards": ("خصم كل بطاقة في كل سينما", "Every card’s discount at every cinema"),
             "all_cities": ("كل السينمات حسب المدينة", "Every cinema by city")}
-# the home page's words (UI redesign Task 3)
+# the home page's words (UI redesign Task 3; r3-home 2026-09-30: the billboard alone carries «الأكثر عرضاً الليلة»
+# now, so the row's own heading is gone; «يستاهل» renamed «الأعلى تقييماً» and «نازل الخميس» renamed «قريباً في
+# السينما», both owner calls 2026-09-30)
 HOME_T = {"top": ("الأكثر عرضاً الليلة", "Most shown tonight"), "top_in": ("الأكثر عرضاً في {city} الليلة", "Most shown in {city} tonight"),
-          "yes": ("يستاهل", "Worth it"), "yes_sub": ("حكمنا من تقييمات النقاد والجمهور", "Our call, from critics and audiences"),
+          "yes": ("الأعلى تقييماً", "Top rated"), "yes_sub": ("حكمنا من تقييمات النقاد والجمهور", "Our call, from critics and audiences"),
           "cheap": ("أرخص لك الليلة", "Cheapest for you tonight"), "family": ("للعائلة", "For the family"),
-          "coming": ("نازل الخميس", "Out Thursday"), "last": ("آخر فرصة", "Last chance"), "arabic": ("عربي", "Arabic"),
+          "coming": ("قريباً في السينما", "Coming soon"), "last": ("آخر فرصة", "Last chance"), "arabic": ("عربي", "Arabic"),
+          "stars": ("نجوم الليلة", "Tonight's stars"),
           "near": ("يبدأ قريب منك", "Starting near you"), "all": ("الكل", "See all"), "all_films": ("كل الأفلام", "All films"),
           "filter": ("تصفية", "Filter"), "sort": ("الترتيب", "Sort"), "sort_default": ("الأكثر عرضاً", "Most shown"),
           "genre": ("النوع", "Genre"), "who": ("مع منو رايح؟", "Who’s coming?"), "before": ("لازم يخلص قبل", "Has to end by"),
@@ -125,7 +130,7 @@ FILM_T = {"about": ("عن الفيلم", "About"), "cast": ("الطاقم", "Cas
           "pick": ("اختر وقت", "Pick a time"),
           "pick_s": ("اختر وقت من المواعيد، وتطلع لك تذكرته هني: سعر كل مقعد بعد خصم بطاقتك، والحجز والاتجاهات.",
                      "Pick a showtime and its ticket shows here: every seat’s price after your card, booking and directions."),
-          "details": ("التفاصيل والحجز", "Details and booking"), "chosen": ("الوقت المختار", "Chosen time"),
+          "details": ("التفاصيل", "Details"), "chosen": ("الوقت المختار", "Chosen time"),
           "n_cin": (("سينما وحدة", "سينمتين", "سينمات", "سينما"), ("cinema", "cinemas")),
           "none": ("ما لقينا عروض لهذا الفيلم في اليومين الجايين.", "No shows for this film in the next two days.")}
 WEEKDAYS = (("الاثنين", "Mon"), ("الثلاثاء", "Tue"), ("الأربعاء", "Wed"), ("الخميس", "Thu"), ("الجمعة", "Fri"), ("السبت", "Sat"), ("الأحد", "Sun"))
@@ -140,6 +145,9 @@ ICONS = {"home": '<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/>',
          "next": '<path d="m9 5 7 7-7 7"/>', "prev": '<path d="m15 5-7 7 7 7"/>',
          # the film page (Task 4): «شارك», the day bar's «⋯»
          "share": '<path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"/>',
+         # r3-seo: the Stories card is a plain file to save, not a share-sheet hand-off (the share icon's
+         # up-arrow implied the wrong action) — a download tray instead
+         "download": '<path d="M12 3v10M7 9l5 5 5-5M5 19h14"/>',
          "dots": '<circle cx="5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="19" cy="12" r="1.3" fill="currentColor"/>'}
 
 
@@ -161,6 +169,10 @@ T = {  # strings shared with cinema.js (window.CT)
     "ends": ("يخلص تقريباً {t}", "Ends around {t}"), "today": ("اليوم", "Today"), "tomorrow": ("بكرة", "Tomorrow"),
     "book_at": ("احجز من موقع {chain}", "Book on the {chain} site"), "share": ("أرسلها للقروب", "Send to the group"),
     "after_card": ("بعد خصم {card}", "after {card}"), "in_cinema": ("{film} في {cinema}", "{film} at {cinema}"),
+    # r3-app: the one-time iOS Safari «أضفه للشاشة الرئيسية» hint (src/js/appfeel.js, a lazy chunk — these two
+    # strings live here, not in cinema.js's TX, so they cost the page's own JSON, never the shared bundle's budget)
+    "ios_install": ("ثبّت سينما: اضغط زر المشاركة، وبعدين اختار «أضف للشاشة الرئيسية»", "Add Cinema: tap Share, then “Add to Home Screen”"),
+    "ios_ok": ("تمام", "Got it"),
 }
 RERELEASE = ("إعادة عرض", "Re-release")
 DATE = re.compile(r"\b(\d{4}-\d{2}-\d{2})\b")

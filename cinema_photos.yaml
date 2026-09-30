@@ -1,0 +1,14 @@
+# cinema_photos.yaml — one official photo URL per cinema (cinema_photos.py, steps/cinema_photo.py).
+#
+# {cid: <https:// URL of a real photo from that cinema's OWN chain site>} — never a stock photo, never
+# another cinema's photo, never invented. A cid with no entry here simply shows no photo on its page
+# (pages/_core/places.py's cinema_head checks for cinema["photo"] and renders the plain head when it is
+# absent — nothing is guessed). cids match cinemas.yaml's keys.
+#
+# This file starts empty on purpose (2026-09-30, r3-data unit): reliably finding each chain's own
+# per-cinema photo page needs either a per-chain URL pattern the reader already confirms (none of the
+# 7 chains' readers carry one today — normalize.py never kept a cinema-page URL, only per-show `book`
+# links) or a manual pass over each chain's site. Add entries here as they're found — a chain page's own
+# og:image, or a cinema-locator listing's photo — and the next refresh mirrors them automatically
+# (cinema_photos.mirror(), capped at cinema_photos.CHECK_CAP fresh downloads a run).
+cinemas: {}

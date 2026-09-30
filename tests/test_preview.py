@@ -69,6 +69,11 @@ def test_default_build_stays_indexable(tmp_path, monkeypatch, env, generated):
             # /summer/ is indexed in July–August only; outside them it waits at its URL, noindex
             assert ("noindex" in html) is (not in_summer), p
             continue
+        if os.path.relpath(p, out).replace(os.sep, "/") in ("v/index.html", "en/v/index.html"):
+            # /v/ «أي واحد؟» (round3, pages/vote.py): a bare shell for a per-friend link fragment the server
+            # never sees; noindex by design, always, and never in the sitemap (its own docstring)
+            assert "noindex" in html, p
+            continue
         if "no confirmed discount for this card" in html or "ما لقينا خصم مؤكد لهالبطاقة" in html:
             continue   # an unconfirmed card's old URL: a noindex note by design (test_hourly_safe.py)
         if "No chain-confirmed events yet" in html or "ما عندنا فعاليات مؤكدة" in html:

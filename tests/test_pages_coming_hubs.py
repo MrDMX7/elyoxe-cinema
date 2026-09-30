@@ -28,7 +28,7 @@ def out(tmp_path_factory):
 
 def test_coming_page_groups_by_release_thursday_and_dated_countdown(out):
     h = read(out, "coming", "index.html")
-    assert "نازل الخميس" in h
+    assert "قريباً في السينما" in h
     assert "1 أكتوبر 2026" in h        # Verity's release_date (2026-10-01) is itself a Thursday
     assert "التاريخ لاحقاً" in h        # Gatto has no release_date
     assert "cs-card" in h and h.count("cs-card") == 2
@@ -37,15 +37,16 @@ def test_coming_page_groups_by_release_thursday_and_dated_countdown(out):
 
 def test_coming_page_english_variant(out):
     h = read(out, "en", "coming", "index.html")
-    assert "Out Thursday" in h and "Date to be announced" in h
+    assert "Coming soon" in h and "Date to be announced" in h
 
 
 def test_thursday_nav_link_repoints_to_coming(out):
     home = read(out, "index.html")
     nav = re.search(r'<nav class="nav".*?</nav>', home, re.S).group(0)
-    assert '<a href="/coming/">نازل قريب</a>' in nav                   # UI redesign: «نازل قريب»
+    assert '<a href="/coming/">قريباً في السينما</a>' in nav           # owner rename 2026-09-30: the header keeps room for the full label
     tabs = re.search(r'<nav class="tabs".*?</nav>', home, re.S).group(0)
     assert '<a href="/coming/">' in tabs                              # the phone's tab bar follows it
+    assert '<span>قريباً</span>' in tabs                               # 344px has no room for the header's full label
 
 
 def test_coming_data_slice_written(out):

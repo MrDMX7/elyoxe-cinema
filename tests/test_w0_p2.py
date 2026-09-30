@@ -132,7 +132,9 @@ def read(out, *parts):
 
 def test_every_acceptance_line_on_one_build(out):
     coming = read(out, "coming", "index.html")
-    assert "disabled" not in coming and "cs-notify" not in coming and re.search(r"<h2>1 أكتوبر 2026</h2><ul class=\"cs-grid\">.*?Anbil Avan", coming, re.S)
+    # round3 (pages/coming.py, "the countdown prints once, in the week's own heading"): a dated week's <h2> is
+    # followed by its own <p class="cs-cd"> countdown, then the grid -- no longer directly adjacent to <ul>
+    assert "disabled" not in coming and "cs-notify" not in coming and re.search(r"<h2>1 أكتوبر 2026</h2>.*?<ul class=\"cs-grid\">.*?Anbil Avan", coming, re.S)
     for parts in (("index.html",), ("dubai", "index.html")):
         assert "آخر فرصة" not in read(out, *parts)
     for fid in ("heart-of-the-beast", "resident-evil"):

@@ -87,11 +87,39 @@ class FilmPages:
                 f'<div class="fposter">{card}</div><div class="fh-t"><h1 class="ft"{attr}>{esc(t)}</h1>{sub}{verdict}{ff}'
                 + (f'<p class="cta">{acts}</p>' if acts else "") + f'{arch}</div></div></section>')
 
+    def _release_seed(self):
+        """The earliest `first_seen` across every film — refresh.attach_first_seen's seed date for a film first
+        pulled before our own tracking window. A film whose only date IS the seed did not necessarily open that
+        day (it may be much older); the site's own honesty rule says a number it cannot back stays off the page.
+        Cached once per build (pages/pulse.py computes the same value for the same reason)."""
+        s = getattr(self, "_release_seed_v", None)
+        if s is None:
+            s = min((str(x.get("first_seen")) for x in self.films.values() if x.get("first_seen")), default="")
+            self._release_seed_v = s
+        return s
+
     def film_about(self, fid, lang, shows, rates):
         """«عن الفيلم»: the synopsis, the facts (as a list of terms), the basis when no scores came out of it, whatever a
         feature adds (film.info), and the breadcrumb."""
         f = self.films[fid]; vd = f.get("verdict") or {}; ar = lang == "ar"
         facts = []
+        # «تاريخ نزول الفلم» + «الأسبوع N» (r3-home fix round, owner idea 2026-09-30): `released` (a chain's
+        # coming-soon date, kept once the film opens — refresh.py) is preferred over `first_seen` (when our own
+        # refresh first noticed it, which can lag the real opening by days). Either is skipped for an archived
+        # film (its own "من … إلى …" span already covers this in archive_note) and for a bare `first_seen` that
+        # equals the data's seed date — that date is an artifact of when tracking began, not a release date.
+        if f.get("status") != "archived":
+            rel = f.get("released") or f.get("first_seen")
+            if rel and not (not f.get("released") and str(rel) == self._release_seed()):
+                try:
+                    d0 = dt.date.fromisoformat(str(rel))
+                    wk = (self.now.date() - d0).days // 7 + 1
+                except ValueError:
+                    d0 = None
+                if d0 and wk >= 1:
+                    hd = human_date(rel, lang)
+                    say = f"{hd}، الأسبوع {wk}" if ar else f"{hd}, week {wk}"
+                    facts.append(("في السينما من", "In cinemas since", dates(esc(say))))
         for key, a, e in (("director", "المخرج", "Director"), ("cast", "البطولة", "Starring")):
             names = self.film_people(f, key, lang)
             if names: facts.append((a, e, "، ".join(f"<bdi>{esc(n)}</bdi>" for n in names) if ar else ", ".join(esc(n) for n in names)))
@@ -190,9 +218,15 @@ class FilmPages:
                 # «اختر وقت» (the desktop column with nothing chosen) and the phone's dock (film.js fills it)
                 empty = (f'<div class="tk-empty" data-tk-empty hidden><p class="k">{esc(L(FILM_T["pick"], lang))}</p>'
                          f'<p>{esc(L(FILM_T["pick_s"], lang))}</p></div>')
-                dock = (f'<div class="dock" data-dock role="region" aria-label="{esc(L(FILM_T["chosen"], lang))}" hidden><div class="dk-t">'
-                        f'<p class="dk-p" data-dk-p></p><p class="dk-s" data-dk-s></p></div>'
-                        f'<button type="button" class="btn dk-b" data-dk-open aria-haspopup="dialog">{esc(L(FILM_T["details"], lang))}</button>'
+                # the dock as a paper stub (§2.3): main part (time, cinema/hall, «التفاصيل» and «احجز» on the stub
+                # itself), a perforation with square notches («رايح» stamps there on tap, never on the price), and
+                # the tear-off price after the card. film.js fills it; the live region outside it is M5's (Task 4)
+                dock = (f'<div class="dock paper stub" data-dock role="region" aria-label="{esc(L(FILM_T["chosen"], lang))}" hidden>'
+                        f'<div class="dk-t"><b class="dk-time" dir="ltr" data-dk-time></b><p class="dk-s" data-dk-s></p>'
+                        f'<div class="dk-act"><button type="button" class="lnk dk-more" data-dk-open aria-haspopup="dialog">{esc(L(FILM_T["details"], lang))}</button>'
+                        f'<a class="dk-b" id="dk-book" data-dk-book rel="noopener nofollow" target="_blank"></a></div></div>'
+                        f'<div class="perf" aria-hidden="true"><span class="dk-stamp" data-dk-stamp></span></div>'
+                        f'<div class="dk-p" data-dk-p></div>'
                         f'</div><p class="vh" data-dk-live aria-live="polite"></p>')   # the live region outside the dock: always rendered (M5)
                 graph = [self.movie_ld(fid, lang)] + [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:30] + [self.breadcrumb_ld(lang, (t, P(lang, "film", fid)))]
                 none = f'<p class="lead">{esc(L(FILM_T["none"], lang))}</p>'
@@ -260,14 +294,21 @@ class FilmPages:
         days = [(self.today, ("اليوم", "Today"))] + ([(self.tomorrow, ("بكرة", "Tomorrow"))] if mode in ("full", "compact") else [])
         out = []
         shows = self.live_halls([s for s in shows if s["date"] in {d for d, _ in days}], lambda s: (s["cinema"], self.hkey(s)))
+        fid = shows[0]["film"] if shows else None
+        seo = getattr(self, "city_seo_urls", None)   # pages/seo_city.py: {(fid, city)} it actually built a page for
         # Dubai (the script's default city) first, as the script will show it: no city moves above it at start-up (CLS)
         for city in sorted(cities, key=lambda c: c != "dubai"):
             cs = [s for s in shows if self.cinemas[s["cinema"]].get("city") == city]
             if not cs: continue
             cids = list(dict.fromkeys(s["cinema"] for s in cs))
             n = ar_count(len(cids), FILM_T["n_cin"][0]) if lang == "ar" else f'{len(cids)} {FILM_T["n_cin"][1][len(cids) != 1]}'
+            # a link to pages/seo_city.py's own page for this pair (never inside <summary>: interactive
+            # content can't nest inside it, and its click would just toggle the disclosure instead of navigating)
+            seo_link = (f'<p class="fc-seo"><a href="{P(lang, "film", fid, city)}">'
+                        f'{"الأوقات والأسعار في " + esc(L(CITY[city], lang)) if lang == "ar" else "Showtimes and prices in " + esc(L(CITY[city], lang))}</a></p>'
+                        if seo and fid and (fid, city) in seo else "")
             out.append(f'<details class="fcity{" here" if city == "dubai" else ""}" data-city="{city}"{" open" if city == "dubai" else ""}><summary><h2>{esc(L(CITY[city], lang))}</h2>'
-                       f'<span class="fc-n">{esc(n)}</span></summary>')
+                       f'<span class="fc-n">{esc(n)}</span></summary>{seo_link}')
             for cid in cids:
                 chain = self.cinemas[cid]["chain"]
                 ss = [s for s in cs if s["cinema"] == cid]

@@ -60,6 +60,11 @@ SEAMS_ADDED = re.compile(r"^assets/(drag\.[0-9a-f]{10}\.js|page-[\w-]+\.[0-9a-f]
 # W1-P2 (MASTER-PLAN §5.2): the system's two tiny Markazi faces (tools/subset_digits.py), fonts only, added
 SYSTEM_ADDED = re.compile(r"^assets/fonts/markazi-700-(digits|mark)\.woff2$")
 REDESIGN_CHANGED = re.compile(r"(\.html|^assets/cinema\.css)$")
+# round3 (2026-09-30): r3-backend's Web Push (push_subscribe.py, push_weekly.py; tests/test_counter_lambdas.py
+# covers the lambdas) added a "push" and a "notificationclick" listener to the service worker — a real behaviour
+# change to the file this test otherwise guards word-for-word. Not folded into REDESIGN_CHANGED (that regex is
+# for .html/.css only): sw.js is compared everywhere except this file, which the golden test always rewrites anyway.
+GOLDEN_CHANGED = re.compile(r"^sw\.js$")
 
 
 def sitemap_urls(b):
@@ -224,7 +229,7 @@ def test_core_build_is_byte_identical_to_phase1(phase1, tmp_path, name, data, di
     assert sorted(before) == sorted(p for p in after if not REDESIGN_ADDED.match(p) and not SEAMS_ADDED.match(p) and not SYSTEM_ADDED.match(p))
     assert len(before) > 50
     bundle = "assets/cinema.HASH.js"
-    diff = [p for p in before if p not in (bundle, "sitemap.xml") and not REDESIGN_CHANGED.search(p) and before[p] != after[p]]
+    diff = [p for p in before if p not in (bundle, "sitemap.xml") and not REDESIGN_CHANGED.search(p) and not GOLDEN_CHANGED.match(p) and before[p] != after[p]]
     assert not diff, diff[:10]
     # the pages' markup is the redesign's, but what each page IS must not move: links, title, description, robots,
     # JSON-LD, its price cells and showtimes; window.CT only gains keys; no template placeholder is ever left

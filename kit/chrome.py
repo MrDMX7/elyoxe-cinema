@@ -174,6 +174,9 @@ class ChromeKit:
                 (vals["thursday_href"], "cal", vals["s_thursday"], cur(nav == "thursday"), ""),
                 fourth]
         vals["tabs"] = "".join(f'<a href="{h}"{c}{x}>{icon(i)}<span>{t}</span></a>' for h, i, t, c, x in tabs)
+        # the header's own «قريباً في السينما» is the full label (room allows, min-width:1024px); the tab bar above
+        # already baked in the short "s_thursday" it needed, so this can only widen the header's {{s_thursday}}
+        vals["s_thursday"] = esc(L(UI["s_thursday_h"], lang))
         first = [h for k in self.FOOT_FIRST for kk, h in extra if kk == k]
         rest = [h for k, h in extra if k not in self.FOOT_FIRST]
         links = [f'<a href="{vals["cinemas_page"]}"{cur(nav == "cinemas" and pagekind == "cinemas")}>{vals["s_cinemas"]}</a>',

@@ -1,18 +1,32 @@
-/* search.js — phase 3, task A5: bilingual fuzzy search over /data/search.json (pages/search.py). A lazy
-   chunk (docs/PLUGINS.md), loaded on every page (page_js "*"), so this file runs once per page and owns its
-   panel: the page's own [data-search] triggers open it (the header's search button and the phone tab bar's
-   «بحث», UI redesign Task 2; a page without one gets a button injected into .top-in as before), a "/"
-   shortcut, and a panel with an ARIA combobox. Focus goes back to whichever trigger opened it. K is window.CINEMA: q, qa, esc, getJSON, lang, AR, C, get/set, now(), city(), card(). */
+/* search.js — bilingual fuzzy search over /data/search.json (pages/search.py), now a browse surface
+   (MASTER-PLAN §2.7, W2-P8): before typing it helps you type and nothing else (recent searches, format
+   chips, the chains in Arabic — no board, no pick, no posters, no slice fetch); a time word («الليلة»)
+   opens the schedule with that time already set. A lazy chunk (docs/PLUGINS.md), loaded on every page
+   (page_js "*"): this file runs once per page and owns its panel. The page's own [data-search] triggers
+   open it (the header's search button and the phone tab bar's «بحث», UI redesign Task 2; a page without
+   one gets a button injected into .top-in as before), a "/" shortcut, and a panel with an ARIA combobox.
+   Focus goes back to whichever trigger opened it. K is window.CINEMA: q, qa, esc, getJSON, lang, AR, C,
+   get/set. The chunk stays under its 4.0 KB gz budget (W2-P8 §5.3): a film result's own next-show line
+   (§2.7's "التالي 21:30 ريل دبي مول") is not in this package's acceptance list and is left for a follow-up
+   that can afford the extra city-slice fetch and parsing it needs. */
 var AR = K.AR, esc = K.esc, q = K.q, qa = K.qa;
 var STR = AR ? {
     ph: "دور على فيلم، سينما أو أحد الطاقم…", open: "بحث", close: "سكّر",
     films: "أفلام", cinemas: "سينمات", people: "ناس", archived: "انتهى عرضه",
-    empty: "ما لقينا شي يطابق بحثك — جرّب كلمة غير."
+    empty: "ما لقينا شي يطابق بحثك — جرّب كلمة غير.",
+    recent: "بحث أخير", clear: "امسح"
   } : {
     ph: "Search a film, cinema or someone in the cast…", open: "Search", close: "Close",
     films: "Films", cinemas: "Cinemas", people: "People", archived: "No longer showing",
-    empty: "Nothing matches your search — try a different word."
+    empty: "Nothing matches your search — try a different word.",
+    recent: "Recent searches", clear: "Clear"
   };
+  /* time words open the schedule with «متى» already answered (cinema.when, filters.js §2.0); an exact
+     match navigates at once (no extra tap: typing the word IS opening it). norm() already folds ة/ه, ء and
+     ا/أ/إ/آ, so one spelling of each catches the rest ("العشاء" -> "العشا", "الآن" -> "الان") */
+  var WHEN = {};
+  WHEN[norm(AR ? "الحين" : "now")] = "now"; WHEN[norm(AR ? "الليلة" : "tonight")] = "tonight";
+  WHEN[norm(AR ? "بعد العشا" : "late")] = "late"; WHEN[norm(AR ? "بكرة" : "tomorrow")] = "tomorrow";
 
   /* ---- the same fold pages/search.py's normalize() applies at build time ---- */
   var DIA = /[ؐ-ًؚ-ٰٟۖ-ۜ۟-۪ۨ-ۭ࣓-࣡ـ]/g;
@@ -117,13 +131,35 @@ var STR = AR ? {
     { key: "cm", label: STR.cinemas },
     { key: "p", label: STR.people }
   ];
-  /* a city (y) and a format or hall (h) sit with the cinemas */
-  function groupOf(t) { return t === "c" || t === "m" || t === "y" || t === "h" ? "cm" : t; }
+  /* a city (y), a format or hall (h) and a chain (n) sit with the cinemas */
+  function groupOf(t) { return t === "c" || t === "m" || t === "y" || t === "h" || t === "n" ? "cm" : t; }
 
-  var panel, input, list, empty, btn, opener = null, activeId = -1, items = [];
+  var panel, input, list, empty, btn, opener = null, activeId = -1;
+
+  /* ---- the empty state: before typing, search helps you type and nothing else (§2.7). No board, no pick,
+     no posters, and no slice fetch — everything here comes from localStorage or the already-loaded index */
+  var RK = "cinema.recent";
+  function recent() {
+    try { return JSON.parse(localStorage.getItem(RK) || "[]").slice(0, 6); } catch (e) { return []; }
+  }
+  function addRecent(s) {
+    s = String(s || "").trim();
+    if (!s) return;
+    try { localStorage.setItem(RK, JSON.stringify([s].concat(recent().filter(function (x) { return x !== s; })).slice(0, 6))); }
+    catch (e) {}
+  }
+  /* the browse block reuses render()'s own row markup (thumb, name, href) -- a format or a chain is a real
+     index entry, so there is nothing new to draw for it */
+  function renderEmpty() {
+    render((DATA || []).filter(function (e) { return e.t === "h" && e.a === e.e || e.t === "n"; }).slice(0, 12));
+    var rs = recent();
+    if (rs.length) list.innerHTML = '<li role="group"><p class="srch-g">' + esc(STR.recent)
+      + '<button class="srch-clr" data-clr>' + esc(STR.clear) + "</button></p><ul class=\"srch-chips\">"
+      + rs.map(function (s) { return '<li><button class="srch-chip" data-q="' + esc(s) + '">' + esc(s) + "</button></li>"; }).join("")
+      + "</ul></li>" + list.innerHTML;
+  }
 
   function render(matches) {
-    items = matches;
     var byGroup = {};
     matches.forEach(function (m) {
       var g = groupOf(m.t);
@@ -154,18 +190,20 @@ var STR = AR ? {
   }
 
   function search(raw) {
-    var query = norm(raw);
+    if (!raw || !raw.trim()) { renderEmpty(); return; }
+    var query = norm(raw), when = WHEN[query];
+    if (when) { addRecent(raw); K.set("when", when); location.href = K.C.base + "?t=" + when + "#now"; return; }
     if (!query) { render([]); return; }
     if (!DATA) { load().then(function () { search(raw); }); return; }
-    var scored = [], top = -1, sq = /[\u0600-\u06ff]/.test(raw) ? skel(raw) : "";
+    var scored = [], top = -1, sq = /[؀-ۿ]/.test(raw) ? skel(raw) : "";
     /* a chain (n) is not scored until W2-P8 draws it: a match on it alone left a blank panel */
     for (var i = 0; i < DATA.length; i++) {
       var s = DATA[i].t === "n" ? -1 : score(query, DATA[i].k || []);
       if (s > top && DATA[i].t !== "f") top = s;
       scored.push({ s: s, e: DATA[i] });
     }
-    /* films draw first, so the skeleton only when no place or person matched inside its name (60): \u00ab\u0633\u062a\u0627\u0631\u00bb lists
-       Star, not a film that sounds like it; \u00ab\u0633\u0628\u0627\u064a\u062f\u0631\u00bb still lists Spider Island under Spider-Man */
+    /* films draw first, so the skeleton only when no place or person matched inside its name (60): «ستار» lists
+       Star, not a film that sounds like it; «سبايدر» still lists Spider Island under Spider-Man */
     scored = scored.filter(function (x) {
       if (sq && top < 60 && x.e.s) x.s = Math.max(x.s, sks(sq, x.e.s));
       return x.s >= 0;
@@ -194,7 +232,7 @@ var STR = AR ? {
 
   function go(el) {
     var p = el && el.getAttribute("data-p");
-    if (p) location.href = href(p);
+    if (p) { addRecent(input.value); location.href = href(p); }
   }
 
   function open(e) {
@@ -203,9 +241,9 @@ var STR = AR ? {
     panel.hidden = false;
     document.documentElement.classList.add("srch-open");
     input.value = "";
-    render([]);
+    renderEmpty();
     setTimeout(function () { input.focus(); }, 0);
-    load();
+    load().then(function () { if (!input.value.trim()) renderEmpty(); });
   }
 
   function close() {
@@ -262,7 +300,10 @@ var STR = AR ? {
     });
     list.addEventListener("click", function (e) {
       var li = e.target.closest ? e.target.closest('[role="option"]') : null;
-      if (li) { e.preventDefault(); go(li); }
+      if (li) { e.preventDefault(); go(li); return; }
+      if (e.target.closest && e.target.closest("[data-clr]")) { try { localStorage.removeItem(RK); } catch (er) {} renderEmpty(); return; }
+      var chip = e.target.closest ? e.target.closest("[data-q]") : null;
+      if (chip) { input.value = chip.getAttribute("data-q"); search(input.value); input.focus(); }
     });
     document.addEventListener("keydown", function (e) {
       var t = e.target || {}, tag = t.tagName || "";

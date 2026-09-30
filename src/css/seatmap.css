@@ -14,4 +14,5 @@
 .tk-hall .s.w{fill:none;stroke:var(--ink-2);stroke-dasharray:2 1}
 .tk-hall .s.best{fill:var(--velvet);stroke:var(--velvet)}
 .tk-hall figcaption{font-size:13px;color:var(--ink);margin-block-start:8px;line-height:1.5}
+.tk-hall figcaption .q{display:block;font-weight:600}
 .tk-hall figcaption .ago{display:block;font-size:11px;color:var(--ink-2)}

@@ -33,14 +33,24 @@ def _share_link(site, lang, url, msg):
 
 def _film_slot(site, lang, fid):
     """The film hero's «شارك» (UI redesign Task 4): a ghost button of the hero's actions, the same link and
-    attributes as `_share_link` (share.js appends the visitor's city and card, and uses the phone's share sheet)."""
+    attributes as `_share_link` (share.js appends the visitor's city and card, and uses the phone's share sheet).
+    r3-seo: a second, plain download link for the day's Stories card (site.og_story_override, filled by
+    `register` below from data["films"][fid]["og_story"], the 1080x1920 sibling of the 1200x630 `og` field) —
+    nothing new to click through, just the file, for a visitor who wants to post it themselves."""
     f = site.films.get(fid) or {}
     if f.get("status") == "archived":
         return ""  # nothing left to share a live price for
     t, url = site.ftitle(fid, lang), SITE + P(lang, "film", fid)
     wa = "https://wa.me/?text=" + quote(t + "\n" + url, safe="")
-    return (f'<a class="btn ghost" href="{esc(wa)}" rel="noopener" target="_blank" data-share data-share-msg="{esc(t)}" '
-            f'data-share-url="{esc(url)}">{icon("share")}{esc("شارك" if lang == "ar" else "Share")}</a>')
+    out = (f'<a class="btn ghost" href="{esc(wa)}" rel="noopener" target="_blank" data-share data-share-msg="{esc(t)}" '
+           f'data-share-url="{esc(url)}">{icon("share")}{esc("شارك" if lang == "ar" else "Share")}</a>')
+    story = site.og_story_override.get((lang, fid))
+    if story:
+        # a download icon and «صورة ستوري»/"Story image", not the share icon and «ستوري إنستقرام»: the card
+        # also serves TikTok, and the link saves a file rather than opening a share sheet (review fix)
+        out += (f'<a class="btn ghost" href="{esc(story)}" download rel="noopener">{icon("download")}'
+                f'{esc("صورة ستوري" if lang == "ar" else "Story image")}</a>')
+    return out
 
 
 def _cinema_slot(site, lang, cid):
@@ -53,18 +63,28 @@ def _cinema_slot(site, lang, cid):
 
 def register(site):
     out_dir = os.path.join(ROOT, "data", "og")
+    site.og_story_override = {}   # (lang, fid) -> full URL of the day's 1080x1920 Stories card, or absent
     for fid, f in site.films.items():
         og = f.get("og")
-        if not isinstance(og, dict):
-            continue
-        for lang, name in og.items():
-            src_path = os.path.join(out_dir, name)
-            if not os.path.isfile(src_path):
-                continue
-            dest = os.path.join(site.out, "og", name)
-            os.makedirs(os.path.dirname(dest), exist_ok=True)
-            shutil.copy2(src_path, dest)
-            site.og_override[(lang, ("film", fid))] = f"{SITE}/og/{name}"
+        if isinstance(og, dict):
+            for lang, name in og.items():
+                src_path = os.path.join(out_dir, name)
+                if not os.path.isfile(src_path):
+                    continue
+                dest = os.path.join(site.out, "og", name)
+                os.makedirs(os.path.dirname(dest), exist_ok=True)
+                shutil.copy2(src_path, dest)
+                site.og_override[(lang, ("film", fid))] = f"{SITE}/og/{name}"
+        story = f.get("og_story")
+        if isinstance(story, dict):
+            for lang, name in story.items():
+                src_path = os.path.join(out_dir, name)
+                if not os.path.isfile(src_path):
+                    continue
+                dest = os.path.join(site.out, "og", name)
+                os.makedirs(os.path.dirname(dest), exist_ok=True)
+                shutil.copy2(src_path, dest)
+                site.og_story_override[(lang, fid)] = f"{SITE}/og/{name}"
 
     return Plugin(slots={
         "film.share": lambda site, lang, fid: _film_slot(site, lang, fid),

@@ -6,6 +6,10 @@
    layer under the header's content whose opacity follows the page's scroll. A browser without scroll timelines keeps
    the solid header, as with no script; under reduced motion the light changes at once, at 56 px */
 .top{position:sticky;inset-block-start:0;z-index:30;background:var(--night);border-block-end:1px solid var(--line)}
+/* installed as a standalone app (iOS/Android): the status bar sits over the page (viewport-fit=cover), so the
+   sticky header pads under it instead of under the notch/Dynamic Island. A normal browser tab already reserves
+   its own chrome for this, so the padding is scoped to display-mode:standalone only */
+@media (display-mode:standalone){.top{padding-block-start:env(safe-area-inset-top)}}
 @supports (animation-timeline:scroll()){
   body[data-hero] .top{background:linear-gradient(rgba(15,11,12,.85),rgba(15,11,12,0)) border-box;border-block-end-color:transparent}
   body[data-hero] .top::before{content:"";position:absolute;inset:0 0 -1px;z-index:-1;background:var(--night);border-block-end:1px solid var(--line);

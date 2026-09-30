@@ -7,6 +7,9 @@
    because a step or reader may swallow it with `except Exception`, the test that made it fails anyway at
    teardown, naming the host. Loopback stays open (none of the code under test serves anything; kept so a
    future local fixture server is not refused).
+
+   The one deliberate exception: the `live_network` fixture (round 3 QA, OMDb real-call test) opts a single
+   test IN to real sockets for its duration only — every other test in the suite is unaffected.
 """
 import os
 import socket
@@ -16,6 +19,7 @@ import pytest
 
 LOOPBACK = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
 ATTEMPTS: list[str] = []
+_LIVE_NETWORK = False   # flipped true only inside the `live_network` fixture, for that one test
 
 
 class NetworkBlocked(RuntimeError):
@@ -23,6 +27,8 @@ class NetworkBlocked(RuntimeError):
 
 
 def _refuse(what):
+    if _LIVE_NETWORK:
+        return None
     ATTEMPTS.append(what)
     raise NetworkBlocked(f"network call in a test: {what}")
 
@@ -40,17 +46,17 @@ def _no_network():
     real_gai = socket.getaddrinfo
 
     def connect(self, address):
-        if self.family == getattr(socket, "AF_UNIX", None) or _host(address) in LOOPBACK:
+        if _LIVE_NETWORK or self.family == getattr(socket, "AF_UNIX", None) or _host(address) in LOOPBACK:
             return real_connect(self, address)
         _refuse(f"socket {_host(address)}")
 
     def connect_ex(self, address):
-        if self.family == getattr(socket, "AF_UNIX", None) or _host(address) in LOOPBACK:
+        if _LIVE_NETWORK or self.family == getattr(socket, "AF_UNIX", None) or _host(address) in LOOPBACK:
             return real_connect_ex(self, address)
         _refuse(f"socket {_host(address)}")
 
     def getaddrinfo(host, *a, **kw):
-        if host is None or str(host) in LOOPBACK:
+        if _LIVE_NETWORK or host is None or str(host) in LOOPBACK:
             return real_gai(host, *a, **kw)
         _refuse(f"dns {host}")
 
@@ -90,6 +96,19 @@ def _network_attempts_fail_the_test(_no_network):
     new = ATTEMPTS[before:]
     if new:
         pytest.fail(f"this test tried the network {len(new)}x (refused): {sorted(set(new))[:8]}", pytrace=False)
+
+
+@pytest.fixture
+def live_network(_no_network):
+    """Opt a single test IN to real sockets (round 3 QA: the OMDb real-call test). Every other test keeps
+    the network refused — this only flips the module-level switch for the duration of the test that asks
+    for it, then flips it back in `finally` even if the test raises."""
+    global _LIVE_NETWORK
+    _LIVE_NETWORK = True
+    try:
+        yield
+    finally:
+        _LIVE_NETWORK = False
 
 
 @pytest.fixture(autouse=True, scope="session")

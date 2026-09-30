@@ -100,10 +100,10 @@ def test_home_of_about_100_films_within_150kb(tmp_path):
     for parts in ((), ("en",)):
         h = read(o, *parts)
         assert h.count('class="film tile') == n
-        # every row the data fills, «نازل الخميس» aside (a Friday build: the Thursday band's days) and «آخر فرصة» deleted
-        # (W2-P4); no near row
+        # every row the data fills, «قريباً في السينما» aside (a Friday build: the Thursday band's days) and «آخر
+        # فرصة» deleted (W2-P4); no near row, no «الأكثر عرضاً الليلة» row (r3-home: the billboard alone carries it)
         keys = re.findall(r'<section class="rail" aria-labelledby="r-([a-z]+)"', h)
-        assert keys == ["top", "yes", "cheap", "family", "arabic"], keys
+        assert keys == ["yes", "cheap", "family", "arabic", "bollywood"], keys
         size = os.path.getsize(os.path.join(o, *parts, "index.html"))
         assert size <= BUDGET, (parts, size)
 
@@ -169,7 +169,7 @@ def test_rows_in_order_from_the_data(tmp_path):
     o, _ = scaled(tmp_path)
     m = main_of(read(o))
     keys = re.findall(r'<section class="rail" aria-labelledby="r-([a-z]+)"', m)
-    assert keys == ["top", "yes", "cheap", "family", "arabic"], keys
+    assert keys == ["yes", "cheap", "family", "arabic", "bollywood"], keys
     rows = {k: re.search(r'<section class="rail" aria-labelledby="r-' + k + r'".*?</section>', m, re.S).group(0) for k in keys}
     firsts = {}
     for k in keys:
@@ -180,28 +180,46 @@ def test_rows_in_order_from_the_data(tmp_path):
             firsts[f] = k
     # «الكل»: the heading line is the link (44 px, ui-rows.css): a page, or «كل الأفلام» with its sort or filter chosen
     href = lambda k: re.search(r'<a class="rail-a" href="([^"]+)"><h2 id="r-' + k + r'">', rows[k]).group(1)
-    assert href("top") == "/#all" and href("yes") == "/?f=yes#all" and href("cheap") == "/?sort=price#all"
+    assert href("yes") == "/?f=yes#all" and href("cheap") == "/?sort=price#all"
     assert href("family") == "/?who=family#all" and href("arabic") == "/arabic/"          # hubs.py draws /arabic/
-    # rows re-sort for the visitor: «الأكثر عرضاً» by their city; «أرخص عرض الليلة» is redrawn from their city's shows
-    assert 'data-rail-sort="count"' in rows["top"] and "data-rail-cheap" in rows["cheap"]
-    # the verdict row holds only «يستاهل» films, and no tag repeats a row's name
+    # «أرخص عرض الليلة» is redrawn from the visitor's city shows
+    assert "data-rail-cheap" in rows["cheap"]
+    # the verdict row (renamed «الأعلى تقييماً») holds only «يستاهل» films, and no tag repeats a row's name
     assert set(re.findall(r'class="tile v-(\w+)"', rows["yes"])) == {"yes"}
     assert '<span class="tag">' not in "".join(rows.values())
     # a row's tile: the id and runtime the prices read, not the filter attributes (the sheet filters the grid)
-    assert "data-genres" not in rows["top"] and 'data-fid="' in rows["top"]
-    assert 'data-rail="1"' in rows["top"] and 'aria-label="التالي"' in rows["top"]
+    assert "data-genres" not in rows["yes"] and 'data-fid="' in rows["yes"]
+    assert 'data-rail="1"' in rows["yes"] and 'aria-label="التالي"' in rows["yes"]
+
+
+def test_yes_row_is_renamed_top_rated(full):
+    """«يستاهل» the row heading is renamed «الأعلى تقييماً» (r3-home, owner call 2026-09-30); the verdict word itself
+    on a tile stays «يستاهل» (VERDICT, MASTER-PLAN §1.4) — only the row's own heading changed. (full_data() gives 4
+    showing «yes» films; the base sample fixture alone has only 3, too few for the row to draw.)"""
+    m = main_of(read(full))
+    row = re.search(r'<section class="rail" aria-labelledby="r-yes".*?</section>', m, re.S).group(0)
+    assert re.search(r'<h2 id="r-yes">الأعلى تقييماً</h2>', row)
+
+
+def test_top_row_is_gone_the_billboard_carries_it(full):
+    """The old separate «الأكثر عرضاً الليلة» row is deleted: the billboard's slide 1 already says it
+    (pages/_core/bill.py bill_pick/BILL_T["top"])."""
+    h = read(full)
+    assert "r-top" not in main_of(h)
+    assert 'eyebrow">الأكثر عرضاً الليلة' in h        # the billboard's own eyebrow, unaffected
 
 
 def test_coming_row_only_from_sunday_to_wednesday_evening(full, tmp_path, monkeypatch):
-    """«نازل الخميس» is a row from Sunday to Wednesday 18:00; from then to Saturday the Thursday band (W2-P7) says it, so
-    the row steps aside (MASTER-PLAN §2.1). No «الخميس» tag on its tiles: the row's name says it."""
+    """«قريباً في السينما» (renamed «نازل الخميس») is a row from Sunday to Wednesday 18:00; from then to Saturday the
+    Thursday band (W2-P7) says it, so the row steps aside (MASTER-PLAN §2.1). No «الخميس» tag on its tiles: the
+    row's name says it."""
     assert "r-coming" not in main_of(read(full))                      # the fixture is a Friday
     from site_kit import Kit
     monkeypatch.setattr(Kit, "week_phase", staticmethod(lambda now: "rest"))
     m = main_of(read(build_full(tmp_path)))
     row = re.search(r'<section class="rail" aria-labelledby="r-coming".*?</section>', m, re.S).group(0)
     assert row.count('class="tile soon"') == 5 and '<span class="tag">' not in row
-    assert re.search(r'<a class="rail-a" href="/coming/"><h2 id="r-coming">نازل الخميس</h2>', row)
+    assert re.search(r'<a class="rail-a" href="/coming/"><h2 id="r-coming">قريباً في السينما</h2>', row)
 
 
 def test_no_last_chance_row_or_tag_even_with_the_step_on(tmp_path, monkeypatch):
@@ -230,7 +248,7 @@ def test_tile_markup(out):
     assert "data-family=" not in tile and "data-kids=" not in tile
     # the poster, the title (two lines held, ui-tile.css), the verdict word, then the one line that differs («من 42»;
     # home.js redraws it for the visitor's city, card and clock). The desktop hover panel is home.js's (fix round 1, I3)
-    assert re.search(r'<span class="tp"><span class="pst img"[^>]*><img [^>]+></span></span><span class="t">كايوتي ضد أكمي</span>'
+    assert re.search(r'<span class="tp"><span class="pst img"[^>]*><img [^>]+></span>(?:<span class="tag wk">[^<]+</span>)?</span><span class="t">كايوتي ضد أكمي</span>'
                      r'<span class="vw">يستاهل</span><span class="m" data-cheap>من <span class="pv"><span class="num">[\d.]+</span></span></span></a>$', tile)
     # an unknown verdict says the short «الحكم بعده» (MASTER-PLAN §1.7)
     assert re.search(r'<a class="film tile v-unknown" href="/film/shish-dou/".*?<span class="vw">الحكم بعده</span>', m, re.S)

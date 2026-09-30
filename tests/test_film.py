@@ -117,9 +117,14 @@ def test_schedule_by_city_ticket_column_and_dock(out):
     col = sec[sec.index('<div class="tkcol">'):]
     assert col.startswith('<div class="tkcol"><div class="tk-empty" data-tk-empty hidden><p class="k">اختر وقت</p>')
     assert '<aside class="ticket" id="ticket" data-ticket' in col
-    # the dock: hidden, filled by film.js
-    assert re.search(r'<div class="dock" data-dock role="region" aria-label="الوقت المختار" hidden>.*data-dk-p.*data-dk-s.*'
-                     r'<button type="button" class="btn dk-b" data-dk-open aria-haspopup="dialog">التفاصيل والحجز</button>', m)
+    # the dock: hidden, a paper stub (§2.3) with «التفاصيل» and «احجز» on the stub itself, its perforation and the
+    # tear-off price — all filled by film.js
+    assert re.search(r'<div class="dock paper stub" data-dock role="region" aria-label="الوقت المختار" hidden>'
+                     r'<div class="dk-t"><b class="dk-time" dir="ltr" data-dk-time></b><p class="dk-s" data-dk-s></p>'
+                     r'<div class="dk-act"><button type="button" class="lnk dk-more" data-dk-open aria-haspopup="dialog">التفاصيل</button>'
+                     r'<a class="dk-b" id="dk-book" data-dk-book rel="noopener nofollow" target="_blank"></a></div></div>'
+                     r'<div class="perf" aria-hidden="true"><span class="dk-stamp" data-dk-stamp></span></div>'
+                     r'<div class="dk-p" data-dk-p></div></div>', m)
     assert '<p class="nc" data-nc hidden></p>' in m and "data-empty hidden" in m
 
 
@@ -152,6 +157,41 @@ def test_the_hash_names_a_real_section_and_no_ids_repeat(out):
         assert len(ids) == len(set(ids)), [i for i in ids if ids.count(i) > 1]
         for k in re.findall(r'data-tab="(\w+)"', h):
             assert f'id="{k}"' in h
+
+
+def test_about_facts_carry_the_release_date_and_week_not_the_seed(out):
+    """r3-home fix round (review Important #1, «تاريخ نزول الفلم»): a showing film's «عن الفيلم» facts get an honest
+    «في السينما من <date>، الأسبوع N» line from `released` or `first_seen` — never from a bare `first_seen` that
+    only equals the data's global seed date (fixtures/sample_latest.json's earliest first_seen is 2026-08-07;
+    heart-of-the-beast's own is 2026-09-11, so it is real, not a seed artifact). `generated` is 2026-09-25, 14 days
+    later, so week 3."""
+    h = read(out, "film", FID)
+    about = h[h.index('id="about"'):h.index('id="cast"') if 'id="cast"' in h else h.index("</main>")]
+    assert "<dt>في السينما من</dt><dd>" in about
+    assert "11 سبتمبر 2026، الأسبوع 3" in about
+    en = read(out, "en", "film", FID)
+    en_about = en[en.index('id="about"'):]
+    assert "<dt>In cinemas since</dt><dd>" in en_about and "week 3" in en_about
+
+
+def test_archived_film_has_no_release_line_its_span_already_says_it(out):
+    """archive_note already says «عُرض … من … إلى …»; the about facts must not add a second, possibly-conflicting date."""
+    h = read(out, "film", "weapons")
+    assert "في السينما من" not in h and "In cinemas since" not in h
+
+
+def test_a_release_date_equal_to_the_seed_is_not_shown(tmp_path):
+    """A film whose only date is the data's global seed cannot honestly claim that as its opening day (the seed is
+    when tracking began, not when the film opened)."""
+    d = json.loads(open(DATA, encoding="utf-8").read())
+    d["films"][FID]["first_seen"] = min(f.get("first_seen") for f in d["films"].values() if f.get("first_seen"))
+    d["films"][FID]["released"] = None
+    p = tmp_path / "seeded.json"
+    p.write_text(json.dumps(d), encoding="utf-8")
+    o = str(tmp_path / "out")
+    build.build(str(p), DISC, o, noindex=False)
+    h = read(o, "film", FID)
+    assert "في السينما من" not in h
 
 
 def test_archived_film_in_the_new_hero(out):
@@ -282,7 +322,7 @@ def test_unknown_verdict_and_the_hero_without_any_picture(out):
     for parts in (("film", "crawlers"), ("en", "film", "crawlers")):
         h = read(out, *parts)
         assert '<section class="fhero np">' in h
-        assert re.search(r'<div class="dock"[^>]*hidden>.*?data-dk-open[^>]*>[^<]+</button></div><p class="vh" data-dk-live aria-live="polite"></p>', h)
+        assert re.search(r'<div class="dock[^"]*"[^>]*hidden>.*?data-dk-open[^>]*>[^<]+</button>.*?</div><p class="vh" data-dk-live aria-live="polite"></p>', h)
     css = build.css_source()
     # the typographic tile is the case on a phone as the poster is (W2-P1: .fposter drawn at clamp(120px,20svh,180px))
     assert ".pst.hero{block-size:clamp(120px,20svh,180px)" in css and ".fhero.fr .fposter{display:none}" in css
