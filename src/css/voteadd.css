@@ -1,0 +1,16 @@
+/* voteadd.css — pages/voteadd.py's ticket button + the floating vote bar (round-3 follow-up). Site-wide
+   (CSS, not PAGE_CSS): the ticket itself appears on almost every page kind. .tk-act wraps so the new
+   button always sits on its own line under «احجز»/«أرسلها للقروب», never squeezed into that row. */
+.tk-act{flex-wrap:wrap}
+.tk-act .v-add{flex:1 1 100%;min-block-size:44px;margin-block-start:8px;display:flex;align-items:center;
+  justify-content:center;background:none;border:1px solid var(--line-2);color:var(--ink);font:inherit;
+  font-weight:500;padding-inline:12px;cursor:pointer}
+.tk-act .v-add.on{border-color:var(--velvet);color:var(--velvet)}
+.tk-act .v-add:focus-visible{outline:2px solid var(--gold);outline-offset:-4px}
+
+.v-bar{position:fixed;inset-inline:0;inset-block-end:0;z-index:6;background:var(--ink);color:var(--screen);
+  display:flex;align-items:center;gap:12px;padding:10px 16px;padding-block-end:calc(10px + env(safe-area-inset-bottom,0px))}
+.v-bar-n{font-weight:600;flex:1 1 auto}
+.v-bar-send{background:var(--gold);color:var(--ink);border:none;font-weight:700;padding:8px 16px;cursor:pointer}
+.v-bar-send:disabled{opacity:.5;cursor:default}
+.v-bar-x{background:none;border:none;color:var(--screen);font-size:20px;line-height:1;cursor:pointer;padding:4px 6px}

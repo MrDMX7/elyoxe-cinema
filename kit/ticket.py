@@ -13,6 +13,7 @@ class TicketKit:
         """The ticket for one show, server-rendered (no-script visitors see the prices); cinema.js refills it
         for whichever time is tapped: phone = bottom sheet, desktop = side panel."""
         cid, chain = s["cinema"], self.cinemas[s["cinema"]]["chain"]
+        vote_city = self.cinemas[cid].get("city") or ""
         code, _ = self.hall_code_label(s); hk = self.hkey(s); asof = self.table_date(s)
         hidden = " hidden" if hidden else ""
         day = L(T["today"] if s["date"] == self.today else T["tomorrow"] if s["date"] == self.tomorrow else (s["date"], s["date"]), lang)
@@ -37,6 +38,7 @@ class TicketKit:
         left = s.get("seats_left")
         left = f'<p class="tk-left" data-tk-seats>{esc(seats_left(int(left), lang))}</p>' if isinstance(left, int) and left > 0 else '<p class="tk-left" data-tk-seats hidden></p>'
         return (f'<aside class="ticket" id="ticket" data-ticket data-show="{self.sid(s)}" data-cin="{esc(cid)}" data-chain="{esc(chain)}"'
+                f' data-fid="{esc(s["film"])}" data-city="{esc(vote_city)}" data-d="{esc(s["date"])}" data-key="{esc(self.show_key_of(s))}"'
                 f' role="dialog" aria-labelledby="tk-cin"{hidden}>'
                 f'<div class="tk-top"><div class="tk-main"><p class="tk-cin" id="tk-cin" data-tk-cin>{self.cname_html(cid, lang)}</p>'
                 f'<p class="tk-film" data-tk-film{self.title_attr(s["film"], lang)}>{esc(ftitle)}</p>'

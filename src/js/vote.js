@@ -9,7 +9,7 @@
    "أنا مع هذا" opens WhatsApp with that option's own time as the reply key, no numbering: the chat itself
    is the ballot box. */
 (function () {
-  var tray = K.q("[data-v-tray]"), empty = K.q("[data-v-empty]");
+  var tray = K.q("[data-v-tray]"), empty = K.q("[data-v-empty]"), actWrap = K.q("[data-v-act]"), resendBtn = K.q("[data-v-resend]");
   if (!tray) return;
   var raw = location.hash.slice(1);
   var keys = [];
@@ -40,10 +40,10 @@
 
   var W = K.AR ? {
     ask: "وين نروح؟", empty: "ما لقينا أي عرض من هذا الرابط. اطلب رابط جديد.", past: "فات",
-    join: "أنا مع هذا", from: "من {p} درهم", ask_group: "اسأل القروب"
+    join: "أنا مع هذا", from: "من {p} درهم", aed: "{p} درهم", ask_group: "اسأل القروب", reply: "ردّوا بالرقم"
   } : {
     ask: "Where to?", empty: "None of these shows were found. Ask for a new link.", past: "Started",
-    join: "I'm in", from: "From {p} AED", ask_group: "Ask the group"
+    join: "I'm in", from: "From {p} AED", aed: "{p} AED", ask_group: "Ask the group", reply: "Reply with the number"
   };
 
   function dubaiDay(d) { return new Date(d.getTime() + 4 * 3600e3).toISOString().slice(0, 10); }   // core.js's day(), inlined:
@@ -54,6 +54,13 @@
     return (K.AR ? "أنا مع " : "I'm in for ") + when + (K.AR ? " " : " ") + o.title + (K.AR ? "، " : ", ") + o.cin;
   }
 
+  /* each option opens its own show (the film page, that time's #s-<key> anchor, exactly the link the
+     ticket's own share button would give it) -- a plain block link, never nested inside the WhatsApp
+     one, so the row stays one <li> with two independent targets: read it, or reply to it. */
+  function filmHref(o) {
+    return location.origin + (K.C && K.C.base ? K.C.base : "/") + "film/" + o.fid + "/#s-" + o.key;
+  }
+
   function draw(opts) {
     var now = K.now().getTime();
     tray.innerHTML = opts.map(function (o) {
@@ -62,13 +69,28 @@
       var line = K.esc(waLine(o));
       var join = started ? "" :
         '<a class="btn velvet v-join" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(line) + '">' + K.esc(W.join) + "</a>";
-      return '<li class="v-opt' + (started ? " v-past" : "") + '"><p class="v-t">' + K.esc(o.title) + "</p>"
-        + '<p class="v-m">' + K.esc(o.time) + (K.AR ? "، " : ", ") + K.esc(o.cin) + price + "</p>"
+      return '<li class="v-opt' + (started ? " v-past" : "") + '">'
+        + '<a class="v-open" href="' + K.esc(filmHref(o)) + '"><p class="v-t">' + K.esc(o.title) + "</p>"
+        + '<p class="v-m">' + K.esc(o.time) + (K.AR ? "، " : ", ") + K.esc(o.cin) + price + "</p></a>"
         + (started ? '<span class="v-done">' + K.esc(W.past) + "</span>" : join) + "</li>";
     }).join("");
     tray.hidden = false;
     if (K.get("prayer") === "1" && K.C.adhan) {
       var sc = document.createElement("script"); sc.src = K.C.adhan; sc.async = true; document.head.appendChild(sc);
+    }
+    /* «أرسل للقروب»: re-shares this exact set (the page's own hash) with a numbered WhatsApp text,
+       same shape as src/js/voteadd.js's own bar -- reimplemented small here since this is a separate
+       lazy chunk (its own scope, no shared functions with the main bundle beyond K). */
+    if (actWrap && resendBtn) {
+      actWrap.hidden = false;
+      resendBtn.onclick = function () {
+        var lines = opts.map(function (o, i) {
+          var p = o.price != null ? (K.AR ? "، " : ", ") + K.sub(W.aed, { p: K.fmt(o.price) }) : "";
+          return (i + 1) + ") " + o.title + " " + o.time + (K.AR ? "، " : ", ") + o.cin + p;
+        });
+        var msg = W.ask + "\n" + lines.join("\n") + "\n" + location.href + "\n" + W.reply;
+        window.open("https://wa.me/?text=" + encodeURIComponent(msg), "_blank", "noopener");
+      };
     }
   }
 

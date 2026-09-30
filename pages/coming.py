@@ -24,8 +24,13 @@ from site_kit import FILMS_AR, HOME_T, Emit, L, NavItem, P, Page, Pages, Plugin,
 TITLE = ("قريباً في السينما", "Coming soon")   # owner rename 2026-09-30 (site_kit.s_thursday_h matches; the
                                                 # phone tab bar keeps the short «قريباً», no room for this at 344px)
 CSS = ("coming",)
-LAZY_JS = ()
+# src/js/push.js (r3-backend, Web Push via the elyoxe-cinema-counter stack): existed but was wired into no
+# page's markup, so the Thursday opt-in was unreachable (round-3 review). Loaded only here, the one page
+# with somewhere for it to live -- the masthead's own subscribe row, beside the iPhone .ics link.
+LAZY_JS = ("push",)
 DIRS = ("coming", "cal")
+
+T_PUSH = ("ذكّرني بالخميس", "Remind me Thursday")
 
 # «سلسلة» declines exactly like «سينما» (CINEMAS_AR in site_kit): one, two, 3-10 plural, 11+ singular-with-number.
 CHAINS_AR = ("سلسلة وحدة", "سلسلتين", "سلاسل", "سلسلة")
@@ -131,7 +136,8 @@ def register(site):
         pages=[Page(("coming",), lang, lambda lang=lang: p.coming_page(lang)) for lang in ("ar", "en")] + [Emit(p.cal_ics)],
         data={"data/coming.json": lambda: {fid: f for fid, f in (site.d.get("coming") or {}).items()}},
         nav=[NavItem("thursday", href=lambda lang: P(lang, "coming"))],
-        slots={"home.after_board": lambda site, lang, **ctx: ComingPages(site)._band(lang)})
+        slots={"home.after_board": lambda site, lang, **ctx: ComingPages(site)._band(lang)},
+        page_js={"coming": ("push",)})
 
 
 class ComingPages(Pages):
@@ -225,6 +231,11 @@ class ComingPages(Pages):
         # iPhone/iPad, never announced to anyone else (review Important #7 -- the file was correct and
         # deployed, just never linked from this page).
         ics = "تابع الخميس بالتقويم" if lang == "ar" else "Subscribe to Thursdays"
+        # the push opt-in row (r3-backend): `hidden` by default, exactly like the .ics line above it, but
+        # revealed by src/js/push.js's own feature-detect (any Push-capable browser), not a UA sniff --
+        # the two rows use different reveal mechanisms because iPhone's limit is real and Push support
+        # isn't guessable from the user agent the way "is this iPhone" is.
+        push_label = L(T_PUSH, lang)
         return ('<div class="cs-mast paper lit">'
                 f'<p class="cs-mast-w">{esc(word)}</p>'
                 f'<p class="cs-mast-d">{esc(headline)}</p>'
@@ -233,6 +244,8 @@ class ComingPages(Pages):
                 + f'<p class="cs-mast-ics" hidden><a href="/cal/thursday.ics">{esc(ics)}</a></p>'
                 + '<script>(function(d){if(/iPhone|iPad/.test(navigator.userAgent)){'
                 + 'd=document.currentScript.previousElementSibling;if(d)d.hidden=false}})()</script>'
+                + f'<p class="cs-mast-push" data-push-row hidden><button type="button" class="btn ghost" data-push-btn>{esc(push_label)}</button>'
+                + '<span class="vh" role="status" data-push-live></span></p>'
                 + '</div>')
 
     def _band(self, lang):

@@ -215,7 +215,7 @@ function openTicket(btn, quiet) {   /* quiet: the page's own pick (film.js fsAut
     var chain = (grp && grp.getAttribute("data-chain")) || (sl && sl.cinemas[cin] && sl.cinemas[cin].chain) || (G && G[cin] && G[cin][1]) ||
       (body.getAttribute("data-chains") || "").split(" ")[0];
     fillTicket(btn, {
-      cin: cin, d: d, t: t, fid: fid, chain: chain,
+      cin: cin, d: d, t: t, fid: fid, chain: chain, city: cityId,
       hall: hl ? hl.getAttribute("data-hall") : s ? s.h : null, hk: hk0 || (s ? s.k : null),
       hn: (hl && q(".hn", hl) && q(".hn", hl).textContent) || (hl && q("small", hl) && q("small", hl).textContent) || (s && s.hn) || "",
       ends: btn.getAttribute("data-ends") || (s && s.e), lg: btn.getAttribute("data-lang") || (s && s.lg), sb: btn.getAttribute("data-subs") || (s && s.sb),
@@ -249,6 +249,19 @@ function fillTicket(btn, x) {
   }).join("") : '<tr><td colspan="2"><span class="na">' + esc(C.box) + "</span></td></tr>", true);
   qa(".p[data-aed]", tk).forEach(function (el) { el.innerHTML = priceHTML(el, false); });
   tk.setAttribute("data-chain", x.chain); tk.setAttribute("data-cin", x.cin);
+  /* for voteadd.js's vote-add button (data-v-*): a tapped time updates the show it names too */
+  var vkey = showKey(x.cin, x.d, x.t, x.hk || "Standard");
+  tk.setAttribute("data-fid", x.fid || ""); tk.setAttribute("data-city", x.city || "");
+  tk.setAttribute("data-d", x.d || ""); tk.setAttribute("data-key", vkey);
+  var va = q("[data-v-add]", tk);
+  if (va) {
+    va.setAttribute("data-v-fid", x.fid || ""); va.setAttribute("data-v-city", x.city || "");
+    va.setAttribute("data-v-date", x.d || ""); va.setAttribute("data-v-key", vkey);
+    va.setAttribute("data-v-title", x.film || ""); va.setAttribute("data-v-cin", x.cname || "");
+    va.setAttribute("data-v-time", x.t || "");
+    var vprice = x.p && x.p.length ? Math.min.apply(null, x.p.filter(function (p) { return p[1] > 0; }).map(function (p) { return p[1]; })) : NaN;
+    if (isFinite(vprice)) va.setAttribute("data-v-price", vprice); else va.removeAttribute("data-v-price");
+  }
   renderTerms(x.chain);
   /* the booking link is this show's, else its chain's site: never the last show's */
   var book = q("[data-tk-book]", tk);
