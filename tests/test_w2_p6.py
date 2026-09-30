@@ -64,8 +64,10 @@ def test_the_cinema_head_names_the_address_in_arabic_the_three_ways_and_the_mall
         assert re.search(r'<a class="go-b" href="[^"]*' + re.escape(host) + r'[^"]*"[^>]*>' + name + "</a>", head), name
     assert re.search(r'dropoff\[latitude\]=2\d\.\d+&amp;dropoff\[longitude\]=5\d\.\d+&amp;dropoff\[nickname\]=Reel%20at%20', head)
     assert "المول يسكّر 00:00" in head or "المول يسكّر 23:00" in head   # malls.yaml, the build's weekday
-    # «سينمتي» is W3-P1's: held, never a control that does nothing
-    assert re.search(r'<button type="button" class="fav" data-fav="reel-dubai-mall" aria-pressed="false" hidden>', head)
+    # «سينمتي» (round3-gaps binds it: src/js/fav.js): hidden in the HTML, so a visitor with no script never meets a control
+    # that does nothing; the chunk unhides it and swaps its visible label between the two it carries
+    assert re.search(r'<button type="button" class="fav" data-fav="reel-dubai-mall" data-city="dubai" aria-pressed="false" hidden'
+                     r' data-on="سينمتي" data-off="ثبّتها سينمتي">.*?<span class="fav-l">ثبّتها سينمتي</span></button>', head)
     en = main_of(read(site, "en", "dubai", "reel-dubai-mall", "index.html"))
     assert "<p class=\"ch-a\">Downtown Dubai</p>" in en[:en.index("</section>")]   # the reader's own, in English
 

@@ -74,6 +74,13 @@ class FilmPages:
         if f.get("rating"): facts.append(f'<span><bdi class="num" dir="ltr">{esc(f["rating"])}</bdi></span>')
         gw = genre_words(f.get("genres"), lang)
         ff = (f'<p class="ff">{"".join(facts)}</p>' if facts else "") + (f'<p class="fg">{esc(("، " if ar else ", ").join(gw))}</p>' if gw else "")
+        # «في السينما من 30 سبتمبر، الأسبوع 1» (round3-gaps): its own line under the facts (the phone's .ff is one
+        # unwrapped line), from the tile's own rule (TileKit.release_week), so the tile's «جديد»/«الأسبوع N» and
+        # this line always agree; nothing when the date is only the tracking seed, never a «last showing» date
+        rel = self.release_line(fid, lang)
+        if rel: ff += f'<p class="frel" data-frel>{rel}</p>'
+        # «ليش يستاهل؟» (round3-gaps): one tap-to-open line right under the verdict (pages/intel.py fills film.why)
+        why = self.slot("film.why", lang, fid=fid)
         acts = ""
         if f.get("trailer"):
             acts += (f'<a class="btn ghost" href="https://www.youtube-nocookie.com/embed/{esc(f["trailer"])}" data-trailer="{esc(f["trailer"])}" rel="noopener" target="_blank">'
@@ -84,19 +91,8 @@ class FilmPages:
         arch = self.archive_note(fid, lang) if f.get("status") == "archived" else ""
         cls = " fr" if frame else "" if f.get("poster") else " np"   # np: the typographic tile stands in the poster's place
         return (f'<section class="fhero{cls}"><div class="fh-bd">{pic}</div><div class="wrap fhero-in">'
-                f'<div class="fposter">{card}</div><div class="fh-t"><h1 class="ft"{attr}>{esc(t)}</h1>{sub}{verdict}{ff}'
+                f'<div class="fposter">{card}</div><div class="fh-t"><h1 class="ft"{attr}>{esc(t)}</h1>{sub}{verdict}{why}{ff}'
                 + (f'<p class="cta">{acts}</p>' if acts else "") + f'{arch}</div></div></section>')
-
-    def _release_seed(self):
-        """The earliest `first_seen` across every film — refresh.attach_first_seen's seed date for a film first
-        pulled before our own tracking window. A film whose only date IS the seed did not necessarily open that
-        day (it may be much older); the site's own honesty rule says a number it cannot back stays off the page.
-        Cached once per build (pages/pulse.py computes the same value for the same reason)."""
-        s = getattr(self, "_release_seed_v", None)
-        if s is None:
-            s = min((str(x.get("first_seen")) for x in self.films.values() if x.get("first_seen")), default="")
-            self._release_seed_v = s
-        return s
 
     def film_about(self, fid, lang, shows, rates):
         """«عن الفيلم»: the synopsis, the facts (as a list of terms), the basis when no scores came out of it, whatever a
@@ -108,18 +104,13 @@ class FilmPages:
         # refresh first noticed it, which can lag the real opening by days). Either is skipped for an archived
         # film (its own "من … إلى …" span already covers this in archive_note) and for a bare `first_seen` that
         # equals the data's seed date — that date is an artifact of when tracking began, not a release date.
-        if f.get("status") != "archived":
-            rel = f.get("released") or f.get("first_seen")
-            if rel and not (not f.get("released") and str(rel) == self._release_seed()):
-                try:
-                    d0 = dt.date.fromisoformat(str(rel))
-                    wk = (self.now.date() - d0).days // 7 + 1
-                except ValueError:
-                    d0 = None
-                if d0 and wk >= 1:
-                    hd = human_date(rel, lang)
-                    say = f"{hd}، الأسبوع {wk}" if ar else f"{hd}, week {wk}"
-                    facts.append(("في السينما من", "In cinemas since", dates(esc(say))))
+        # «تاريخ نزول الفلم» + «الأسبوع N» (r3-home fix round, owner idea 2026-09-30): TileKit.release_week, the one
+        # rule the tile's «جديد»/«الأسبوع N» and the hero's line also read (an archived film: archive_note's span)
+        rw = self.release_week(fid)
+        if rw:
+            hd = human_date(rw[0], lang)
+            say = f"{hd}، الأسبوع {rw[1]}" if ar else f"{hd}, week {rw[1]}"
+            facts.append(("في السينما من", "In cinemas since", dates(esc(say))))
         for key, a, e in (("director", "المخرج", "Director"), ("cast", "البطولة", "Starring")):
             names = self.film_people(f, key, lang)
             if names: facts.append((a, e, "، ".join(f"<bdi>{esc(n)}</bdi>" for n in names) if ar else ", ".join(esc(n) for n in names)))

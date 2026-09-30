@@ -44,8 +44,9 @@ body[data-page=city]::before{block-size:440px;background:radial-gradient(320px 2
 /* ------------------------------------------------ W2-P6: the cinema head: name (and «سينمتي» from W3-P1), the address in the
    page's language, three 44 px ways there, «المول يسكّر 00:00» and the chain's read time */
 .chead .pt{max-inline-size:none}
-.fav{inline-size:44px;block-size:44px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;background:none;border:1px solid var(--line-2);color:var(--screen);cursor:pointer}
-.fav[aria-pressed=true]{color:var(--gold);border-color:var(--gold)}
+.fav{min-inline-size:44px;block-size:44px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding-inline:10px;background:none;border:1px solid var(--line-2);color:var(--screen);cursor:pointer;font:inherit;font-size:var(--fs-meta);white-space:nowrap}
+.fav[aria-pressed=true]{border-color:var(--screen)}
+.fav[aria-pressed=true] svg path{fill:currentColor}
 .ch-a{margin-block-start:8px;color:var(--dim);font-size:var(--fs-body);line-height:1.5}
 .go-r{display:flex;flex-wrap:wrap;gap:8px;margin-block-start:16px}
 .go-b{min-block-size:44px;display:inline-flex;align-items:center;padding-inline:16px;border:1px solid var(--line-2);color:var(--screen);text-decoration:none;font-size:var(--fs-meta);font-weight:500}

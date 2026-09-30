@@ -615,6 +615,7 @@ class Kit(MediaKit, TileKit, SchedKit, TicketKit, ChromeKit, FiltersKit):
              "film.info": "film page, «عن الفيلم» tab, after the synopsis and facts (ctx: fid)",
              # the film page's other places (UI redesign Task 4): each fills its own tab, or the hero's actions
              "film.share": "film page, the hero's actions: a share link (ctx: fid)",
+             "film.why": "film page, the hero, right under the verdict: «ليش يستاهل؟», one tap-to-open line (ctx: fid)",
              "film.cast": "film page, «الطاقم» tab (ctx: fid)",
              "film.similar": "film page, «شي يشبه» tab (ctx: fid)",
              "film.double": "film page, «فيلمين ورا بعض» tab (ctx: fid); unfilled since W0-P2 (plan §4.1 #14), W2-P6 retires it",

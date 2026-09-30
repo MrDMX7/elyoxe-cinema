@@ -95,6 +95,7 @@ the sitemap and the assets.
 | `cinema.after_halls` | a cinema page, after «القاعات والأسعار» | `cid` |
 | `film.info` | a film page (showing or archived): the «عن الفيلم» tab, after the synopsis and the facts (UI redesign Task 4) | `fid` |
 | `film.share` | a film page: the hero's actions, after «الإعلان» (a ghost button; pages/og.py's «شارك») | `fid` |
+| `film.why` | a film page: the hero, right under the verdict — «ليش يستاهل؟» as one tap-to-open line (pages/intel.py: the film's intel reasons, else a fallback from the verdict, RT and IMDb numbers) | `fid` |
 | `film.cast` | a film page: the «الطاقم» tab (pages/people.py) | `fid` |
 | `film.similar` | a film page: the «شي يشبه» tab (pages/insights.py; an archived film gets core's tiles) | `fid` |
 | `film.double` | a film page: the «فيلمين ورا بعض» tab. Nothing fills it since W0-P2 (MASTER-PLAN §4.1 #14: the all-cities pairs were past times), so the tab is not drawn; W2-P6 retires the slot | `fid` |

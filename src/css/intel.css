@@ -21,3 +21,24 @@
 .i-qa{margin-block-start:var(--s3)}
 .i-qa .q{color:var(--screen);font-weight:500;margin:0}
 .i-qa .a{color:var(--dim);margin:var(--s1) 0 0}
+/* round3-gaps: «ليش يستاهل؟» in the hero, one tap-to-open line under the verdict (film.why); the release line
+   under the facts; the «بدون حرق» switch over the two spoiler disclosures (on: an open one shows only its gate) */
+.fwhy{margin-block:4px 0;max-inline-size:60ch}
+.fwhy summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;min-block-size:40px;font-size:var(--fs-meta);color:var(--screen)}
+.fwhy summary span{text-decoration:underline;text-decoration-color:var(--seat);text-underline-offset:.25em}
+.fwhy summary::-webkit-details-marker{display:none}
+.fwhy summary::after{content:"+";color:var(--seat);display:inline-block;inline-size:1em;text-align:center}
+.fwhy[open] summary::after{content:"–"}
+.fwhy .i-list{margin-block:0 var(--s2)}
+.i-list li.mid::marker{color:var(--seat)}
+.frel{font-size:var(--fs-meta);color:var(--seat);margin:-4px 0 12px}
+.i-sp{display:grid;gap:var(--s2)}
+.i-ns{display:inline-flex;align-items:center;gap:var(--s2);min-block-size:44px;cursor:pointer;color:var(--screen);font-size:var(--fs-body);justify-self:start}
+.i-ns input{appearance:none;-webkit-appearance:none;margin:0;inline-size:40px;block-size:22px;border:1px solid var(--line-2);background:transparent;position:relative;cursor:pointer;flex:0 0 auto}
+.i-ns input::after{content:"";position:absolute;inset-block:3px;inset-inline-start:3px;inline-size:14px;background:var(--seat)}
+.i-ns input:checked{background:var(--velvet);border-color:var(--velvet)}
+.i-ns input:checked::after{inset-inline-start:auto;inset-inline-end:3px;background:var(--screen)}
+.i-ns input:focus-visible{outline:2px solid var(--screen);outline-offset:2px}
+.i-gate{display:none}
+.i-sp:has(.i-ns input:checked) .i-gate{display:block;color:var(--screen);font-size:var(--fs-meta)}
+.i-sp:has(.i-ns input:checked) .i-body{display:none}

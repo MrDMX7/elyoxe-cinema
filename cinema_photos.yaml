@@ -5,10 +5,49 @@
 # (pages/_core/places.py's cinema_head checks for cinema["photo"] and renders the plain head when it is
 # absent — nothing is guessed). cids match cinemas.yaml's keys.
 #
-# This file starts empty on purpose (2026-09-30, r3-data unit): reliably finding each chain's own
-# per-cinema photo page needs either a per-chain URL pattern the reader already confirms (none of the
-# 7 chains' readers carry one today — normalize.py never kept a cinema-page URL, only per-show `book`
-# links) or a manual pass over each chain's site. Add entries here as they're found — a chain page's own
-# og:image, or a cinema-locator listing's photo — and the next refresh mirrors them automatically
-# (cinema_photos.mirror(), capped at cinema_photos.CHECK_CAP fresh downloads a run).
-cinemas: {}
+# Filled 2026-09-30 (round3-gaps): every URL below was found on the chain's OWN site (the page is named above each),
+# downloaded, checked to be an image of THAT cinema (lobby, foyer or hall — looked at, one by one), landscape and at
+# least cinema_photos.MIN_WIDTH wide. 27 of 65 cinemas. The rest, and why (so nobody searches the same pages twice):
+#   VOX (23)      its cinema pages carry no photo of the cinema at all — only generic hall banners with text on them,
+#                 the same file under six names; no og:image, no schema.org image.
+#   Reel (3)      one 225x265 portrait of the mall's outside per cinema, no larger size in its media library.
+#   ROXY Circle Mall   its only image is an «NOW OPEN» promo banner with text.
+#   Star (10)     Al Ghurair, Al Wahda, Bawadi, Century, Dana Plaza, Mall of Al Ain, RAK: only 250 px thumbnails (under
+#                 MIN_WIDTH); Al Foah, Barari, Al Raha: the photo is the MALL's outside, not the cinema.
+#   Cine Royal WTC Mall   3D renders, not photos.
+# Cine Royal serves its photos as multipart/form-data and Star's big ones are 12–18 MB: cinema_photos.py trusts Pillow
+# rather than the Content-Type and allows 20 MB for these. Novo's resizer URLs are used as the site's own page lists them.
+cinemas:
+  # --- Cinemacity (each cinema's page under https://www.cinemacity.ae/our-locations/, its hero image)
+  cinemacity-alqana: "https://cms-assets.webediamovies.pro/cdn-cgi/image/dpr=1,fit=scale-down,gravity=auto,metadata=none,quality=85,width=1920,height=1160/production/4689/4171e8279c8522211329deed41aafa2b.jpg"
+  cinemacity-arabian-centre: "https://cms-assets.webediamovies.pro/cdn-cgi/image/dpr=1,fit=scale-down,gravity=auto,metadata=none,quality=85,width=1920,height=799/production/4689/4e420aea7ccbdb944db6f93bee5fc2cd.jpeg"
+  cinemacity-fountain-views: "https://cms-assets.webediamovies.pro/cdn-cgi/image/dpr=1,fit=scale-down,gravity=auto,metadata=none,quality=85,width=1920,height=1097/production/4689/955cb0f6dc1957101f26bac047286f61.jpeg"
+  cinemacity-rahmania: "https://cms-assets.webediamovies.pro/cdn-cgi/image/dpr=1,fit=scale-down,gravity=auto,metadata=none,quality=85,width=1920,height=1275/production/4689/e90eefecb1baa631848b466c08cfe4de.jpg"
+  # Starlight (Marina Mall): the hero has a slogan printed on it, so a plain auditorium photo from the same page's gallery
+  cinemacity-starlight: "https://cms-assets.webediamovies.pro/cdn-cgi/image/dpr=1,fit=scale-down,gravity=auto,metadata=none,quality=85,width=2000/production/4689/44eaa6b86734c0767c1b2f85a0e8288c.jpg"
+  cinemacity-zero-6-mall: "https://cms-assets.webediamovies.pro/cdn-cgi/image/dpr=1,fit=scale-down,gravity=auto,metadata=none,quality=85,width=1920,height=1281/production/4689/2e55c7d5a556970923ed905a93bf020c.jpg"
+  # --- Cine Royal (https://cineroyal.ae/ each cinema's page, its gallery)
+  cineroyal-al-dhannah-mall: "https://media.cineroyal.ae/zoomedImages/931801a5-1c02-4f0d-b44d-71f37fccfaa4.jpg"
+  cineroyal-dalma-mall: "https://media.cineroyal.ae/zoomedImages/5ca93b8b-7697-4427-a3fd-7ea296bbb7f2.jpg"
+  cineroyal-deerfields-mall: "https://media.cineroyal.ae/zoomedImages/864f065d-7f23-448d-a60e-554542a8d301.jpg"
+  cineroyal-khalidiyah-mall: "https://media.cineroyal.ae/zoomedImages/a4e384b2-4b9d-4f33-86ae-e28c2bbcfade.jpg"
+  # --- Novo (https://uae.novocinemas.com/location — each cinema's own image_url from the site's cinema list)
+  novo-bas-mall-baniyas: "https://imagenovo-v3.novocinemas.com/3e104ba9-ac06-43e9-9d5a-d1f1e439716b.jpg?w=1200&q=75&format=auto"
+  novo-buhairah-centre: "https://imagenovo-v3.novocinemas.com/21272011-5700-4ff3-b269-b459b7a6e0f0.jpg?w=1200&q=75&format=auto"
+  novo-dragon-mart: "https://imagenovo-v3.novocinemas.com/18cd15e3-5fe6-44f0-84b5-36ac29ca1d81.jpg?w=1200&q=75&format=auto"
+  novo-manar-mall: "https://imagenovo-v3.novocinemas.com/a14141dd-e4c3-4451-b718-f9dcbcc0611b.jpg?w=1200&q=75&format=auto"
+  novo-mega-mall: "https://imagenovo-v3.novocinemas.com/fba99a06-3e2a-4b69-92f3-4a85490c4fa5.jpg?w=1200&q=75&format=auto"
+  novo-sahara-centre: "https://imagenovo-v3.novocinemas.com/eeddb2df-9cf3-4ab7-9ae8-458a58f182b0.jpg?w=1200&q=75&format=auto"
+  # --- ROXY (https://www.theroxycinemas.com/en/cinemas/<cinema>, the page's banner)
+  roxy-al-khawaneej: "https://www.theroxycinemas.com/sites/default/files/styles/original/public/2025-05/8k8a6540_2.webp?itok=alxTqWOs"
+  roxy-boxpark: "https://www.theroxycinemas.com/sites/default/files/styles/original/public/2025-05/box_park_banner_2.webp?itok=KTxoRQd3"
+  roxy-city-walk: "https://www.theroxycinemas.com/sites/default/files/styles/original/public/2025-05/city_walk_banner_2.webp?itok=uHlIZ1Ct"
+  roxy-dubai-hills-mall: "https://www.theroxycinemas.com/sites/default/files/styles/original/public/2025-05/dubai_hill_banner_image_4_0.webp?itok=_F08LdMx"
+  roxy-the-beach-jbr: "https://www.theroxycinemas.com/sites/default/files/styles/original/public/2025-05/the_beach_banner_2_0.webp?itok=XuFvyIQj"
+  # --- Star (https://www.starcinemas.ae/Locations — each cinema's image from the site's own cinema list)
+  star-central-mall-kc-abu-dhabi: "https://web-api.starcinemas.ae/uploads/Cinema/1681763258489-img_0443.jpg"
+  star-grand-mall-ajman: "https://web-api.starcinemas.ae/uploads/Cinema/1681763350161-img_0424.jpg"
+  star-grand-safeer-abu-dhabi: "https://web-api.starcinemas.ae/uploads/Cinema/1681763303155-img_0435.jpg"
+  star-junction-mall-dip-dubai: "https://star-image.starcinemas.ae/S3/uploads/Cinema/1775117808145-junctionmall5.jpg"
+  star-mall-of-uaq-umm-al-quwain: "https://web-api.starcinemas.ae/uploads/Cinema/1681763486935-img_0418.jpg"
+  star-national-cinema-abu-dhabi: "https://web-api.starcinemas.ae/uploads/Cinema/1681763197643-img_0432.jpg"

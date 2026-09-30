@@ -68,7 +68,7 @@ PT = {
     "next": ("التالي {t}", "next {t}"), "none_left": ("ما في عروض باقية {when}", "no shows left {when}"),
     "closes": ("المول يسكّر {t}", "The mall closes at {t}"),
     "late": ("يخلص بعد ما يسكّر المول: {films}. استعمل مدخل السينما.", "Ends after the mall closes: {films}. Use the cinema’s own entrance."),
-    "go": ("الوصول", "Getting there"), "mine": ("سينمتي", "My cinema"),
+    "go": ("الوصول", "Getting there"), "mine": ("سينمتي", "My cinema"), "pin": ("ثبّتها سينمتي", "Pin as my cinema"),
     "halls": ("القاعات والأسعار", "Halls and prices"), "seat": ("الفئة", "Seat"), "price": ("السعر", "Price"),
     "what": ("شو الفرق بين القاعات؟", "What each hall is"),
     "halls_all": ("كل القاعات المميزة في الإمارات، مقارنة", "Every premium hall in the UAE, compared"),
@@ -441,8 +441,11 @@ class PlacesPages:
         ar = lang == "ar"
         mark = ('<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true" '
                 'focusable="false"><path d="M6 3h12v18l-6-4-6 4z"/></svg>')
-        fav = (f'<button type="button" class="fav" data-fav="{esc(cid)}" aria-pressed="false" hidden>{mark}'
-               f'<span class="vh">{esc(L(PT["mine"], lang))}</span></button>')
+        # «سينمتي» (round3-gaps: W3-P1 never shipped, so this stayed hidden): src/js/fav.js unhides it, keeps the pin
+        # in cinema.me {cins} (the key filters.js's «وين: سينمتي» already reads) and swaps the label when pressed
+        fav = (f'<button type="button" class="fav" data-fav="{esc(cid)}" data-city="{esc(city or "")}" aria-pressed="false" hidden'
+               f' data-on="{esc(L(PT["mine"], lang))}" data-off="{esc(L(PT["pin"], lang))}">{mark}'
+               f'<span class="fav-l">{esc(L(PT["pin"], lang))}</span></button>')
         photo = c.get("photo")
         bd = ""
         if isinstance(photo, dict) and photo.get("w1280") and photo.get("w640"):

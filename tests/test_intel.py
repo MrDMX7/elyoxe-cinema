@@ -405,4 +405,7 @@ def test_film_info_slot_hides_arabic_intel_on_the_english_mirror():
     assert "IMDb" in html_en
     assert "سبب مهم" not in html_en and "ملخص عربي" not in html_en and "نهاية عربية" not in html_en
     html_ar = intel_page._film_info(site, "ar", "x")
-    assert "سبب مهم" in html_ar and "ملخص عربي" in html_ar
+    assert "ملخص عربي" in html_ar
+    # round3-gaps: the reasons are the hero's «ليش يستاهل؟» (film.why) now, never the tab's — and Arabic only there too
+    assert "سبب مهم" not in html_ar and "سبب مهم" in intel_page._why(site, "ar", "x")
+    assert "سبب مهم" not in intel_page._why(site, "en", "x")

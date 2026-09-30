@@ -56,6 +56,7 @@ from __future__ import annotations
 import functools
 import hashlib
 import os
+import re
 import sys
 from datetime import date, datetime
 from pathlib import Path
@@ -412,6 +413,21 @@ def _card(lang, title, price, city_label, day, poster_path, wordmark):
     return buf.getvalue()
 
 
+_STORY_NAME = re.compile(r"^(?P<fid>.+)-(?P<lang>ar|en)-story-[0-9a-f]{12}\.webp$")
+
+
+def _last_story(out_dir, fid, lang):
+    """The newest Stories card already on disk for this film and language (any hash), or None."""
+    best = None
+    for p in Path(out_dir).glob(f"{fid}-{lang}-story-*.webp"):
+        m = _STORY_NAME.match(p.name)
+        if not m or m.group("fid") != fid or m.group("lang") != lang:
+            continue
+        if best is None or p.stat().st_mtime > best.stat().st_mtime:
+            best = p
+    return best.name if best else None
+
+
 def run(data: dict, ctx: dict) -> dict | None:
     data_dir = ctx.get("data_dir") or (ROOT / "data")
     out_dir = Path(data_dir) / "og"
@@ -423,7 +439,7 @@ def run(data: dict, ctx: dict) -> dict | None:
     # Stories cap (round 3 QA fix): at most STORY_CAP NEW renders per run -- a cache hit (nothing about the
     # film's own inputs changed) never counts against it, so a normal day with a static catalogue does zero
     # new work regardless of how many films are showing.
-    story_new = 0
+    story_todo = []   # (0 = no card yet | 1 = a stale card still in use, fid, lang, title, price, poster, name, old)
 
     for fid, f in films.items():
         archived = f.get("status") == "archived"
@@ -468,31 +484,42 @@ def run(data: dict, ctx: dict) -> dict | None:
         # the Stories card: showing films only. Round 3 QA fix: the hash folds in the film's own inputs
         # (title, price, poster) but NOT today's date, so date-only churn never forces a re-render -- a
         # film re-renders only when something about it actually changed.
+        # round3-gaps (2026-09-30): only the first 5 films in dict order ever had a card on the live site -- a
+        # changed price re-rendered those same films every run and the cap ran out before the rest. Now a film's
+        # last card stays in use (and on disk) until its re-render lands, and films with NO card go first.
         if not archived:
             story_price = _cheapest_today(shows, fid, today)
-            og_story = f.get("og_story") if isinstance(f.get("og_story"), dict) else {}
+            og_story = {}
             for lang in ("ar", "en"):
                 title = str((f.get("title_ar") or f.get("title")) if lang == "ar" else (f.get("title") or f.get("title_ar")) or fid)
-                wordmark = "سينما" if lang == "ar" else "Cinema"
                 h = _hash(STORY_RENDER_VERSION, "story", fid, lang, title, story_price, st.st_size, st.st_mtime_ns)
                 name = f"{fid}-{lang}-story-{h}.webp"
-                keep.add(name)
-                dest = out_dir / name
-                if dest.is_file():
+                if (out_dir / name).is_file():
+                    keep.add(name)
                     og_story[lang] = name
                     continue
-                if story_new >= STORY_CAP:   # over the per-run cap on NEW renders: leave it for a later run
-                    continue
-                try:
-                    webp = _story_card(lang, title, story_price, wordmark, poster)
-                    dest.write_bytes(webp)
-                    og_story[lang] = name
-                    rendered += 1
-                    story_new += 1
-                except Exception:  # noqa: BLE001 - same rule as the 1200x630 card: skip, never abort the step
-                    skipped += 1
+                old = _last_story(out_dir, fid, lang)
+                if old:
+                    keep.add(old)
+                    og_story[lang] = old
+                story_todo.append((1 if old else 0, fid, lang, title, story_price, poster, name, old))
             if og_story:
                 f["og_story"] = og_story
+            else:
+                f.pop("og_story", None)
+
+    # Stories renders, films with no card first, at most STORY_CAP NEW renders a run (a cache hit never counts)
+    for _pri, fid, lang, title, story_price, poster, name, old in sorted(story_todo, key=lambda t: t[0])[:STORY_CAP]:
+        try:
+            webp = _story_card(lang, title, story_price, "سينما" if lang == "ar" else "Cinema", poster)
+            (out_dir / name).write_bytes(webp)
+        except Exception:  # noqa: BLE001 - same rule as the 1200x630 card: skip, never abort the step
+            skipped += 1
+            continue
+        keep.add(name)
+        keep.discard(old)
+        films[fid].setdefault("og_story", {})[lang] = name
+        rendered += 1
 
     # prune stale renders (a changed input, or a format/version bump) for both the 1200x630 (.png) and
     # Stories (.webp) cards -- never let data/og/ grow forever
