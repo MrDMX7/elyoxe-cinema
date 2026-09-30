@@ -15,7 +15,9 @@
    one Markazi word plus three short lines, no card grid inside it */
 .cs-mast{padding:20px 16px;margin:0 auto 20px;text-align:center}
 .cs-mast-w{margin:0;font-family:var(--display);font-weight:var(--dw);font-size:96px;line-height:1}
-@media (min-width:1024px){.cs-mast-w{font-size:160px}}
+/* «Thursday» at 96 px is ~440 px wide: on /en/ it scaled the page to 458 px at every phone width (round3 QA) */
+[dir=ltr] .cs-mast-w{font-size:min(96px,17vw)}
+@media (min-width:1024px){.cs-mast-w,[dir=ltr] .cs-mast-w{font-size:160px}}
 .cs-mast-d,.cs-mast-i,.cs-mast-n{margin:4px 0 0;font-size:.95em}
 .cs-mast-i{color:var(--ink-2)}
 .cs-mast-n{color:var(--ink-2);font-size:.8em}

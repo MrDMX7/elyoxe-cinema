@@ -122,7 +122,7 @@ def test_schedule_by_city_ticket_column_and_dock(out):
     assert re.search(r'<div class="dock paper stub" data-dock role="region" aria-label="الوقت المختار" hidden>'
                      r'<div class="dk-t"><b class="dk-time" dir="ltr" data-dk-time></b><p class="dk-s" data-dk-s></p>'
                      r'<div class="dk-act"><button type="button" class="lnk dk-more" data-dk-open aria-haspopup="dialog">التفاصيل</button>'
-                     r'<a class="dk-b" data-dk-book rel="noopener nofollow" target="_blank"></a></div></div>'
+                     r'<a class="dk-b" id="dk-book" data-dk-book rel="noopener nofollow" target="_blank"></a></div></div>'
                      r'<div class="perf" aria-hidden="true"><span class="dk-stamp" data-dk-stamp></span></div>'
                      r'<div class="dk-p" data-dk-p></div></div>', m)
     assert '<p class="nc" data-nc hidden></p>' in m and "data-empty hidden" in m

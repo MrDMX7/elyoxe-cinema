@@ -221,7 +221,7 @@ class FilmPages:
                 dock = (f'<div class="dock paper stub" data-dock role="region" aria-label="{esc(L(FILM_T["chosen"], lang))}" hidden>'
                         f'<div class="dk-t"><b class="dk-time" dir="ltr" data-dk-time></b><p class="dk-s" data-dk-s></p>'
                         f'<div class="dk-act"><button type="button" class="lnk dk-more" data-dk-open aria-haspopup="dialog">{esc(L(FILM_T["details"], lang))}</button>'
-                        f'<a class="dk-b" data-dk-book rel="noopener nofollow" target="_blank"></a></div></div>'
+                        f'<a class="dk-b" id="dk-book" data-dk-book rel="noopener nofollow" target="_blank"></a></div></div>'
                         f'<div class="perf" aria-hidden="true"><span class="dk-stamp" data-dk-stamp></span></div>'
                         f'<div class="dk-p" data-dk-p></div>'
                         f'</div><p class="vh" data-dk-live aria-live="polite"></p>')   # the live region outside the dock: always rendered (M5)
