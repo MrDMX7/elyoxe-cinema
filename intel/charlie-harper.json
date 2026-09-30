@@ -1,0 +1,26 @@
+{
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "charlie-harper",
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-10-03",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "نسبة 61% من النقاد على Rotten Tomatoes حكم متوسط، مب قوي ولا ضعيف"
+    },
+    {
+      "pos": false,
+      "text": "الرقم مبني على 31 نقد بس، عينة مب كبيرة وايد"
+    },
+    {
+      "pos": true,
+      "text": "يجمع رومانسي ودراما، خيار زين لمحبين هالنوعين"
+    }
+  ],
+  "written": "2026-09-30"
+}

@@ -1,0 +1,31 @@
+{
+  "audience": [
+    {
+      "source": "Rotten Tomatoes",
+      "text": "الجمهور متفاوت بآرائه لكن ميّال شوي للإيجابية أكثر من النقاد"
+    }
+  ],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "dark-nun",
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-10-03",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": false,
+      "text": "تقييم النقاد 53% من 17 نقد، يعني آراء متوسطة ومنقسمة"
+    },
+    {
+      "pos": true,
+      "text": "الجمهور أعطاه 61%، أعلى شوي من تقييم النقاد"
+    },
+    {
+      "pos": true,
+      "text": "120 دقيقة من الرعب والإثارة"
+    }
+  ],
+  "written": "2026-09-30"
+}
