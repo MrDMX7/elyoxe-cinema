@@ -114,10 +114,38 @@ fail() {  # fail <message> <rc> <key> -- <rc> is the FRESH-failure exit code (6 
   exit "${2:-1}"
 }
 
-exec 8>"$HERE/data/.run.lock"
-flock -n 8 || { echo "another run holds the lock — skipping"; exit 0; }
+# one instance at a time. flock (util-linux) is on the Fold, CI and every Linux dev box, but
+# Windows Git Bash ships none — command -v finds nothing there and `flock -n 8` would just fail
+# with "command not found" (127, non-zero), which the old `flock -n 8 || skip` read as "someone
+# else holds the lock" on EVERY run, forever. Where flock exists, behaviour is unchanged byte for
+# byte (including test_degraded_state.py's fake `flock` on PATH). Where it doesn't, fall back to
+# an mkdir lock (atomic on any filesystem, Windows included), reclaimed if stale — a run never
+# takes anywhere near 3h, so a killed process must not wedge every later run forever.
+if command -v flock >/dev/null 2>&1; then
+  exec 8>"$HERE/data/.run.lock"
+  flock -n 8 || { echo "another run holds the lock — skipping"; exit 0; }
+else
+  LOCKDIR="$HERE/data/.run.lock.d"
+  now_lock=$(date +%s)
+  if [ -d "$LOCKDIR" ]; then
+    lock_ts=$(cat "$LOCKDIR/started" 2>/dev/null); case "$lock_ts" in ''|*[!0-9]*) lock_ts=0;; esac
+    if [ $(( now_lock - lock_ts )) -gt 10800 ]; then
+      echo "run.sh: stale lock (started ${lock_ts}, >3h old) — reclaiming"
+      rm -rf "$LOCKDIR"
+    fi
+  fi
+  if ! mkdir "$LOCKDIR" 2>/dev/null; then
+    echo "another run holds the lock — skipping"; exit 0
+  fi
+  echo "$now_lock" > "$LOCKDIR/started"
+  trap 'rm -rf "$LOCKDIR"' EXIT
+fi
 
-PY="$HERE/.venv/bin/python"; [ -x "$PY" ] || PY=python3
+# .venv/bin/python (Linux: the Fold, CI) vs .venv/Scripts/python.exe (Windows `python -m venv`) —
+# try both before falling back to whatever python3 is on PATH.
+PY="$HERE/.venv/bin/python"
+[ -x "$PY" ] || PY="$HERE/.venv/Scripts/python.exe"
+[ -x "$PY" ] || PY=python3
 export PY PYTHONUNBUFFERED=1
 
 echo "== cinema run start (py: $PY)"
