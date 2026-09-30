@@ -110,8 +110,15 @@ def _why(site, lang, fid):
     head = L["why_yes"] if v == "yes" else L["why_skip"] if v == "skip" else L["why_mixed"]
     cls = lambda pos: "pos" if pos is True else "neg" if pos is False else "mid"
     lis = "".join(f'<li class="{cls(pos)}">{_decimals(dates(esc(t)))}</li>' for t, pos in items)
+    # the sections further down (in «عن الفيلم»), one tap from the hero: owner 2026-09-30 «ما لقيت اشرح النهاية ولا اسأل
+    # الفيلم» — they sat under the whole schedule. tabs.js opens the «عن الفيلم» tab and the <details> the link names.
+    jumps = ""
+    if intel and lang == "ar":
+        links = ([("i-aud", L["audience"][0])] if intel.get("audience") else []) +                 [("i-end", L["ending_btn"][0]), ("i-qa", L["qa_btn"][0])]
+        jumps = '<nav class="i-jumps" aria-label="عن الفيلم">' + "".join(
+            f'<a class="i-jump" href="#{i}">{esc(t)}</a>' for i, t in links) + '</nav>'
     return (f'<details class="fwhy" data-why="{src}"><summary><span>{esc(head[0 if lang == "ar" else 1])}</span></summary>'
-            f'<ul class="i-list">{lis}</ul></details>')
+            f'<ul class="i-list">{lis}</ul></details>{jumps}')
 
 
 def _score_row(film, lang, intel=None):
@@ -141,7 +148,7 @@ def _audience(intel, lang):
     if not pts:
         return ""
     items = "".join(f'<li>{dates(esc(p.get("text", "")))} <span class="src">— {esc(p.get("source", ""))}</span></li>' for p in pts)
-    return (f'<details class="i-d i-audience"><summary>{esc(L["audience"][0 if lang == "ar" else 1])}</summary>'
+    return (f'<details class="i-d i-audience" id="i-aud"><summary>{esc(L["audience"][0 if lang == "ar" else 1])}</summary>'
             f'<ul class="i-list">{items}</ul></details>')
 
 
@@ -162,7 +169,7 @@ def _spoiler(intel, lang):
     ending = intel.get("ending") if has_plot else None
     ending_body = dates(esc(ending)) if ending else esc(L["no_answer"][0 if lang == "ar" else 1])
     gate = f'<p class="i-gate">{esc(L["gate"][0 if lang == "ar" else 1])}</p>'
-    end_d = (f'<details class="i-d i-spoiler"><summary>{esc(L["ending_btn"][0 if lang == "ar" else 1])}</summary>'
+    end_d = (f'<details class="i-d i-spoiler" id="i-end"><summary>{esc(L["ending_btn"][0 if lang == "ar" else 1])}</summary>'
              f'<p class="i-warn">{warn}</p>{gate}<div class="i-body"><p>{ending_body}</p></div></details>')
     qa = (intel.get("qa") or []) if has_plot else []
     if qa:
@@ -170,7 +177,7 @@ def _spoiler(intel, lang):
                           f'<p class="a">{dates(esc(x.get("a", "")))}</p></div>' for x in qa)
     else:
         qa_body = f'<p>{esc(L["no_answer"][0 if lang == "ar" else 1])}</p>'
-    qa_d = (f'<details class="i-d i-spoiler"><summary>{esc(L["qa_btn"][0 if lang == "ar" else 1])}</summary>'
+    qa_d = (f'<details class="i-d i-spoiler" id="i-qa"><summary>{esc(L["qa_btn"][0 if lang == "ar" else 1])}</summary>'
             f'<p class="i-warn">{warn}</p>{gate}<div class="i-body">{qa_body}</div></details>')
     # «بدون حرق»: a visible switch right above the two disclosures, on by default (see the module note)
     switch = (f'<label class="i-ns"><input type="checkbox" checked data-nospoil>'
