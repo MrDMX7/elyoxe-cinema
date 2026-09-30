@@ -33,7 +33,7 @@
    «غيره» swaps to the next card with no flaps; the flaps (§1.3) run once, on the session's first pick this
    session (sessionStorage, never localStorage — a first impression, not a preference), then never again. A
    landed pick is announced once (aria-live) and focus moves to its «احجز». */
-var PK = { list: [], i: -1, Y: null };
+var PK = { list: [], i: -1, Y: null, tomorrow: null };
 
 function pkT(ar, en) { return K.AR ? ar : en; }
 function pkToMin(t) { return +t.slice(0, 2) * 60 + +t.slice(3, 5); }
@@ -41,9 +41,12 @@ function pkToMin(t) { return +t.slice(0, 2) * 60 + +t.slice(3, 5); }
 function pkReachMs(km) { return (km == null ? 35 : Math.round(km * 1.6) + 20) * 6e4; }
 /* «مع منو» fit (kit/filters.who_fits' data-fits): an unknown fit under a restriction is excluded, never assumed */
 function pkWhoOk(fits, who) { return !who || (" " + (fits || "") + " ").indexOf(" " + who + " ") >= 0; }
-/* the film's tile, wherever the page drew one («كل الأفلام», a home row): the one copy of its verdict and fit */
+/* the film's tile, wherever the page drew one («كل الأفلام», a home row): the grid tile is the one that carries
+   data-fits/data-rating (kit/tile.py, row=False); a home row's tile (row=True) has neither, so it is never picked
+   over a grid tile that exists for the same film (fix round: a family/kids pick was dropping films that also had
+   a row, because the row tile came first in the DOM and its missing data-fits read as "fits nothing") */
 function pkMeta(fid) {
-  var el = K.q('[data-fid="' + fid + '"][data-v]');
+  var el = K.q('.film.tile[data-fid="' + fid + '"][data-v]') || K.q('[data-fid="' + fid + '"][data-v]');
   return el ? { v: el.getAttribute("data-v") || "unknown", fits: el.getAttribute("data-fits") || "", rating: el.getAttribute("data-rating") || "" }
             : { v: "unknown", fits: "", rating: "" };
 }
@@ -89,7 +92,10 @@ function pkCandidates(Y, nowMs, ask, tomorrow) {
     if (meta.v === "skip") return;              // «تجنّبه»
     if (pkSeen(s.f)) return;                     // «شفته؟»
     if (!pkWhoOk(meta.fits, ask.who)) return;
-    var pay = Math.min.apply(null, (s.p || []).map(function (p) { return p[1]; }).filter(function (v) { return v > 0; }).concat([0]));
+    /* the cheapest *sold* price, or 0 with none (fix round, Critical #1: concat([0]) before the min used to make
+       every result 0 — board-live.js `lowest()` is the same "positives only, else 0" rule) */
+    var prices = (s.p || []).map(function (p) { return p[1]; }).filter(function (v) { return v > 0; });
+    var pay = prices.length ? Math.min.apply(null, prices) : 0;
     out.push({ s: s, meta: meta, km: K.bd.km(s.c), pay: pay });
   });
   return out;
@@ -117,21 +123,41 @@ function pkRank(cand, nowMs, ask) {
 }
 
 function pkChain(cid) { return PK.Y && PK.Y.cinemas[cid] ? PK.Y.cinemas[cid].chain : ""; }
-/* the price after the card, through the one function the board and every price cell already use (disc.js) */
+/* the price after the card, through the one function the board and every price cell already use (disc.js).
+   `data-asof` is passed through (fix round, Important #6) so a fallback-table price is never presented as live —
+   board-live.js `lowest()` already refuses those; `off` says whether the card actually changed it, for pkWhyPrice */
 function pkPrice(c) {
-  if (!c.pay) return { html: "", pay: 0 };
+  if (!c.pay) return { html: "", pay: 0, off: false };
   var el = document.createElement("span");
   el.setAttribute("data-aed", c.pay); el.setAttribute("data-cin", c.s.c); el.setAttribute("data-hall", c.s.h);
   el.setAttribute("data-hk", c.s.k); el.setAttribute("data-chain", pkChain(c.s.c));
+  if (c.s.asof) el.setAttribute("data-asof", c.s.asof);
   el.innerHTML = K.bd.price(el, false);
-  return { html: el.innerHTML, pay: +el.getAttribute("data-shown") || c.pay };
+  return { html: el.innerHTML, pay: +el.getAttribute("data-shown") || c.pay, off: /<s[ >]/.test(el.innerHTML) };
+}
+/* the price term for «ليش؟»: only the pay figure plus «درهم», and «بعد {card}» once it actually changed the price
+   (§3.1's own example: «29 درهم بعد فزعة») — never the struck list price or the asof note run in beside it
+   (fix round, Important #6: the stripped-tags version used to read "29 42" with no unit) */
+function pkWhyPrice(pr) {
+  if (!pr.html) return "";
+  var s = '<span class="num">' + pr.pay + "</span> " + K.esc(K.C.aed || "");
+  var cn = pr.off && K.C.cards && K.C.cards[K.card()];
+  if (cn) s += " " + K.esc(K.sub(K.C.after_card, { card: cn }));
+  return s;
+}
+/* the start-fit line, worded from the show's own date/time, never a fixed «الليلة» (fix round, Important #5: a
+   tomorrow show, or a same-day show hours out, used to be captioned "tonight" regardless) */
+function pkWhyStart(r, tomorrow) {
+  if (r.mins > 0 && r.mins <= 90) return pkT("يبدأ بعد " + r.mins + " د", "starts in " + r.mins + " min");
+  if (r.c.s.d === tomorrow) return pkT("بكرة " + r.c.s.t, "tomorrow " + r.c.s.t);
+  return pkT(r.c.s.t, r.c.s.t);
 }
 /* «ليش؟»: the price, then the top 3 positive terms in plain words (§3.1's example) */
-function pkWhy(r, priceText) {
+function pkWhy(r, priceText, tomorrow) {
   var t = r.t, why = [];
   if (r.c.meta.v === "yes") why.push({ w: 1, s: pkT("يستاهل", "worth it") });
   else if (r.c.meta.v === "mixed") why.push({ w: .3, s: pkT("بين بين", "mixed") });
-  why.push({ w: t.start, s: r.mins <= 90 && r.mins > 0 ? pkT("يبدأ بعد " + r.mins + " د", "starts in " + r.mins + " min") : pkT("الليلة", "tonight") });
+  why.push({ w: t.start, s: pkWhyStart(r, tomorrow) });
   if (r.c.km != null) why.push({ w: t.dist, s: K.bd.kmt(r.c.km, K.lang) });
   why.sort(function (a, b) { return b.w - a.w; });
   var top = why.slice(0, 3).map(function (x) { return x.s; });
@@ -148,9 +174,9 @@ var PK_T = {
 
 function pkRender(box, flap) {
   var r = PK.list[PK.i];
-  if (!r) { box.className = "pk-stub"; box.innerHTML = '<p class="pk-empty">' + K.esc(PK_T.empty) + "</p>"; return; }
+  if (!r) { pkEmpty(box); return; }
   var s = r.c.s, cn = K.bd.nm((PK.Y.cinemas || {})[s.c] || {}), fn = K.bd.nm((PK.Y.films || {})[s.f] || {});
-  var pr = pkPrice(r.c), chain = pkChain(s.c), why = pkWhy(r, pr.html ? '<span class="num">' + pr.html.replace(/<[^>]+>/g, "") + "</span>" : "");
+  var pr = pkPrice(r.c), chain = pkChain(s.c), why = pkWhy(r, pkWhyPrice(pr), PK.tomorrow);
   box.className = "pk-stub paper" + (flap ? " pk-flap" : "");
   box.innerHTML =
     '<div class="pk-body"><p class="pk-h">' + K.esc(PK_T.head) + '</p>'
@@ -158,11 +184,15 @@ function pkRender(box, flap) {
     + '<p class="pk-cin"><bdi>' + K.esc(cn) + '</bdi></p>'
     + (pr.html ? '<p class="pk-p">' + pr.html + '</p>' : "")
     + '<p class="pk-why"><b>' + K.esc(PK_T.why) + '</b> ' + why + '</p></div>'
-    + '<div class="pk-act"><a class="btn main velvet" href="' + K.esc(s.b || "#s-" + K.showKey(s.c, s.d, s.t, s.k)) + '" rel="noopener nofollow" target="_blank" data-pk-book>'
+    /* the fallback (no booking URL yet) opens the film page's own anchor, same as home.js's tile — never a bare
+       "#s-…" on the page pick.js rendered on (home/404 have no such anchor), fix round Minor #3 */
+    + '<div class="pk-act"><a class="btn main velvet" href="' + K.esc(s.b || (K.C.base + "film/" + s.f + "/#s-" + K.showKey(s.c, s.d, s.t, s.k))) + '"'
+    + (s.b ? ' rel="noopener nofollow" target="_blank"' : "") + ' data-pk-book>'
     + K.esc(PK_T.book.replace("{c}", chain || cn)) + '</a>'
     + '<button type="button" class="btn ghost" data-pk-again>' + K.esc(PK_T.again) + "</button></div>";
   var live = document.getElementById("pk-live");
-  if (live) live.textContent = K.esc(PK_T.said.replace("{t}", s.t).replace("{f}", fn).replace("{c}", cn));
+  /* textContent never needs K.esc: escaping is for innerHTML, and here it double-escapes (fix round, Minor #2) */
+  if (live) live.textContent = PK_T.said.replace("{t}", s.t).replace("{f}", fn).replace("{c}", cn);
   var go = K.q("[data-pk-book]", box);
   if (go) { if (flap) setTimeout(function () { go.focus(); }, 920); else go.focus(); }
 }
@@ -171,37 +201,49 @@ function pkFlapOnce() {
   try { if (sessionStorage.getItem("cinema.pkFlap")) return false; sessionStorage.setItem("cinema.pkFlap", "1"); return true; } catch (e) { return true; }
 }
 
+/* the box lands after the flex row that holds the button (home's `.bh-top`, places.py's `.ch-t`), never as a
+   third item squeezed into that row itself — the 404's `.bh-nolabel` has no such row, so the old "after the
+   button" default still applies there (fix round, Important #2: the stub used to render inside `.bh-top`'s own
+   flex layout on home, at 360/390 too). `btn._pkBox` (not DOM position) is how pkGo finds it again, since the
+   box is no longer always the button's next sibling. */
 function pkMount(btn) {
   if (!document.getElementById("pk-live")) {
     var live = document.createElement("p"); live.id = "pk-live"; live.className = "vh"; live.setAttribute("aria-live", "polite");
     document.body.appendChild(live);
   }
   var box = document.createElement("div"); box.className = "pk-stub"; box.setAttribute("data-pk-box", "");
-  btn.insertAdjacentElement("afterend", box);
+  var row = btn.closest(".bh-top") || btn.closest(".ch-t");
+  (row || btn).insertAdjacentElement("afterend", box);
+  btn._pkBox = box;
   return box;
 }
 
 function pkRun(box, city, ask) {
   var nowMs = K.now().getTime(), dd = K.bd.days();
+  PK.tomorrow = dd[1];
   PK.list = pkRank(pkCandidates(PK.Y, nowMs, ask, dd[1]), nowMs, ask);
   PK.i = 0;
   pkRender(box, pkFlapOnce());
 }
 
+function pkEmpty(box) { box.className = "pk-stub"; box.innerHTML = '<p class="pk-empty">' + K.esc(PK_T.empty) + "</p>"; }
+
 function pkGo(btn) {
   var city = btn.getAttribute("data-pick") || K.city();
-  var box = btn.nextElementSibling && btn.nextElementSibling.hasAttribute("data-pk-box") ? btn.nextElementSibling : pkMount(btn);
+  var box = btn._pkBox || pkMount(btn);
   var ask = window.CINEMA.ask ? window.CINEMA.ask() : { who: "", when: "", where: "" };
   var have = K.bd.S();
   if (have && have.city === city) { PK.Y = have; pkRun(box, city, ask); return; }
   var dd = K.bd.days();
+  /* a slice fetch can fail (offline, a bad response): «غيره» would then tap on nothing forever, so a failure
+     says the same "nothing fits" line rather than the button going silent (fix round, Minor #1) */
   Promise.all([K.bd.day(city, dd[0]), K.bd.day(city, dd[1])]).then(function (ds) {
     var o = { cinemas: {}, films: {}, shows: [], city: city };
     ds.forEach(function (x) { for (var k in x.cinemas) o.cinemas[k] = x.cinemas[k]; for (k in x.films) o.films[k] = x.films[k]; o.shows = o.shows.concat(x.shows); });
     PK.Y = o;
-    if (!o.shows.length) { box.className = "pk-stub"; box.innerHTML = '<p class="pk-empty">' + K.esc(PK_T.empty) + "</p>"; return; }
+    if (!o.shows.length) { pkEmpty(box); return; }
     pkRun(box, city, ask);
-  });
+  }).catch(function () { pkEmpty(box); });
 }
 
 document.addEventListener("click", function (e) {

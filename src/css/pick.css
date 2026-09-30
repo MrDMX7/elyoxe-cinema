@@ -8,6 +8,10 @@
 .bh-top h2{flex:1}
 .bh-nolabel{min-block-size:0}
 .pl-pick{min-block-size:44px;flex:0 0 auto}
+/* held invisible, not absent (fix round, Important #3): `hidden` alone is display:none, so unhiding it later
+   shifts the layout (CLS) — visibility keeps its 44 px reserved from first paint, on the head row and on the
+   404's own column both */
+.pl-pick[hidden]{display:inline-flex;visibility:hidden}
 .pk-stub{margin-block-start:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
 .pk-h{margin:0;font-size:var(--fs-meta);color:var(--ink-2);text-transform:none}
 .pk-when{margin:4px 0 0;font-size:var(--fs-h2);font-weight:600;line-height:1.2;display:flex;align-items:baseline;gap:8px}

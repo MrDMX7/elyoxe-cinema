@@ -22,18 +22,20 @@ JS = Path(ROOT, "src", "js", "pick.js")
 # a minimal city slice (S), UAE minutes; `now` is 2026-10-01 20:00 Dubai time. Two cinemas (c1 3 km away, c2 20 km),
 # three films: f1 «يستاهل» family-fit (G), f2 «تجنّبه», f3 unknown verdict, kids-fit
 NOW_MS = 1000000000000  # an arbitrary fixed instant; only relative offsets below matter to the scorer
-STUB = """
+STUB = r"""
 var K = (function () {
   var meta = %(meta)s, cins = { c1: {chain:"reel",ar:"سي وان",en:"C1"}, c2: {chain:"vox",ar:"سي تو",en:"C2"} };
   var km = { c1: 3, c2: 20 };
   function makeEl(attrs) { return { getAttribute: function (k) { return attrs.hasOwnProperty(k) ? attrs[k] : null; } }; }
   return {
-    AR: true, lang: "ar", C: {},
+    AR: true, lang: "ar", C: { aed: "درهم", base: "/", cards: { fazaa: "فزعة" }, after_card: "بعد خصم {card}" },
     q: function (sel) { var m = /data-fid="([^"]+)"/.exec(sel); var f = m && meta[m[1]]; return f ? makeEl(f) : null; },
     qa: function () { return []; },
     esc: function (s) { return String(s == null ? "" : s); },
+    sub: function (s, o) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return o[k] != null ? o[k] : m; }); },
     now: function () { return { getTime: function () { return %(now)s; } }; },
     city: function () { return "dubai"; },
+    card: function () { return %(card)s; },
     showKey: function () { return "abcdef"; },
     fmt: function (n) { return String(n); },
     bd: {
@@ -41,7 +43,19 @@ var K = (function () {
       km: function (c) { return km[c]; }, kmt: function (k) { return k + " كم"; },
       nm: function (o) { return o ? o.ar : ""; }, days: function () { return ["2026-10-01", "2026-10-02"]; },
       day: function () { return Promise.resolve({ cinemas: {}, films: {}, shows: [] }); },
-      price: function (el) { el.setAttribute("data-shown", el.getAttribute("data-aed")); return '<span class="num">' + el.getAttribute("data-aed") + "</span>"; }
+      /* mirrors src/js/prices.js priceHTML closely enough for the tests: with card "fazaa" every price is
+         halved and struck (BOGO-shaped, just to exercise the discounted branch), and data-asof is dropped when
+         RENDER_ASOF is false (unconfirmed dates never show as if they were live) */
+      price: function (el) {
+        var aed = +el.getAttribute("data-aed");
+        if (%(card)s === "fazaa") {
+          var pay = Math.round(aed / 2 * 100) / 100;
+          el.setAttribute("data-shown", pay);
+          return "<b>" + pay + '</b> <s class="num">' + aed + "</s>";
+        }
+        el.setAttribute("data-shown", aed);
+        return '<span class="num">' + aed + "</span>";
+      }
     }
   };
 })();
@@ -77,8 +91,8 @@ def shows(now):
 META2 = dict(META, f4={"data-v": "yes", "data-fits": "family", "data-rating": "PG"}, f5={"data-v": "yes", "data-fits": "", "data-rating": ""})
 
 
-def run(tmp_path, ask, meta=META2, now=NOW_MS, expr="null", pre=""):
-    stub = STUB % {"meta": json.dumps(meta), "now": now, "ask": json.dumps(ask)}
+def run(tmp_path, ask, meta=META2, now=NOW_MS, expr="null", pre="", card='""'):
+    stub = STUB % {"meta": json.dumps(meta), "now": now, "ask": json.dumps(ask), "card": card}
     src = stub + "\n" + JS.read_text(encoding="utf-8") + "\n" + pre + "\nprocess.stdout.write(JSON.stringify(" + expr + "));\n"
     (tmp_path / "t.js").write_text(src, encoding="utf-8")
     r = subprocess.run([NODE, str(tmp_path / "t.js")], capture_output=True, text=True, encoding="utf-8", timeout=60)
@@ -93,6 +107,16 @@ def test_hard_filters_drop_started_unreachable_skip_and_who_mismatch(tmp_path):
                pre="var c = pkCandidates(" + json.dumps({"cinemas": {}, "films": {}, "shows": shows(NOW_MS)}) + ", " + str(NOW_MS) + ", {who:'',when:''}, '2026-10-02');",
                expr="c.map(function(x){return x.s.f})")
     assert "f2" not in fids and "f5" not in fids and "f1" in fids and "f3" in fids and "f4" in fids
+
+
+def test_candidate_pay_is_the_cheapest_positive_price(tmp_path):
+    """Fix round, Critical #1: `Math.min` over positives concat([0]) always gave 0. A show with a real, positive
+    price (f1: 42) must candidate at that price, never 0 — and a show with no priced seat at all (none in this
+    fixture) still falls back to 0, not a crash."""
+    pays = run(tmp_path, {},
+               pre="var c = pkCandidates(" + json.dumps({"cinemas": {}, "films": {}, "shows": shows(NOW_MS)}) + ", " + str(NOW_MS) + ", {who:'',when:''}, '2026-10-02');",
+               expr="c.reduce(function(o,x){o[x.s.f]=x.pay;return o;},{})")
+    assert pays["f1"] == 42 and pays["f4"] == 50 and pays["f3"] == 30   # never 0 while a positive price exists
 
     fam = run(tmp_path, {}, meta=META2,
               pre="var c = pkCandidates(" + json.dumps({"cinemas": {}, "films": {}, "shows": shows(NOW_MS)}) + ", " + str(NOW_MS) + ", {who:'family',when:''}, '2026-10-02');",
@@ -121,9 +145,39 @@ def test_why_always_names_something_and_carries_the_price(tmp_path):
            "var cand = pkCandidates(PK.Y, " + str(NOW_MS) + ", {who:'',when:''}, '2026-10-02');"
            "var r = pkRank(cand, " + str(NOW_MS) + ", {who:'',when:''});"
            "var pr = pkPrice(r[0].c);"
-           "var why = pkWhy(r[0], pr.html ? pr.pay : '');")
+           "var why = pkWhy(r[0], pkWhyPrice(pr), '2026-10-02');")
     why = run(tmp_path, {}, pre=pre, expr="why")
     assert why and why != ""                        # «ليش؟» is mandatory: it never renders empty
+    assert "42" in why and "درهم" in why            # fix round Critical #1/Important #6: the real price, with its unit
+
+
+def test_why_price_shows_after_card_only_when_the_card_actually_paid_less(tmp_path):
+    """Fix round, Important #6: no card → plain «42 درهم»; card «fazaa» (which our price stub halves) →
+    the shown (after-card) figure plus «بعد خصم فزعة», never the struck list price or the asof note run in beside
+    it with no unit (the old bug: "29 42" glued together)."""
+    Y = {"cinemas": {"c1": {"chain": "reel", "ar": "سي وان", "en": "C1"}}, "films": {}, "shows": shows(NOW_MS)}
+    pre = ("var cand = pkCandidates(" + json.dumps(Y) + ", " + str(NOW_MS) + ", {who:'',when:''}, '2026-10-02');"
+           "var f1 = cand.filter(function(c){return c.s.f==='f1';})[0];"
+           "var pr = pkPrice(f1);")
+    no_card = run(tmp_path, {}, pre=pre + "var out = pkWhyPrice(pr);", expr="out", card='""')
+    assert no_card == '<span class="num">42</span> درهم'
+    with_card = run(tmp_path, {}, pre=pre + "var out = pkWhyPrice(pr);", expr="out", card='"fazaa"')
+    assert with_card == '<span class="num">21</span> درهم بعد خصم فزعة'
+
+
+def test_why_start_reason_never_says_tonight_for_tomorrow_or_a_far_show(tmp_path):
+    """Fix round, Important #5: a tomorrow show, or a same-day show hours out, must not be captioned «الليلة»."""
+    Y = {"cinemas": {"c1": {"chain": "reel", "ar": "سي وان", "en": "C1"}}, "films": {}, "shows": [
+        {"c": "c1", "f": "f1", "d": "2026-10-02", "t": "20:40", "h": "Standard", "k": "Standard", "p": [["a", 42]], "b": None, "at": NOW_MS + 24 * 3600e3},
+        {"c": "c1", "f": "f4", "d": "2026-10-01", "t": "23:00", "h": "Standard", "k": "Standard", "p": [["a", 50]], "b": None, "at": NOW_MS + 2 * 3600e3},
+    ]}
+    pre = ("var cand = pkCandidates(" + json.dumps(Y) + ", " + str(NOW_MS) + ", {who:'',when:''}, '2026-10-02');"
+           "var r = pkRank(cand, " + str(NOW_MS) + ", {who:'',when:''});"
+           "var out = {};"
+           "r.forEach(function(x){ out[x.c.s.f] = pkWhy(x, '', '2026-10-02'); });")
+    out = run(tmp_path, {}, meta=META2, pre=pre, expr="out")
+    assert "الليلة" not in out["f1"] and "بكرة" in out["f1"]      # tomorrow's show
+    assert "الليلة" not in out["f4"]                              # 2 h out, past the 90-min "starts in N" window
 
 
 def test_pk_pure_terms(tmp_path):
