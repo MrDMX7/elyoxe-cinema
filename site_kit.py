@@ -140,6 +140,9 @@ ICONS = {"home": '<path d="M4 11 12 4l8 7v9h-5v-6H9v6H4z"/>',
          "next": '<path d="m9 5 7 7-7 7"/>', "prev": '<path d="m15 5-7 7 7 7"/>',
          # the film page (Task 4): «شارك», the day bar's «⋯»
          "share": '<path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"/>',
+         # r3-seo: the Stories card is a plain file to save, not a share-sheet hand-off (the share icon's
+         # up-arrow implied the wrong action) — a download tray instead
+         "download": '<path d="M12 3v10M7 9l5 5 5-5M5 19h14"/>',
          "dots": '<circle cx="5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="19" cy="12" r="1.3" fill="currentColor"/>'}
 
 

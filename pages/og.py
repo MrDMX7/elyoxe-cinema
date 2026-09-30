@@ -46,8 +46,10 @@ def _film_slot(site, lang, fid):
            f'data-share-url="{esc(url)}">{icon("share")}{esc("شارك" if lang == "ar" else "Share")}</a>')
     story = site.og_story_override.get((lang, fid))
     if story:
-        out += (f'<a class="btn ghost" href="{esc(story)}" download rel="noopener">{icon("share")}'
-                f'{esc("ستوري إنستقرام" if lang == "ar" else "Instagram Story")}</a>')
+        # a download icon and «صورة ستوري»/"Story image", not the share icon and «ستوري إنستقرام»: the card
+        # also serves TikTok, and the link saves a file rather than opening a share sheet (review fix)
+        out += (f'<a class="btn ghost" href="{esc(story)}" download rel="noopener">{icon("download")}'
+                f'{esc("صورة ستوري" if lang == "ar" else "Story image")}</a>')
     return out
 
 

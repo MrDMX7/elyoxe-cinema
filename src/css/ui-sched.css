@@ -12,6 +12,7 @@
 .fcity[open] > summary::after{transform:rotate(-135deg)}
 .fcity > summary h2{font-family:var(--body);font-size:var(--fs-title);font-weight:500}
 .fc-n{font-size:var(--fs-meta);color:var(--seat)}
+.fc-seo{font-size:var(--fs-meta);margin-block:4px 0}
 .js .fcity.here{border:0}
 .js .fcity.here > summary{cursor:default;min-block-size:0;padding-block:16px 0}
 .js .fcity.here > summary::after{display:none}

@@ -278,7 +278,7 @@ def test_film_page_links_the_story_card_from_the_share_actions(tmp_path, cache):
     assert os.path.isfile(os.path.join(out, "og", name_story))
     html = open(os.path.join(out, "film", "test-film", "index.html"), encoding="utf-8").read()
     assert f'href="{site_kit.SITE}/og/{name_story}" download' in html
-    assert "ستوري إنستقرام" in html
+    assert "صورة ستوري" in html
 
 
 def test_og_dims_only_for_1200x630_images(tmp_path):

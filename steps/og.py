@@ -100,6 +100,9 @@ def _cheapest_and_city(shows, cinemas, fid, today):
 
 
 SW, SH = 1080, 1920   # Instagram/TikTok Stories canvas
+STORY_CAP = 60   # a per-run ceiling on new Stories renders (the unit's own rule); the hash folds in today's
+                 # date so every showing film re-renders once a day regardless of catalogue size — this caps
+                 # that daily cost rather than the (already small, cached) 1200x630 card
 
 
 def _cheapest_today(shows, fid, today):
@@ -391,6 +394,15 @@ def run(data: dict, ctx: dict) -> dict | None:
     films, cinemas, shows = data.get("films") or {}, data.get("cinemas") or {}, data.get("shows") or []
     rendered, skipped, cities, keep = 0, 0, {}, set()
 
+    # Stories cap: a NEW render this run is allowed only for a film already cached today (cheap: no PNG
+    # work, just a filename) or one of the busiest STORY_CAP films by today's show count — so a catalogue
+    # far bigger than usual can't turn the daily Stories pass into an unbounded render job
+    today_counts: dict[str, int] = {}
+    for s in shows:
+        if s.get("date") == today:
+            today_counts[s.get("film")] = today_counts.get(s.get("film"), 0) + 1
+    story_allow = set(sorted(films, key=lambda fid: -today_counts.get(fid, 0))[:STORY_CAP])
+
     for fid, f in films.items():
         archived = f.get("status") == "archived"
         price = city = city_label = None
@@ -444,6 +456,8 @@ def run(data: dict, ctx: dict) -> dict | None:
                 dest = out_dir / name
                 if dest.is_file():
                     og_story[lang] = name
+                    continue
+                if fid not in story_allow:   # over the cap and not cached today: leave it for a busier-day drop
                     continue
                 try:
                     png = _story_card(lang, title, story_price, wordmark, poster)
