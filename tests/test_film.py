@@ -154,6 +154,41 @@ def test_the_hash_names_a_real_section_and_no_ids_repeat(out):
             assert f'id="{k}"' in h
 
 
+def test_about_facts_carry_the_release_date_and_week_not_the_seed(out):
+    """r3-home fix round (review Important #1, «تاريخ نزول الفلم»): a showing film's «عن الفيلم» facts get an honest
+    «في السينما من <date>، الأسبوع N» line from `released` or `first_seen` — never from a bare `first_seen` that
+    only equals the data's global seed date (fixtures/sample_latest.json's earliest first_seen is 2026-08-07;
+    heart-of-the-beast's own is 2026-09-11, so it is real, not a seed artifact). `generated` is 2026-09-25, 14 days
+    later, so week 3."""
+    h = read(out, "film", FID)
+    about = h[h.index('id="about"'):h.index('id="cast"') if 'id="cast"' in h else h.index("</main>")]
+    assert "<dt>في السينما من</dt><dd>" in about
+    assert "11 سبتمبر 2026، الأسبوع 3" in about
+    en = read(out, "en", "film", FID)
+    en_about = en[en.index('id="about"'):]
+    assert "<dt>In cinemas since</dt><dd>" in en_about and "week 3" in en_about
+
+
+def test_archived_film_has_no_release_line_its_span_already_says_it(out):
+    """archive_note already says «عُرض … من … إلى …»; the about facts must not add a second, possibly-conflicting date."""
+    h = read(out, "film", "weapons")
+    assert "في السينما من" not in h and "In cinemas since" not in h
+
+
+def test_a_release_date_equal_to_the_seed_is_not_shown(tmp_path):
+    """A film whose only date is the data's global seed cannot honestly claim that as its opening day (the seed is
+    when tracking began, not when the film opened)."""
+    d = json.loads(open(DATA, encoding="utf-8").read())
+    d["films"][FID]["first_seen"] = min(f.get("first_seen") for f in d["films"].values() if f.get("first_seen"))
+    d["films"][FID]["released"] = None
+    p = tmp_path / "seeded.json"
+    p.write_text(json.dumps(d), encoding="utf-8")
+    o = str(tmp_path / "out")
+    build.build(str(p), DISC, o, noindex=False)
+    h = read(o, "film", FID)
+    assert "في السينما من" not in h
+
+
 def test_archived_film_in_the_new_hero(out):
     h = read(out, "film", "weapons")
     hero = h[h.index('<section class="fhero'):]

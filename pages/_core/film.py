@@ -84,11 +84,39 @@ class FilmPages:
                 f'<div class="fposter">{card}</div><div class="fh-t"><h1 class="ft"{attr}>{esc(t)}</h1>{sub}{verdict}{ff}'
                 + (f'<p class="cta">{acts}</p>' if acts else "") + f'{arch}</div></div></section>')
 
+    def _release_seed(self):
+        """The earliest `first_seen` across every film — refresh.attach_first_seen's seed date for a film first
+        pulled before our own tracking window. A film whose only date IS the seed did not necessarily open that
+        day (it may be much older); the site's own honesty rule says a number it cannot back stays off the page.
+        Cached once per build (pages/pulse.py computes the same value for the same reason)."""
+        s = getattr(self, "_release_seed_v", None)
+        if s is None:
+            s = min((str(x.get("first_seen")) for x in self.films.values() if x.get("first_seen")), default="")
+            self._release_seed_v = s
+        return s
+
     def film_about(self, fid, lang, shows, rates):
         """«عن الفيلم»: the synopsis, the facts (as a list of terms), the basis when no scores came out of it, whatever a
         feature adds (film.info), and the breadcrumb."""
         f = self.films[fid]; vd = f.get("verdict") or {}; ar = lang == "ar"
         facts = []
+        # «تاريخ نزول الفلم» + «الأسبوع N» (r3-home fix round, owner idea 2026-09-30): `released` (a chain's
+        # coming-soon date, kept once the film opens — refresh.py) is preferred over `first_seen` (when our own
+        # refresh first noticed it, which can lag the real opening by days). Either is skipped for an archived
+        # film (its own "من … إلى …" span already covers this in archive_note) and for a bare `first_seen` that
+        # equals the data's seed date — that date is an artifact of when tracking began, not a release date.
+        if f.get("status") != "archived":
+            rel = f.get("released") or f.get("first_seen")
+            if rel and not (not f.get("released") and str(rel) == self._release_seed()):
+                try:
+                    d0 = dt.date.fromisoformat(str(rel))
+                    wk = (self.now.date() - d0).days // 7 + 1
+                except ValueError:
+                    d0 = None
+                if d0 and wk >= 1:
+                    hd = human_date(rel, lang)
+                    say = f"{hd}، الأسبوع {wk}" if ar else f"{hd}, week {wk}"
+                    facts.append(("في السينما من", "In cinemas since", dates(esc(say))))
         for key, a, e in (("director", "المخرج", "Director"), ("cast", "البطولة", "Starring")):
             names = self.film_people(f, key, lang)
             if names: facts.append((a, e, "، ".join(f"<bdi>{esc(n)}</bdi>" for n in names) if ar else ", ".join(esc(n) for n in names)))

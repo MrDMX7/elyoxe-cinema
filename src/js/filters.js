@@ -218,6 +218,11 @@ function bindFilters() {
   if (pf && q('[data-filter="' + pf.replace(/"/g, "") + '"]')) ST.filt = pf;
   if (pl) ST.flang = pl;
   if (pw === "family" || pw === "kids") ST.who = pw;
+  /* «كل الأفلام» sits behind a closed <details> (kit/tile.py, collapse=True). Chromium opens it for a same-document
+     fragment navigation into a closed <details>; iPhone Safari (the owner's device) does not, so a «الكل» link
+     (?sort=/?f=/?who=/?fl=#all) or a shared #all link would land the visitor on a closed box with the filter
+     applied invisibly underneath. Force it open ourselves whenever the answer to «كيف عرفنا نفتحه» is yes. */
+  if ((ps || pf || pl || pw || location.hash === "#all") && q("details.allg")) q("details.allg").open = true;
   document.addEventListener("click", function (e) {
     var t = e.target.closest ? e.target : null, b, v, k;
     if (!t) return;
@@ -229,7 +234,7 @@ function bindFilters() {
     }
     else if ((b = t.closest("[data-before]"))) { save("before", b.getAttribute("data-before")); refilter(); }
     else if ((b = t.closest("[data-flang]"))) { save("flang", b.getAttribute("data-flang")); applyFilters(); }
-    else if (t.closest("[data-show-all]")) { var all = q("#all"); if (all) setTimeout(function () { all.scrollIntoView({ block: "start", behavior: RM ? "auto" : "smooth" }); }, 60); }
+    else if (t.closest("[data-show-all]")) { var d = q("details.allg"); if (d) d.open = true; var all = q("#all"); if (all) setTimeout(function () { all.scrollIntoView({ block: "start", behavior: RM ? "auto" : "smooth" }); }, 60); }
     else if ((b = t.closest("[data-prayer]"))) { save("prayer", !ST.prayer); applyPrayer(); }
     else if ((b = t.closest("[data-hide-clash]"))) { save("hide", !ST.hide); applyPrayer(); }
     else {
