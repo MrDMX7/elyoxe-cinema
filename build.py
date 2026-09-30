@@ -198,15 +198,28 @@ GENERATED = [c for c, _, _ in CITIES] + ["film", "cards", "halls", "data", "asse
 # can answer a tap. Over the fail line the build stops (the code is wrong, not the day's data); past the warning line
 # it says so, and the package moves code into a lazy chunk or page-scoped CSS before it merges. KB as the plan counts
 # them: 1,000 bytes (its «28.7 KB at 7e787e4» is that bundle's 28,740 bytes at gzip -9).
-JS_WARN_GZ, JS_FAIL_GZ = 35_200, 36_700   # the initial bundle, /assets/cinema.<hash>.js (hard cap 45 KB). Raised from
-# 34_000 on the legend integration branch (2026-09-28): Wave 2 filled chrome.js, drag.js, places.js and board.js —
-# all previously-declared zero-cost stubs — pushing the fixture bundle to 34.3 KB, past the old line but 1.7 KB clear
-# of JS_FAIL_GZ. Raised again on round3 (2026-09-30): ten units merged at once (ticket dock, appfeel, filters,
-# film) each added a few real bytes to already-eager files, landing the fixture at 34.9 KB — past the old warning
-# line though every one of them stayed lazy where the module system allows it (board/vote/appfeel chunks). Kept the
-# gap to JS_FAIL_GZ over 1024 on purpose: tests/test_build.py pads a fixture to JS_WARN_GZ + 1024 bytes and expects
-# a warning, not a failure. The line moves deliberately for real filled-in features, not quietly for bloat; a
-# future package that grows the bundle further should still move its own code into a lazy chunk before merging.
+JS_WARN_GZ, JS_FAIL_GZ = 36_000, 39_000   # the initial bundle, /assets/cinema.<hash>.js (plan's hard cap 45 KB).
+# Raised from 34_000 on the legend integration branch (2026-09-28): Wave 2 filled chrome.js, drag.js, places.js
+# and board.js — all previously-declared zero-cost stubs — pushing the fixture bundle to 34.3 KB, past the old
+# line but 1.7 KB clear of JS_FAIL_GZ. Raised again on round3 (2026-09-30): ten units merged at once (ticket
+# dock, appfeel, filters, film) each added a few real bytes to already-eager files, landing the fixture at 34.9
+# KB — past the old warning line though every one of them stayed lazy where the module system allows it
+# (board/vote/appfeel chunks). Raised again in the film-hero clean-up (round r3, 2026-09-30): chrome.js's
+# header-solid logic (an owner-reported bug fix — the header sitting translucent over the title, twice over:
+# once on a real scroll, then again when the film hero's own flex-end text block reflows under the header with
+# NO scroll at all, a coordinator-caught follow-up) needed two IntersectionObservers, both eager (no lazy chunk
+# crosses this early), landing the fixture at 35.37 KB. A first, narrower raise here (35_200 -> 35_500, JS_FAIL_GZ
+# unchanged) passed locally on Windows but failed CI on Ubuntu: tests/test_build.py's own _padded() helper
+# bisects a synthetic pad string to land the bundle near JS_WARN_GZ+1024, but it calibrates that pad by
+# concatenating it AFTER the whole core bundle, while the real build's js_files() inserts a padding MODULE's JS
+# between the core modules and main.js — a different byte context gzip doesn't compress identically, so the
+# padded fixture landed a few dozen bytes past where the calibration predicted. With the old 1.5 KB gap that
+# slop was invisible; shrinking the gap to ~200 bytes (JS_WARN_GZ+1024 to JS_FAIL_GZ) made it fail. Fix: a real
+# gap again (JS_FAIL_GZ raised too, not just JS_WARN_GZ), ~2 KB from JS_WARN_GZ+1024, comfortably absorbing that
+# slop and the bisection's own 64-byte granularity, while staying 6 KB clear of the plan's 45 KB hard cap. Kept
+# the gap to JS_FAIL_GZ over 1024 on purpose: tests/test_build.py pads a fixture to JS_WARN_GZ + 1024 bytes and
+# expects a warning, not a failure. The line moves deliberately for real filled-in features, not quietly for
+# bloat; a future package that grows the bundle further should still move its own code into a lazy chunk first.
 CSS_FAIL_GZ = 19_000                      # the shared sheet, /assets/cinema.css (render-blocking)
 HTML_MAX = 150_000                        # a page, raw (the spec's rule; Kit.fit keeps schedules under it)
 

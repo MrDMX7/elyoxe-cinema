@@ -31,13 +31,13 @@ p.rr{font-size:var(--fs-meta);color:var(--dim);margin-block:-4px 8px}
 .fv .word{font:var(--dw) var(--fs-h2)/1 var(--display);color:var(--screen)}
 .fv.v-yes .word{color:var(--gold)}
 .fv.v-skip .word{color:var(--seat)}
-/* «المزيد» sits over the end of the last line (never below it: showing it must not move the hero, CLS) */
-.fv-w{position:relative;max-inline-size:60ch}
-.fv-w .fv-m{position:absolute;inset-block-end:0;inset-inline-end:0;margin:0;border:0;padding:0;padding-inline-start:56px;cursor:pointer;
-  font:inherit;font-size:var(--fs-body);line-height:var(--lh-body);font-weight:500;color:var(--screen);text-decoration:none;
-  background:linear-gradient(to var(--to-end),rgba(15,11,12,0),var(--night) 44px)}
-.fv-w .fv-m:hover,.fv-w .fv-m:focus-visible{text-decoration:underline;text-underline-offset:.2em}
-.fv-w .fv.open + .fv-m{position:static;background:none;padding:0;font-size:var(--fs-meta);font-weight:400;color:var(--seat);text-decoration:underline;min-block-size:32px}
+/* «المزيد» sits on its own line under the clamped verdict (round r3, owner report: it used to draw as a
+   gradient-backed box over the end of the last line, clashing with the text there — a small CLS on open,
+   accepted now in exchange for a verdict area that never overlaps its own text) */
+.fv-w{max-inline-size:60ch}
+.fv-w .fv-m{display:block;margin-block:4px 0;border:0;padding:0;cursor:pointer;background:none;
+  font:inherit;font-size:var(--fs-meta);line-height:1.2;font-weight:400;color:var(--seat);text-decoration:underline;text-underline-offset:.2em;min-block-size:32px}
+.fv-w .fv-m:hover,.fv-w .fv-m:focus-visible{color:var(--screen)}
 /* the facts on one line on a phone (the genres are one tap away, in «عن الفيلم») */
 .ff{display:flex;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;gap:8px 16px;font-size:var(--fs-meta);color:var(--seat);margin-block:8px 12px}
 .ff .num{color:inherit}

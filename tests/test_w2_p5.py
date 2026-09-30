@@ -220,13 +220,40 @@ def test_the_tab_bar_is_opaque_steps_away_and_yields(out):
     assert re.search(r"\.tabs a\{min-block-size:60px;", c)                      # the bar's 60 px: --chrome-b's fallback
 
 
-def test_the_header_turns_solid_on_a_scroll_timeline(out):
+def test_the_header_turns_solid_the_instant_the_page_scrolls(out):
+    """Round r3 (owner report: the header sat translucent over the title for a stretch of scroll): the old scroll
+    timeline (0-56px fade) is gone; a class toggled by an IntersectionObserver (chrome.js) on a sentinel at the
+    very top of body now flips the header solid in one step, the moment scrollY leaves 0."""
     c = css(out)
-    sup = re.search(r"@supports \(animation-timeline:scroll\(\)\)\{(.*?)\}\}", c, re.S).group(1)
-    assert "body[data-hero] .top::before{" in sup and "animation:top-solid linear both;animation-timeline:scroll(root);animation-range:0 56px" in sup
-    assert "@keyframes top-solid{to{opacity:1}}" in c
-    assert re.search(r"body\[data-hero\] \.top::before\{animation-timing-function:steps\(1,end\)\}", c)   # reduced motion: at once
-    assert rule(c, ".top").startswith("position:sticky") and "background:var(--night)" in rule(c, ".top")   # no timeline: solid
+    # the header's OWN scroll-timeline is gone (the home billboard's unrelated .bill recede/dim/lift keeps its own
+    # animation-timeline rules elsewhere in this same sheet — a different feature, untouched here)
+    assert "@keyframes top-solid" not in c and "animation-range:0 56px" not in c
+    assert "body[data-hero] .top::before{" not in c.replace(".js body[data-hero] .top::before{", "")
+    assert ".js body[data-hero] .top{background:linear-gradient(rgba(15,11,12,.85),rgba(15,11,12,0)) border-box;border-block-end-color:transparent}" in c
+    assert ".js body[data-hero] .top::before{" in c and "opacity:0}" in c
+    assert ".js body[data-hero].scrolled .top::before{opacity:1}" in c
+    assert rule(c, ".top").startswith("position:sticky") and "background:var(--night)" in rule(c, ".top")   # no script: solid
+    h = read(out, "film", "heart-of-the-beast", "index.html")
+    assert '<span class="vh" id="scroll-mark" aria-hidden="true"></span>' in h
+    b = bundle(out)
+    assert 'q("#scroll-mark")' in b and "IntersectionObserver" in b
+    assert 'body.classList.toggle("scrolled"' in b
+
+
+def test_the_header_also_goes_solid_when_the_film_heros_text_reflows_under_it_with_no_scroll(out):
+    """Round r3, coordinator-caught follow-up: the sentinel above only sees a real scroll. The film hero
+    (ui-fhero.css .fhero, justify-content:flex-end) anchors its text block to the picture's BOTTOM — opening
+    «ليش يستاهل؟» can grow that block past the picture's own min-height, and once it does, flex-end has no
+    slack left: the title itself jumps to y=0, straight under a still-translucent header, with scrollY
+    unchanged throughout (a screenshot proved it: after-390-why-open.png). A second observer, on the title
+    itself with the header's own live height as its top rootMargin, catches this the same way it catches a
+    real scroll — IntersectionObserver recomputes on any geometry change of its target, not only scrolling —
+    and both observers drive the SAME class through a shared flag object, so neither can clear what the
+    other just set."""
+    b = bundle(out)
+    assert 'q(".fhero h1.ft")' in b and 'q(".top")' in b
+    assert 'rootMargin: "-" + topEl.offsetHeight + "px 0px 0px 0px"' in b
+    assert "SOL.a || SOL.b" in b   # neither observer can silently win over the other
 
 
 def test_the_floating_lines_sit_on_the_chrome_not_under_it(out):
