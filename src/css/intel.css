@@ -42,3 +42,7 @@
 .i-gate{display:none}
 .i-sp:has(.i-ns input:checked) .i-gate{display:block;color:var(--screen);font-size:var(--fs-meta)}
 .i-sp:has(.i-ns input:checked) .i-body{display:none}
+/* the hero's jump links to the sections in «عن الفيلم» (owner 2026-09-30: they were buried under the schedule) */
+.i-jumps{display:flex;flex-wrap:wrap;gap:var(--s2);margin-block:var(--s2) 0}
+.i-jump{display:inline-flex;align-items:center;min-block-size:44px;padding-inline:var(--s3);border:1px solid var(--line-2);color:var(--screen);text-decoration:none;font-size:var(--fs-meta)}
+.i-jump:active{background:var(--tint)}

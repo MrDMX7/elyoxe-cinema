@@ -28,12 +28,21 @@ function bindTabs() {
     var el = id && document.getElementById(id), p = el && (el.getAttribute("role") === "tabpanel" ? el : el.closest("[role=tabpanel]"));
     return p ? panels.indexOf(p) : -1;
   }
+  /* a link to a <details> inside a tab (the hero's «اشرح النهاية» / «أسئلة عن الفيلم» / «رأي الجمهور»): open it and
+     bring IT into view, not just the tab bar */
+  function openAt(id, smooth) {
+    var el = id && document.getElementById(id);
+    if (!el || el.tagName !== "DETAILS") return false;
+    el.open = true;
+    el.scrollIntoView({ block: "center", behavior: smooth && !RM ? "smooth" : "auto" });
+    return true;
+  }
   /* an address naming a tab (or anything inside one): that tab, and the tabs brought into view under the header */
   function fromHash(smooth) {
-    var i = byId(idOf(location.hash));
+    var id = idOf(location.hash), i = byId(id);
     if (i < 0) return false;
     show(i, false);
-    list.scrollIntoView({ block: "start", behavior: smooth && !RM ? "smooth" : "auto" });
+    if (!openAt(id, smooth)) list.scrollIntoView({ block: "start", behavior: smooth && !RM ? "smooth" : "auto" });
     return true;
   }
   /* at start-up, again once the page has loaded (the browser's own jump to the anchor, and images above, come after) */
@@ -65,6 +74,7 @@ function bindTabs() {
     e.preventDefault();
     show(i, false);
     try { history.replaceState(history.state, "", a.getAttribute("href")); } catch (x) {}
+    if (openAt(idOf(a.getAttribute("href")), true)) return;
     list.scrollIntoView({ block: "start", behavior: RM ? "auto" : "smooth" });
     tabs[i].focus({ preventScroll: true });
   });
