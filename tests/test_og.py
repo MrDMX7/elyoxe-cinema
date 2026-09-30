@@ -227,6 +227,70 @@ def test_archived_film_gets_no_story_card(cache):
     assert "og_story" not in data["films"]["test-film"]
 
 
+def test_story_card_is_webp_under_250kb(cache):
+    """Round 3 QA fix: was a ~1.6MB PNG, up to ~120/day from the owner's phone. Now WebP, <= STORY_MAX_BYTES."""
+    data = _data()
+    og_step.run(data, {"data_dir": str(cache), "now": data["generated"]})
+    name_ar = data["films"]["test-film"]["og_story"]["ar"]
+    assert name_ar.endswith(".webp")
+    path = cache / "og" / name_ar
+    assert path.stat().st_size <= og_step.STORY_MAX_BYTES
+    im = Image.open(path)
+    assert im.format == "WEBP" and im.size == (1080, 1920)
+
+
+def test_story_card_not_rerendered_when_only_the_date_changes(cache):
+    """The date must not be baked into the hash (or the image): a calendar-day rollover with nothing else
+    different about the film must not force a regeneration -- that was the source of ~120 renders/day."""
+    d1 = _data(today="2026-09-27", price=35)
+    og_step.run(d1, {"data_dir": str(cache), "now": d1["generated"]})
+    name1 = d1["films"]["test-film"]["og_story"]["ar"]
+
+    before = set((cache / "og").glob("*story*.webp"))
+
+    d2 = _data(today="2026-09-28", price=35)   # only the date moved; price/title/poster are identical
+    og_step.run(d2, {"data_dir": str(cache), "now": d2["generated"]})
+    name2 = d2["films"]["test-film"]["og_story"]["ar"]
+
+    assert name2 == name1                                       # same cache file reused
+    assert (cache / "og" / name1).exists()                      # never pruned
+    assert set((cache / "og").glob("*story*.webp")) == before   # nothing new drawn for the story card
+                                                                 # (the 1200x630 og card DOES show the date
+                                                                 # and is expected to re-render -- unrelated)
+
+
+def test_story_render_cap_limits_new_renders_per_run(cache):
+    """At most STORY_CAP brand-new Stories renders per run; a cache hit doesn't count against it."""
+    data = {
+        "generated": "2026-09-27T12:00:00+04:00",
+        "cinemas": {"c1": {"chain": "vox", "city": "dubai"}},
+        "films": {}, "shows": [],
+    }
+    n_films = og_step.STORY_CAP + 5
+    for i in range(n_films):
+        fid = f"film-{i}"
+        _poster(cache / "posters" / f"{fid}-684.webp")
+        data["films"][fid] = {
+            "title": f"Film {i}", "title_ar": f"فيلم {i}", "status": "showing",
+            "poster": f"https://cinema.elyoxe.com/posters/{fid}-342.webp",
+            "poster_2x": f"https://cinema.elyoxe.com/posters/{fid}-684.webp",
+        }
+        data["shows"].append({"film": fid, "cinema": "c1", "date": "2026-09-27", "time": "19:00",
+                               "prices": [{"seat": "Regular", "aed": 35}]})
+    og_step.run(data, {"data_dir": str(cache), "now": data["generated"]})
+    with_story_1 = sum(1 for f in data["films"].values() if "og_story" in f)
+    # each film needs 2 new renders (ar+en); the cap counts individual renders, so a cap of STORY_CAP
+    # fully covers STORY_CAP // 2 films this run -- fewer than the whole catalogue
+    assert with_story_1 == og_step.STORY_CAP // 2 < n_films
+
+    # a second run over the SAME unchanged catalogue must not touch the films already rendered (cache hits,
+    # free) and picks up more of the remaining ones within its own fresh per-run cap -- progress, not a stall
+    og_step.run(data, {"data_dir": str(cache), "now": data["generated"]})
+    with_story_2 = sum(1 for f in data["films"].values() if "og_story" in f)
+    assert with_story_2 == min(n_films, 2 * (og_step.STORY_CAP // 2))
+    assert with_story_2 > with_story_1
+
+
 def test_missing_poster_is_skipped_not_crashed(tmp_path):
     data = _data()
     r = og_step.run(data, {"data_dir": str(tmp_path / "data"), "now": data["generated"]})

@@ -248,7 +248,7 @@ def test_tile_markup(out):
     assert "data-family=" not in tile and "data-kids=" not in tile
     # the poster, the title (two lines held, ui-tile.css), the verdict word, then the one line that differs («من 42»;
     # home.js redraws it for the visitor's city, card and clock). The desktop hover panel is home.js's (fix round 1, I3)
-    assert re.search(r'<span class="tp"><span class="pst img"[^>]*><img [^>]+></span></span><span class="t">كايوتي ضد أكمي</span>'
+    assert re.search(r'<span class="tp"><span class="pst img"[^>]*><img [^>]+></span>(?:<span class="tag wk">[^<]+</span>)?</span><span class="t">كايوتي ضد أكمي</span>'
                      r'<span class="vw">يستاهل</span><span class="m" data-cheap>من <span class="pv"><span class="num">[\d.]+</span></span></span></a>$', tile)
     # an unknown verdict says the short «الحكم بعده» (MASTER-PLAN §1.7)
     assert re.search(r'<a class="film tile v-unknown" href="/film/shish-dou/".*?<span class="vw">الحكم بعده</span>', m, re.S)

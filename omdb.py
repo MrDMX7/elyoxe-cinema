@@ -12,7 +12,8 @@ from pathlib import Path
 
 import requests
 
-OMDB_TTL = 30 * 24 * 3600   # 30 days: a public rating barely moves once a film has settled
+OMDB_TTL = 3 * 24 * 3600   # 3 days (round 3 QA: OMDb free tier is 1000 req/day, so caching still matters,
+                           # but 30 days let a fresh rating go stale for too long)
 UA = {"User-Agent": "elyoxe-cinema/1.0 (+https://cinema.elyoxe.com)"}
 
 

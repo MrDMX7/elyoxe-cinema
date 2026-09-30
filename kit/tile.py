@@ -12,6 +12,39 @@ TILE_V = {"unknown": ("الحكم بعده", "No verdict yet")}
 
 
 class TileKit:
+    def _tile_release_seed(self):
+        """Same idea as pages/_core/film.py's FilmPages._release_seed (the earliest `first_seen` across
+        every film) -- kept as its own small copy here since TileKit methods run with `self` bound to the
+        Site, not to a CorePages instance, so that mixin's method isn't reachable from here."""
+        s = getattr(self, "_tile_release_seed_v", None)
+        if s is None:
+            s = min((str(x.get("first_seen")) for x in self.films.values() if x.get("first_seen")), default="")
+            self._tile_release_seed_v = s
+        return s
+
+    def week_tag(self, fid, lang):
+        """«جديد» for a film in its first week, «الأسبوع N» after — poster TILE views only (owner idea #284,
+        round 3 QA), never the film page (film_about already shows the full release date there; this is not
+        a replacement for it). Same `released`-over-`first_seen` preference and seed-date guard as the film
+        page's own week line, so the two never disagree. Never an «آخر عرض» countdown: no chain feeds a
+        last-showing date, so nothing here is ever inferred from one."""
+        f = self.films.get(fid) or {}
+        if f.get("status") == "archived":
+            return None
+        rel = f.get("released") or f.get("first_seen")
+        if not rel or (not f.get("released") and str(rel) == self._tile_release_seed()):
+            return None
+        try:
+            d0 = dt.date.fromisoformat(str(rel))
+        except ValueError:
+            return None
+        wk = (self.now.date() - d0).days // 7 + 1
+        if wk < 1:
+            return None
+        if wk == 1:
+            return "جديد" if lang == "ar" else "New"
+        return f"الأسبوع {wk}" if lang == "ar" else f"Week {wk}"
+
     def film_tile(self, fid, lang, shows, big=False, i=99, live=False, row=False, tag=None):
         """A film tile: the poster (2:3), the title in two lines (their height held, so tiles line up), and the line
         that differs between films. A `live` tile (home and city: its line is redrawn by src/js/home.js for the
@@ -29,7 +62,10 @@ class TileKit:
         ar = lang == "ar"
         if live: price = f'{L(HOME_T["from"], lang)} {cell}' if mc else self.box(lang)
         else: price = (f'{L(HOME_T["from"], lang)} {cell} {esc(L(T["aed"], lang))}' if ar else f'{L(HOME_T["from"], lang)} {esc(L(T["aed"], lang))} {cell}') if mc else self.box(lang)
+        # tag precedence: an explicit tag the caller passed, then «إعادة عرض», then the جديد/الأسبوع N micro-label
+        # (round 3 QA, owner idea #284) -- never stacked, so the corner never gets cluttered with two badges
         tag = tag or (L(RERELEASE, lang) if f.get("rerelease") else None)
+        wk = None if (tag or row) else self.week_tag(fid, lang)   # not on a curated home row: no tag there (test_home)
         attrs = (f' data-fid="{esc(fid)}"' if row else self.film_attrs(fid, fits=live)) + f' data-v="{v}"'
         attrs += f' data-runtime="{int(f["runtime"])}"' if f.get("runtime") else ""
         if not row and f.get("lang"): attrs += f' data-lang="{esc(f["lang"])}"'
@@ -37,7 +73,8 @@ class TileKit:
         word = (f'<span class="vw">{esc(L(TILE_V.get(v, (vw, vw)), lang))}</span>' if live and not row else "")   # its colour: the tile's v-*
         return (f'<a class="{"tile" if row else "film tile"} v-{v}" href="{P(lang, "film", fid)}"{attrs}>'
                 + f'<span class="tp">{self.poster(fid, lang, eager=not row, lazy=row or i >= 1, sizes=sizes, srcset=not row, label=False)}'
-                + (f'<span class="tag">{esc(tag)}</span>' if tag else "") + '</span>'
+                + (f'<span class="tag">{esc(tag)}</span>' if tag else "")
+                + (f'<span class="tag wk">{esc(wk)}</span>' if wk else "") + '</span>'
                 + f'<span class="t"{self.title_attr(fid, lang)}>{esc(self.ftitle(fid, lang))}</span>'
                 + word + f'<span class="m" data-cheap>{price}</span></a>')
 

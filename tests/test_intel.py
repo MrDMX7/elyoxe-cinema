@@ -1,8 +1,13 @@
 """filmintel.py, omdb.py and pages/intel.py (UNIT r3-film, fix round) — never a real network call (conftest's
 guard fails the test at teardown on any attempt, even a caught one), so every path that could reach out is
-monkeypatched with a fake client/fetcher, exactly like the rest of the suite tests verdicts.py-shaped code."""
+monkeypatched with a fake client/fetcher, exactly like the rest of the suite tests verdicts.py-shaped code.
+One deliberate exception (round 3 QA): test_fill_scores_real_omdb_call_heart_of_the_beast opts into the
+`live_network` fixture to prove the real OMDb integration, and skips itself when no key is configured."""
 import json
+import os
 from datetime import date, timedelta
+
+import pytest
 
 import filmintel
 import omdb
@@ -302,6 +307,48 @@ def test_fill_scores_skips_films_with_no_imdb_id(monkeypatch, tmp_path):
     data = {"films": {"x": {"imdb": {"id": None}}}}
     omdb.fill_scores(data, str(tmp_path))
     assert "imdb_score" not in data["films"]["x"]
+
+
+def test_fill_scores_ttl_is_exactly_3_days(monkeypatch, tmp_path):
+    """Round 3 QA: OMDb free tier is 1000 req/day, so a cached entry is only re-fetched once it is older
+    than 3 days -- neither shorter (which would waste the quota) nor the old 30-day value (too stale)."""
+    assert omdb.OMDB_TTL == 3 * 24 * 3600
+
+    monkeypatch.setattr(omdb, "_key", lambda: "fake-key")
+    calls = {"n": 0}
+    monkeypatch.setattr(omdb, "_fetch", lambda imdb_id, key: (calls.__setitem__("n", calls["n"] + 1), 7.5)[1])
+
+    data = {"films": {"x": {"imdb": {"id": "tt7526136"}}}}
+    omdb.fill_scores(data, str(tmp_path))
+    assert calls["n"] == 1
+
+    # just under 3 days old: still cached, no re-fetch
+    cache = json.loads((tmp_path / "omdb_cache.json").read_text(encoding="utf-8"))
+    cache["tt7526136"]["at"] -= (3 * 24 * 3600 - 60)
+    (tmp_path / "omdb_cache.json").write_text(json.dumps(cache), encoding="utf-8")
+    data2 = {"films": {"x": {"imdb": {"id": "tt7526136"}}}}
+    omdb.fill_scores(data2, str(tmp_path))
+    assert calls["n"] == 1 and data2["films"]["x"]["imdb_score"] == 7.5
+
+    # just over 3 days old: re-fetched
+    cache = json.loads((tmp_path / "omdb_cache.json").read_text(encoding="utf-8"))
+    cache["tt7526136"]["at"] -= (3 * 24 * 3600 + 60)
+    (tmp_path / "omdb_cache.json").write_text(json.dumps(cache), encoding="utf-8")
+    data3 = {"films": {"x": {"imdb": {"id": "tt7526136"}}}}
+    omdb.fill_scores(data3, str(tmp_path))
+    assert calls["n"] == 2
+
+
+def test_fill_scores_real_omdb_call_heart_of_the_beast(live_network):
+    """Real network call (round 3 QA fix): tt7526136 is «Heart of the Beast» -- OMDb's own published rating
+    for it is 7.5. Skipped when no OMDb key is configured anywhere (env OMDB_KEY, else AWS SSM
+    /elyoxe/omdb/key) -- this test proves the live integration works when a key exists, it is not the gate
+    that decides whether one is provisioned."""
+    key = os.environ.get("OMDB_KEY") or omdb._key()
+    if not key:
+        pytest.skip("no OMDb key configured (env OMDB_KEY / AWS SSM /elyoxe/omdb/key)")
+    score = omdb._fetch("tt7526136", key)
+    assert score == 7.5
 
 
 # ------------------------------------------------------------------------------------------- pages/intel.py
