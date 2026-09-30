@@ -1,0 +1,23 @@
+/* film intelligence (UNIT r3-film, pages/intel.py): the «عن الفيلم» tab's richer sections — scores, reasons,
+   audience opinion, a fun fact and two spoiler-gated disclosures. Native <details>/<summary>, no script;
+   the identity's own rules (MASTER-PLAN §1.4): no rounded boxes, no shadow cards, no middle dots. */
+.i-wrap{display:grid;gap:var(--s4);margin-block-start:var(--s5)}
+.i-h{font-size:var(--fs-body);font-weight:600;color:var(--screen);margin:0 0 var(--s2)}
+.i-scores .facts.scores{margin:0}
+.consensus{font-size:var(--fs-meta);color:var(--dim);margin:var(--s2) 0 0;max-inline-size:62ch}
+.i-d{border-block-start:1px solid var(--line);padding-block-start:var(--s3)}
+.i-d summary{cursor:pointer;font-size:var(--fs-body);color:var(--screen);list-style:none;display:flex;align-items:center;gap:var(--s2);min-block-size:44px}
+.i-d summary::-webkit-details-marker{display:none}
+.i-d summary::before{content:"+";color:var(--seat);font-family:var(--body);flex:0 0 auto;width:1em;text-align:center}
+.i-d[open] summary::before{content:"–"}
+.i-list{margin:var(--s2) 0 0;padding-inline-start:1.1em;display:grid;gap:var(--s2);color:var(--dim);font-size:var(--fs-meta)}
+.i-list li.pos::marker{color:var(--live)}
+.i-list li.neg::marker{color:var(--velvet)}
+.i-list .src{color:var(--seat)}
+.i-fact{font-size:var(--fs-meta);color:var(--dim);border-block-start:1px solid var(--line);padding-block-start:var(--s3);margin:0;max-inline-size:62ch}
+.i-fact .src{color:var(--seat)}
+.i-spoiler .i-warn{color:var(--seat);font-size:var(--fs-meta);margin:var(--s2) 0}
+.i-spoiler p{font-size:var(--fs-meta);color:var(--dim);margin:var(--s2) 0}
+.i-qa{margin-block-start:var(--s3)}
+.i-qa .q{color:var(--screen);font-weight:500;margin:0}
+.i-qa .a{color:var(--dim);margin:var(--s1) 0 0}
