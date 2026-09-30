@@ -11,6 +11,7 @@ data/*.json
 data/price_history.jsonl
 star_bundle.js
 data/.run.lock
+data/.run.lock.d/
 data/.last_pages
 .venv/
 venv/
