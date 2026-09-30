@@ -202,7 +202,10 @@ def test_a_listed_qid_brings_that_items_arabic_names_and_nothing_else(tmp_path, 
     item. Its Arabic label is the title (a source: no review), its aliases are search keys, the owner's Gulf
     proposal waits as an unreviewed pin, and only the Arabic names are read (never RT, cast or synopsis)."""
     cache = tmp_path / "c.json"
-    cache.write_text(json.dumps({"ae": {"ids": {}, "ids_status": "not_found", "lookup_v": 2,
+    # lookup_v matches the current LOOKUP_VERSION (not hardcoded 2) so this cached "not found" stays put
+    # for this test — a version bump would otherwise force a live re-lookup of "ae"'s ids, which is not
+    # what this test is about (see test_enrich_search_regression.py for that).
+    cache.write_text(json.dumps({"ae": {"ids": {}, "ids_status": "not_found", "lookup_v": enrich_mod.LOOKUP_VERSION,
                                         "ids_checked_at": datetime.now(timezone.utc).isoformat()}}), encoding="utf-8")
     titles = _titles_file(tmp_path, {"ae": {"qid": "Q23781155", "ar": "أفنجرز إند قيم: إنكور", "source": "proposed",
                                             "pin": True, "review": True}})

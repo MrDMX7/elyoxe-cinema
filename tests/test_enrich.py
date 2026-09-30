@@ -35,6 +35,17 @@ def _no_arabic_label_lookup_and_no_reviewed_list(monkeypatch, tmp_path):
     monkeypatch.setattr(enrich_mod, "TITLES_AR_PATH", str(empty))
 
 
+@pytest.fixture(autouse=True)
+def _no_fulltext_search_by_default(monkeypatch):
+    """2026-09-30 fix: matching now merges wbsearchentities with a full-text search
+    (_wikidata_fulltext_search, see _merged_search_hits). Every test in this file that mocks matching
+    mocks wbsearchentities (_wikidata_search) only, as it did before that function existed, so this
+    stubs the full-text side to contribute nothing by default — the merge is then a no-op and every
+    existing expectation below holds unchanged. tests/test_enrich_search_regression.py replaces this
+    stub with its own to test the merge itself."""
+    monkeypatch.setattr(enrich_mod, "_wikidata_fulltext_search", lambda title: [])
+
+
 def _raise(*a, **kw):
     raise AssertionError("network was called when the cache should have been used")
 
@@ -462,8 +473,11 @@ def test_old_not_found_is_retried_once_for_the_rerelease_fallback(monkeypatch, t
 def test_synopsis_is_dropped_when_nothing_was_matched(monkeypatch, tmp_path):
     fresh = datetime.now(timezone.utc).isoformat()
     cache = tmp_path / "c.json"
+    # lookup_v matches the current LOOKUP_VERSION (not hardcoded) so this "not found" is not stale by
+    # version and the mocked-network assertion below actually exercises the "skip" path being tested.
     cache.write_text(json.dumps({"dhoomakethu": {"ids": {}, "ids_status": "not_found", "ids_checked_at": fresh,
-                                                  "lookup_v": 2, "synopsis_en": "Dhoomakethu is a 1968 Kannada film."}}),
+                                                  "lookup_v": enrich_mod.LOOKUP_VERSION,
+                                                  "synopsis_en": "Dhoomakethu is a 1968 Kannada film."}}),
                      encoding="utf-8")
     monkeypatch.setattr(enrich_mod.requests, "get", _raise)
     data = {"films": {"dhoomakethu": {"title": "Dhoomakethu", "title_ar_chain": "دhoomakethu"}}}

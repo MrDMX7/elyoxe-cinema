@@ -2,8 +2,8 @@
 
 No TMDB/OMDb keys exist for this project and none are created (controller ruling,
 2026-09-25). Instead:
-  - Wikidata (wbsearchentities + wbgetentities, no key) for title_ar, year, genres,
-    director, cast, runtime, the IMDb id (P345) and the Rotten Tomatoes id (P1258).
+  - Wikidata (wbsearchentities + a full-text search, both no key, + wbgetentities) for title_ar,
+    year, genres, director, cast, runtime, the IMDb id (P345) and the Rotten Tomatoes id (P1258).
   - The Rotten Tomatoes page itself (https://www.rottentomatoes.com/m/<id>) for the
     Tomatometer/Popcornmeter percentages, review counts and critics consensus —
     parsed out of the page's embedded `media-scorecard-json` block and the
@@ -25,9 +25,11 @@ result) is retried after NOT_FOUND_TTL — a title with no Wikidata item today m
 the film is a few days old. "error" (a network/HTTP/parse failure — we couldn't tell either
 way) is retried much sooner, after ERROR_TTL, specifically so a transient outage during a
 film's first-ever lookup doesn't get treated as "confirmed absent" and left that way forever
-(round-3 controller review, 2026-09-26). Ratings (the RT numbers) expire after RATINGS_TTL
-regardless of ids status. offline=True never touches the network — whatever is in the cache
-(or nothing) is used.
+(round-3 controller review, 2026-09-26). A "not_found" cached under an older LOOKUP_VERSION is
+retried once too, capped per run at NOT_FOUND_RELOOKUP_CAP (oldest-checked first) so a version
+bump — e.g. this fix's widened search — doesn't throw every cached-absent film at Wikidata (and
+the phone) in one run. Ratings (the RT numbers) expire after RATINGS_TTL regardless of ids
+status. offline=True never touches the network — whatever is in the cache (or nothing) is used.
 
 Wikidata matching only ever accepts a film-shaped hit whose own publication year is in
 `accepted_years` — the current/previous calendar year by default, or a single explicit
@@ -41,6 +43,23 @@ search hits at all gets there, orthogonal to this year filter). The Rotten Tomat
 the same guard: a page's own `releaseYear` (read out of its `where-to-watch-json` block) must
 match the Wikidata-recorded year for that same qid, or the rating is dropped rather than
 attached to the wrong film.
+
+Candidates come from two Wikidata searches, merged (fix, 2026-09-30 — the regression that cost
+most films their match): wbsearchentities alone (the only source before this fix) is a label/alias
+*prefix* match ranked by sitelink count, so a brand-new, barely-linked film routinely loses to an
+older or unrelated work sharing its title — the 2026 "Resident Evil" (Zach Cregger) doesn't surface
+even 50 hits deep, buried under the video-game franchise and its many entries; "Digger" and "The
+Odyssey" both have their current-year film past position 6 (the search `limit` used here), a plain
+franchise/game/epic-poem/older-film crowding the front. `_wikidata_fulltext_search` (CirrusSearch's
+full-text `list=search`) ranks by textual relevance instead and finds all three directly. Neither
+search replaces the other — full text can miss what a short, exact label match gets outright — so
+`_find_film_qid` merges both, then still applies every guard above unchanged: a wider candidate
+pool, not a looser acceptance test. Among several accepted-year film-shaped candidates,
+`_best_film_in_hits` now prefers one whose own label is an exact (case/punctuation-insensitive)
+match for the searched title over one that only matched by relevance. The retry-with-suffix pass
+appends " film" (proven to surface a buried new release through full-text search) ahead of the
+`accepted_years`-derived "(2026 film)"/"(2025 film)" disambiguators (previously hardcoded to those
+two literal years regardless of the actual current year).
 
 Re-releases (fix wave, 2026-09-26): a classic back in cinemas (The Dark Knight, Interstellar)
 has no current-year Wikidata film, so the year filter above finds nothing. Only then, and only
@@ -92,7 +111,15 @@ RATINGS_TTL = timedelta(days=3)
 NOT_FOUND_TTL = timedelta(days=3)
 ERROR_TTL = timedelta(hours=6)
 FILM_QIDS = {"Q11424", "Q24862", "Q24869"}  # film, short film, television film
-LOOKUP_VERSION = 2          # 2: re-release fallback — a "not_found" from an older version is retried once
+LOOKUP_VERSION = 3          # 2: re-release fallback. 3 (2026-09-30 regression fix): search widened with
+                             # a full-text fallback — wbsearchentities alone buries a brand-new,
+                             # low-notability film behind an older/unrelated same-titled one. A
+                             # "not_found" from an older version is retried once, capped per run —
+                             # NOT_FOUND_RELOOKUP_CAP below — so the version bump does not throw every
+                             # cached-absent film at Wikidata (and the phone) in a single run.
+NOT_FOUND_RELOOKUP_CAP = 30  # of the films whose "not_found" predates the current LOOKUP_VERSION, at
+                             # most this many are retried in one enrich() call (oldest ids_checked_at
+                             # first); the rest catch up on a later run.
 RERELEASE_MIN_SITELINKS = 20
 RERELEASE_RUNTIME_TOLERANCE = 5
 # listing language -> Wikidata QID of that language (P364, original language of the film)
@@ -185,6 +212,47 @@ def _wikidata_search(title):
         return r.json().get("search", [])
     except ValueError as e:
         raise LookupFailed(f"bad JSON from wbsearchentities: {e}") from e
+
+
+_TAG = re.compile(r"<[^>]+>")
+
+
+def _wikidata_fulltext_search(title):
+    """CirrusSearch full-text search over the item namespace (action=query&list=search) — ranked by
+    textual relevance rather than wbsearchentities' sitelink-popularity-weighted label/alias prefix
+    match, so it finds a brand-new, barely-linked film that wbsearchentities buries dozens of hits deep
+    behind an older or unrelated same-titled work (module docstring, 2026-09-30 fix). Hit shape matches
+    _wikidata_search's: {"id": qid, "description": best-effort text} — "description" is Cirrus's own
+    snippet, HTML-stripped; it usually is the item's Description field for a clean match, sometimes a
+    fragment of other matched text, so _looks_like_a_film's regex check on it is a heuristic same as for
+    wbsearchentities. May raise LookupFailed, same as _wikidata_search."""
+    r = _polite_get(
+        "https://www.wikidata.org/w/api.php",
+        params={"action": "query", "list": "search", "srsearch": title, "srnamespace": 0,
+                "format": "json", "srlimit": 10},
+    )
+    if r is None:
+        raise LookupFailed("network error calling the Wikidata full-text search")
+    if r.status_code != 200:
+        raise LookupFailed(f"Wikidata full-text search HTTP {r.status_code}")
+    try:
+        hits = r.json().get("query", {}).get("search", [])
+    except ValueError as e:
+        raise LookupFailed(f"bad JSON from the Wikidata full-text search: {e}") from e
+    return [{"id": h["title"], "description": _TAG.sub("", h.get("snippet") or "")}
+            for h in hits if isinstance(h.get("title"), str) and h["title"].startswith("Q")]
+
+
+def _merged_search_hits(title):
+    """Both Wikidata searches for one title, deduplicated (wbsearchentities' hits first — its
+    "description" is the cleaner of the two). See the module docstring: neither search alone is enough.
+    Either call's LookupFailed propagates uncaught, exactly as a single search failing did before this
+    function existed — a transient failure on either request is still never miscached as a confirmed
+    "not found" (the LookupFailed philosophy above _wikidata_search)."""
+    hits = _wikidata_search(title)
+    extra = _wikidata_fulltext_search(title)
+    seen = {h["id"] for h in hits}
+    return hits + [h for h in extra if h["id"] not in seen]
 
 
 def _wikidata_entities(ids, props="labels|claims"):
@@ -387,9 +455,9 @@ def _looks_like_a_film(hit, ent):
     return bool(_DESC_FILM.search(desc)) and not _DESC_NOT_FILM.search(desc)
 
 
-def _best_film_in_hits(hits, accepted_years):
-    """Given wbsearchentities hits, returns the qid of the first film-shaped hit whose own
-    publication year is in `accepted_years`, or None.
+def _best_film_in_hits(hits, accepted_years, want_title=None):
+    """Given search hits (wbsearchentities, full-text, or the two merged), returns the qid of a
+    film-shaped hit whose own publication year is in `accepted_years`, or None.
 
     No "best guess" fallback: a film-shaped hit whose year is wrong (or unknown) is not
     returned even if it's the only film-shaped hit. Round-3 controller review — the previous
@@ -397,38 +465,64 @@ def _best_film_in_hits(hits, accepted_years):
     found, which is how "The Odyssey" silently resolved to a 2016 film. Wrong match is worse
     than no match: the caller treats None as "not found" and moves on, rather than attaching
     another film's title_ar/genres/cast/runtime/ids to this listing.
+
+    `want_title`, when given (2026-09-30 fix): among several accepted-year film-shaped hits —
+    now a real possibility once wbsearchentities and full-text results are merged — one whose
+    own English label is an exact match (case/punctuation-insensitive, via _norm_title) for it
+    wins over one that only matched by relevance/alias. Hit order (the search engines' own
+    ranking) still decides when no hit is an exact label match, same as before this parameter
+    existed.
     """
     if not hits:
         return None
     entities = _wikidata_entities([h["id"] for h in hits])
+    want = _norm_title(want_title) if want_title else None
+    candidates = []
     for h in hits:
         qid = h["id"]
         ent = entities.get(qid)
         if not ent or not _looks_like_a_film(h, ent):
             continue
         if _claim_year(ent) in accepted_years:
-            return qid
-    return None
+            candidates.append((qid, ent))
+    if not candidates:
+        return None
+    if want:
+        for qid, ent in candidates:
+            if _norm_title(_label(entities, qid, "en")) == want:
+                return qid
+    return candidates[0][0]
 
 
 def _find_film_qid(title, accepted_years):
     """Wikidata match: instance-of film, publication year in `accepted_years`, or None.
 
-    A plain title search often loses to a franchise/game entity of the same name (e.g.
-    "Resident Evil" the video-game franchise outranks the 2026 film), or surfaces an older
-    film with the same title (e.g. "The Odyssey" 2016) ahead of or instead of the current
-    one. So: try the plain title first; if it doesn't land on a hit whose year is in
-    `accepted_years`, retry with a "(2026 film)"/"(2025 film)" disambiguator, which is how
-    Wikidata titles most just-released films. If neither lands on an accepted year, return
-    None — never the best non-matching hit (see _best_film_in_hits).
+    wbsearchentities alone first — cheap, and already right for most titles (module docstring:
+    it is a plain label/alias prefix match, so an exact or near-exact title still lands directly
+    on the film). Only when that doesn't land on an accepted-year hit does a full-text search
+    (_wikidata_fulltext_search) join in, merged with what wbsearchentities already returned — a
+    brand-new, barely-linked film routinely loses wbsearchentities' popularity ranking to an
+    older or unrelated entity of the same name (e.g. "Resident Evil" the video-game franchise
+    outranking the 2026 film by dozens of positions), which the full-text side finds directly.
+    If that still doesn't land, retry both merged, appending " film" (proven to surface a buried
+    new release through the full-text search), then a "(<year> film)" disambiguator for each
+    accepted year — how Wikidata titles some just-released films, tried last since it rarely
+    matches literally. If nothing lands on an accepted year, return None — never the best
+    non-matching hit (see _best_film_in_hits). This keeps the common case at one request, paying
+    for the wider (and slower, rate-limited) search only for the titles that actually need it.
     """
     hits = _wikidata_search(title)
-    qid = _best_film_in_hits(hits, accepted_years)
+    qid = _best_film_in_hits(hits, accepted_years, title)
     if qid:
         return qid
-    for suffix in (" (2026 film)", " (2025 film)"):
-        more_hits = _wikidata_search(title + suffix)
-        more_qid = _best_film_in_hits(more_hits, accepted_years)
+    hits = hits + [h for h in _wikidata_fulltext_search(title) if h["id"] not in {x["id"] for x in hits}]
+    qid = _best_film_in_hits(hits, accepted_years, title)
+    if qid:
+        return qid
+    suffixes = [" film"] + [f" ({y} film)" for y in sorted(accepted_years, reverse=True)]
+    for suffix in suffixes:
+        more_hits = _merged_search_hits(title + suffix)
+        more_qid = _best_film_in_hits(more_hits, accepted_years, title)
         if more_qid:
             return more_qid
     return None
@@ -445,34 +539,52 @@ def _runtime_of(ent):
 
 def _find_rerelease_qid(title, runtime=None, lang=None):
     """An older film for a title with no current-year match — see the module docstring's
-    "Re-releases": exact English label, >= RERELEASE_MIN_SITELINKS sitelinks, runtime within
-    RERELEASE_RUNTIME_TOLERANCE when both are known, original language agreeing when both are
-    known. Returns the qid or None. May raise LookupFailed."""
+    "Re-releases": its English label equals the cleaned title, or (2026-09-30 fix) is a leading
+    word-prefix of it — a themed re-release is often listed with a promotional tag stuck onto the
+    original title ("Avengers Endgame: Encore" for "Avengers: Endgame"), which no Wikidata search
+    finds under the full listing title at all (unlike an unrelated title, that search returns zero
+    hits, full stop). Up to 3 trailing words are dropped from the *search query* to find such a
+    listing's own item; the label comparison itself is never loosened beyond "is a prefix of the
+    full listing title" — still gated by every other guard: >= RERELEASE_MIN_SITELINKS sitelinks
+    (a well-known film, not a same-named obscurity), runtime within RERELEASE_RUNTIME_TOLERANCE
+    when both are known, original language agreeing when both are known. The title itself falls
+    back to the item's own enwiki sitelink when its English *label* is empty (2026-09-30 fix,
+    found live: Q23781155, "Avengers: Endgame" itself, carries no English label at all despite 90
+    sitelinks and an enwiki article titled exactly that — the label field and the sitelink can
+    genuinely disagree on Wikidata). Returns the qid or None. May raise LookupFailed, from any of
+    the (up to 4) queries tried."""
     want = _norm_title(title)
     if not want:
         return None
-    hits = _wikidata_search(title)
-    if not hits:
-        return None
-    entities = _wikidata_entities([h["id"] for h in hits], props="labels|claims|sitelinks")
-    for h in hits:
-        qid = h["id"]
-        ent = entities.get(qid)
-        if not ent or not _looks_like_a_film(h, ent):
+    words = title.split()
+    queries = dict.fromkeys(q for q in
+                             [title] + [" ".join(words[:-n]) for n in range(1, min(3, len(words) - 1) + 1)]
+                             if q.strip())
+    for query in queries:
+        hits = _merged_search_hits(query)  # LookupFailed propagates uncaught, same as _find_film_qid's
+        if not hits:                       # retries above — a failure is never miscached as "not found"
             continue
-        label = ((ent.get("labels") or {}).get("en") or {}).get("value")
-        if _norm_title(label) != want:
-            continue
-        if len(ent.get("sitelinks") or {}) < RERELEASE_MIN_SITELINKS:
-            continue
-        rt = _runtime_of(ent)
-        if runtime and rt and abs(int(runtime) - rt) > RERELEASE_RUNTIME_TOLERANCE:
-            continue
-        lang_qid = LANG_QIDS.get(lang or "")
-        langs = {v.get("id") for v in _claim_values(ent, "P364")}
-        if lang_qid and langs and lang_qid not in langs:
-            continue
-        return qid
+        entities = _wikidata_entities([h["id"] for h in hits], props="labels|claims|sitelinks")
+        for h in hits:
+            qid = h["id"]
+            ent = entities.get(qid)
+            if not ent or not _looks_like_a_film(h, ent):
+                continue
+            en_name = (((ent.get("labels") or {}).get("en") or {}).get("value")
+                       or ((ent.get("sitelinks") or {}).get("enwiki") or {}).get("title"))
+            label = _norm_title(en_name)
+            if not label or not want.startswith(label):
+                continue
+            if len(ent.get("sitelinks") or {}) < RERELEASE_MIN_SITELINKS:
+                continue
+            rt = _runtime_of(ent)
+            if runtime and rt and abs(int(runtime) - rt) > RERELEASE_RUNTIME_TOLERANCE:
+                continue
+            lang_qid = LANG_QIDS.get(lang or "")
+            langs = {v.get("id") for v in _claim_values(ent, "P364")}
+            if lang_qid and langs and lang_qid not in langs:
+                continue
+            return qid
     return None
 
 
@@ -657,6 +769,18 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
     dirty = False
     current_year = datetime.now(timezone.utc).year
 
+    # A "not_found" cached under an older LOOKUP_VERSION all become eligible for a retry at once
+    # when the version bumps (e.g. this fix, 2: re-release fallback -> 3: widened search) — capped
+    # here, oldest-checked first, so that doesn't throw every stale "not found" film at Wikidata
+    # (and the phone) in a single run; the rest catch up on a later run.
+    version_stale = sorted(
+        (fid for fid, film in films.items()
+         if (cache.get(fid) or {}).get("ids_status") == "not_found"
+         and (cache[fid].get("lookup_v", 1) < LOOKUP_VERSION)),
+        key=lambda fid: cache[fid].get("ids_checked_at") or "",
+    )
+    version_retry_batch = set(version_stale[:NOT_FOUND_RELOOKUP_CAP])
+
     for fid, film in films.items():
         _blank_film_fields(film)
         # search_title is an optional override for the Wikidata/Wikipedia query only — the
@@ -682,9 +806,9 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
         if ids_status == "found":
             should_attempt = False  # a confirmed match is permanent, never re-queried
         elif ids_status == "not_found":
-            # a "not found" from before the re-release fallback existed is retried once now
-            should_attempt = (entry.get("lookup_v", 1) < LOOKUP_VERSION
-                              or not _fresh(ids_checked_at, NOT_FOUND_TTL))
+            # a "not found" from before the current LOOKUP_VERSION is retried once, capped per
+            # run (version_retry_batch above); otherwise the ordinary NOT_FOUND_TTL applies.
+            should_attempt = fid in version_retry_batch or not _fresh(ids_checked_at, NOT_FOUND_TTL)
         elif ids_status == "error":
             should_attempt = not _fresh(ids_checked_at, ERROR_TTL)
         else:  # never attempted
