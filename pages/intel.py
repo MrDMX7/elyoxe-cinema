@@ -110,15 +110,17 @@ def _why(site, lang, fid):
     head = L["why_yes"] if v == "yes" else L["why_skip"] if v == "skip" else L["why_mixed"]
     cls = lambda pos: "pos" if pos is True else "neg" if pos is False else "mid"
     lis = "".join(f'<li class="{cls(pos)}">{_decimals(dates(esc(t)))}</li>' for t, pos in items)
-    # the sections further down (in «عن الفيلم»), one tap from the hero: owner 2026-09-30 «ما لقيت اشرح النهاية ولا اسأل
-    # الفيلم» — they sat under the whole schedule. tabs.js opens the «عن الفيلم» tab and the <details> the link names.
+    # the sections further down (in «عن الفيلم»), a small row at the bottom of THIS list (round r3: they
+    # used to sit as a sibling right after the <details>, drawn whether the list was open or not -- cluttering the
+    # hero before a single tap. Inside the <details> they show only once it is open. tabs.js opens the tab and the
+    # <details> the link names, wherever in the DOM the link itself sits (openAt, by id).
     jumps = ""
     if intel and lang == "ar":
-        links = ([("i-aud", L["audience"][0])] if intel.get("audience") else []) +                 [("i-end", L["ending_btn"][0]), ("i-qa", L["qa_btn"][0])]
+        links = ([("i-aud", L["audience"][0])] if intel.get("audience") else []) + [("i-end", L["ending_btn"][0]), ("i-qa", L["qa_btn"][0])]
         jumps = '<nav class="i-jumps" aria-label="عن الفيلم">' + "".join(
             f'<a class="i-jump" href="#{i}">{esc(t)}</a>' for i, t in links) + '</nav>'
     return (f'<details class="fwhy" data-why="{src}"><summary><span>{esc(head[0 if lang == "ar" else 1])}</span></summary>'
-            f'<ul class="i-list">{lis}</ul></details>{jumps}')
+            f'<ul class="i-list">{lis}</ul>{jumps}</details>')
 
 
 def _score_row(film, lang, intel=None):

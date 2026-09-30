@@ -47,15 +47,23 @@ def test_hero_title_verdict_facts_and_actions(out):
     assert 'data-fv-more aria-controls="fv" aria-expanded="false" hidden>المزيد</button>' in hero
     ff = re.search(r'<p class="ff">(.*?)</p>', hero).group(1)
     assert '<span class="basis rates">' in ff and '<span class="num">118</span> دقيقة' in ff and "PG15" in ff and "·" not in ff
+    # round r3 (owner report, too many controls before the schedule): one action row now — «الإعلان» and a
+    # «شارك» button that opens a menu (never a second hero button for «صورة ستوري»); «قارن» is no longer a
+    # hero link at all, only the tab film_tabs() draws below the schedule when the film has one
     cta = re.search(r'<p class="cta">(.*?)</p>', hero).group(1)
-    labels = re.findall(r'</svg>([^<]+)</a>|js-only" href="#compare"[^>]*>([^<]+)</a>', cta)
-    assert [a or b for a, b in labels] == ["الإعلان", "شارك", "قارن"]
-    assert 'data-trailer="k8Qm3LzT0aE"' in cta and "data-share-url=" in cta and 'data-tab-go="compare"' in cta
+    labels = re.findall(r'</svg>([^<]+)</a>|</svg>([^<]+)</button>', cta)
+    assert [a or b for a, b in labels] == ["الإعلان", "شارك"]
+    assert 'data-trailer="k8Qm3LzT0aE"' in cta and 'data-sheet-open="sheet-share"' in cta
+    assert "data-share-url=" not in cta and "قارن" not in cta and "data-tab-go" not in cta
+    # the share sheet itself (sheet.js opens it; site_kit.Kit.sheet): the WhatsApp/native-share link keeps the
+    # same data-share* shape share.js has always rewritten, «صورة ستوري» sits beside it, never in the hero
+    sheet = h[h.index('id="sheet-share"'):h.index('id="sheet-share"') + 1200]
+    assert 'data-share data-share-msg=' in sheet and "data-share-url=" in sheet and "أرسل" in sheet
     # the poster card (desktop) with the velvet glow, the view transition's «poster»
     assert '<div class="fposter"><span class="pst hero img"' in hero
     en = read(out, "en", "film", FID)
     assert '<h1 class="ft">Heart of the Beast</h1>' in en and '<p class="fte">' not in en        # no English title twice
-    assert re.search(r'</svg>Trailer</a>.*</svg>Share</a>.*>Compare</a>', en)
+    assert re.search(r'</svg>Trailer</a>.*</svg>Share</button>.*>Compare</a>', en)                # Compare: the tab, not the hero
 
 
 def test_hero_frame_is_the_lcp_and_poster_fallback_is_one_download(tmp_path):
@@ -327,7 +335,9 @@ def test_unknown_verdict_and_the_hero_without_any_picture(out):
     # the typographic tile is the case on a phone as the poster is (W2-P1: .fposter drawn at clamp(120px,20svh,180px))
     assert ".pst.hero{block-size:clamp(120px,20svh,180px)" in css and ".fhero.fr .fposter{display:none}" in css
     # I1: the «المزيد» rules outrank .lnk (the button no longer carries it); M4: one .cg-m
-    assert ".fv-w .fv-m{position:absolute;" in css and css.count(".cg-m{") == 1
+    # round r3: «المزيد» is a plain block-level text button under the verdict, never a positioned overlay
+    assert ".fv-w .fv-m{display:block;" in css and "position:absolute" not in css[css.index(".fv-w .fv-m{"):css.index(".fv-w .fv-m{") + 400]
+    assert css.count(".cg-m{") == 1
     assert 'class="lnk fv-m"' not in read(out, "film", FID)
 
 

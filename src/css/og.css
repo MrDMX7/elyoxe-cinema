@@ -6,6 +6,10 @@
   text-decoration:none;font-weight:600;padding-inline:16px}
 .pshare .share:focus-visible{outline:2px solid var(--gold);outline-offset:-5px}
 .pshare .share[data-share-applied]{background:var(--ink)}
+/* the film hero's share sheet (round r3): «أرسل» and «صورة ستوري», one full-width row each — the same shape
+   as the «قائمتي» sheet's own rows (ui-sheet.css .me-rows), never side by side on a phone */
+.share-opts{display:grid;gap:8px}
+.share-opts .btn{inline-size:100%;justify-content:flex-start}
 
 /* the "opened with your friend's settings" prompt (src/js/share.js) — one line, never silent. On a phone it
    sits on top of the tab bar (nav.tabs: 60 px links + its 1 px rule + the safe area), never in its slot; desktop has no bar. */

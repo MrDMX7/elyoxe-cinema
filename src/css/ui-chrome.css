@@ -1,36 +1,45 @@
 /* the chrome: the header (mark, pills, search), the network city note, the footer, the install line (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
 /* ------------------------------------------------ the chrome (UI redesign Task 2): one header line, a phone tab bar,
    the footer, and the sheets the header's pills open */
-/* the header: solid night with a 1 px rule. Over a screen (data-hero) it starts clear and turns solid over the first
-   56 px of scroll, on a scroll timeline (W2-P5, MASTER-PLAN §2.0: no listener, no sentinel): the night and its rule are a
-   layer under the header's content whose opacity follows the page's scroll. A browser without scroll timelines keeps
-   the solid header, as with no script; under reduced motion the light changes at once, at 56 px */
+/* the header: solid night with a 1 px rule. Over a screen (data-hero) it starts translucent (the frame/poster shows
+   through, behind the wordmark and pills) and turns fully solid the INSTANT any of its own readable text would
+   otherwise sit under it — round r3 (owner report: «صارت الشاشة فوضوية», a screenshot of the film page showed
+   «سينما» and the pills sitting over the title). chrome.js drives it with two IntersectionObservers, never a
+   scroll listener: one on a 1 px sentinel at the very top of body (src/page.html) for a real scroll, and one on
+   the film hero's own title (a coordinator-caught second case: the film hero's text block is anchored to its
+   picture's BOTTOM — see .fhero's justify-content:flex-end below — so opening «ليش يستاهل؟» can grow it past the
+   picture's own height and shove the title to y=0 with NO scroll at all; that observer's rootMargin is the
+   header's own live height, so it fires on that reflow exactly as the other fires on a scroll). Both toggle
+   body.scrolled through one shared flag, so the header can never overlap readable text however the overlap would
+   have happened. Solid is a ::before layer under the header's own content, its opacity following .scrolled.
+   Gated behind .js: with no script (or JS disabled) the base rule above wins and the header is always solid,
+   same as every other page kind */
 .top{position:sticky;inset-block-start:0;z-index:30;background:var(--night);border-block-end:1px solid var(--line)}
 /* installed as a standalone app (iOS/Android): the status bar sits over the page (viewport-fit=cover), so the
    sticky header pads under it instead of under the notch/Dynamic Island. A normal browser tab already reserves
    its own chrome for this, so the padding is scoped to display-mode:standalone only */
 @media (display-mode:standalone){.top{padding-block-start:env(safe-area-inset-top)}}
-@supports (animation-timeline:scroll()){
-  body[data-hero] .top{background:linear-gradient(rgba(15,11,12,.85),rgba(15,11,12,0)) border-box;border-block-end-color:transparent}
-  body[data-hero] .top::before{content:"";position:absolute;inset:0 0 -1px;z-index:-1;background:var(--night);border-block-end:1px solid var(--line);
-    opacity:0;animation:top-solid linear both;animation-timeline:scroll(root);animation-range:0 56px}
+.js body[data-hero] .top{background:linear-gradient(rgba(15,11,12,.85),rgba(15,11,12,0)) border-box;border-block-end-color:transparent}
+.js body[data-hero] .top::before{content:"";position:absolute;inset:0 0 -1px;z-index:-1;background:var(--night);border-block-end:1px solid var(--line);opacity:0}
+.js body[data-hero].scrolled .top::before{opacity:1}
+@media (prefers-reduced-motion:no-preference){
+  .js body[data-hero] .top::before{transition:opacity .12s var(--ease-out)}
 }
-@keyframes top-solid{to{opacity:1}}
-@media (prefers-reduced-motion:reduce){
-  body[data-hero] .top::before{animation-timing-function:steps(1,end)}
-}
-.top-in{display:flex;align-items:center;gap:12px;block-size:var(--head)}
+.top-in{display:flex;align-items:center;gap:8px;block-size:var(--head)}
 /* the wordmark: «سينما» in Markazi gold on every page, /en/ too (owner default D7: an Arabic logotype, read as «Cinema»);
-   32 px, the h1 step's floor, header and footer alike */
+   32 px, the h1 step's floor, header and footer alike — the header's own copy shrinks a little on a phone (round r3:
+   the header pills used to truncate at 344–390 px; this and the tighter gaps/padding below free the room they need
+   to show their full text, e.g. «الشارقة» and «بطاقتي», without an ellipsis) */
 .mark{font-family:var(--display);font-weight:700;font-size:32px;line-height:1;color:var(--gold);text-decoration:none;flex:0 0 auto}
+.top .mark{font-size:var(--fs-h2)}
 [lang=en] .mark{font-family:"Markazi Mark",serif}
 .nav{display:none}
-.tools{margin-inline-start:auto;display:flex;align-items:center;gap:8px;min-inline-size:0}
+.tools{margin-inline-start:auto;display:flex;align-items:center;gap:4px;min-inline-size:0}
 .icon{inline-size:40px;block-size:40px;display:inline-grid;place-items:center;flex:0 0 auto;background:none;border:0;padding:0;color:var(--screen);cursor:pointer}
 .icon svg{inline-size:20px;block-size:20px}
 .srch-b{display:none}
 .js .srch-b{display:inline-grid}
-.pill{display:inline-flex;align-items:center;gap:8px;min-block-size:36px;min-inline-size:0;padding-inline:12px;border:1px solid var(--line-2);
+.pill{display:inline-flex;align-items:center;gap:4px;min-block-size:36px;min-inline-size:0;padding-inline:8px;border:1px solid var(--line-2);
   background:rgba(15,11,12,.4);color:var(--screen);font-size:var(--fs-meta);line-height:1.2;text-decoration:none;white-space:nowrap}
 .pill span{overflow:hidden;text-overflow:ellipsis;max-inline-size:8.5em;line-height:1.7}
 /* a down-pointing chevron (▾): direction-independent, so physical borders — logical ones point it sideways in RTL */
@@ -61,6 +70,7 @@
 .foot a:hover{color:var(--screen)}
 @media (min-width:1024px){
   .top-in{gap:28px}
+  .top .mark{font-size:32px}
   .nav{display:flex;gap:24px}
   .nav a{min-block-size:44px;display:inline-flex;align-items:center;font-size:var(--fs-title);color:var(--seat);text-decoration:none}
   .nav a:hover{color:var(--screen)}

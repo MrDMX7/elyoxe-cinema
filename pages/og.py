@@ -32,25 +32,33 @@ def _share_link(site, lang, url, msg):
 
 
 def _film_slot(site, lang, fid):
-    """The film hero's «شارك» (UI redesign Task 4): a ghost button of the hero's actions, the same link and
-    attributes as `_share_link` (share.js appends the visitor's city and card, and uses the phone's share sheet).
-    r3-seo: a second, plain download link for the day's Stories card (site.og_story_override, filled by
-    `register` below from data["films"][fid]["og_story"], the 1080x1920 sibling of the 1200x630 `og` field) —
-    nothing new to click through, just the file, for a visitor who wants to post it themselves."""
+    """The film hero's «شارك» (UI redesign Task 4): round r3 (owner report, too many controls before the
+    schedule) turned it from a ghost button that shared directly into a ghost button that opens a small
+    sheet (site_kit's own sheet(), the same component the header's pills use) with the actual actions inside:
+    the WhatsApp/native-share link (`_share_link`'s shape: share.js appends the visitor's city and card, and
+    uses the phone's share sheet when it has one) and, r3-seo, a second, plain download link for the day's
+    Stories card (site.og_story_override, filled by `register` below from data["films"][fid]["og_story"], the
+    1080x1920 sibling of the 1200x630 `og` field) — nothing new to click through, just the file, for a visitor
+    who wants to post it themselves. Appends to site._sheets exactly as film_bar's own «⋯» sheet does (both
+    reset and flushed once per page by site.page(), pages/_core/film.py's film_pages)."""
     f = site.films.get(fid) or {}
     if f.get("status") == "archived":
         return ""  # nothing left to share a live price for
     t, url = site.ftitle(fid, lang), SITE + P(lang, "film", fid)
     wa = "https://wa.me/?text=" + quote(t + "\n" + url, safe="")
-    out = (f'<a class="btn ghost" href="{esc(wa)}" rel="noopener" target="_blank" data-share data-share-msg="{esc(t)}" '
-           f'data-share-url="{esc(url)}">{icon("share")}{esc("شارك" if lang == "ar" else "Share")}</a>')
+    send = (f'<a class="btn ghost" href="{esc(wa)}" rel="noopener" target="_blank" data-share data-share-msg="{esc(t)}" '
+            f'data-share-url="{esc(url)}">{icon("share")}{esc("أرسل" if lang == "ar" else "Send")}</a>')
     story = site.og_story_override.get((lang, fid))
+    story_link = ""
     if story:
         # a download icon and «صورة ستوري»/"Story image", not the share icon and «ستوري إنستقرام»: the card
         # also serves TikTok, and the link saves a file rather than opening a share sheet (review fix)
-        out += (f'<a class="btn ghost" href="{esc(story)}" download rel="noopener">{icon("download")}'
-                f'{esc("صورة ستوري" if lang == "ar" else "Story image")}</a>')
-    return out
+        story_link = (f'<a class="btn ghost" href="{esc(story)}" download rel="noopener">{icon("download")}'
+                      f'{esc("صورة ستوري" if lang == "ar" else "Story image")}</a>')
+    body = f'<div class="sec share-opts">{send}{story_link}</div>'
+    site._sheets.append(site.sheet("sheet-share", ("شارك", "Share"), body, lang))
+    return (f'<button type="button" class="btn ghost" data-sheet-open="sheet-share" aria-haspopup="dialog">'
+            f'{icon("share")}{esc("شارك" if lang == "ar" else "Share")}</button>')
 
 
 def _cinema_slot(site, lang, cid):

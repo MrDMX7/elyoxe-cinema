@@ -42,11 +42,14 @@ class FilmPages:
             out.append(x)
         return out[:4]
 
-    def film_hero(self, fid, lang, rates, cmp_tab):
+    def film_hero(self, fid, lang, rates):
         """The hero (the mock's .fhero): the trailer frame full-bleed under the header (Kit.backdrop, the page's LCP);
         with none yet, the poster blurred beyond reading on a phone and, on a desktop, the sharp poster card in the
         velvet glow (the home billboard's fallback); the title, the English title and year, the verdict (three
-        lines, «المزيد» opens the rest), the facts, and the actions: الإعلان، شارك (pages/og.py), قارن."""
+        lines, «المزيد» opens the rest), the facts, and one action row: الإعلان، شارك (pages/og.py — its sheet
+        also carries «صورة ستوري»). Round r3 (owner report, too many controls before the schedule): «قارن» no
+        longer draws a second hero button — film_tabs() already draws its own «قارن» tab under the schedule
+        whenever the film has one, so the hero needed no link to it."""
         f = self.films[fid]; v = (f.get("verdict") or {}).get("verdict") or "unknown"
         t = self.ftitle(fid, lang); attr = self.title_attr(fid, lang); ar = lang == "ar"
         # «الشاشة» (W2-P1, kit/media.py): the graded frame (its portrait crop on a phone), preloaded; with none, the lit
@@ -86,8 +89,6 @@ class FilmPages:
             acts += (f'<a class="btn ghost" href="https://www.youtube-nocookie.com/embed/{esc(f["trailer"])}" data-trailer="{esc(f["trailer"])}" rel="noopener" target="_blank">'
                      f'<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>{esc(L(FILM_T["trailer"], lang))}</a>')
         acts += self.slot("film.share", lang, fid=fid)
-        # «قارن» opens its tab (tabs.js); the tab itself is script-drawn (compare.js), so is this link
-        if cmp_tab: acts += f'<a class="btn ghost js-only" href="#compare" data-tab-go="compare">{esc(L(FILM_T["compare"], lang))}</a>'
         arch = self.archive_note(fid, lang) if f.get("status") == "archived" else ""
         cls = " fr" if frame else "" if f.get("poster") else " np"   # np: the typographic tile stands in the poster's place
         return (f'<section class="fhero{cls}"><div class="fh-bd">{pic}</div><div class="wrap fhero-in">'
@@ -194,7 +195,7 @@ class FilmPages:
                           "cast": self.slot("film.cast", lang, fid=fid),
                           "similar": self.similar(fid, lang) if archived else self.slot("film.similar", lang, fid=fid),
                           "double": self.slot("film.double", lang, fid=fid), "compare": self.slot("film.compare", lang, fid=fid)}
-                hero = self.film_hero(fid, lang, rates, bool(panels["compare"]))
+                hero = self.film_hero(fid, lang, rates)
                 tabs = self.film_tabs(fid, lang, panels)
                 vword = L(VERDICT.get(v, VERDICT["unknown"]), lang)
                 if archived:

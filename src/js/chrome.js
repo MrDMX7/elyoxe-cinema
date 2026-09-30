@@ -11,7 +11,16 @@
      iPhone plays its own on the switches drag.js makes native.
    - The «قائمتي» sheet (D2, until W3-P1's /me/): the card chosen, and «امسح بياناتي», which asks once more, then clears
      every «cinema.» key on this phone and loads the page again as a first visit.
-   - drag.js (the sheets' drag, a lazy chunk): fetched when a phone page is idle, or at the first sheet. */
+   - drag.js (the sheets' drag, a lazy chunk): fetched when a phone page is idle, or at the first sheet.
+   - The header over a screen (round r3, ui-chrome.css's data-hero rules): translucent at rest, solid the instant
+     any of its own readable text would sit under it — never a scroll listener, two IntersectionObservers: one on
+     a top-of-body sentinel (a real scroll), one on the film hero's own title with the header's height as its top
+     margin (a coordinator-caught second case with NO scroll at all — the film hero's text block is anchored to
+     its picture's BOTTOM, ui-fhero.css's justify-content:flex-end, so opening «ليش يستاهل؟» can grow it past the
+     picture's own height and shove the title itself up to y=0; an observer keyed to scrollY alone never sees
+     this, since scrollY never changes — but the title's own geometry does, and IntersectionObserver recomputes
+     on that too). Both drive the same class through a shared flag object, so one can never clear what the other
+     just set. */
 var CH = { down: false, stub: false, y: 0, tap: false }, chRoot = document.documentElement;
 function chAway() {
   var b = 0, away = CH.down || CH.stub, t = q(".tabs");
@@ -26,6 +35,16 @@ function dragLoad() {
   if (u && !q('script[src="' + u + '"]')) { var s = document.createElement("script"); s.src = u; document.head.appendChild(s); }
 }
 feature(function () {
+  /* the header-solid pair (module note above): harmless on a page with no data-hero — the class still gets set,
+     nothing in the stylesheet reads it there. */
+  var IO = window.IntersectionObserver, SOL = { a: false, b: false };
+  function sol(k, v) { SOL[k] = v; body.classList.toggle("scrolled", SOL.a || SOL.b); }
+  if (IO) {
+    new IO(function (e) { sol("a", !e.pop().isIntersecting); }).observe(q("#scroll-mark"));
+    var ft = q(".fhero h1.ft"), topEl = q(".top");
+    if (ft && topEl) new IO(function (e) { sol("b", !e.pop().isIntersecting); },
+      { rootMargin: "-" + topEl.offsetHeight + "px 0px 0px 0px" }).observe(ft);
+  }
   document.addEventListener("click", function (e) { if (e.isTrusted) CH.tap = true; }, true);
   addEventListener("scroll", function () {
     var y = scrollY, dn = y > CH.y && y > 0;
