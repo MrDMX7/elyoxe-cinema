@@ -10,8 +10,11 @@
 #
 # Exit: 0 = deployed (possibly with degraded chains). $DEGRADED_RC (78) = DEGRADED — a failure
 #   (tests/pull/refresh/deploy/memory-wait) that was already alerted and is STILL going on: nothing
-#   new deployed, logged as DEGRADED, quiet except at most one reminder per Asia/Dubai calendar day
-#   (ruling, docs/RULINGS.md:37) -- run-job.sh's state/<job>.state must record "degraded" (not
+#   new deployed, logged as DEGRADED, and the owner is told at once (item 291, 2026-09-30 -- a
+#   freeze confirmed two runs in a row is no longer news that waits) then reminded at most once
+#   every 6 hours while it lasts (ruling, docs/RULINGS.md:37, raised from once/calendar-day: that
+#   let a freeze starting just after midnight go ~24h between reminders) -- run-job.sh's
+#   state/<job>.state must record "degraded" (not
 #   "ok") for this exit code, never silently exit 0 for an ongoing failure. NOT plain 2: run-job.sh
 #   already used 2 for its own "unknown job name" fallback before this convention existed, so this
 #   script and run-job.sh's finish() must agree on the SAME dedicated code (78) or a mistyped job
@@ -69,16 +72,21 @@ PYEOF
 # same convention as statefile.py's write_json_atomic; these markers are polled across runs, so a
 # killed run must not leave one truncated).
 write_marker_atomic() { printf '%s\n' "$2" > "$1.tmp.$$" && mv -f "$1.tmp.$$" "$1"; }
-# remind_once <key> <message> — at most one notification per Asia/Dubai calendar day while a
-# condition stays bad (ruling, docs/RULINGS.md:37). data/.reminded-<key> holds the last date
-# reminded; fail() also stamps it the day the FRESH alert fires, so the reminder cycle only starts
-# the following day (the owner already knows about today's failure from that first alert).
+# remind_once <key> <message> — item 291 (2026-09-30): a freeze is confirmed the moment a condition
+# is STILL bad on the run right after the fresh alert (fail()'s DEGRADED branch below never calls
+# this on the first, fresh occurrence — only from the second run in a row onward), so the first call
+# here always fires "at once" (no marker yet). After that, at most one notification per 6 hours
+# while the condition stays bad (data/.reminded-<key> holds the epoch seconds of the last one) — not
+# once per calendar day, which used to let a freeze that started just after midnight run up to ~24h
+# between reminders (a real 20-hour freeze went unnoticed this way).
 remind_once() {
-  local key="$1" msg="$2" today marker
-  today=$(TZ=Asia/Dubai date +%F)
+  local key="$1" msg="$2" now_ts marker last_ts elapsed=999999
+  now_ts=$(TZ=Asia/Dubai date +%s)
   marker="$HERE/data/.reminded-$key"
-  [ "$(cat "$marker" 2>/dev/null)" = "$today" ] && return 0
-  write_marker_atomic "$marker" "$today"
+  last_ts=$(cat "$marker" 2>/dev/null)
+  case "$last_ts" in ''|*[!0-9]*) : ;; *) elapsed=$(( now_ts - last_ts ));; esac
+  [ "$elapsed" -lt 21600 ] && return 0   # < 6h since the last reminder (21600s): stay quiet
+  write_marker_atomic "$marker" "$now_ts"
   note "سينما ⚠" "$msg" "elyoxe-cinema-$key"
 }
 # ok_now <key> <message on clear> — a condition is absent this run; notify once if it had been
@@ -88,18 +96,21 @@ fail() {  # fail <message> <rc> <key> -- <rc> is the FRESH-failure exit code (6 
   # deploy, refresh.py's own rc). A failure that was already alerted and is STILL going on exits
   # $DEGRADED_RC (78, NOT 2 -- see the top-of-file comment and docs/RULINGS.md:37) instead of
   # repeating <rc> or going quiet with 0 -- so run-job.sh's state/<job>.state records "degraded"
-  # with a since-time, not "ok" -- with at most one reminder per calendar day while it lasts
-  # (remind_once above).
+  # with a since-time, not "ok". Item 291: this DEGRADED branch is exactly the condition's SECOND
+  # (or later) run in a row -- remind_once fires at once the first time it is called for a key (no
+  # marker yet), then throttles to at most once per 6h while the freeze lasts.
   echo "FAILED: $1"
   if [ -z "$(alert cond "$3" --bad "$1" --clear "")" ]; then
     local since; since=$(since_of "$3")
-    echo "DEGRADED: $3 since ${since:-?} — quiet unless today's reminder is still due"
-    remind_once "$3" "سينما: ما زال $1 من ${since:-?}"
+    echo "DEGRADED: $3 since ${since:-?} — freeze alert at once, then at most every 6h"
+    remind_once "$3" "سينما: بعده $1 من ${since:-?}"
     exit "$DEGRADED_RC"
   fi
-  # run-job.sh notifies a non-zero exit; notify here only when run on its own
+  # run-job.sh notifies a non-zero exit; notify here only when run on its own. No marker is stamped
+  # here (item 291): the FIRST failure is only a possible blip, not yet a confirmed freeze -- the
+  # reminder marker belongs solely to remind_once, so the very next run (if still broken) alerts at
+  # once instead of waiting up to a day.
   [ -z "${ELYOXE_JOB:-}" ] && note "سينما ✗" "$1" "elyoxe-cinema"
-  write_marker_atomic "$HERE/data/.reminded-$3" "$(TZ=Asia/Dubai date +%F)"   # today already covered by this fresh alert
   exit "${2:-1}"
 }
 

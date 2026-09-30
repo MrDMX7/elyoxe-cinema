@@ -161,7 +161,7 @@ GRADE_SATURATION = 0.88
 # the portrait
 PORTRAIT_MIN_H = 800
 PORTRAIT_QUALITIES = (72, 66, 60)
-PORTRAIT_MAX_BYTES = 70_000
+PORTRAIT_MAX_BYTES = 60_000   # item 292 (2026-09-30): the home billboard's mobile LCP element -- keep it light
 PORTRAIT_DISPLAY = (1080, 1620)   # the phone billboard's 2:3 box: 360 x 540 CSS px at DPR 3
 SHARP_MIN_RATIO = 0.9
 WINDOW_STEPS = 9

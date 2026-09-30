@@ -325,14 +325,15 @@ def test_the_portrait_is_never_upscaled():
     assert img is None and blob is None and why == "active height 536 < 800"
 
 
-def test_the_portrait_is_at_most_70_kb(fixture_run):
+def test_the_portrait_is_at_most_60_kb(fixture_run):
+    """item 292 (2026-09-30): the home billboard's mobile LCP element -- lowered from 70 KB."""
     tmp, _, _, e = fixture_run["film-1080"]
-    assert _file(tmp, e["p"]).stat().st_size <= bd.PORTRAIT_MAX_BYTES == 70_000
+    assert _file(tmp, e["p"]).stat().st_size <= bd.PORTRAIT_MAX_BYTES == 60_000
     assert e["pq"] == 72
     # an incompressible source steps down in quality and, still too big, writes nothing
     noise = Image.merge("RGB", [Image.effect_noise((720, 1080), 120) for _ in range(3)])
     img, blob, q, ratio, why = bd.portrait(noise, 0.5, noise.resize((1280, 1080)))
-    assert img is None and why == "over 70000 B even at q60"
+    assert img is None and why == "over 60000 B even at q60"
 
 
 def test_the_window_goes_to_the_subject_in_focus_not_the_most_colourful_patch():

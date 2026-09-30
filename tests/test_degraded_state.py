@@ -1,15 +1,20 @@
-"""Task A1 (ops): degraded state + daily reminder while a failure lasts.
+"""Task A1 (ops): degraded state + a freeze alert at once, then a reminder every 6h while it lasts.
 
 Ruling parked in docs/CUTOVER.md §6: an already-alerted ongoing failure used to exit 0, so
 run-job.sh's state/<job>.state read "ok" for a job that was, in truth, still broken. Fixed by:
-run.sh's fail() now exits 2 ("DEGRADED") instead of 0 for a condition that is already alerted and
-still bad -- logging the condition + its since-time -- and sends at most one reminder per Asia/Dubai
-calendar day while it lasts (data/.reminded-<key>); a fresh alert (the first time a condition turns
-bad) still exits its real code (6 tests, 7 pull, 3 deploy, refresh.py's own rc) and stamps today as
-already covered so the reminder cycle only starts the next day. ok_now() gives one "recovered" note
-and drops the marker. run-job.sh's finish() now treats rc==2 as a third state (degraded): it records
-status=degraded in state/<job>.state and does NOT notify (the job already handled its own alert), so
-an hourly cinema tick never repeats the same failure notification every run.
+run.sh's fail() now exits $DEGRADED_RC (78, "DEGRADED") instead of 0 for a condition that is
+already alerted and still bad -- logging the condition + its since-time. A fresh alert (the first
+time a condition turns bad) still exits its real code (6 tests, 7 pull, 3 deploy, refresh.py's own
+rc) and stamps nothing -- it is only a possible blip. Item 291 (2026-09-30): the very next run, if
+still broken, is the SECOND run in a row -- a confirmed freeze -- so remind_once() (data/.reminded-
+<key> now holds epoch seconds, not a date) fires AT ONCE on its first call for that key, then
+throttles to at most one reminder per 6 hours while the freeze persists (raised from once per
+Asia/Dubai calendar day, which could leave up to ~24h of silence between reminders -- a real
+20-hour freeze went unnoticed that way). ok_now() gives one "recovered" note and drops the marker,
+so a future recurrence of the same key starts a fresh cycle. run-job.sh's finish() treats rc==78 as
+a third state (degraded): it records status=degraded in state/<job>.state and does NOT notify (the
+job already handled its own alert), so an hourly cinema tick never repeats the same failure
+notification every run.
 
 This suite runs run.sh for real (bash subprocess) against a throwaway sandbox: a self-contained git
 repo (a local "origin" so `git pull --ff-only` is a trivial no-op success), stub deploy.sh/refresh.py/
@@ -147,8 +152,10 @@ def test_a_fresh_test_failure_exits_6_and_alerts_once(sandbox):
     assert rc == 6, out
     assert "FAILED: الاختبارات فشلت" in log
     assert alert_state(sandbox)["tests"]["sig"] == "bad"
-    # the fresh alert already told the owner about today -- no separate reminder needed yet
-    assert reminded_marker(sandbox, "tests") is not None
+    # item 291: a single fresh failure is only a possible blip, not a confirmed freeze -- no
+    # reminder marker is stamped yet (that belongs solely to remind_once, so a still-broken run
+    # right after this one alerts AT ONCE instead of the marker already looking "covered")
+    assert reminded_marker(sandbox, "tests") is None
 
 
 # ================================================================ degraded, not ok
@@ -169,36 +176,57 @@ def test_an_ongoing_failure_is_degraded_not_ok_or_a_repeat_failure(sandbox):
     assert alert_state(sandbox)["tests"] == {"sig": "bad", "since": since_after_first}
 
 
-def test_the_reminder_marker_is_not_re_stamped_twice_the_same_day(sandbox):
+# ================================================================ item 291: freeze alert at once, then every 6h
+
+def test_a_freeze_confirmed_twice_in_a_row_alerts_at_once(sandbox):
+    """The behaviour change: the SECOND consecutive bad run (the one that first proves this is a
+    real freeze, not a one-off blip) must notify immediately -- not wait for a marker that the old
+    calendar-day scheme had already (wrongly) pre-stamped on the very first, fresh failure."""
     set_tests(sandbox[0], passing=False)
-    run_cinema(sandbox)
-    stamped_after_first = reminded_marker(sandbox, "tests")
-    run_cinema(sandbox)                       # run 2, same day: degraded, no new reminder due
-    assert reminded_marker(sandbox, "tests") == stamped_after_first
+    run_cinema(sandbox)                                    # run 1: fresh alert, no marker yet
+
+    rc, out, log = run_cinema(sandbox)                     # run 2: still broken -- twice in a row
+    assert rc == 78, out
+    assert "notify (unavailable): سينما ⚠ — سينما: بعده" in log
+    assert "من " in log                                    # "<condition> من <since>" -- the template shape
+    assert reminded_marker(sandbox, "tests") is not None    # the freeze reminder cycle started now
 
 
-# ================================================================ one reminder per calendar day
+def test_a_reminder_does_not_repeat_within_6_hours(sandbox):
+    set_tests(sandbox[0], passing=False)
+    run_cinema(sandbox)                                    # run 1: fresh
+    _, _, log_after_second = run_cinema(sandbox)            # run 2: freeze confirmed, alerts at once
+    stamped_after_second = reminded_marker(sandbox, "tests")
 
-def test_a_reminder_fires_once_when_a_new_day_starts_while_still_broken(sandbox):
+    rc, out, log = run_cinema(sandbox)                      # run 3, minutes later: still < 6h
+    assert rc == 78, out
+    new_lines = log[len(log_after_second):] if log.startswith(log_after_second) else log
+    assert "بعده" not in new_lines
+    assert reminded_marker(sandbox, "tests") == stamped_after_second
+
+
+def test_a_reminder_fires_again_once_6_hours_have_passed(sandbox):
     tmp_path, _ = sandbox
     set_tests(tmp_path, passing=False)
-    run_cinema(sandbox)                                   # fresh alert, stamps "today"
-    (tmp_path / "data" / ".reminded-tests").write_text("2000-01-01", encoding="utf-8")  # simulate a new day
+    run_cinema(sandbox)                                    # run 1: fresh
+    run_cinema(sandbox)                                    # run 2: freeze confirmed, alerts at once
+    old_marker = int(reminded_marker(sandbox, "tests"))
+    # simulate 6h + 1s having passed since the last reminder
+    (tmp_path / "data" / ".reminded-tests").write_text(str(old_marker - 21601), encoding="utf-8")
 
     rc, out, log = run_cinema(sandbox)
-    assert rc == 78
-    assert "notify (unavailable): سينما ⚠ — سينما: ما زال" in log
-    assert "من " in log                                   # "<condition> من <since>" -- the template shape
-    assert reminded_marker(sandbox, "tests") != "2000-01-01"  # the marker actually advanced
+    assert rc == 78, out
+    assert "notify (unavailable): سينما ⚠ — سينما: بعده" in log
+    new_marker = int(reminded_marker(sandbox, "tests"))
+    assert new_marker > old_marker - 21601                 # the marker actually advanced
 
-    # and it does NOT fire again later the same (simulated-new) day
+    # and it stays quiet again right after (< 6h since this new reminder)
     log_before = log
     rc2, out2, log2 = run_cinema(sandbox)
     assert rc2 == 78
     new_lines = log2[len(log_before):] if log2.startswith(log_before) else log2
-    assert "ما زال" not in new_lines or reminded_marker(sandbox, "tests") == reminded_marker(sandbox, "tests")
-    # the authoritative check: the marker from the reminder run did not change on this quiet run
-    assert reminded_marker(sandbox, "tests") is not None
+    assert "بعده" not in new_lines
+    assert int(reminded_marker(sandbox, "tests")) == new_marker
 
 
 # ================================================================ recovery
