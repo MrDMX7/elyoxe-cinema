@@ -247,7 +247,47 @@ def _client():
 
         ssm = boto3.client("ssm", region_name="ap-south-1")
         key = ssm.get_parameter(Name="/elyoxe/anthropic/key", WithDecryption=True)["Parameter"]["Value"]
-    return anthropic.Anthropic(api_key=key)
+    return _UsageLogged(anthropic.Anthropic(api_key=key))
+
+
+# $ per million tokens (input, output) — Anthropic list prices checked 2026-10-01; cache writes 1.25x input, reads 0.1x
+PRICES = {"claude-sonnet-5": (2.0, 10.0), "claude-sonnet-5-5": (2.0, 10.0), "claude-haiku-4-5": (1.0, 5.0),
+          "claude-opus-5-5": (4.0, 20.0)}
+USAGE_LOG = os.environ.get("ELYOXE_USAGE_LOG") or os.path.expanduser("~/.elyoxe/usage.jsonl")
+
+
+class _UsageLogged:
+    """The client _client() returns: messages.create as usual, plus one JSON line per call (tokens and dollars) into
+    the file the daily automation-cost email sums (~/workspace/automation/cost-report). Best effort: logging never
+    breaks a call, and tests (which build their own fake clients) never reach it."""
+
+    def __init__(self, client):
+        self._client = client
+        self.messages = self
+
+    def create(self, **kw):
+        resp = self._client.messages.create(**kw)
+        try:
+            import sys
+            import time
+
+            fr = sys._getframe(1)   # the caller names the job: verdicts:generate_one, filmintel:call_json, …
+            job = f"{Path(fr.f_code.co_filename).stem}:{fr.f_code.co_name.lstrip('_')}"
+            u = resp.usage
+            n_in, n_out = u.input_tokens or 0, u.output_tokens or 0
+            c_read = getattr(u, "cache_read_input_tokens", 0) or 0
+            c_write = getattr(u, "cache_creation_input_tokens", 0) or 0
+            p_in, p_out = PRICES.get(kw.get("model", ""), (0.0, 0.0))
+            usd = (n_in * p_in + n_out * p_out + c_write * p_in * 1.25 + c_read * p_in * 0.1) / 1e6
+            line = {"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "project": "cinema", "job": job,
+                    "via": "api", "model": kw.get("model"), "in": n_in, "out": n_out, "cache_read": c_read,
+                    "cache_write": c_write, "usd": round(usd, 6), "ok": True}
+            os.makedirs(os.path.dirname(USAGE_LOG), exist_ok=True)
+            with open(USAGE_LOG, "a", encoding="utf-8", newline="\n") as f:
+                f.write(json.dumps(line) + "\n")
+        except Exception:
+            pass
+        return resp
 
 
 # Lines in reviews.md-style notes that must never reach the model as usable "facts" — prediction
