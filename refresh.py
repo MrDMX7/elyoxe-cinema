@@ -740,7 +740,9 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
             health["posters"] = {"ok": False, "error": str(e)}
             print(f"refresh: posters failed: {e}", file=sys.stderr)
 
-    if not offline and not no_verdicts:
+    if verdicts_mod.claude_off():
+        summaries.append("verdicts: Claude switched off (~/.elyoxe/claude-off) — existing verdicts kept, none written")
+    if not offline and not no_verdicts and not verdicts_mod.claude_off():
         verdict_health = _write_verdicts_isolated(merged)
         health["verdicts"] = verdict_health
         if not verdict_health["ok"]:

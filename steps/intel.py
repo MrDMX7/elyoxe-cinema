@@ -16,7 +16,8 @@ import omdb
 def run(data: dict, ctx: dict) -> dict | None:
     if ctx.get("offline"):
         return {"skipped": "offline"}
-    results = filmintel.write_missing(data)
+    import verdicts
+    results = {} if verdicts.claude_off() else filmintel.write_missing(data)   # switched off: show what exists, write nothing
     for fid, film in data.get("films", {}).items():
         intel = filmintel.read(fid)
         if intel is not None and intel.get("by") == "claude":
