@@ -237,8 +237,20 @@ EMIRATI_SYSTEM_NOTE = f"""أنت تكتب سطراً عربياً بلهجة إ�
 صغيرة بلا نقاد) فقل ذلك بصراحة بدل اختلاق رقم، مثلاً: «ما لقينا تقييمات كافية لهالفيلم للحين»."""
 
 
+CLAUDE_OFF = os.environ.get("ELYOXE_CLAUDE_OFF") or os.path.expanduser("~/.elyoxe/claude-off")
+
+
+def claude_off() -> bool:
+    """The owner's kill switch (2026-10-01, «تبند كل استخدامات الclaude + API مؤقتا»): while ~/.elyoxe/claude-off exists,
+    no verdict, intel or IMAX line is generated and no API call is made; the site keeps the text it already has.
+    Remove the file to switch back on. Ignored under pytest, whose fake clients never reach the API."""
+    return os.path.exists(CLAUDE_OFF) and not os.environ.get("PYTEST_CURRENT_TEST")
+
+
 def _client():
     """Anthropic client: ANTHROPIC_API_KEY env var, else AWS SSM /elyoxe/anthropic/key."""
+    if claude_off():   # the last line of defence: whatever path got here, no call leaves this machine
+        raise RuntimeError(f"Claude is switched off ({CLAUDE_OFF} exists)")
     import anthropic
 
     key = os.environ.get("ANTHROPIC_API_KEY")
