@@ -39,11 +39,18 @@ def test_bucket_and_stack_are_the_cinema_ones():
     assert "SITE=https://cinema.elyoxe.com" in code
 
 
+FAST = 'fast(){ shift 2; "$(command -v python3 || command -v python)" "$HOME/workspace/tools/s3fast.py" "$@" || aws s3 "$@"; }'
+
+
 def test_every_s3_write_goes_to_the_cinema_bucket_only():
-    s3 = [l for l in _code_lines() if re.search(r"\baws s3(api)? ", l)]
+    code = _code_lines()
+    # 2026-10-08: every pass goes through the fast uploader (~/workspace/tools/s3fast.py, same arguments; the CLI if it fails),
+    # and the helper passes its arguments through untouched
+    assert FAST in code, "the fast() helper changed: check it still passes the arguments through unchanged"
+    s3 = [l for l in code if re.search(r"\baws s3(api)? ", l) and l != FAST]
     assert len(s3) >= 3, "expected the sync passes"
     for l in s3:
-        assert re.search(r"\baws s3 sync ", l), f"only `aws s3 sync` is allowed: {l.strip()}"
+        assert re.search(r"^fast aws s3 sync ", l), f"only `fast aws s3 sync` is allowed: {l.strip()}"
         targets = re.findall(r"(s3://\S+|\"\$DEST\")", l)
         assert targets == ['"$DEST"'], f"sync target must be $DEST: {l.strip()}"
     # no other s3:// literal anywhere

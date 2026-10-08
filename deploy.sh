@@ -13,6 +13,9 @@
 #   PY=.venv/bin/python ./deploy.sh      (default PY: python3 if it runs, else python)
 #   SRC=some/dir ./deploy.sh             (publish an already-built root-shaped dir; skips the build)
 set -euo pipefail
+# 2026-10-08 (owner: the fast upload for every project): uploads go through ~/workspace/tools/s3fast.py (boto3, many at a
+# time, same arguments as `aws s3 sync|cp`); the CLI runs only if it fails
+fast(){ shift 2; "$(command -v python3 || command -v python)" "$HOME/workspace/tools/s3fast.py" "$@" || aws s3 "$@"; }
 export PYTHONWARNINGS=ignore
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REGION=ap-south-1; STACK=elyoxe-cinema; SITE=https://cinema.elyoxe.com
@@ -66,22 +69,22 @@ SHORT=(--include "*.html" --include "*.xml" --include "*.txt" --include "sw.js")
 # 1) assets (immutable) — also the --delete pass for everything that is neither short-lived nor data
 # (*.ics excluded: W2-P7's /cal/thursday.ics is a subscribed feed, never immutable, or it would never
 # see a new Thursday — pass 5 below gives it its own short cache and content type)
-aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete \
+fast aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete \
   --exclude "*.html" --exclude "*.xml" --exclude "*.txt" --exclude "sw.js" --exclude "*.webmanifest" \
   --exclude "data/*" --exclude "*.ics" "${NEVER[@]}" "${KEEP[@]}" \
   --cache-control "public, max-age=31536000, immutable" --only-show-errors
 # 2) data slices, 10 min (with --delete: yesterday's <city>-<date>.json disappear)
-aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" --include "data/*" "${KEEP[@]}" \
+fast aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" --include "data/*" "${KEEP[@]}" \
   --content-type "application/json; charset=utf-8" --cache-control "public, max-age=600" --only-show-errors
 # 3) html + sitemap + robots + service worker, 5 min (with --delete: pages of films that left are removed)
-aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" "${SHORT[@]}" \
+fast aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" "${SHORT[@]}" \
   --exclude "data/*" "${NEVER[@]}" "${KEEP[@]}" --cache-control "public, max-age=300" --only-show-errors
 # 4) the web manifest, 5 min, with its own content type (mimetypes does not know .webmanifest)
-aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" --include "*.webmanifest" "${NEVER[@]}" "${KEEP[@]}" \
+fast aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" --include "*.webmanifest" "${NEVER[@]}" "${KEEP[@]}" \
   --content-type "application/manifest+json" --cache-control "public, max-age=300" --only-show-errors
 # 5) /cal/thursday.ics, 5 min, its own content type (W2-P7 §2.6: a subscribed calendar must see a new
 # Thursday quickly, and mimetypes does not know .ics either)
-aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" --include "*.ics" "${NEVER[@]}" "${KEEP[@]}" \
+fast aws s3 sync "$SRC/" "$DEST" --region "$REGION" --delete --exclude "*" --include "*.ics" "${NEVER[@]}" "${KEEP[@]}" \
   --content-type "text/calendar; charset=utf-8" --cache-control "public, max-age=300" --only-show-errors
 
 INV=$(aws cloudfront create-invalidation --distribution-id "$DIST" --paths "/*" --query Invalidation.Id --output text)
