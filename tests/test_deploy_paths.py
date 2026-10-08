@@ -39,7 +39,7 @@ def test_bucket_and_stack_are_the_cinema_ones():
     assert "SITE=https://cinema.elyoxe.com" in code
 
 
-FAST = 'fast(){ shift 2; "$(command -v python3 || command -v python)" "$HOME/workspace/tools/s3fast.py" "$@" || aws s3 "$@"; }'
+FAST = 'fast(){ shift 2; "$(command -v python3 || command -v python)" "$(cygpath -m "$HOME" 2>/dev/null || echo "$HOME")/workspace/tools/s3fast.py" "$@" || aws s3 "$@"; }'
 
 
 def test_every_s3_write_goes_to_the_cinema_bucket_only():
