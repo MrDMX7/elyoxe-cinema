@@ -65,6 +65,15 @@ def real(tmp_path_factory):
     return o
 
 
+def evening_ahead():
+    """Whether the real data was pulled with an evening still ahead of it (06:00-21:00, its own clock). «أرخص عرض الليلة»
+    lists shows from the data's time to 03:00, so data pulled in the small hours has hardly any and the row is rightly
+    not drawn. Requiring it anyway froze the site for 8 days (2026-10-01 to 10-09): the 02:02 pull failed the real-data
+    tests, and run.sh runs the tests before the refresh that would have replaced that data."""
+    g = json.load(open(REAL, encoding="utf-8")).get("generated", "")
+    return len(g) >= 13 and 6 <= int(g[11:13]) < 21
+
+
 def check_rows(rows):
     """The acceptance: no film in the first 3 slots of two rows, and no row under 4 films."""
     firsts = {}
@@ -134,12 +143,13 @@ def test_the_real_rows_hold_the_rule_and_tell_different_stories(real):
     three posters opening the rows 4 times on the first 4 screens, §4.2 #8)."""
     for parts in ((), ("en",)):
         rows = rows_of(read(real, *parts))
-        assert {"yes", "cheap"} <= set(rows), rows.keys()
+        assert ({"yes", "cheap"} if evening_ahead() else {"yes"}) <= set(rows), rows.keys()
         check_rows(rows)
 
 
 # ---------------------------------------------------------------- «أرخص عرض الليلة» (§2.1, §4.2 #22)
 def test_cheapest_show_tonight_is_show_cards(real):
+    if not evening_ahead(): pytest.skip("data/latest.json was pulled in the small hours: no evening left for «أرخص عرض الليلة»")
     h = read(real)
     row = re.search(r'<section class="rail" aria-labelledby="r-cheap" data-rail-cheap>.*?</section>', main_of(h), re.S).group(0)
     assert "أرخص عرض الليلة" in row and "أرخص لك الليلة" not in h
