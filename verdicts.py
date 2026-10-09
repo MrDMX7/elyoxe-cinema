@@ -1,6 +1,6 @@
 """Verdicts: verdicts/<fid>.json, written once per new film and never overwritten by hand.
 
-write_missing(data, force=False) calls the Anthropic Messages API (model claude-sonnet-5) for
+write_missing(data, force=False) calls Claude (Haiku 5.5 since 2026-10-09; `claude -p` on the subscription or the API key, see claude_via()) for
 every film in `data["films"]` that has no verdicts/<fid>.json yet (or, with force=True, for
 every claude-written one — a hand-edited file, "by" != "claude", is never touched either way)
 and writes {"fid", "verdict": "yes|mixed|skip|unknown", "ar", "en", "basis", "written", "by"}.
@@ -32,7 +32,7 @@ from pathlib import Path
 VERDICTS_DIR = Path(__file__).resolve().parent / "verdicts"
 VALID_VERDICTS = {"yes", "mixed", "skip", "unknown"}
 RESEARCHED_VERDICTS = VALID_VERDICTS - {"unknown"}
-MODEL = "claude-sonnet-5"
+MODEL = "claude-haiku-5-5"   # owner 2026-10-09: Haiku 5.5, through `claude -p` on the subscription (was Sonnet 5 on the API key); needs Claude Code >= 2.1.295
 MAX_ATTEMPTS = 5
 
 # The owner's canonical, actively-maintained Emirati lexicon (content/video/_system/EMIRATI-LEXICON.json,
@@ -247,10 +247,27 @@ def claude_off() -> bool:
     return os.path.exists(CLAUDE_OFF) and not os.environ.get("PYTEST_CURRENT_TEST")
 
 
+CLAUDE_API = os.environ.get("ELYOXE_CINEMA_CLAUDE_API") or os.path.expanduser("~/.elyoxe/cinema-claude-api")
+
+
+def claude_via() -> str:
+    """Which road a call takes (owner 2026-10-09: «خله خيار… مرات الapi ومرات الاشتراك ب -p»):
+      "cli" (default) — `claude -p` on the owner's subscription;
+      "api"           — the paid key (ANTHROPIC_API_KEY, else SSM /elyoxe/anthropic/key), billed per token.
+    Switch to the API by creating ~/.elyoxe/cinema-claude-api (delete it to go back), or for one run with
+    CINEMA_CLAUDE_VIA=api|cli, which wins over the file. Same MODEL either way."""
+    v = (os.environ.get("CINEMA_CLAUDE_VIA") or "").strip().lower()
+    if v in ("api", "cli"):
+        return v
+    return "api" if os.path.exists(CLAUDE_API) else "cli"
+
+
 def _client():
-    """Anthropic client: ANTHROPIC_API_KEY env var, else AWS SSM /elyoxe/anthropic/key."""
+    """A client with the messages.create surface the callers use, on the road claude_via() picks."""
     if claude_off():   # the last line of defence: whatever path got here, no call leaves this machine
         raise RuntimeError(f"Claude is switched off ({CLAUDE_OFF} exists)")
+    if claude_via() == "cli":
+        return _CliClient()
     import anthropic
 
     key = os.environ.get("ANTHROPIC_API_KEY")
@@ -262,16 +279,81 @@ def _client():
     return _UsageLogged(anthropic.Anthropic(api_key=key))
 
 
-# $ per million tokens (input, output) — Anthropic list prices checked 2026-10-01; cache writes 1.25x input, reads 0.1x
-PRICES = {"claude-sonnet-5": (2.0, 10.0), "claude-sonnet-5-5": (2.0, 10.0), "claude-haiku-4-5": (1.0, 5.0),
-          "claude-opus-5-5": (4.0, 20.0)}
+class _CliClient:
+    """messages.create(model, max_tokens, system, messages, …) through `claude -p --output-format json`. Returns an
+    object with .content = [text block], which is all the callers read. The Arabic system note and the prompt go
+    over stdin: on Windows claude is claude.CMD, and cmd.exe cuts or mangles a long multi-line Arabic argument (the
+    same fix as saas/football/news/summarize.py). max_tokens and thinking are not CLI flags; thinking is off through
+    MAX_THINKING_TOKENS=0. One usage line per call, via=subscription (usd = the CLI's list-price equivalent)."""
+
+    def __init__(self):
+        self.messages = self
+
+    def create(self, *, model, system="", messages=(), **_ignored):
+        import shutil
+        import subprocess
+        import sys
+        import time
+        from types import SimpleNamespace
+
+        exe = os.environ.get("CLAUDE_BIN") or shutil.which("claude") or os.path.expanduser("~/.local/bin/claude")
+        cmd = [exe, "-p", "--model", model, "--output-format", "json", "--tools", "", "--strict-mcp-config",
+               "--disable-slash-commands", "--no-session-persistence", "--setting-sources", "",
+               "--settings", '{"alwaysThinkingEnabled":false}',
+               "--system-prompt", "You are the Arabic film editor of Elyoxe Cinema. Follow the instructions at the top "
+                                  "of the message exactly and reply in the format they ask for."]
+        user = "\n\n".join(m["content"] for m in messages if m.get("role") == "user" and isinstance(m.get("content"), str))
+        t0 = time.time()
+        r = subprocess.run(cmd, input=f"{system}\n\n---\n\n{user}", capture_output=True, text=True, encoding="utf-8",
+                           timeout=int(os.environ.get("CINEMA_CLAUDE_TIMEOUT") or 180),
+                           env=dict(os.environ, MAX_THINKING_TOKENS="0"))
+        try:
+            out = json.loads(r.stdout or "{}")
+        except json.JSONDecodeError:
+            out = {}
+        fr = sys._getframe(1)   # the caller names the job: verdicts:generate_one, filmintel:call_json, …
+        _log_cli(f"{Path(fr.f_code.co_filename).stem}:{fr.f_code.co_name.lstrip('_')}", out, round(time.time() - t0, 1))
+        if r.returncode or out.get("is_error") or not isinstance(out.get("result"), str):
+            raise RuntimeError(f"claude -p failed: {(out.get('result') or r.stderr or '')[:200]}")
+        # an older CLI that does not know the model prints «unrecognized_model» and quietly runs the DEFAULT model
+        # (checked 2026-10-09 on 2.1.284: Haiku 5.5 asked, the big model ran with ~210K context tokens) — refuse that
+        ran = [m for m in (out.get("modelUsage") or {}) if not m.startswith(model)]
+        if ran:
+            raise RuntimeError(f"claude -p ran {ran} instead of {model} (update Claude Code: `claude update`)")
+        return SimpleNamespace(content=[SimpleNamespace(type="text", text=out["result"])],
+                               stop_reason=out.get("stop_reason") or "end_turn")
+
+
+def _log_cli(job, out, secs):
+    """One line per model the CLI used, the shape tifo's usage_log.record_cli writes; best effort."""
+    try:
+        import time
+
+        at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        lines = [{"at": at, "project": "cinema", "job": job, "via": "subscription",
+                  "model": mu.get("canonicalModel") or m, "in": mu.get("inputTokens", 0), "out": mu.get("outputTokens", 0),
+                  "cache_read": mu.get("cacheReadInputTokens", 0), "cache_write": mu.get("cacheCreationInputTokens", 0),
+                  "usd": round(mu.get("costUSD") or 0, 6), "ok": not out.get("is_error"), "secs": secs}
+                 for m, mu in (out.get("modelUsage") or {}).items()]
+        if lines and not os.environ.get("PYTEST_CURRENT_TEST"):
+            os.makedirs(os.path.dirname(USAGE_LOG), exist_ok=True)
+            with open(USAGE_LOG, "a", encoding="utf-8", newline="\n") as f:
+                f.write("".join(json.dumps(x) + "\n" for x in lines))
+    except Exception:
+        pass
+
+
+# $ per million tokens (input, output) — Anthropic list prices (platform.claude.com pricing, checked 2026-10-09; Haiku 5.5
+# for prompts up to 100K tokens); cache writes 1.25x input, reads 0.1x
+PRICES = {"claude-haiku-5-5": (0.10, 0.50), "claude-haiku-4-5": (1.0, 5.0), "claude-sonnet-5": (2.0, 10.0),
+          "claude-sonnet-5-5": (2.0, 10.0), "claude-opus-5-5": (4.0, 20.0)}
 USAGE_LOG = os.environ.get("ELYOXE_USAGE_LOG") or os.path.expanduser("~/.elyoxe/usage.jsonl")
 
 
 class _UsageLogged:
-    """The client _client() returns: messages.create as usual, plus one JSON line per call (tokens and dollars) into
-    the file the daily automation-cost email sums (~/workspace/automation/cost-report). Best effort: logging never
-    breaks a call, and tests (which build their own fake clients) never reach it."""
+    """The API-road client: messages.create as usual, plus one JSON line per call (tokens and dollars) into the file
+    the daily automation-cost email sums (~/workspace/automation/cost-report). Best effort: logging never breaks a
+    call, and tests (which build their own fake clients) never reach it."""
 
     def __init__(self, client):
         self._client = client
@@ -294,9 +376,10 @@ class _UsageLogged:
             line = {"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "project": "cinema", "job": job,
                     "via": "api", "model": kw.get("model"), "in": n_in, "out": n_out, "cache_read": c_read,
                     "cache_write": c_write, "usd": round(usd, 6), "ok": True}
-            os.makedirs(os.path.dirname(USAGE_LOG), exist_ok=True)
-            with open(USAGE_LOG, "a", encoding="utf-8", newline="\n") as f:
-                f.write(json.dumps(line) + "\n")
+            if not os.environ.get("PYTEST_CURRENT_TEST"):
+                os.makedirs(os.path.dirname(USAGE_LOG), exist_ok=True)
+                with open(USAGE_LOG, "a", encoding="utf-8", newline="\n") as f:
+                    f.write(json.dumps(line) + "\n")
         except Exception:
             pass
         return resp

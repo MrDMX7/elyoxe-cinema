@@ -313,7 +313,7 @@ def _call_json(client, prompt: str, sys_extra: str, validate_fn, *validate_args)
         sys_note = vd.EMIRATI_SYSTEM_NOTE + "\n" + sys_extra
         if last_reason:
             sys_note += f"\n\nمحاولتك السابقة رُفضت لأن: {last_reason}. أعد الصياغة بلا هذه المخالفة."
-        # thinking explicitly off: this account's claude-sonnet-5 otherwise spends the WHOLE max_tokens budget
+        # thinking explicitly off (the CLI client takes it off with MAX_THINKING_TOKENS=0): claude-sonnet-5 on the API otherwise spends the WHOLE max_tokens budget
         # on its own extended thinking before any text (checked 2026-09-30 — max_tokens=1500 came back
         # stop_reason "max_tokens", 1500 thinking_tokens, no text block at all); {"type":"disabled"} confirmed
         # to give a plain end_turn with text instead.
