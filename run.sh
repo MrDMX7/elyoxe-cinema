@@ -153,8 +153,10 @@ echo "== cinema run start (py: $PY)"
 ok_now mem "الذاكرة رجعت — سينما اشتغلت من جديد"
 # a pull that fails must not deploy the old code as if it were the release (final review M3): stop, tell
 # the owner once (alerts.py), and let every later run stop the same way until the checkout is fixed --
-# e.g. files dirty with line endings only: `git diff --ignore-all-space --quiet && git reset --hard origin/main`
-if ! git pull --ff-only -q; then
+# e.g. files dirty with line endings only: `git diff --ignore-all-space --quiet && git reset --hard origin/main`.
+# --autostash: verdicts/intel left dirty by a run that died before commit_verdicts (the 10-09 manual recovery
+# did exactly that) froze every later run for 8 days with «cannot pull with rebase: You have unstaged changes».
+if ! git pull --ff-only --autostash -q; then
   fail "git pull فشل على $(git log --oneline -1 | cut -c1-40) — ما نُشر شي، الموقع على النسخة السابقة (git status في saas/cinema)" 7 pull
 fi
 ok_now pull "git pull رجع يشتغل"

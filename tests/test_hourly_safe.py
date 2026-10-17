@@ -433,7 +433,7 @@ def test_a_failed_pull_stops_the_run_and_alerts():
     "FAILED: git pull ..." and exits 7."""
     sh = (ROOT / "run.sh").read_text(encoding="utf-8")
     code = "\n".join(l for l in sh.splitlines() if not l.strip().startswith("#"))
-    m = re.search(r"if ! git pull --ff-only -q; then\n(.*?)\nfi", code, re.S)
+    m = re.search(r"if ! git pull --ff-only --autostash -q; then\n(.*?)\nfi", code, re.S)
     assert m, "the pull must be checked"
     assert re.match(r"\s*fail \".*\" 7 pull$", m.group(1)), m.group(1)
     assert "WARN: git pull" not in code
