@@ -1,7 +1,7 @@
 /* insights (pages/insights.py, pages/questions.py): price index, history chart, box office, compare, «شي يشبه»,
    question pages. «هـ»: gold only on prices, screen light for lines, no boxes, logical properties. */
 .pi h2,.ph h2,.pt-w h2,.bo-w h2,.cmp h2,.sim h2,.qa h2{margin-block:28px 8px}
-.pidx td b,.pt-w td b{color:var(--gold);font-weight:600}
+.pidx td b,.pt-w td b{color:var(--screen);font-weight:600}   /* a median list price, nobody's own number: screen light, never gold (gold is yours, §1.5; audit 2026-10-17) */
 .pidx td,.pidx th{vertical-align:baseline}
 .pidx .pi-ch th{color:var(--screen);font-weight:600;font-size:15px;padding-block:16px 6px}
 .pidx tbody th[scope=row]{font-weight:400}

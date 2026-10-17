@@ -34,3 +34,6 @@
 .cs-band .all-l{flex:none;font-size:.85em;color:var(--ink-2)}
 .cs-band .all-l::after{content:" ‹"}          /* the arrow the plan gives «الكل» elsewhere (ui-rows.css .rail-a), missing here (review Minor) */
 [dir=ltr] .cs-band .all-l::after{content:" ›"}
+/* «ذكّرني بالخميس» on the marquee's paper: the night's ghost button (screen light on a 12% screen tint) was nearly
+   invisible on paper (audit 2026-10-17) — ink words and an ink-3 rule there instead */
+.cs-mast .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--ink-3)}
