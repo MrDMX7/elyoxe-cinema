@@ -244,7 +244,7 @@ fi
 
 # discounts_watch.py (roadmap 195, 2026-10-17): once a week, read every page discounts.yaml cites and tell the
 # owner which ones changed or stopped answering (the yaml's own `checked` dates are his — the watcher never
-# touches them). Weekly, not every run: 20 pages behind Akamai and bank sites are not a 3-hourly habit. A
+# touches them). Weekly, not every run: 20 pages behind Akamai and bank sites are not a habit for every tick. A
 # failure here is only a log line — the site is already deployed.
 WATCH_STATE="$HERE/data/discount_sources.json"
 if [ ! -f "$WATCH_STATE" ] || [ -n "$(find "$WATCH_STATE" -mtime +6 2>/dev/null)" ]; then
