@@ -1,5 +1,6 @@
 /* «سينما» service worker (build.py writes it to /sw.js; __V__ = the build's source hash).
-   Pages: network first, the cached copy when offline, else /offline.html.
+   Pages: network first, the cached copy when offline or when the network has not answered in RACE ms (3 s,
+   2026-10-17 — lie-fi in a mall), else /offline.html.
    /assets and /posters: cache first (their names or ?v= change when they do).
    /data: stale-while-revalidate, a cached slice served for at most 10 minutes.
    Every cache is capped (oldest entries go first); only plain same-origin 200s are kept — never a redirect,
@@ -22,6 +23,18 @@ self.addEventListener("activate", function (e) {
   }).then(function () { return self.clients.claim(); }));
 });
 
+/* race(net, m): the network's answer, unless RACE ms pass first and a cached copy m exists — then m (the network,
+   still running under e.waitUntil, refreshes the cache). A network error with m: m. No m: the network as it is. */
+var RACE = 3000;
+function race(net, m) {
+  if (!m) return net;
+  return new Promise(function (done) {
+    var over = false, t = setTimeout(function () { if (!over) { over = true; done(m); } }, RACE);
+    net.then(function (res) { if (!over) { over = true; clearTimeout(t); done(res); } },
+             function () { if (!over) { over = true; clearTimeout(t); done(m); } });
+  });
+}
+
 function put(name, req, res) {
   if (ok(res)) { var c = res.clone(); caches.open(name).then(function (ca) { return ca.delete(req).then(function () { return ca.put(req, c); }); }).then(function () { return trim(name); }); }
   return res;
@@ -31,8 +44,13 @@ self.addEventListener("fetch", function (e) {
   var r = e.request, u = new URL(r.url);
   if (r.method !== "GET" || u.origin !== location.origin) return;
   if (r.mode === "navigate" || (r.headers.get("accept") || "").indexOf("text/html") >= 0) {
-    e.respondWith(fetch(r).then(function (res) { return put(PAGES, r, res); }).catch(function () {
-      return caches.match(r).then(function (m) { return m || caches.match("/offline.html"); });
+    /* network first, raced against RACE ms when a cached copy exists (a mall basement's one bar: the page used to hang
+       until TCP gave up); the network answer still refreshes the cache for the next visit. No copy: wait for the
+       network, and only an error brings /offline.html — never a 3 s guess that the network is gone */
+    var net = fetch(r).then(function (res) { return put(PAGES, r, res); });
+    e.waitUntil(net.catch(function () {}));
+    e.respondWith(caches.match(r).then(function (m) {
+      return race(net, m).catch(function () { return m || caches.match("/offline.html"); });
     }));
     return;
   }
@@ -50,7 +68,9 @@ self.addEventListener("fetch", function (e) {
         });
         var fresh = m && Date.now() - (+m.headers.get("x-sw-at") || 0) < DATA_MAX;
         if (fresh) { e.waitUntil(net.catch(function () {})); return m; }
-        return net.catch(function () { return m || Response.error(); });
+        /* an older copy: the same RACE as pages (the network refreshes it when it comes) */
+        if (m) e.waitUntil(net.catch(function () {}));
+        return race(net, m).catch(function () { return m || Response.error(); });
       });
     }));
   }
