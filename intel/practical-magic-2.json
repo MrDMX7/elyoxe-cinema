@@ -1,7 +1,62 @@
 {
-  "by": "failed",
+  "audience": [
+    {
+      "source": "Rotten Tomatoes",
+      "text": "الجمهور متحمّس للفيلم أكثر بكثير من النقاد، ونسبته عالية على Rotten Tomatoes"
+    }
+  ],
+  "by": "claude",
+  "consensus_ar": "حنين للفيلم الأول بس بدون حيوية، وكيمياء الأختين بين Sandra Bullock وNicole Kidman تشيل شوي من ثقله، لكن الحبكة المصطنعة تعب ما يستاهل.",
+  "ending": "Frances راحت للنهر بإرادتها وروح Jet تشوفها، وبهالشكل انكسرت لعنة Owens. بعد سنة، تزوجت Kylie من Gideon، وبالحفلة بست Sally مع Ian، وفي الآخر طارت Sally وGillian وKylie وAntonia بالشمسيات من فوق السطح قدام الضيوف.",
   "fid": "practical-magic-2",
-  "next_check": "2026-10-03",
-  "reason": "could not produce compliant output after 4 attempts (last: tanwin (ً/ٌ/ٍ) in spoken text — never tanwin in the spoken register)",
-  "written": "2026-09-30"
+  "fun_fact": {
+    "source": "Rotten Tomatoes",
+    "text": "الفرق بين تقييم الجمهور 91% وتقييم النقاد 36% على Rotten Tomatoes واضح"
+  },
+  "has_plot": true,
+  "qa": [
+    {
+      "a": "انضرب بسيارة الصبح الثاني، وانترك بغيبوبة.",
+      "q": "شو صار لـ Gideon بعد ما قالت له Kylie إنها تحبه؟"
+    },
+    {
+      "a": "عشان تدور طريقة تنقذ فيها Gideon.",
+      "q": "ليش Kylie سرقت Book of Raven؟"
+    },
+    {
+      "a": "راحت لإنجلترا، ومنها لبلدة Thornfield اللي ولدت فيها Maria Owens، تدور Lockland Manor.",
+      "q": "وين راحت Kylie بعد الرؤى اللي شافتها؟"
+    },
+    {
+      "a": "فك سحرها المحجوب، فصارت تقدر تلقى Kylie.",
+      "q": "شو سوّى Ian لـ Sally؟"
+    },
+    {
+      "a": "Tom Bailey، لأنه لعن Ian وسرق كتابه، وحاول يسرق سحر Kylie عند أطلال Lockland Manor.",
+      "q": "منو كان ورا كل اللي صار؟"
+    },
+    {
+      "a": "لازم ساحرة تضحي بحياتها بإرادتها، وهذا اللي سوته Frances.",
+      "q": "شو اللي لازم يصير عشان تنكسر لعنة Owens؟"
+    }
+  ],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "«السحر العملي 2» حصل على 91% من تقييمات الجمهور في Rotten Tomatoes"
+    },
+    {
+      "pos": false,
+      "text": "النقاد أعطوه 36% من 170 نقد على Rotten Tomatoes"
+    },
+    {
+      "pos": true,
+      "text": "النقاد يقولون إن لطافة الفيلم جاية من كيمياء الأختين بين Sandra Bullock وNicole Kidman"
+    },
+    {
+      "pos": false,
+      "text": "النقاد اشتكوا من حبكة ميكانيكية فيها تعب كبير ما تستاهل"
+    }
+  ],
+  "written": "2026-10-09"
 }

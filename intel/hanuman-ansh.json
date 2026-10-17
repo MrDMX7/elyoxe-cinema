@@ -1,7 +1,53 @@
 {
-  "by": "failed",
+  "audience": [
+    {
+      "source": "Rotten Tomatoes",
+      "text": "تقييم الجمهور على Rotten Tomatoes 97%، يعني الأغلب مبسوطين فيه."
+    }
+  ],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": "بعد ما يساعد Lakshminarayan رجّال خايف ضايع بالليل عند جبل Kainchi القريب من Nainital، يقرا الرجّال Hanuman Chalisa، ويطلع Maharaj ji ويوصله بأمان. وتنتهي Hanuman Ansh بتلميح لجزء ثاني.",
   "fid": "hanuman-ansh",
-  "next_check": "2026-10-03",
-  "reason": "could not produce compliant output after 4 attempts (last: tanwin (ً/ٌ/ٍ) in spoken text — never tanwin in the spoken register)",
-  "written": "2026-09-30"
+  "fun_fact": null,
+  "has_plot": true,
+  "next_check": "2026-10-20",
+  "qa": [
+    {
+      "a": "عند جبل Kainchi القريب من Nainital.",
+      "q": "وين يصير الجزء الأخير؟"
+    },
+    {
+      "a": "لأنه ضاع بالليل وكان خايف.",
+      "q": "ليش الرجّال يحتاج مساعدة؟"
+    },
+    {
+      "a": "يقرا Hanuman Chalisa.",
+      "q": "أي شي يقوله الرجّال قبل ما يظهر Maharaj ji؟"
+    },
+    {
+      "a": "يوصل الرجّال بأمان.",
+      "q": "شو يسوي Maharaj ji بعدين؟"
+    },
+    {
+      "a": "بعد خلاف مع صاحب أرض المعبد، وبعدين يروح لجبل Kainchi.",
+      "q": "ليش يترك Lakshminarayan Neebkarori؟"
+    },
+    {
+      "a": "يتأكد أن Rambeti عندها أكل كافي.",
+      "q": "شو يسوي قبل ما يروح Neebkarori؟"
+    }
+  ],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "تقييم الجمهور على Rotten Tomatoes وصل 97%، وهذا رقم عالي."
+    },
+    {
+      "pos": false,
+      "text": "ما لقينا تقييمات كافية من النقاد لهالفيلم للحين."
+    }
+  ],
+  "retry_reason": "claude -p failed: ",
+  "written": "2026-10-09"
 }

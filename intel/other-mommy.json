@@ -1,0 +1,23 @@
+{
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "other-mommy",
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-10-20",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "«الأم الأخرى» من أفلام الرعب والإثارة لسنة 2026، ومدته 95 دقيقة"
+    },
+    {
+      "pos": false,
+      "text": "ما لقينا تقييمات كافية لهالفيلم للحين"
+    }
+  ],
+  "retry_reason": "claude -p failed: ",
+  "written": "2026-10-09"
+}

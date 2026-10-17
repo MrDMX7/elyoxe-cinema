@@ -1,7 +1,32 @@
 {
-  "by": "failed",
+  "audience": [
+    {
+      "source": "Rotten Tomatoes",
+      "text": "رأي الجمهور إيجابي بوجه عام ويميل للإعجاب بالفيلم"
+    }
+  ],
+  "by": "claude",
+  "consensus_ar": "إجماع النقاد يقول إن الفيلم عمل ودّي وممتع يسخر بمرح من سحر صناعة الأفلام، وهو أكثر أجزاء السلسلة متعة لحد الحين.",
+  "ending": null,
   "fid": "minions-and-monsters",
-  "next_check": "2026-10-03",
-  "reason": "could not produce compliant output after 4 attempts (last: banned word \"شنو\" used — say \"شو\" instead)",
-  "written": "2026-09-30"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-10-20",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "حاز على 89% من 183 نقد على Rotten Tomatoes"
+    },
+    {
+      "pos": true,
+      "text": "تقييم الجمهور على Rotten Tomatoes 75%"
+    },
+    {
+      "pos": false,
+      "text": "تقييم الجمهور 75% أقل من تقييم النقاد 89%"
+    }
+  ],
+  "retry_reason": "claude -p failed: ",
+  "written": "2026-10-09"
 }

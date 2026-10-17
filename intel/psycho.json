@@ -1,0 +1,34 @@
+{
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": "النقاد يستمتعون بهالفيلم الدموي الممتع، وأداء Maika Monroe الشرس يشيل العمل كله، مع لمسة أدبية وذكاء في أجواء العصر الفيكتوري.",
+  "ending": null,
+  "fid": "psycho",
+  "fun_fact": {
+    "source": "Rotten Tomatoes",
+    "text": "Maika Monroe تقود الفيلم، ووصفها النقاد بالشرسة في أدائها"
+  },
+  "has_plot": false,
+  "next_check": "2026-10-20",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "حاصل على 81% على Rotten Tomatoes من 36 نقد"
+    },
+    {
+      "pos": true,
+      "text": "أداء Maika Monroe الشرس في الدور الرئيسي من أبرز نقاط قوته عند النقاد"
+    },
+    {
+      "pos": true,
+      "text": "مدته 85 دقيقة، وهو دموي بطريقة ممتعة حسب تقييم النقاد"
+    },
+    {
+      "pos": false,
+      "text": "عدد النقاد 36 بس، فالتقييم مبني على عينة صغيرة"
+    }
+  ],
+  "retry_reason": "claude -p failed: ",
+  "written": "2026-10-09"
+}

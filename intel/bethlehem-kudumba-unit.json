@@ -1,7 +1,26 @@
 {
-  "by": "failed",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "bethlehem-kudumba-unit",
-  "next_check": "2026-10-03",
-  "reason": "could not produce compliant output after 4 attempts (last: tanwin (ً/ٌ/ٍ) in spoken text — never tanwin in the spoken register)",
-  "written": "2026-09-30"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-10-12",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": false,
+      "text": "ما لقينا تقييمات كافية لهالفيلم للحين"
+    },
+    {
+      "pos": true,
+      "text": "يجمع بين الدراما والكوميدي والرومانسي"
+    },
+    {
+      "pos": false,
+      "text": "مدته 160 دقيقة"
+    }
+  ],
+  "written": "2026-10-09"
 }

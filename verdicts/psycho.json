@@ -1,0 +1,14 @@
+{
+  "ar": "Psycho ناله 81% من 36 نقد على Rotten Tomatoes. أداء Maika Monroe الشرس يشيل الفيلم ويعطيك مرح دموي ممتع وذكاء أدبي.",
+  "basis": "RT 81% (36 نقد)",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 81,
+    "rt_count": 36
+  },
+  "by": "claude",
+  "en": "Victorian Psycho is an enjoyably blood-soaked lark that thrives on Maika Monroe's ferocious lead performance. It delivers plenty of wicked fun and literary wit.",
+  "fid": "psycho",
+  "verdict": "yes",
+  "written": "2026-10-09"
+}
