@@ -79,3 +79,8 @@ older than the visitor's day says so (main.js stale note + the board's own line)
 home rows put the visitor's city first.
 Vision (owner, 2026-10-17): the first reference for films in the UAE, easy for everyone and deep for those who open it,
 no holes, «this should be illegal» UI/UX; an iPhone/Android app later (85 / App Store — not before he asks).
+Visual round 2026-10-17 (owner: «UI/UX سهل، مبهر، احترافي، بسيط، أسطوري»): /cards/ on a phone is one block per card (W2-P9);
+people without a photo get the initials tile (§1.6); the inlined board painter no longer throws on an empty box
+(a K reference from the stale-day line); 44 px thumb targets for cinema names, «الخريطة», the city page's cinema
+links and the logo; the coming page never requests a chain's placeholder poster (a 404 on every visit).
+Audited on a phone viewport with tmp/audit.cjs (LCP/CLS/tap targets/errors) — keep running it after each visual change.

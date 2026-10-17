@@ -35,7 +35,7 @@ p.rr{font-size:var(--fs-meta);color:var(--dim);margin-block:-4px 8px}
    gradient-backed box over the end of the last line, clashing with the text there — a small CLS on open,
    accepted now in exchange for a verdict area that never overlaps its own text) */
 .fv-w{max-inline-size:60ch}
-.fv-w .fv-m{display:block;margin-block:4px 0;border:0;padding:0;cursor:pointer;background:none;
+.fv-w .fv-m{display:block;margin-block:4px 0;border:0;padding:0;min-block-size:40px;cursor:pointer;background:none;
   font:inherit;font-size:var(--fs-meta);line-height:1.2;font-weight:400;color:var(--seat);text-decoration:underline;text-underline-offset:.2em;min-block-size:32px}
 .fv-w .fv-m:hover,.fv-w .fv-m:focus-visible{color:var(--screen)}
 /* the facts on one line on a phone (the genres are one tap away, in «عن الفيلم») */

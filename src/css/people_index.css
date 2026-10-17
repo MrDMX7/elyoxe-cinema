@@ -6,6 +6,8 @@
   gap:14px 10px}
 .pi-l a{display:flex;flex-direction:column;gap:6px;color:var(--screen);text-decoration:none;font-size:14px;line-height:1.3}
 .pi-l img,.pi-i{display:block;inline-size:64px;block-size:80px;object-fit:cover;background:var(--tint)}
+/* no photo: the initials in the display face, seat-grey on the tint (W2-P9, 2026-10-17 — a blank box read as broken) */
+.pi-i{display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:var(--dw);font-size:22px;color:var(--seat);letter-spacing:.04em}
 .pi-c{display:flex;flex-wrap:wrap;gap:6px 18px}
 .pi-c a{flex-direction:row;font-size:15px}
 @media (max-width:560px){.pi-l{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}}

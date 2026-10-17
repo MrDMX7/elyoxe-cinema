@@ -18,12 +18,21 @@ TITLE = ("الناس", "People")
 CSS = ("people_index",)
 
 
+
+def initials(name):
+    """The initials tile for a person with no photo (MASTER-PLAN §1.6, W2-P9): the first letter of the first and the
+    last word («أحمد حلمي» → «أ ح», «Maika Monroe» → «M M»); one letter for a one-word name; "" for none."""
+    words = [w for w in str(name or "").split() if w and w[0].isalnum()]
+    if not words: return ""
+    if len(words) == 1: return words[0][0]
+    return f"{words[0][0]} {words[-1][0]}"
+
 class PeopleIndex(Pages):
     def __init__(self, site):
         super().__init__(site)
         self.ppl = People(site)
 
-    def showing_now(self, q):
+    def showing_now(self, q):   # noqa: D102
         fids = self.ppl.films_of.get(q) or {}
         return any(self.films[f].get("status") != "archived" for f in fids)
 
@@ -33,7 +42,7 @@ class PeopleIndex(Pages):
         ph = self.ppl.photo(q)
         img = (f'<img src="{esc(ph["src"])}" srcset="{esc(ph["src"])} 160w, {esc(ph["src2x"])} 320w" sizes="64px"'
                f' width="64" height="80" alt="" loading="lazy" decoding="async">' if ph
-               else '<span class="pi-i" aria-hidden="true"></span>')
+               else f'<span class="pi-i" aria-hidden="true">{esc(initials(self.ppl.name(q, lang)))}</span>')
         return (f'<li><a href="{self.ppl.href(q, lang)}">{img}'
                 f'<span{self.ppl.name_attr(q, lang)}>{esc(self.ppl.name(q, lang))}</span></a></li>')
 

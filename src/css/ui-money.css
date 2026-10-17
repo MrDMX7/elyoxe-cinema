@@ -25,6 +25,17 @@
 /* .more after .links: «links more» rows (the cards strip, home's, /prices/) take .more's display and margin, and the
    city schedule's «و N سينما ثانية» link its size and colour (W1-P1 kept the order the one stylesheet had) */
 .more{margin-block-start:16px}
+/* cards on a phone (W2-P9): one block per card, the best offer gold (yours), the rest seat-grey; the matrix from 1024 px */
+.cph-l{display:grid;border-block-start:1px solid var(--line-2)}
+.cph{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm best" "c c";gap:4px 16px;align-items:baseline;
+  padding-block:14px;border-block-end:1px solid var(--line);color:var(--screen);text-decoration:none;min-block-size:44px}
+.cph-n{grid-area:nm;font-weight:500;font-size:var(--fs-title)}
+.cph-b{grid-area:best;text-align:end;font-size:var(--fs-meta);color:var(--seat)}
+.cph-b .off{color:var(--gold);font-weight:600;font-size:var(--fs-time)}
+.cph-b .in{white-space:nowrap}
+.cph-c{grid-area:c;color:var(--seat);font-size:var(--fs-meta);line-height:1.5}
+@media (min-width:1024px){.cph-l{display:none}}
+@media (max-width:1023px){.cards .xwrap,body[data-page=cards] .xwrap{display:none}}
 /* cards matrix */
 .xwrap{overflow-x:auto;border-block:1px solid var(--line-2)}
 .matrix{border-collapse:collapse;inline-size:max-content;min-inline-size:100%;font-size:var(--fs-body)}

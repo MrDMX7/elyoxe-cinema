@@ -31,7 +31,7 @@
    the header pills used to truncate at 344–390 px; this and the tighter gaps/padding below free the room they need
    to show their full text, e.g. «الشارقة» and «بطاقتي», without an ellipsis) */
 .mark{font-family:var(--display);font-weight:700;font-size:32px;line-height:1;color:var(--gold);text-decoration:none;flex:0 0 auto}
-.top .mark{font-size:var(--fs-h2)}
+.top .mark{font-size:var(--fs-h2);padding-block:8px;margin-block:-8px}
 [lang=en] .mark{font-family:"Markazi Mark",serif}
 .nav{display:none}
 .tools{margin-inline-start:auto;display:flex;align-items:center;gap:4px;min-inline-size:0}

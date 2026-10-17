@@ -66,6 +66,7 @@ def test_photo_shown_where_available(out):
     start = h.index('href="/people/ahmad/"')
     ahmad_row = h[start:start + h[start:].index("</li>")]
     assert "<img" not in ahmad_row and 'class="pi-i"' in ahmad_row
+    assert re.search(r'<span class="pi-i" aria-hidden="true">\S( \S)?</span>', ahmad_row)   # the initials tile, never a blank box
 
 
 def test_english_page_and_names(out):

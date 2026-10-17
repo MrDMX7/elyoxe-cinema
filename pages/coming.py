@@ -19,7 +19,7 @@ import re
 
 from genres import GENRES, genre_keys
 from normalize import film_fid
-from site_kit import FILMS_AR, HOME_T, Emit, L, NavItem, P, Page, Pages, Plugin, ar_count, esc, hue, human_date, rel
+from site_kit import OUR_POSTER, SAFE_URL, FILMS_AR, HOME_T, Emit, L, NavItem, P, Page, Pages, Plugin, ar_count, esc, hue, human_date, rel
 
 TITLE = ("قريباً في السينما", "Coming soon")   # owner rename 2026-09-30 (site_kit.s_thursday_h matches; the
                                                 # phone tab bar keeps the short «قريباً», no room for this at 344px)
@@ -140,6 +140,13 @@ def register(site):
         page_js={"coming": ("push",)})
 
 
+
+def _real_poster(po):
+    """A poster worth an <img>: our mirrored file or an absolute URL — never a chain's own relative placeholder
+    (Reel's «/assets/images/placeholder-poster.webp» reached the page as-is and 404ed on every visit, audit 2026-10-17)."""
+    po = str(po or "")
+    return bool(po) and "placeholder" not in po.lower() and bool(SAFE_URL.match(po) or OUR_POSTER.match(po))
+
 class ComingPages(Pages):
     def _groups(self):
         """{thursday-iso|None: [(fid, film), ...]} sorted by date, undated (None) group last."""
@@ -165,7 +172,7 @@ class ComingPages(Pages):
     def _card(self, fid, f, lang):
         pc = hue(fid)
         img = (f'<span class="cs-p img" style="--pc:{pc}"><img src="{esc(rel(f["poster"]))}" alt="" loading="lazy" width="200" height="300"></span>'
-               if f.get("poster") else f'<span class="cs-p" style="--pc:{pc}"><span class="cs-t">{esc(f["title"])}</span></span>')
+               if _real_poster(f.get("poster")) else f'<span class="cs-p" style="--pc:{pc}"><span class="cs-t">{esc(f["title"])}</span></span>')
         title_ar = f.get("title_ar")
         titles = (f'<span class="cs-n">{esc(f["title"])}</span>' + (f'<bdi class="cs-ar">{esc(title_ar)}</bdi>' if title_ar and lang == "ar" else "")
                   if lang == "en" or not title_ar else f'<span class="cs-n">{esc(title_ar)}</span><bdi class="cs-ar" lang="en">{esc(f["title"])}</bdi>')

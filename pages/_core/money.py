@@ -116,12 +116,40 @@ class MoneyPages:
                           (f'<span class="nil">{esc(L(T["none_found"], lang))}</span>' if st == "none_found" else f'<span class="nil">{esc(L(T["expired"], lang))}</span>' if st == "expired" else "")
                     cells += f"<td>{txt}</td>"
                 rows += f'<tr><th scope="row"><a href="{P(lang, "cards", card["id"])}">{esc(card["name_ar"] if lang == "ar" else card["name_en"])}</a></th>{cells}</tr>'
-            body += (f'<section class="wrap"><div class="xwrap"><table class="matrix"><thead><tr><th></th>{head}</tr></thead><tbody>{rows}</tbody></table></div>'
+            # a phone (W2-P9, 2026-10-17): the matrix scrolled sideways and showed 2 of 7 columns, the rest cut mid-word;
+            # one block per card instead — its best offer in gold and where it works, the matrix from 1024 px only
+            body += (f'<section class="wrap"><div class="cph-l">{"".join(self.card_block(card, chains, lang) for card in self.cards)}</div>'
+                     f'<div class="xwrap"><table class="matrix"><thead><tr><th></th>{head}</tr></thead><tbody>{rows}</tbody></table></div>'
                      f'<p class="hint">{"1+1 = تذكرتين بسعر وحدة." if lang == "ar" else "1+1 = buy one, get one."}</p></section>')
             title = ("خصومات السينما في الإمارات — فزعة وإسعاد وعروض البنوك" if lang == "ar" else "UAE cinema discounts — Fazaa, Esaad and bank cards")
             desc = ("جدول واحد لكل خصومات السينما الرسمية في الإمارات: فزعة وإسعاد والبنوك، في فوكس وستار ونوفو وريل وروكسي وسيني رويال وسينما سيتي." if lang == "ar"
                     else "One table of every official UAE cinema discount: Fazaa, Esaad and banks, at VOX, Star, Novo, Reel, Roxy, Cine Royal and Cinemacity.")
             self.page(lang, ("cards",), title, desc, body, [self.breadcrumb_ld(lang, (L(UI["s_cards"], lang), P(lang, "cards")))], "cards", nav="cards")
+
+    def card_block(self, card, chains, lang):
+        """One card on a phone: its name (a link to its page), its best current offer in gold with the chains that give
+        it, then every other chain's offer on one seat-grey line; a card with no current offer says so once."""
+        cid = card["id"]; ar = lang == "ar"
+        name = card["name_ar"] if ar else card["name_en"]
+        offers = []   # (rank, offer text, chain name)
+        for ch in chains:
+            r = rule_for(self.rules, ch, cid)
+            if rule_state(r, self.today) != "ok": continue
+            v = float(r.get("value") or 0)
+            rank = v if r.get("type") == "percent" else 50 if r.get("type") == "bogo" else 1   # percent by size, 1+1 as a half, a set price last
+            offers.append((rank, rule_offer(r, lang), self.h.chain_name(ch, lang)))
+        if not offers:
+            best = f'<span class="nil">{esc(L(T["none_found"], lang))}</span>'; rest = ""
+        else:
+            offers.sort(key=lambda o: (-o[0], o[1], o[2]))
+            top = offers[0][1]
+            top_chains = [o[2] for o in offers if o[1] == top]
+            glue = " و" if ar else " and "
+            best = f'<b class="off">{dates(esc(top))}</b> <span class="in">{"في " if ar else "at "}{esc(("، " if ar else ", ").join(top_chains[:-1]) + (glue if len(top_chains) > 1 else "") + top_chains[-1])}</span>'
+            others = [o for o in offers if o[1] != top]
+            rest = f'<small class="cph-c">{esc(("، " if ar else ", ").join(f"{o[2]} {o[1]}" for o in others))}</small>' if others else ""
+        return (f'<a class="cph" href="{P(lang, "cards", cid)}"><span class="cph-n">{esc(name)}</span>'
+                f'<span class="cph-b">{best}</span>{rest}</a>')
 
     # -------------------------------------------------- halls
     def halls_page(self):

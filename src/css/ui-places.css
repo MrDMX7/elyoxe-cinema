@@ -31,7 +31,7 @@
 .sf .t{font-weight:500;font-size:var(--fs-title);line-height:1.35}
 .sf .vw{font-size:var(--fs-meta)}
 .scin{margin-block-start:8px}
-.scin .cn{font-size:var(--fs-meta);color:var(--dim);text-decoration:none}
+.scin .cn{font-size:var(--fs-meta);color:var(--dim);text-decoration:none;display:inline-block;padding-block:12px;margin-block:-12px}   /* 44 px to the thumb, the line unchanged */
 .scin .times{margin-block-start:4px}
 /* halls explained + price tables */
 .halls{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(20rem,100%),1fr));column-gap:40px}
