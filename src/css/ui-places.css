@@ -15,7 +15,7 @@
    the heads, the hero titles, the wordmark and the verdict word */
 .clist{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(13rem,100%),1fr));column-gap:32px}
 .clist li{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-block:12px;border-block-end:1px solid var(--line)}
-.clist a{font-weight:500;font-size:var(--fs-title);text-decoration:none}
+.clist a{font-weight:500;font-size:var(--fs-title);text-decoration:none;display:inline-block;padding-block:12px;margin-block:-12px}   /* 44 px to the thumb (audit 2026-10-17) */
 .clist .n{color:var(--seat);font-size:var(--fs-meta)}
 .rows{display:grid}
 .row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm val" "sub val";column-gap:20px;row-gap:2px;padding-block:16px;border-block-end:1px solid var(--line)}

@@ -133,7 +133,7 @@ h2 small{font-family:var(--body);font-weight:400;font-size:var(--fs-meta);color:
 .switch i{display:block;inline-size:20px;block-size:20px;background:var(--night)}
 .switch[aria-checked=true]{background:var(--live);justify-content:flex-end}
 /* small text links still get a 24 px target (WCAG 2.5.8) */
-a.src,.crumbs a,.hall .where a{display:inline-flex;align-items:center;min-block-size:24px}
+a.src,.crumbs a,.hall .where a{display:inline-flex;align-items:center;min-block-size:44px;margin-block:-12px}   /* 44 px to the thumb, the line unmoved (audit 2026-10-17) */
 @media (min-width:1024px){
 /* ------------------------------------------------ desktop (E-Desk-*) */
   :root{--gut:64px;--head:70px}

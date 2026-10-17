@@ -45,4 +45,4 @@
 .q-hub h2{margin-block:26px 6px}
 .q-hub ul{list-style:none;padding:0;margin:0}
 .q-hub li{padding-block:8px;border-block-end:1px solid var(--line)}
-.q-hub a{text-decoration:none}
+.q-hub a{text-decoration:none;display:inline-block;padding-block:12px;margin-block:-12px}   /* 44 px to the thumb */

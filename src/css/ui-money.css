@@ -1,7 +1,7 @@
 /* money: cards (rows, the matrix, examples, FAQ) and /sources/ (moved out of src/cinema.css by W1-P1; owner: MASTER-PLAN §6.2) */
 .links{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;margin-block-start:12px}
 .links > span{color:var(--seat);font-size:var(--fs-meta);min-inline-size:4.5rem}
-.links a{text-decoration:none;border-block-end:1px solid var(--line-2)}
+.links a{text-decoration:none;border-block-end:1px solid var(--line-2);display:inline-block;padding-block:8px;margin-block:-8px}   /* 44 px to the thumb */
 .links a:hover{border-color:var(--screen)}
 .chains{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(16rem,100%),1fr));column-gap:32px}
 .chains li{padding-block:12px;border-block-end:1px solid var(--line);display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
