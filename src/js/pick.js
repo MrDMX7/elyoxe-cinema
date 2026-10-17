@@ -188,7 +188,7 @@ function pkRender(box, flap) {
        "#s-…" on the page pick.js rendered on (home/404 have no such anchor), fix round Minor #3 */
     + '<div class="pk-act"><a class="btn main velvet" href="' + K.esc(s.b || (K.C.base + "film/" + s.f + "/#s-" + K.showKey(s.c, s.d, s.t, s.k))) + '"'
     + (s.b ? ' rel="noopener nofollow" target="_blank"' : "") + ' data-pk-book>'
-    + K.esc(PK_T.book.replace("{c}", chain || cn)) + '</a>'
+    + K.esc(PK_T.book.replace("{c}", (K.C.chains && K.C.chains[chain]) || chain || cn)) + '</a>'
     + '<button type="button" class="btn ghost" data-pk-again>' + K.esc(PK_T.again) + "</button></div>";
   var live = document.getElementById("pk-live");
   /* textContent never needs K.esc: escaping is for innerHTML, and here it double-escapes (fix round, Minor #2) */

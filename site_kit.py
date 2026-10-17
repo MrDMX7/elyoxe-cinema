@@ -897,7 +897,8 @@ class Kit(MediaKit, TileKit, SchedKit, TicketKit, ChromeKit, FiltersKit):
         strings["ad"] = {ch: int((c or {}).get("ad_offset_min") or 15) for ch, c in (self.d.get("chains") or {}).items() if isinstance(c, dict)}
         strings["adhan"] = "/assets/" + self.adhan_name
         strings["days"] = sorted({s["date"] for s in self.shows})
-        strings["sites"] = CHAIN_SITE   # a time with no booking URL of its own books on its chain's site   # the slice dates that exist (no 404 for a day not built)
+        strings["sites"] = CHAIN_SITE   # a time with no booking URL of its own books on its chain's site
+        strings["chains"] = {ch: self.h.chain_name(ch, lang) for ch in CHAIN_SITE}   # «ستار», not «star», wherever a script names a chain (pick.js, 2026-10-17)   # the slice dates that exist (no 404 for a day not built)
         chunks = {n: self.chunk_urls[n] for n in dict.fromkeys((*js, *self.kind_js.get(pagekind, ()), *self.kind_js.get("*", ()))) if n in self.chunk_urls}
         if chunks: strings["chunks"] = chunks   # main.js loads each after start-up
         pre = [f'<link rel="preload" href="/assets/fonts/{f}" as="font" type="font/woff2" crossorigin>' for f in FONTS[lang]]

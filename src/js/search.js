@@ -14,12 +14,12 @@ var STR = AR ? {
     ph: "دور على فيلم، سينما أو أحد الطاقم…", open: "بحث", close: "سكّر",
     films: "أفلام", cinemas: "سينمات", people: "ناس", archived: "انتهى عرضه",
     empty: "ما لقينا شي يطابق بحثك — جرّب كلمة غير.",
-    recent: "بحث أخير", clear: "امسح"
+    recent: "بحث أخير", clear: "امسح", formats: "الصيغ", chains: "السلاسل"
   } : {
     ph: "Search a film, cinema or someone in the cast…", open: "Search", close: "Close",
     films: "Films", cinemas: "Cinemas", people: "People", archived: "No longer showing",
     empty: "Nothing matches your search — try a different word.",
-    recent: "Recent searches", clear: "Clear"
+    recent: "Recent searches", clear: "Clear", formats: "Formats", chains: "Chains"
   };
   /* time words open the schedule with «متى» already answered (cinema.when, filters.js §2.0); an exact
      match navigates at once (no extra tap: typing the word IS opening it). norm() already folds ة/ه, ء and
@@ -150,8 +150,16 @@ var STR = AR ? {
   }
   /* the browse block reuses render()'s own row markup (thumb, name, href) -- a format or a chain is a real
      index entry, so there is nothing new to draw for it */
+  /* formats and chains as chips, each the entry's own link (an empty-thumb row read as a broken checkbox, 2026-10-17) */
+  function chips(label, t) {
+    var es = (DATA || []).filter(function (e) { return e.t === t && (t === "n" || e.a === e.e); }).slice(0, 8);
+    return es.length ? '<li role="group"><p class="srch-g">' + esc(label) + '</p><ul class="srch-chips">'
+      + es.map(function (e) { return '<li><a class="srch-chip" href="' + esc(href(e.p)) + '"' + (AR && !e.a ? ' lang="en" dir="ltr"' : "") + ">" + esc(name(e)) + "</a></li>"; }).join("") + "</ul></li>" : "";
+  }
   function renderEmpty() {
-    render((DATA || []).filter(function (e) { return e.t === "h" && e.a === e.e || e.t === "n"; }).slice(0, 12));
+    list.innerHTML = chips(STR.formats, "h") + chips(STR.chains, "n");
+    input.removeAttribute("aria-activedescendant");
+    input.setAttribute("aria-expanded", "false");
     var rs = recent();
     if (rs.length) list.innerHTML = '<li role="group"><p class="srch-g">' + esc(STR.recent)
       + '<button class="srch-clr" data-clr>' + esc(STR.clear) + "</button></p><ul class=\"srch-chips\">"
