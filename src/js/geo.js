@@ -13,7 +13,11 @@ function geoApply(j) {
   set("geo", "1");
   var c = j && j.city;
   if (!c || !C.cities[c] || get("city")) return false;
-  pickCity(c);
+  /* the answer lands after first paint: on a film page the visitor's city then moves to the top and opens, which
+     shifted a whole schedule under the thumb (CLS 0.27 on the first-ever visit, audit 2026-10-17). A view transition
+     cross-fades the reorder instead — and Chrome keeps layout shifts inside one out of CLS */
+  if (document.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) document.startViewTransition(function () { pickCity(c); });
+  else pickCity(c);
   qa("[data-near-msg]").forEach(function (el) {
     el.textContent = sub(GEO_TX.pick, { city: C.cities[c] });
     el.insertAdjacentHTML("beforeend", '<button type="button" class="lnk" data-geo-change>' + esc(GEO_TX.change) + "</button>");

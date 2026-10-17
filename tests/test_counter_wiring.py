@@ -76,3 +76,13 @@ def test_run_sh_mails_the_owner_when_the_phone_notifier_is_absent():
 def test_watchdog_workflow_fails_on_a_stale_site():
     wf = open(os.path.join(ROOT, ".github", "workflows", "watchdog.yml"), encoding="utf-8").read()
     assert "schedule:" in wf and "cinema.elyoxe.com" in wf and "25200" in wf and "exit 1" in wf
+
+
+def test_a_late_geo_answer_reorders_the_page_inside_a_view_transition():
+    """geo.js (2026-10-17): the network's city arrives after first paint; moving the visitor's city first then shifted a
+    whole schedule (CLS 0.27). The reorder runs inside document.startViewTransition where it exists (reduced motion
+    and older browsers: the plain call)."""
+    js = open(os.path.join(ROOT, "src", "js", "geo.js"), encoding="utf-8").read()
+    body = js[js.index("function geoApply"):js.index("function geoNote")]
+    assert "document.startViewTransition(function () { pickCity(c); })" in body
+    assert "prefers-reduced-motion: reduce" in body and "else pickCity(c);" in body
