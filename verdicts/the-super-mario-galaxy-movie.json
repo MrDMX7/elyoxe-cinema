@@ -1,0 +1,14 @@
+{
+  "ar": "«فلم سوبر ماريو غالاكسي» النقاد ما حبّوه كثير، 42% بس من 226 نقد كانت إيجابية. الجمهور حبّه أكثر، بنسبة 87%.",
+  "basis": "RT 42% (226 نقد) · الجمهور 87%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 42,
+    "rt_count": 226
+  },
+  "by": "claude",
+  "en": "Critics were lukewarm on The Super Mario Galaxy Movie, with only 42% of 226 reviews positive. Audiences were far more enthusiastic, giving it 87% on Rotten Tomatoes.",
+  "fid": "the-super-mario-galaxy-movie",
+  "verdict": "mixed",
+  "written": "2026-10-17"
+}

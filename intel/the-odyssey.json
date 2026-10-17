@@ -1,6 +1,35 @@
 {
-  "by": "skip",
+  "audience": [
+    {
+      "source": "Rotten Tomatoes",
+      "text": "الجمهور متحمس له بوضوح، وتقييمه قريب من تقييم النقاد"
+    }
+  ],
+  "by": "claude",
+  "consensus_ar": "يجدد حكاية ملحمية قديمة بحركة فخمة وأداء قوي من طاقم كبير، ويعطي الأسطورة إحساس إنساني أصيل.",
+  "ending": null,
   "fid": "the-odyssey",
-  "next_check": "2026-10-03",
-  "written": "2026-09-30"
+  "fun_fact": {
+    "source": "ويكيبيديا",
+    "text": "كتب الفيلم وأخرجه Christopher Nolan، وأنتجه مع زوجته Emma Thomas"
+  },
+  "has_plot": false,
+  "next_check": "2026-10-20",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "تقييم النقاد 94% من 515 نقد على Rotten Tomatoes"
+    },
+    {
+      "pos": true,
+      "text": "الجمهور عطاه 96% على Rotten Tomatoes"
+    },
+    {
+      "pos": false,
+      "text": "مدته 175 دقيقة، يعني يحتاج وقت طويل"
+    }
+  ],
+  "synopsis_ar": "الأوديسة فيلم ملحمي من 2026 كتبه وأخرجه Christopher Nolan، ومقتبس عن ملحمة Homer اليونانية القديمة. يتابع الفيلم Odysseus (Damon) ملك Ithaca في رحلته الطويلة والخطرة للعودة إلى بيته بعد الحرب، ويلتقي كائنات أسطورية وهو يحاول الوصول إلى زوجته Penelope (Hathaway).",
+  "written": "2026-10-17"
 }

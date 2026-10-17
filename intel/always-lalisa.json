@@ -1,0 +1,35 @@
+{
+  "audience": [
+    {
+      "source": "Rotten Tomatoes",
+      "text": "تقييم الجمهور على Rotten Tomatoes كان إيجابي بالكامل."
+    }
+  ],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "always-lalisa",
+  "fun_fact": {
+    "source": "ويكيبيديا",
+    "text": "الفيلم من إخراج Sue Kim وتعرض حياة Lisa على مدار سنة كاملة."
+  },
+  "has_plot": false,
+  "next_check": "2026-10-20",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "تقييم الجمهور على Rotten Tomatoes وصل 100%."
+    },
+    {
+      "pos": true,
+      "text": "عُرض أول مرة في مهرجان تورونتو السينمائي الدولي 2026 بتاريخ 11 سبتمبر."
+    },
+    {
+      "pos": false,
+      "text": "العرض في الصالات محدود، وبعدها يطلع على YouTube Premium بشكل حصري."
+    }
+  ],
+  "synopsis_ar": "وثائقي من إخراج Sue Kim يتابع سنة من حياة Lisa، المغنية والراپرة التايلاندية، وهي تمشي بمسارها الفردي منفصلة عن Blackpink. عُرض الفيلم أول مرة في مهرجان تورونتو السينمائي، وبعدها ينعرض في الصالات وبشاشات IMAX.",
+  "written": "2026-10-17"
+}

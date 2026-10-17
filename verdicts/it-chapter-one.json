@@ -1,0 +1,14 @@
+{
+  "ar": "«إت» حصل على 85% من 391 نقد على Rotten Tomatoes، والجمهور أعطاه 84%. الفيلم مرعب ومؤثر، وقصته عن أطفال منبوذين تشدّك للنهاية.",
+  "basis": "RT 85% (391 نقد) · الجمهور 84%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 85,
+    "rt_count": 391
+  },
+  "by": "claude",
+  "en": "It earned 85% from 391 critic reviews on Rotten Tomatoes, with audiences at 84%. Well-acted and frightening, it blends horror with an emotionally affecting story about outcast kids.",
+  "fid": "it-chapter-one",
+  "verdict": "yes",
+  "written": "2026-10-17"
+}

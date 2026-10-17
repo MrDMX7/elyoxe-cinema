@@ -1,0 +1,14 @@
+{
+  "ar": "مقاتل الشوارع (فلم 2026) جاب 42% من 93 نقد على RT، بس الجمهور أعطاه 80%. النقاد يقولون إن القصة مشوشة والكوميديا طفولية، بس فيه أسلوب بصري قوي وحبّ واضح للعبة.",
+  "basis": "RT 42% (93 نقد) · الجمهور 80%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 42,
+    "rt_count": 93
+  },
+  "by": "claude",
+  "en": "Street Fighter scores 42% on Rotten Tomatoes from 93 critics, while audiences give it 80%. Critics find the storytelling incoherent and the humor juvenile, though they credit its stylish action and affection for the games.",
+  "fid": "street-fighter",
+  "verdict": "mixed",
+  "written": "2026-10-17"
+}

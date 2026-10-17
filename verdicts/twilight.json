@@ -1,0 +1,14 @@
+{
+  "ar": "الشفق فانتازيا رومانسية عن بيلا وإدوارد، ومب كل النقاد حبّوه: 48% بس من 223 نقد. الجمهور أعطاه 72%، يعني المعجبين بيستانسون فيه أكثر.",
+  "basis": "RT 48% (223 نقد) · الجمهور 72%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 48,
+    "rt_count": 223
+  },
+  "by": "claude",
+  "en": "Twilight is a romantic fantasy about Bella and Edward that critics were split on, with 48% on Rotten Tomatoes, while audiences gave it 72%.",
+  "fid": "twilight",
+  "verdict": "mixed",
+  "written": "2026-10-17"
+}

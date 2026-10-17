@@ -1,14 +1,14 @@
 {
-  "ar": "«الحساب الاجتماعي» دراما وإثارة من إخراج Aaron Sorkin بالإنجليزي، والنقاد معطينه 60% من 129 نقد. هذا تقييم متوسط، يعني فيه اللي يعجبه وفيه اللي ما يعجبه.",
-  "basis": "RT 60% (129 نقد)",
+  "ar": "«الحساب الاجتماعي» يقدّم نقد قوي لوسائل التواصل، بس النقاد يشوفونه أضعف من الأول. تقييم النقاد 55% من 242 نقد، والجمهور 72%.",
+  "basis": "RT 55% (242 نقد) · الجمهور 72%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": 60,
-    "rt_count": 129
+    "rt": 55,
+    "rt_count": 242
   },
   "by": "claude",
-  "en": "The Social Reckoning is a drama-thriller in English directed by Aaron Sorkin, with critics giving it 60% from 129 reviews on Rotten Tomatoes. That is a mixed reception.",
+  "en": "A worthwhile critique of social media's reach that critics feel falls short of its predecessor, with a 55% critics score from 242 reviews and 72% from audiences on Rotten Tomatoes.",
   "fid": "the-social-reckoning",
   "verdict": "mixed",
-  "written": "2026-10-09"
+  "written": "2026-10-17"
 }

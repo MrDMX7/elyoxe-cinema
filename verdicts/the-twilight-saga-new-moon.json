@@ -1,0 +1,14 @@
+{
+  "ar": "النقاد ما عجبهم: 28% من 226 نقد على RT، والجمهور أعطاه 61%. الإيقاع بطيء والنبرة كئيبة، فيمكن يعجب المعجبين بالسلسلة بس.",
+  "basis": "RT 28% (226 نقد) · الجمهور 61%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 28,
+    "rt_count": 226
+  },
+  "by": "claude",
+  "en": "Critics were not impressed, with 28% on Rotten Tomatoes from 226 reviews, while audiences gave it 61%. Its slow pace and downcast tone may satisfy devoted fans but are likely to turn off newcomers.",
+  "fid": "the-twilight-saga-new-moon",
+  "verdict": "skip",
+  "written": "2026-10-17"
+}

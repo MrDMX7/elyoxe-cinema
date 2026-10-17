@@ -6,7 +6,7 @@
   "fid": "the-crystal-planet",
   "fun_fact": null,
   "has_plot": false,
-  "next_check": "2026-10-03",
+  "next_check": "2026-10-20",
   "qa": [],
   "reasons": [
     {
@@ -18,5 +18,6 @@
       "text": "ما لقينا تقييمات نقدية كافية لهالفيلم للحين"
     }
   ],
-  "written": "2026-09-30"
+  "synopsis_ar": null,
+  "written": "2026-10-17"
 }

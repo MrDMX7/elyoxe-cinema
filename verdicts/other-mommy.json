@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "«الأم الأخرى» حاصل على 17% بس من النقاد على Rotten Tomatoes، والجمهور يعطيه 48%. Jessica Chastain تبدع بدورها، بس الفيلم سخيف أكثر من اللازم وقفزات الرعب ما تكفي عشان يصير مخيف.",
+  "basis": "RT 17% (87 نقد) · الجمهور 48%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 17,
+    "rt_count": 87
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "Jessica Chastain gives a strong performance, but the film is too silly for its uneven jump scares to build a truly spooky whole.",
   "fid": "other-mommy",
-  "verdict": "unknown",
-  "written": "2026-10-09"
+  "verdict": "skip",
+  "written": "2026-10-17"
 }
