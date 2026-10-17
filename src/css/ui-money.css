@@ -28,7 +28,7 @@
 /* cards on a phone (W2-P9): one block per card, the best offer gold (yours), the rest seat-grey; the matrix from 1024 px */
 .cph-l{display:grid;border-block-start:1px solid var(--line-2)}
 .cph{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm best" "c c";gap:4px 16px;align-items:baseline;
-  padding-block:14px;border-block-end:1px solid var(--line);color:var(--screen);text-decoration:none;min-block-size:44px}
+  padding-block:16px;border-block-end:1px solid var(--line);color:var(--screen);text-decoration:none;min-block-size:44px}
 .cph-n{grid-area:nm;font-weight:500;font-size:var(--fs-title)}
 .cph-b{grid-area:best;text-align:end;font-size:var(--fs-meta);color:var(--seat)}
 .cph-b .off{color:var(--gold);font-weight:600;font-size:var(--fs-time)}

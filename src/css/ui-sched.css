@@ -27,9 +27,9 @@
 .js .fcity.here:not([data-more]) > .cg:nth-child(n+5):not(:nth-child(5):last-child){display:none}
 .cg-h{display:flex;align-items:baseline;gap:4px 12px;margin-block-end:12px;flex-wrap:wrap}
 .cg-h h3{font-family:var(--body);font-size:var(--fs-title);font-weight:500}
-.cg-h h3 a{text-decoration:none;display:inline-block;padding-block:10px;margin-block:-10px}   /* a 44 px thumb target on a 20 px line (audit 2026-10-17) */
+.cg-h h3 a{text-decoration:none;display:inline-block;padding-block:12px;margin-block:-12px}   /* a 44 px thumb target on a 20 px line (audit 2026-10-17) */
 .cg-m{display:contents;font-size:var(--fs-meta);color:var(--seat)}   /* its distance and age inherit it (a stale age: .age.stale, dim) */
-.cg-h .map{font-size:var(--fs-meta);color:var(--seat);margin-inline-start:auto;text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:4px;min-block-size:44px;margin-block:-10px;display:inline-flex;align-items:center}
+.cg-h .map{font-size:var(--fs-meta);color:var(--seat);margin-inline-start:auto;text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:4px;min-block-size:44px;margin-block:-12px;display:inline-flex;align-items:center}
 .more-c{display:flex;min-block-size:44px;align-items:center;margin-block:8px}   /* colour and font from .lnk, which it always carries */
 /* no script: each hall's name and «من» price over its times (the rows the server writes) */
 .hl{margin-block-start:8px}

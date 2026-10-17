@@ -147,7 +147,7 @@ class MoneyPages:
             glue = " و" if ar else " and "
             best = f'<b class="off">{dates(esc(top))}</b> <span class="in">{"في " if ar else "at "}{esc(("، " if ar else ", ").join(top_chains[:-1]) + (glue if len(top_chains) > 1 else "") + top_chains[-1])}</span>'
             others = [o for o in offers if o[1] != top]
-            rest = f'<small class="cph-c">{esc(("، " if ar else ", ").join(f"{o[2]} {o[1]}" for o in others))}</small>' if others else ""
+            rest = f'<small class="cph-c">{dates(esc(("، " if ar else ", ").join(f"{o[2]} {o[1]}" for o in others)))}</small>' if others else ""
         return (f'<a class="cph" href="{P(lang, "cards", cid)}"><span class="cph-n">{esc(name)}</span>'
                 f'<span class="cph-b">{best}</span>{rest}</a>')
 
