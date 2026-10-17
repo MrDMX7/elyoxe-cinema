@@ -5,3 +5,8 @@
 .cheap-t td a{color:inherit;text-decoration-color:var(--seat)}
 .cheap-t td small{display:block;color:var(--seat);font-size:12px}
 .cheap-cmp [data-cheap-all]{margin-block-start:8px}
+/* the ticket's «نفس الفيلم أرخص» line (on paper: ink words, the saving in velvet, never gold) */
+.tk-alt{padding:8px 16px 0;font-size:var(--fs-meta)}
+.tk-alt a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--ink-3);text-underline-offset:4px;display:inline-block;padding-block:12px;margin-block:-12px}
+.tk-alt b{color:var(--velvet);font-weight:600}
+@media (min-width:1024px){.tk-alt{padding:12px 20px 0}}

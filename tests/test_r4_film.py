@@ -54,6 +54,26 @@ def test_cheapest_chunk_registered_and_container_on_film_pages(tmp_path):
         assert "data-cheapest" not in read(out, "film", archived, "index.html")
 
 
+def test_ticket_carries_the_cheaper_same_film_slot_and_the_chunk_fills_it(tmp_path):
+    """MASTER-PLAN §2.3 item 4 (2026-10-17): the ticket always has an empty, hidden «نفس الفيلم أرخص» slot after its
+    seats; cinecompare.js (film pages only) fills it from the same rows «وين أرخص؟» reads, after the card, only for a
+    saving of ALT_MIN AED or more, as a #s-<key> link (ticket.js's hashchange listener opens it)."""
+    out = str(tmp_path / "o")
+    build.build(DATA, DISC, out, noindex=False)
+    home = read(out, "index.html")
+    seats = home.index('<table class="tk-seats">')
+    slot = home.index('<p class="tk-alt" data-tk-alt hidden></p>')
+    assert seats < slot < home.index('<div class="tk-qty" data-tk-qty hidden></div>')
+    js = open(os.path.join(ROOT, "src", "js", "cinecompare.js"), encoding="utf-8").read()
+    assert 'K.on("ticket", alt)' in js and "ALT_MIN = 5" in js
+    body = js[js.index("function alt("):js.index("function start(")]
+    assert "K.after(low, x.chain, x.hall, K.card(), x.hk, x.cin)" in body      # the chosen show after the card
+    assert "rowsOf(sec)[0]" in body and "r.b.key === mine" in body             # the cheapest, never itself
+    assert "pay - r.b.pay < ALT_MIN" in body and '\'<a href="#s-\' + r.b.key' in body
+    css = open(os.path.join(ROOT, "src", "css", "cheapest.css"), encoding="utf-8").read()
+    assert ".tk-alt b{color:var(--velvet)" in css and "--gold" not in css[css.index(".tk-alt"):]   # never gold on paper
+
+
 # ---------------------------------------------------------------- #300: «باقي N مقعد» from real occupancy
 def test_seats_left_only_from_a_fresh_scarce_sample(tmp_path):
     """pages/seats.py.build_data sets show["seats_left"] (kit/sched.py's data-left, kit/ticket.py's own badge —

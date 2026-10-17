@@ -6,8 +6,9 @@
    ticket.js's own hashchange listener (always in the core bundle) opens that show's ticket, folding its cinema
    open first when it was behind «N سينمات ثانية» (film.js's fsReveal). A lazy chunk (pages/cheapest.py): K is
    window.CINEMA, so no discAfter() of its own — K.after() is the core's real one. */
-var W = K.AR ? { h: "وين أرخص؟", cin: "السينما", price: "السعر", time: "الوقت", all: "الكل" }
-  : { h: "Where’s it cheaper?", cin: "Cinema", price: "Price", time: "Time", all: "All" };
+var W = K.AR ? { h: "وين أرخص؟", cin: "السينما", price: "السعر", time: "الوقت", all: "الكل", alt: "نفس الفيلم أرخص بـ{d} درهم", at: "{t} في {c}", std: "قاعة عادية" }
+  : { h: "Where’s it cheaper?", cin: "Cinema", price: "Price", time: "Time", all: "All", alt: "Same film, {d} AED less", at: "{t} at {c}", std: "standard hall" };
+var ALT_MIN = 5;   // a saving under 5 AED is not worth a line on the ticket
 var MAX = 8;
 
 function hallLabel(b, hl) {
@@ -64,7 +65,29 @@ function render(box) {
     (rows.length > MAX && !open ? "<button type=\"button\" class=\"lnk\" data-cheap-all>" + K.esc(W.all) + "</button>" : "");
   box.hidden = false;
 }
+/* the ticket's «نفس الفيلم أرخص» line (MASTER-PLAN §2.3 item 4): the chosen show against the cheapest of the same
+   film in its city that day, both after the visitor's card — said only when the saving is ALT_MIN or more, as a
+   #s-<key> link the hashchange listener opens like any other show */
+var LAST = null;
+function alt(x) {
+  if (x) LAST = x; x = LAST;
+  var el = K.q("[data-tk-alt]"); if (!el || !x) return;
+  el.hidden = true; el.innerHTML = "";
+  var ps = (x.p || []).map(function (p) { return p[1]; }).filter(function (v) { return v > 0; });
+  if (!ps.length || x.hall == null || x.hk == null) return;
+  var low = Math.min.apply(null, ps), now = K.after(low, x.chain, x.hall, K.card(), x.hk, x.cin);
+  var pay = now && now.a != null ? now.a : low;
+  var sec = K.q('.fcity[data-city="' + x.city + '"]') || K.q(".fcity.here"), r = sec ? rowsOf(sec)[0] : null;
+  var mine = K.showKey(x.cin, x.d, x.t, x.hk || "Standard");
+  if (!r || r.b.key === mine || pay - r.b.pay < ALT_MIN) return;
+  /* the hall too: a VIP recliner against a regular seat is a different evening, said so plainly */
+  var hall = r.b.hn || (x.hk && x.hk !== "Standard" ? W.std : "");
+  el.innerHTML = '<a href="#s-' + r.b.key + '"><b>' + K.esc(K.sub(W.alt, { d: K.fmt(pay - r.b.pay) })) + "</b>: " +
+    K.esc(K.sub(W.at, { t: r.b.t, c: r.name }) + (hall ? (K.AR ? "، " : ", ") + hall : "")) + "</a>";
+  el.hidden = false;
+}
 function start() {
+  K.on("ticket", alt); K.on("card", function () { alt(); }); K.on("rules", function () { alt(); });
   var box = K.q("[data-cheapest]"); if (!box) return;
   function redraw() { render(box); }
   box.addEventListener("click", function (e) {

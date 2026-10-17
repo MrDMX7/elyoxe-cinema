@@ -192,7 +192,10 @@ fi
 # test gate (ruling 2026-09-26): whatever was just pulled must pass the suite before it can publish.
 # Red -> no refresh, no deploy: the live site stays on the last good build. The laptop pushes by hand
 # now (the repo has a workflow, so wsync treats it as pull-only), and CI runs the same suite there.
-if ! "$PY" -m pytest -q -x -p no:cacheprovider; then
+# --basetemp inside the checkout (2026-10-17): ~1,240 tests each build a site into tmp_path, which by default is the
+# system Temp folder — outside the laptop's Defender exclusion (cinema-runner), so every file was scanned and the
+# suite took ~1 h 28 min. data/ is gitignored; pytest empties the folder at the start of each run.
+if ! "$PY" -m pytest -q -x -p no:cacheprovider --basetemp="$HERE/data/.pytest-tmp"; then
   fail "الاختبارات فشلت على $(git log --oneline -1 | cut -c1-60) — ما نُشر شي، الموقع على النسخة السابقة" 6 tests
 fi
 ok_now tests "الاختبارات رجعت خضراء"

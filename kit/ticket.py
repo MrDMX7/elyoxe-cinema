@@ -45,6 +45,9 @@ class TicketKit:
                 f'<p class="tk-when" data-tk-when>{"".join(lines)}</p>{left}</div>'
                 f'<div class="tk-stub"><span data-tk-day>{esc(day)}</span><b dir="ltr" data-tk-time>{esc(s["time"])}</b></div></div>'
                 f'<table class="tk-seats"><tbody data-tk-rows>{seats}</tbody></table>'
+                # «نفس الفيلم أرخص» (MASTER-PLAN §2.3 item 4, 2026-10-17): script-only, filled by src/js/cinecompare.js
+                # on a film page when the same film is cheaper (after the card) in this city that day — the slot only
+                f'<p class="tk-alt" data-tk-alt hidden></p>'
                 # «كم بتكلفني الطلعة؟» (R4 §298): the ticket-count stepper and its total after the card — script-only
                 # (the stepper itself needs a tap; a no-script visitor already has each seat's own price above),
                 # so cinema.js draws its rows and total entirely; this is only its slot, always in the same place

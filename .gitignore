@@ -24,3 +24,4 @@ data/*.bak
 data/*.corrupt-*
 data/.req-hash
 tmp/
+data/.pytest-tmp/

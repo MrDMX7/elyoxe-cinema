@@ -425,6 +425,14 @@ def test_run_sh_routes_every_notification_through_alert_state():
     assert "3-hour" not in sh
 
 
+def test_the_test_gate_keeps_its_temp_files_inside_the_checkout():
+    """2026-10-17: tmp_path defaulted to the system Temp folder, outside the laptop's Defender exclusion — the suite
+    took ~1 h 28 min there. The gate passes --basetemp under data/ (gitignored, emptied by pytest each run)."""
+    code = open(os.path.join(ROOT, "run.sh"), encoding="utf-8").read()
+    assert '-m pytest -q -x -p no:cacheprovider --basetemp="$HERE/data/.pytest-tmp"' in code
+    assert "data/.pytest-tmp/" in open(os.path.join(ROOT, ".gitignore"), encoding="utf-8").read()
+
+
 def test_a_failed_pull_stops_the_run_and_alerts():
     """final review M3: `git pull --ff-only` failing (EOL-dirty files, a diverged checkout) used to log a
     WARN and deploy the old code as if it were the release. It must go through fail() -- one alert via
