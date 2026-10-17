@@ -66,3 +66,16 @@ Open: 217, 218, 223; list 17 = 225–231.
 ## Added 2026-09-27 (lists 17–18)
 Phase 3: 225 mall pages · 229 «سفراء سينما» · 231 weekly numbers card · 232 Arabic synopsis for every film (facts only, owner-reviewable) · 233 rating trend arrows.
 Open: 226–228, 230, 234–236; list 19 = 237–241.
+
+## Released 2026-10-17 (owner: «أفوضك، سو كل الأشياء اللي بتحسن وتطور الموقع»)
+Freeze fix (run.sh pulls with --autostash; the laptop had been silent since 10-09) · laptop alerts by mail (tools/notify_mail.py, SES)
++ an outside watchdog (.github/workflows/watchdog.yml, fails and mails when the site is older than 7 h) · 88 the privacy
+counter is finally wired (pages/beacon.py, counter.yaml filled into beacon.js/push.js at bundle time; tools/stats.py
+reads the numbers) — the Thursday push button works for the same reason · 232 Arabic synopsis on the film page
+(intel/<fid>.json "synopsis_ar", Claude from the Wikipedia lead, its own call for finished records) · 195 new-offer
+detector (discounts_watch.py, weekly from run.sh; script-rendered sources only report outages) · security headers on
+CloudFront (HSTS, CSP, nosniff, Referrer-Policy, Permissions-Policy; infra/template.yaml SecurityHeaders) · a build
+older than the visitor's day says so (main.js stale note + the board's own line) instead of «ما في عروض باقية اليوم» ·
+home rows put the visitor's city first.
+Vision (owner, 2026-10-17): the first reference for films in the UAE, easy for everyone and deep for those who open it,
+no holes, «this should be illegal» UI/UX; an iPhone/Android app later (85 / App Store — not before he asks).

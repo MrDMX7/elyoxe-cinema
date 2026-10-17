@@ -2,14 +2,17 @@
   "audience": [
     {
       "source": "Rotten Tomatoes",
-      "text": "الجمهور متقبّل للفيلم أكثر من النقاد، بس بدون حماس كبير"
+      "text": "الجمهور مال له أكثر من النقاد، وأعطاه 63% على Rotten Tomatoes."
     }
   ],
   "by": "claude",
   "consensus_ar": null,
   "ending": "بيلي اللي تظاهرت إنها لوس تطيح من الجبل بعد ما تدفعها جون، وجون يحاول يقتل جاكس بس يطيح ويموت بروحه. جون طلع يهرّب مخدرات فنتانيل وياهم، والهليكوبتر اللي إيّت مب حق الحكومة كانت حق مهرّبين ثانيين. جاكس تستخدم المخدرات الباقية عشان تفاوض وتنجي، وترجع للبار وتشرب نخب بيلي. بعدين تفتح دفتر شيلوه وتلقى وجهة يديدة اسمها Hell's Chasm.",
   "fid": "fall-2-deadpoint",
-  "fun_fact": null,
+  "fun_fact": {
+    "source": "ويكيبيديا",
+    "text": "الفيلم تكملة لفيلم Fall (2022)، ومن إخراج Peter وMichael Spierig."
+  },
   "has_plot": true,
   "qa": [
     {
@@ -39,17 +42,14 @@
   ],
   "reasons": [
     {
+      "pos": true,
+      "text": "الجمهور أعطاه 63% على Rotten Tomatoes."
+    },
+    {
       "pos": false,
-      "text": "53% بس من النقاد عند Rotten Tomatoes من 58 نقد، رقم متوسط لا أكثر"
-    },
-    {
-      "pos": true,
-      "text": "الجمهور أعطاه 63%، أعلى شوي من تقييم النقاد"
-    },
-    {
-      "pos": true,
-      "text": "58 نقد رقم معقول يعطي صورة واضحة عن رأي النقاد"
+      "text": "النقاد أعطوه 53% من 59 نقد على Rotten Tomatoes."
     }
   ],
-  "written": "2026-09-30"
+  "synopsis_ar": "«سقوط 2: ديدبوينت» إثارة بقاء من إخراج Peter وMichael Spierig، وكتب السيناريو Scott Mann وJonathan Frank. الفيلم تكملة لفيلم Fall (2022)، ويشارك فيه Harriet Slater وArsema Thomas وTom Brittney وVirginia Gardner.",
+  "written": "2026-10-17"
 }

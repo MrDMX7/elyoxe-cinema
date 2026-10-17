@@ -1,0 +1,8 @@
+# The privacy counter + Web Push backend (infra/counter, stack `elyoxe-cinema-counter`, ap-south-1).
+# build.py fills these into src/js/beacon.js and src/js/push.js (their __COUNTER_API__ / __VAPID_PUBLIC_KEY__)
+# at bundle time. Both values are public by nature (the browser sees them); the stats secret and the VAPID
+# private key stay in SSM. Re-read them after `infra/counter/deploy.sh`:
+#   aws cloudformation describe-stacks --region ap-south-1 --stack-name elyoxe-cinema-counter --query "Stacks[0].Outputs"
+#   aws ssm get-parameter --region ap-south-1 --name /elyoxe/cinema/counter/vapid-public --query Parameter.Value --output text
+api: "https://dpp9qwv7j4.execute-api.ap-south-1.amazonaws.com/"
+vapid_public: "BJJJ2OzHq6outtwZxWlCGKEM-nQ54oes798AuJJ8K73bPAhJ2KcDUnLZt72oYQeAJA1VGsuSp1YCmK7O2ufKlmg"

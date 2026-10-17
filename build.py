@@ -84,17 +84,45 @@ def chunk_js(path):
     return minify_lite('(function (K) {\n"use strict";\n' + src + "\n})(window.CINEMA);\n") + "\n"
 
 
+# ---------------------------------------------------------------- the counter's public settings
+COUNTER_PLACEHOLDERS = {"__COUNTER_API__": "api", "__VAPID_PUBLIC_KEY__": "vapid_public"}
+
+
+def counter_config(path=None):
+    """counter.yaml → {placeholder: value}: the privacy counter's HTTP API and the Web Push public key
+    (infra/counter). Missing file or keys → "" — beacon.js and push.js then do nothing (they test for an
+    empty or unfilled value), never an error."""
+    import yaml
+    try:
+        with open(path or os.path.join(ROOT, "counter.yaml"), encoding="utf-8") as f:
+            cfg = yaml.safe_load(f) or {}
+    except OSError:
+        cfg = {}
+    return {ph: str(cfg.get(key) or "") for ph, key in COUNTER_PLACEHOLDERS.items()}
+
+
+def fill_counter(js, counter=None):
+    """src/js/beacon.js and src/js/push.js carry __COUNTER_API__ / __VAPID_PUBLIC_KEY__; the real values go
+    in here, at bundle time, for the main bundle and every lazy chunk (2026-10-17: until now nothing ever
+    replaced them, so the counter stack ran for three weeks with no client and the push button always said
+    «unsupported»)."""
+    for ph, val in (counter if counter is not None else counter_config()).items():
+        js = js.replace(ph, val)
+    return js
+
+
 # ---------------------------------------------------------------- the site
 class Site(Kit):
     def __init__(self, data, disc, halls, out, modules=None):
         super().__init__(data, disc, halls, out)
         self.modules = discover() if modules is None else list(modules)
-        self.js = bundle_js(modules=self.modules)
+        counter = counter_config()
+        self.js = fill_counter(bundle_js(modules=self.modules), counter)
         self.js_name = f"cinema.{hashlib.sha1(self.js.encode()).hexdigest()[:10]}.js"
         self.chunks = {}
         for m in self.modules:
             for n in getattr(m, "LAZY_JS", ()):
-                js = chunk_js(_asset(m, "js", n))
+                js = fill_counter(chunk_js(_asset(m, "js", n)), counter)
                 self.chunks[n] = (f"{n}.{hashlib.sha1(js.encode()).hexdigest()[:10]}.js", js)
         self.chunk_urls = {n: "/assets/" + f for n, (f, _) in self.chunks.items()}
         # page-scoped stylesheets: one per page kind that has any rule (a kind whose partials are still empty gets no link)

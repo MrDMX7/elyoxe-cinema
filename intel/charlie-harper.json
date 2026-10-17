@@ -6,21 +6,18 @@
   "fid": "charlie-harper",
   "fun_fact": null,
   "has_plot": false,
-  "next_check": "2026-10-03",
+  "next_check": "2026-10-20",
   "qa": [],
   "reasons": [
     {
       "pos": true,
-      "text": "نسبة 61% من النقاد على Rotten Tomatoes حكم متوسط، مب قوي ولا ضعيف"
+      "text": "الجمهور قيّمه بـ 84% على Rotten Tomatoes، وهذا رقم قوي."
     },
     {
       "pos": false,
-      "text": "الرقم مبني على 31 نقد بس، عينة مب كبيرة وايد"
-    },
-    {
-      "pos": true,
-      "text": "يجمع رومانسي ودراما، خيار زين لمحبين هالنوعين"
+      "text": "النقاد أعطوه 59% من 32 نقد على Rotten Tomatoes، يعني الآراء مب متفقة عليه."
     }
   ],
-  "written": "2026-09-30"
+  "synopsis_ar": "Charlie Harper رومانسي أمريكي من إنتاج 2025، من إخراج Mac Eldridge وTom Dean، وكتب سيناريوه Tom Dean. من بطولة Emilia Jones وNick Robinson.",
+  "written": "2026-10-17"
 }

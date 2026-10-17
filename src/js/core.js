@@ -106,7 +106,7 @@ function startFeatures() {
   FEAT.forEach(function (fn) { try { fn(); } catch (e) { if (window.console) console.error(e); } });
   window.CINEMA = { C: C, lang: lang, AR: AR, page: page, q: q, qa: qa, esc: esc, fmt: fmt, sub: sub, uae: uae, getJSON: getJSON,
     get: get, set: set, now: function () { return NOW; }, city: function () { return city; }, card: function () { return card; },
-    on: on, emit: emit, showKey: showKey,
+    on: on, emit: emit, showKey: showKey, hday: humanDay,
     /* after(): prices.js's own, so a lazy chunk needs no discAfter() twin (the "card"/"rules" hooks say when to
        redraw with it: "rules" once main.js's /data/discounts.json lands, null until then). who(): «مع منو» (R4
        §298's stepper default), ST itself stays unexposed */

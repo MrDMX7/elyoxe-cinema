@@ -170,6 +170,42 @@ Resources:
         CookiesConfig: { CookieBehavior: none }
         QueryStringsConfig: { QueryStringBehavior: none }
 
+  # Security headers on every response (2026-10-17, owner: «خالي من الثغرات»). The site is static, so a strict
+  # script-src would be possible only with per-build hashes for the inline boot/speculation scripts; until then
+  # 'self' + 'unsafe-inline' still shuts out every foreign script host, objects, base-uri tricks and framing by
+  # others. connect-src: the site itself (/data, /geo) and the counter/push API (counter.yaml). frame-src: the
+  # trailer embeds. Images/media stay open to https: so a chain's CDN still can never be the reason a page breaks.
+  SecurityHeaders:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: elyoxe-cinema-security
+        SecurityHeadersConfig:
+          StrictTransportSecurity: { AccessControlMaxAgeSec: 31536000, IncludeSubdomains: true, Preload: false, Override: true }
+          ContentTypeOptions: { Override: true }
+          ReferrerPolicy: { ReferrerPolicy: strict-origin-when-cross-origin, Override: true }
+          FrameOptions: { FrameOption: SAMEORIGIN, Override: true }
+          ContentSecurityPolicy:
+            Override: true
+            ContentSecurityPolicy: >-
+              default-src 'self';
+              script-src 'self' 'unsafe-inline';
+              style-src 'self' 'unsafe-inline';
+              img-src 'self' data: blob: https:;
+              media-src 'self' blob: https:;
+              font-src 'self';
+              connect-src 'self' https://dpp9qwv7j4.execute-api.ap-south-1.amazonaws.com;
+              frame-src https://www.youtube-nocookie.com https://www.youtube.com;
+              worker-src 'self';
+              manifest-src 'self';
+              object-src 'none';
+              base-uri 'self';
+              form-action 'self';
+              frame-ancestors 'self'
+        CustomHeadersConfig:
+          Items:
+            - { Header: Permissions-Policy, Value: "geolocation=(self), camera=(), microphone=(), payment=(), usb=()", Override: true }
+
   Distribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -198,6 +234,7 @@ Resources:
           AllowedMethods: [GET, HEAD]
           CachedMethods: [GET, HEAD]
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6          # Managed-CachingOptimized (honours Cache-Control)
+          ResponseHeadersPolicyId: !Ref SecurityHeaders
           FunctionAssociations:
             - EventType: viewer-request
               FunctionARN: !GetAtt RewriteFunction.FunctionMetadata.FunctionARN
@@ -210,6 +247,7 @@ Resources:
             CachedMethods: [GET, HEAD]
             CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad          # Managed-CachingDisabled
             OriginRequestPolicyId: !Ref GeoPolicy
+            ResponseHeadersPolicyId: !Ref SecurityHeaders
             FunctionAssociations:
               - EventType: viewer-request
                 FunctionARN: !GetAtt GeoFunction.FunctionMetadata.FunctionARN

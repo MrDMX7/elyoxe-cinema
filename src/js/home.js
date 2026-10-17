@@ -196,6 +196,11 @@ function sortRows(count, idx, n, end, go) {
     if (r.getAttribute("data-rail-sort") === "count") {
       var key = function (el) { return (el.classList.contains("off") ? 1e12 : 0) - (count[el.getAttribute("data-fid")] || 0) * 1e3 + (+el.getAttribute("data-o") || 0); };
       els = els.map(function (e) { return [key(e), e]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (p) { return p[1]; });
+    } else {
+      /* every other row: what shows in the visitor's city first, the rest after it in the row's own order — an Al Ain
+         visitor used to open on a row of «ما يعرض في العين» (2026-10-17) */
+      var off = function (e) { return e.classList.contains("off"); }, on = els.filter(function (e) { return !off(e); });
+      if (on.length && on.length < els.length) els = on.concat(els.filter(off));
     }
     var fids = els.map(function (el) { return el.getAttribute("data-fid"); }), o = lead(seen, fids);
     r.hidden = !o;

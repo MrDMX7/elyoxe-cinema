@@ -409,3 +409,98 @@ def test_film_info_slot_hides_arabic_intel_on_the_english_mirror():
     # round3-gaps: the reasons are the hero's «ليش يستاهل؟» (film.why) now, never the tab's — and Arabic only there too
     assert "سبب مهم" not in html_ar and "سبب مهم" in intel_page._why(site, "ar", "x")
     assert "سبب مهم" not in intel_page._why(site, "en", "x")
+
+
+# ================================================================ item 232 (2026-10-17): the Arabic synopsis
+FILM_SYN = {**FILM, "synopsis_en": "Interstellar is a 2014 epic science fiction film directed by Christopher Nolan."}
+OPEN_SYN = json.dumps({**json.loads(OPEN_GOOD), "synopsis_ar": "رحلة بالفضاء من إخراج Christopher Nolan عن أب يدوّر كوكب ثاني يعيش فيه البشر."})
+
+
+def test_validate_open_requires_synopsis_ar_when_an_english_synopsis_is_given():
+    why = filmintel._validate_open(json.loads(OPEN_GOOD), [], True, True)
+    assert why and "synopsis_ar" in why
+    assert filmintel._validate_open(json.loads(OPEN_SYN), [], True, True) is None
+
+
+def test_validate_open_rejects_synopsis_ar_when_none_was_given():
+    why = filmintel._validate_open(json.loads(OPEN_SYN), [], True, False)
+    assert why and "synopsis_ar" in why
+
+
+def test_needs_generate_redoes_a_claude_record_only_for_a_missing_synopsis():
+    stable = {"by": "claude", "has_plot": True, "reasons": [], "audience": [], "fun_fact": None, "consensus_ar": None}
+    assert filmintel.needs_generate(stable, FILM) is False                      # no English synopsis: nothing to add
+    assert filmintel.needs_generate(stable, FILM_SYN) is True                   # a synopsis exists, none in the record
+    assert filmintel.needs_generate({**stable, "synopsis_ar": None}, FILM_SYN) is False   # asked before, honestly null
+    assert filmintel.needs_generate({**stable, "synopsis_ar": "..."}, FILM_SYN) is False
+
+
+def test_generate_one_redoes_the_open_half_for_the_synopsis_and_keeps_a_finished_spoiler_half():
+    existing = {"by": "claude", "reasons": [{"text": "قديم", "pos": True}], "audience": [], "fun_fact": None,
+                "consensus_ar": None, "has_plot": True, "ending": "النهاية المحفوظة.", "qa": [{"q": "س", "a": "ج"}] * 4}
+    client = FakeClient([OPEN_SYN])
+    out = filmintel._generate_one(client, "interstellar", FILM_SYN, None, [], existing=existing)
+    assert client.messages.calls == 1                                            # the open call only
+    assert out["synopsis_ar"].startswith("رحلة بالفضاء")
+    assert out["ending"] == "النهاية المحفوظة." and len(out["qa"]) == 4 and out["has_plot"] is True
+    assert "next_check" not in out
+
+
+def test_generate_one_prompt_carries_the_english_synopsis_and_the_record_the_arabic_one():
+    client = FakeClient([OPEN_SYN])
+    out = filmintel._generate_one(client, "interstellar", FILM_SYN, None, [])
+    assert out["synopsis_ar"] and out["by"] == "claude"
+    prompt = filmintel._open_prompt(FILM_SYN, [])
+    assert "synopsis_ar" in prompt and "Christopher Nolan" in prompt
+    assert "synopsis_ar" not in filmintel._open_prompt(FILM, []) or '"synopsis_ar": "..." أو null' in filmintel._open_prompt(FILM, [])
+
+
+def test_write_missing_skips_the_plot_fetch_when_the_spoiler_half_is_done(tmp_path, monkeypatch):
+    monkeypatch.setattr(filmintel, "INTEL_DIR", tmp_path)
+    monkeypatch.setattr(filmintel, "reddit_snippets", lambda title, year, cap=6: [])
+
+    def boom(qid):
+        raise AssertionError("wikipedia_plot must not be fetched for a finished spoiler half")
+    monkeypatch.setattr(filmintel, "wikipedia_plot", boom)
+    (tmp_path / "interstellar.json").write_text(json.dumps({"fid": "interstellar", "by": "claude", "reasons": [], "audience": [],
+                                                            "fun_fact": None, "consensus_ar": None, "has_plot": True,
+                                                            "ending": "x", "qa": [{"q": "a", "b": "c"}] * 4}), encoding="utf-8")
+    fake = FakeClient([OPEN_SYN])
+    monkeypatch.setattr("verdicts._client", lambda: fake)
+    out = filmintel.write_missing({"films": {"interstellar": FILM_SYN}})
+    assert out["interstellar"]["synopsis_ar"] and out["interstellar"]["ending"] == "x"
+
+
+def test_attach_synopses_puts_the_intel_synopsis_on_the_film(tmp_path, monkeypatch):
+    monkeypatch.setattr(filmintel, "INTEL_DIR", tmp_path)
+    (tmp_path / "a.json").write_text(json.dumps({"fid": "a", "by": "claude", "synopsis_ar": " قصة أ. "}), encoding="utf-8")
+    (tmp_path / "b.json").write_text(json.dumps({"fid": "b", "by": "skip"}), encoding="utf-8")
+    (tmp_path / "c.json").write_text(json.dumps({"fid": "c", "by": "claude", "synopsis_ar": None}), encoding="utf-8")
+    films = {"a": {}, "b": {}, "c": {}, "d": {"synopsis_ar": "عندي"}}
+    assert intel_page.attach_synopses(films) == 1
+    assert films["a"]["synopsis_ar"] == "قصة أ." and "synopsis_ar" not in films["b"] and "synopsis_ar" not in films["c"]
+    assert films["d"]["synopsis_ar"] == "عندي"
+
+
+def test_validate_open_drops_tanwin_from_a_written_synopsis_instead_of_rejecting_it():
+    parsed = {**json.loads(OPEN_SYN), "synopsis_ar": "قصة عن أب يسافر بعيداً جداً عن بيته."}
+    assert filmintel._validate_open(parsed, [], True, True) is None
+    assert parsed["synopsis_ar"] == "قصة عن أب يسافر بعيدا جدا عن بيته."
+
+
+def test_write_missing_keeps_a_finished_record_when_the_synopsis_call_fails(tmp_path, monkeypatch):
+    monkeypatch.setattr(filmintel, "INTEL_DIR", tmp_path)
+    monkeypatch.setattr(filmintel, "reddit_snippets", lambda title, year, cap=6: [])
+    monkeypatch.setattr(filmintel, "wikipedia_plot", lambda qid: None)
+    rec = {"fid": "interstellar", "by": "claude", "reasons": [{"text": "قديم", "pos": True}], "audience": [],
+           "fun_fact": None, "consensus_ar": "النقاد حبّوه.", "has_plot": True, "ending": "x", "qa": [{"q": "a", "a": "b"}] * 4}
+    (tmp_path / "interstellar.json").write_text(json.dumps(rec), encoding="utf-8")
+    fake = FakeClient([OPEN_BAD_DIALECT])    # every attempt rejected
+    monkeypatch.setattr("verdicts._client", lambda: fake)
+    filmintel.write_missing({"films": {"interstellar": FILM_SYN}})
+    after = json.loads((tmp_path / "interstellar.json").read_text(encoding="utf-8"))
+    assert after["by"] == "claude" and after["reasons"] == rec["reasons"] and after["ending"] == "x"
+    assert "synopsis_ar" not in after and after["next_check"] > date.today().isoformat() and after["retry_reason"]
+    assert filmintel.needs_generate(after, FILM_SYN) is False      # backed off now …
+    after["next_check"] = (date.today() - timedelta(days=1)).isoformat()
+    assert filmintel.needs_generate(after, FILM_SYN) is True       # … retried once the window passes

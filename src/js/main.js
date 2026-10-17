@@ -69,6 +69,21 @@ function humanDay(d) {
   catch (e) { return d; }
 }
 function dayName(d) { return d === TODAY ? C.today : d === TOMORROW ? C.tomorrow : humanDay(d); }
+/* a build older than the visitor's day — the runner stopped (2026-10-01→09 and 10-09→17 it did, and every page said
+   «ما في عروض باقية اليوم» over a schedule that was simply old): one line under the header, the same shape as the
+   geo note, saying which day the schedule is for; <html data-stale> for anything else that wants to know */
+var STALE_TX = AR ? "جدول اليوم ما وصل بعد — آخر جدول عندنا ليوم {d}، ونحدّثه كل 3 ساعات." : "Today's schedule hasn't arrived yet — the latest we have is for {d}; it refreshes every 3 hours.";
+function staleDay() { var ds = C.days; return ds && ds.length && TODAY > ds[ds.length - 1] ? ds[ds.length - 1] : ""; }
+feature(function () {
+  var d = staleDay();
+  if (!d || q("[data-stale-note]")) return;
+  document.documentElement.setAttribute("data-stale", d);
+  var n = document.createElement("div");
+  n.className = "gnote stale"; n.setAttribute("data-stale-note", ""); n.setAttribute("role", "status");
+  n.innerHTML = "<p>" + esc(sub(STALE_TX, { d: humanDay(d) })) + "</p>";
+  var top = q(".top");
+  if (top && top.parentNode) top.parentNode.insertBefore(n, top.nextSibling);
+});
 function relabelDays() {
   /* the film page's day bar: «اليوم»/«بكرة» over the weekday and date; a day that is neither says its weekday */
   var later = qa("[data-day]").some(function (o) { return o.getAttribute("data-day") >= TODAY; });

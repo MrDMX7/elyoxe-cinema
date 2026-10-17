@@ -11,6 +11,7 @@ buttons. A film with no intel file (no basis yet, or the run hasn't reached it) 
 an empty or broken section (honesty rule, feedback_emirati_dialect.md)."""
 import re
 
+import filmintel
 from site_kit import Plugin, dates, esc, num
 
 DEC = re.compile(r"(?<![\w\">.])(\d+\.\d)(?![\d%])")   # «7.6 من 10»: a decimal score, set in the digits' face like any number
@@ -203,4 +204,21 @@ def _film_info(site, lang, fid):
 
 
 def register(site):
+    # item 232 (2026-10-17): the Arabic synopsis lives in intel/<fid>.json (Claude, from the film's Wikipedia lead,
+    # owner-editable like any intel file); the core film page reads film["synopsis_ar"] (pages/_core/film.py
+    # film_about), so it is attached here, before any page renders — the English lead stays the fallback.
+    attach_synopses(getattr(site, "films", None) or {})
     return Plugin(slots={"film.info": _film_info, "film.why": _why})
+
+
+def attach_synopses(films):
+    """film["synopsis_ar"] from intel/<fid>.json where the film has none of its own. Returns how many."""
+    n = 0
+    for fid, film in films.items():
+        if film.get("synopsis_ar"):
+            continue
+        rec = filmintel.read(fid)
+        if rec and rec.get("by") in ("claude", "hand") and isinstance(rec.get("synopsis_ar"), str) and rec["synopsis_ar"].strip():
+            film["synopsis_ar"] = rec["synopsis_ar"].strip()
+            n += 1
+    return n

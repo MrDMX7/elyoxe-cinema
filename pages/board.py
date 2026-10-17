@@ -62,6 +62,7 @@ BOARD_T = {
     "x": ("{n} أفلام", "{n} films"),                          # «21:00 3 أفلام»: a minute three films share
     "x11": ("{n} فيلم", "{n} films"),                         # eleven and more: «11 فيلم»
     "w": ("جاري التحديث…", "Refreshing…"),                   # every row passed and no shows in yet (§1.7)
+    "stale": ("جدول اليوم ما وصل بعد — آخر جدول عندنا ليوم {d}", "Today's schedule hasn't arrived yet — the latest we have is {d}"),   # a build older than the visitor's day (2026-10-17)
     "h": ("{n} تبدأ خلال ساعة", "{n} start within the hour"),   # a desktop only (§1.2 #11)
     "at": ("يبدأ الساعة {t}", "Starting at {t}"),             # the shared minute's sheet
     "first": ("أقرب عرض لك", "Your nearest show"),            # film.first

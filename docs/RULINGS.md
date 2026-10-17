@@ -48,3 +48,12 @@ Every decision taken on the owner's behalf while building «سينما». Each l
 - Task 3: review — Needs fixes (Roxy omitted on false premise; caps miss curl_cffi redirects — VOX ~84 req; shapes per hall label show another screen's count; force-added report). Fix round 1/5 dispatched incl. merging origin/main into phase2. Ruling: Reel anonymous guest token OK (phase-1 precedent).
 - Task 3: fix round 1/5 implementer done 18bed30 (+55c47ed merge of origin/main, b4371c4/c7ac817 report removal). Ruling: 18bed30 also contains Task 2's staged round-2 files — accepted, no history rewrite — cost if wrong: commit attribution only.
 - Ruling: the 60-request cap covers the occupancy sampler; price sampling stays under its own once-per-cinema×hall×date daily cache — cost if wrong: none (separately bounded).
+
+# Rulings 2026-10-17 (owner delegated: «أفوضك»)
+- Ruling: `git pull --ff-only --autostash` in run.sh — the 10-09 manual recovery left intel/verdicts dirty and froze the laptop runner for 8 days — cost if wrong: a stash pop conflict on intel/ (commit_verdicts already handles the same case).
+- Ruling: the laptop mails the owner (SES, hello@ → his Gmail) when the Fold's `notify` is absent; never under the test sandbox (CINEMA_ENV_SH set) — cost if wrong: a stray email.
+- Ruling: a GitHub-scheduled watchdog fails on a site older than 7 h and posts through the public contact form — the only outside channel with no secret in the repo — cost if wrong: one contact-form email per 3 h while stale.
+- Ruling: counter.yaml (the API URL and the VAPID public key, both public by nature) is committed and filled at bundle time; the stats secret and private key stay in SSM — cost if wrong: none.
+- Ruling: the Arabic synopsis is written in Emirati-light like the rest, with tanwin dropped rather than rejected (prose, not narration) and in its own call for finished records — cost if wrong: a synopsis the owner edits by hand in intel/<fid>.json.
+- Ruling: CSP keeps 'unsafe-inline' for scripts/styles (the inline boot, speculation rules and style= colours) — a strict hash CSP is a later step; img/media stay open to https: — cost if wrong: none visible; a report-only step would have found breakage first.
+- Ruling: a synopsis failure never erases a finished intel record (five were erased on the first try and restored from git) — cost if wrong: none.

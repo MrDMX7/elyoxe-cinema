@@ -1,0 +1,33 @@
+# watchdog — is cinema.elyoxe.com actually being refreshed? (2026-10-17)
+#
+# The runner (the laptop's Task Scheduler, the Fold as fallback) deploys every 3 hours; deploy.sh re-uploads
+# index.html every time, so the homepage's Last-Modified IS the last successful deploy. Twice this month the
+# runner failed quietly for over a week (a test, then a dirty checkout) and nothing outside the laptop
+# noticed. This job runs on GitHub's clock, needs no secret, and FAILS when the site is older than 7 hours
+# (two missed runs) — a failed scheduled workflow mails the repository owner by GitHub's own notification —
+# and, as a second channel, posts the same line through the site's contact form (SES → the owner's inbox).
+name: watchdog
+on:
+  schedule:
+    - cron: "40 */3 * * *"   # :40 — after the :10 runs have had time to finish (a laptop run is ~2.5 h)
+  workflow_dispatch:
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: last deploy age
+        run: |
+          set -u
+          lm=$(curl -sS -m 30 -I --compressed https://cinema.elyoxe.com/ | tr -d '\r' | grep -i '^last-modified:' | cut -d' ' -f2-)
+          if [ -z "$lm" ]; then echo "no Last-Modified header"; exit 1; fi
+          age=$(( $(date +%s) - $(date -d "$lm" +%s) ))
+          echo "last deploy: $lm — $((age / 3600)) h $(((age % 3600) / 60)) min ago"
+          if [ "$age" -le 25200 ]; then exit 0; fi
+          msg="cinema.elyoxe.com ما تحدّث من $((age / 3600)) ساعة (آخر نشر: $lm). افحص cinema-runner/logs على اللابتوب."
+          curl -sS -m 30 -o /dev/null -w "contact form: %{http_code}\n" \
+            -H "Origin: https://elyoxe.com" -H "Content-Type: application/json" \
+            -X POST https://hybw54y21l.execute-api.ap-south-1.amazonaws.com/ \
+            -d "$(printf '{"name":"سينما watchdog","email":"hello@elyoxe.com","lang":"ar","message":%s}' "$(printf '%s' "$msg" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read(), ensure_ascii=False))')")" || true
+          echo "::error::$msg"
+          exit 1

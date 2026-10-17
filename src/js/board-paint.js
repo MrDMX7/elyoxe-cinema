@@ -102,7 +102,10 @@ var cbPaint = function (I, b) {
         /* nothing left tonight: name the next show instead of claiming a refresh that will not change anything
            (fix round review §Important 5, honesty §1.2 #8) */
         var nx = rowsAll.filter(function (r) { return r.at >= now; }).sort(function (a, b) { return a.at - b.at; })[0];
-        box.innerHTML = '<p class="bw">' + (nx ? S.at.replace("{t}", CB.hm(nx.at)) : S.w) + "</p>";
+        /* a build older than the visitor's day (the runner stopped): say that, not «جاري التحديث» — the island's last day
+           is K.C.days' last; the visitor's day is UAE's (UTC+4), as core.js's TODAY (2026-10-17) */
+        var ds = K.C.days || [], td = new Date(K.now().getTime() + 144e5).toISOString().slice(0, 10), st = ds.length && td > ds[ds.length - 1] ? ds[ds.length - 1] : "";
+        box.innerHTML = '<p class="bw">' + (nx ? S.at.replace("{t}", CB.hm(nx.at)) : st && S.stale ? S.stale.replace("{d}", K.hday ? K.hday(st) : st) : S.w) + "</p>";
       }
       if (!ls("card")) [].forEach.call(box.querySelectorAll(".p[data-aed]"), function (p) { if (!lo || +p.getAttribute("data-aed") < +lo.getAttribute("data-aed")) lo = p; });
       if (lo) lo.classList.add("lo");

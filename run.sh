@@ -52,7 +52,16 @@ exec > >(while IFS= read -r l; do printf '[%s] %s\n' "$(date '+%F %T')" "$l"; do
 # notify <title> <body> <id> — the workspace mechanism (termux-env.sh → notify.py); never fails the run.
 ENV_SH="${CINEMA_ENV_SH:-/root/workspace/automation/phone/termux-env.sh}"
 if [ -f "$ENV_SH" ]; then . "$ENV_SH"; fi
-note() { if declare -F notify >/dev/null; then notify "$@" >/dev/null 2>&1 || echo "notify failed: $1"; else echo "notify (unavailable): $1 — $2"; fi; }
+# Without `notify` (the laptop: no termux-env.sh) a real run mails the owner instead (tools/notify_mail.py, SES) —
+# two freezes went unseen because the laptop could only print «notify (unavailable)» (2026-10-17). The test
+# sandbox always sets CINEMA_ENV_SH, so under pytest this branch is never taken and nothing is ever mailed.
+note() {
+  if declare -F notify >/dev/null; then notify "$@" >/dev/null 2>&1 || echo "notify failed: $1"
+  elif [ -z "${CINEMA_ENV_SH:-}" ] && [ -f "$HERE/tools/notify_mail.py" ]; then
+    if "${PY:-python3}" "$HERE/tools/notify_mail.py" "$1" "$2" 2>>"$HERE/data/notify_mail.err"; then echo "notify (mail): $1 — $2"
+    else echo "notify (unavailable, mail failed): $1 — $2"; fi
+  else echo "notify (unavailable): $1 — $2"; fi
+}
 # alert <alerts.py args> — prints the notification body when a condition starts or clears, else nothing
 alert() { "${PY:-python3}" alerts.py "$@" 2>/dev/null || true; }
 # since_of <key> — the ISO "since" time alerts.py recorded for a still-bad condition, or "".
@@ -231,6 +240,19 @@ if [ "$vrc" -eq 0 ]; then
 else
   m=$(alert cond git --bad "نُشر الموقع، بس ما قدرت أرفع ملفات الأحكام (رمز $vrc) — بحاول كل جولة" --clear "")
   [ -z "$m" ] || note "سينما ⚠" "$m" "elyoxe-cinema-git"
+fi
+
+# discounts_watch.py (roadmap 195, 2026-10-17): once a week, read every page discounts.yaml cites and tell the
+# owner which ones changed or stopped answering (the yaml's own `checked` dates are his — the watcher never
+# touches them). Weekly, not every run: 20 pages behind Akamai and bank sites are not a 3-hourly habit. A
+# failure here is only a log line — the site is already deployed.
+WATCH_STATE="$HERE/data/discount_sources.json"
+if [ ! -f "$WATCH_STATE" ] || [ -n "$(find "$WATCH_STATE" -mtime +6 2>/dev/null)" ]; then
+  if m=$("$PY" discounts_watch.py 2>>"$HERE/data/discounts_watch.err"); then
+    [ -z "$m" ] || note "سينما: الخصومات" "$m" "elyoxe-cinema-discounts"
+  else
+    echo "WARN: discounts_watch.py failed — see data/discounts_watch.err"
+  fi
 fi
 
 # health.json: {chain: {ok, at, error, shows, prices_degraded, reused?}} -- alerts.py compares it with

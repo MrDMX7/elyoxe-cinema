@@ -22,7 +22,8 @@ never raising past its own catch). read(fid) is the page-side accessor (pages/in
 
 intel/<fid>.json shape:
     {"fid", "reasons": [{"text", "pos": true|false}, 2-4], "audience": [{"text", "source"}, 0-3],
-     "fun_fact": {"text", "source"} | null, "consensus_ar": "..." | null,
+     "fun_fact": {"text", "source"} | null, "consensus_ar": "..." | null, "synopsis_ar": "..." | null (item 232:
+     two or three spoiler-free Arabic sentences from film["synopsis_en"], the Wikipedia lead — null without one),
      "ending": "..." | null, "qa": [{"q","a"}, 0-8] (only with a real ending),
      "has_plot": bool, "written": "YYYY-MM-DD", "by": "claude",
      "next_check": "YYYY-MM-DD" | absent}   — present whenever a retry later might change the outcome
@@ -169,6 +170,8 @@ def needs_generate(existing: dict | None, film: dict) -> bool:
     if by == "failed":
         return True   # backoff window passed — retry
     if by == "claude":
+        if film.get("synopsis_en") and "synopsis_ar" not in existing:
+            return True   # the Arabic synopsis (item 232, 2026-10-17) is missing — only the open half is redone
         return not existing.get("has_plot", False)   # try again only to add the spoiler half once a real
                                                        # ending exists; a "claude" record that already has one
                                                        # is stable (cost, and dialect drift risk of mass
@@ -194,6 +197,9 @@ OPEN_SYSTEM_EXTRA = """
   null لو ما فيه شي مناسب.
 - «consensus_ar»: لو أعطيتك إجماع نقاد إنجليزي تحت، لخّصه بالعربي بكلماتك بجملة أو جملتين — بلا نسخ حرفي.
   غير ذلك رجّعه null.
+- «synopsis_ar»: لو أعطيتك ملخّصاً إنجليزياً للفيلم تحت، اكتب عن شو الفيلم بجملتين إلى ثلاث بالعربي من ذاك الملخّص
+  فقط — بلا نهاية وبلا أي حرق، بلا تقييم، وبلا نسخ حرفي أو ترجمة آلية؛ أسماء الممثلين والأماكن الأجنبية بحروف
+  لاتينية كما وردت، وبلا تنوين ولا «جوه/جوا» (قل «داخل»). غير ذلك رجّعه null.
 - ممنوع تذكر مصدرك الداخلي («المعطيات»، «البيانات») — اكتب عن الفيلم نفسه دائماً.
 """
 
@@ -221,6 +227,9 @@ def _open_prompt(film: dict, reddit: list[str]) -> str:
         lines.append(f"Rotten Tomatoes (الجمهور): {rt['audience']}%")
     if rt.get("consensus"):
         lines.append(f"إجماع النقاد (إنجليزي، لخّصه بالعربي بكلماتك، لا تنسخه): {rt['consensus']}")
+    if film.get("synopsis_en"):
+        lines.append("ملخّص الفيلم (إنجليزي، من ويكيبيديا، بلا نهاية — اكتب منه synopsis_ar بكلماتك): "
+                     + str(film["synopsis_en"])[:1200])
     if reddit:
         lines.append("عناوين نقاش عن الفيلم من Reddit (لخّص معناها بأسلوبك، لا تنسخها، ولا تذكر أسماء مستخدمين):\n"
                      + "\n".join(f"- {s}" for s in reddit))
@@ -228,11 +237,47 @@ def _open_prompt(film: dict, reddit: list[str]) -> str:
         '{"reasons": [{"text": "...", "pos": true}, ...2-4], '
         '"audience": [{"text": "...", "source": "Rotten Tomatoes أو Reddit"}, ...0-3], '
         '"fun_fact": {"text": "...", "source": "..."} أو null, '
-        '"consensus_ar": "..." أو null}'
+        '"consensus_ar": "..." أو null, '
+        '"synopsis_ar": "..." أو null}'
     )
     lines.append("\nملاحظة: ما عندك قصة الفيلم هنا أبداً — لا تخمّن أي تفصيل من أحداثه.")
     lines.append("\nرد بـJSON فقط بهذا الشكل بلا أي نص آخر:\n" + schema)
     return "\n".join(lines)
+
+
+SYNOPSIS_SYSTEM_EXTRA = """
+أنت تكتب ملخّصاً قصيراً لفيلم لصفحته (لا حكماً ولا نهاية). التزم:
+- «synopsis_ar»: عن شو الفيلم بجملتين إلى ثلاث بالعربي من الملخّص الإنجليزي المعطى تحت فقط — بلا نهاية وبلا أي حرق،
+  بلا تقييم، وبلا نسخ حرفي أو ترجمة آلية. أسماء الممثلين والأماكن الأجنبية بحروف لاتينية كما وردت.
+- بلا تنوين، وبلا كلمة «جديد/جديدة» (قل «أول» أو «يديد»)، وبلا «جوه/جوا» (قل «داخل»).
+- ممنوع تذكر مصدرك («الملخّص»، «المعطيات») — اكتب عن الفيلم نفسه.
+"""
+
+
+def _synopsis_prompt(film: dict) -> str:
+    """The synopsis alone (item 232): a finished record gains its Arabic synopsis without re-asking for — and risking —
+    the reasons, audience and consensus it already carries (the first try re-ran the whole open half and 3 of 5
+    films failed on a word in a field that was already good)."""
+    lines = [
+        f"الفيلم: {film.get('title')} ({film.get('title_ar') or 'بلا عنوان عربي'})",
+        *vd._site_lines(film),
+        f"السنة: {film.get('year')}",
+        f"الأنواع: {', '.join(vd._genre_labels(film.get('genres')))}",
+        "ملخّص الفيلم (إنجليزي، من ويكيبيديا، بلا نهاية): " + str(film.get("synopsis_en") or "")[:1200],
+        '\nرد بـJSON فقط بهذا الشكل بلا أي نص آخر:\n{"synopsis_ar": "..."}',
+    ]
+    return "\n".join(lines)
+
+
+def _validate_synopsis(parsed: dict) -> str | None:
+    syn = parsed.get("synopsis_ar")
+    if isinstance(syn, str):
+        syn = parsed["synopsis_ar"] = vd.TANWIN.sub("", syn).strip() or None
+    if not syn:
+        return "synopsis_ar must be a real Arabic synopsis, not null"
+    if len(syn) > 700:
+        return "synopsis_ar is too long — two or three sentences"
+    return vd._dialect_violation(syn)
 
 
 def _spoiler_prompt(film: dict, plot: str) -> str:
@@ -242,7 +287,7 @@ def _spoiler_prompt(film: dict, plot: str) -> str:
             + "\n\nرد بـJSON فقط بهذا الشكل بلا أي نص آخر:\n" + schema)
 
 
-def _validate_open(parsed: dict, reddit: list[str], expects_consensus: bool) -> str | None:
+def _validate_open(parsed: dict, reddit: list[str], expects_consensus: bool, expects_synopsis: bool = False) -> str | None:
     reasons = parsed.get("reasons")
     if not isinstance(reasons, list) or not (2 <= len(reasons) <= 4):
         return "reasons must be a list of 2 to 4 items"
@@ -267,11 +312,22 @@ def _validate_open(parsed: dict, reddit: list[str], expects_consensus: bool) -> 
         return "a critics' consensus was given — consensus_ar must be a real paraphrase, not null"
     if not expects_consensus and consensus_ar:
         return "no critics' consensus was given — consensus_ar must be null"
+    synopsis_ar = parsed.get("synopsis_ar")
+    if isinstance(synopsis_ar, str):
+        synopsis_ar = parsed["synopsis_ar"] = vd.TANWIN.sub("", synopsis_ar).strip() or None   # «عاماً» → «عاما»: prose, not speech
+    if expects_synopsis and not (isinstance(synopsis_ar, str) and synopsis_ar.strip()):
+        return "an English synopsis was given — synopsis_ar must be a real Arabic synopsis, not null"
+    if not expects_synopsis and synopsis_ar:
+        return "no synopsis was given — synopsis_ar must be null"
+    if synopsis_ar and len(synopsis_ar) > 700:
+        return "synopsis_ar is too long — two or three sentences"
     texts = [r.get("text", "") for r in reasons] + [a.get("text", "") for a in audience]
     if ff:
         texts.append(ff.get("text", ""))
     if consensus_ar:
         texts.append(consensus_ar)
+    if synopsis_ar:
+        texts.append(synopsis_ar)
     for t in texts:
         why = vd._dialect_violation(t)
         if why:
@@ -342,14 +398,20 @@ def _generate_one(client, fid: str, film: dict, plot: str | None, reddit: list[s
     a plot existed) reuses it instead of paying for it again — only the spoiler half is retried."""
     if existing and existing.get("by") == "claude":
         open_fields = {"reasons": existing.get("reasons") or [], "audience": existing.get("audience") or [],
-                        "fun_fact": existing.get("fun_fact"), "consensus_ar": existing.get("consensus_ar")}
+                        "fun_fact": existing.get("fun_fact"), "consensus_ar": existing.get("consensus_ar"),
+                        "synopsis_ar": existing.get("synopsis_ar")}
+        if "synopsis_ar" not in existing and film.get("synopsis_en"):   # the one missing half, on its own
+            open_fields["synopsis_ar"] = _call_json(client, _synopsis_prompt(film), SYNOPSIS_SYSTEM_EXTRA,
+                                                    _validate_synopsis).get("synopsis_ar")
     else:
         rt = film.get("rt") or {}
         open_fields = _call_json(client, _open_prompt(film, reddit), OPEN_SYSTEM_EXTRA, _validate_open,
-                                  reddit, bool(rt.get("consensus")))
+                                  reddit, bool(rt.get("consensus")), bool(film.get("synopsis_en")))
 
     ending, qa = None, []
-    if plot:
+    if existing and existing.get("by") == "claude" and existing.get("has_plot") and existing.get("ending"):
+        ending, qa = existing["ending"], (existing.get("qa") or [])[:8]   # a finished spoiler half is never paid for twice
+    elif plot:
         spoiler = _call_json(client, _spoiler_prompt(film, plot), SPOILER_SYSTEM_EXTRA, _validate_spoiler, plot)
         ending = spoiler.get("ending")
         qa = (spoiler.get("qa") or [])[:8] if ending else []
@@ -360,6 +422,7 @@ def _generate_one(client, fid: str, film: dict, plot: str | None, reddit: list[s
         "audience": open_fields.get("audience") or [],
         "fun_fact": open_fields.get("fun_fact"),
         "consensus_ar": open_fields.get("consensus_ar"),
+        "synopsis_ar": open_fields.get("synopsis_ar"),
         "ending": ending,
         "qa": qa,
         "has_plot": bool(ending),
@@ -412,7 +475,8 @@ def write_missing(data: dict, cap: int = INTEL_CAP, only_fids: set[str] | None =
                               "next_check": _next_check()})
                 continue
             qid = (film.get("wikidata") or {}).get("qid")
-            plot = wikipedia_plot(qid) if is_released(film) else None
+            done_spoiler = bool(existing and existing.get("by") == "claude" and existing.get("has_plot"))
+            plot = None if done_spoiler else (wikipedia_plot(qid) if is_released(film) else None)
             reddit = reddit_snippets(film.get("title"), film.get("year"))
             if client is None:
                 client = vd._client()
@@ -421,6 +485,11 @@ def write_missing(data: dict, cap: int = INTEL_CAP, only_fids: set[str] | None =
             results[fid] = intel
         except Exception as e:  # noqa: BLE001 - one bad film must never stop the others or the run
             print(f"filmintel: {fid} failed: {e}")
+            if existing and existing.get("by") == "claude":
+                # a finished record stays (its reasons and spoiler half are paid for and good); only the half that
+                # failed — the synopsis — is retried after the backoff (2026-10-17: five records were erased this way)
+                _write(path, {**existing, "next_check": _next_check(), "retry_reason": str(e)[:200]})
+                continue
             _write(path, {"fid": fid, "by": "failed", "written": date.today().isoformat(),
                           "next_check": _next_check(), "reason": str(e)[:200]})
             continue
