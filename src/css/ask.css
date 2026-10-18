@@ -1,0 +1,24 @@
+/* «اسأل الفيلم» (pages/ask.py, src/js/ask.js): one question box, ready questions as chips, answers newest first; a
+   spoiler stays closed behind its <details>. No radius, no shadow, no card: lines and type, like the rest of the page. */
+.ask-lead{color:var(--dim);font-size:var(--fs-body);line-height:var(--lh-body);margin-block:0 16px}
+.ask-f{display:flex;gap:8px;align-items:stretch}
+.ask-f input{flex:1 1 auto;min-inline-size:0;min-block-size:48px;padding-inline:16px;border:1px solid var(--line-2);background:transparent;
+  color:var(--screen);font:inherit;font-size:16px}
+.ask-f input:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.ask-f .btn{min-block-size:48px;padding-inline:24px}
+.ask-f .btn:disabled{opacity:.6}
+.ask-chips{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.ask-chip{min-block-size:44px;padding-inline:16px;border:1px solid var(--line-2);background:transparent;color:var(--screen);font:inherit;
+  font-size:var(--fs-meta);cursor:pointer}
+.ask-out{margin-block-start:16px}
+.ask-a{padding-block:16px;border-block-start:1px solid var(--line)}
+.ask-qq{margin:0 0 8px;color:var(--seat);font-size:var(--fs-meta)}
+.ask-t{margin:0;font-size:var(--fs-body);line-height:var(--lh-body)}
+.ask-src{display:block;margin-block-start:4px;color:var(--seat);font-size:var(--fs-meta)}
+.ask-w{margin:0;color:var(--dim)}
+.ask-e{margin:0;color:var(--dim)}
+.ask-sp summary{cursor:pointer;min-block-size:44px;display:flex;align-items:center;color:var(--screen);font-weight:500;
+  text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:4px}
+.ask-sp[open] summary{margin-block-end:8px}
+@media (prefers-reduced-motion:no-preference){.ask-a.pending .ask-w{animation:ask-p 1.2s ease-in-out infinite alternate}}
+@keyframes ask-p{from{opacity:.5}}

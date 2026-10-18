@@ -144,9 +144,10 @@ class FilmPages:
         when it has something. No script: in-page links to the sections, which stand one after another in that
         order; src/js/tabs.js makes them a tablist (arrow keys, aria-selected, the others hidden, #hash opens one).
         «قارن» is script-drawn (compare.js), so its tab is too."""
-        order = [k for k in ("about", "cast", "similar", "double", "compare") if panels.get(k)]
+        order = [k for k in ("about", "ask", "cast", "similar", "double", "compare") if panels.get(k)]
         if not order: return ""
-        links = "".join(f'<a href="#{k}" data-tab="{k}"{" class=\"js-only\"" if k == "compare" else ""}>{esc(L(FILM_T[k], lang))}</a>' for k in order)
+        # «اسأل الفيلم» (pages/ask.py, 2026-10-18) and «قارن» are script-drawn: their tabs are too
+        links = "".join(f'<a href="#{k}" data-tab="{k}"{" class=\"js-only\"" if k in ("compare", "ask") else ""}>{esc(L(FILM_T[k], lang))}</a>' for k in order)
         secs = "".join(f'<section class="tpn" id="{k}">{panels[k]}</section>' for k in order)
         return (f'<div class="ftabs"><div class="wrap tabsx" data-tabs aria-label="{esc(L(FILM_T["tabs"], lang))}">{links}</div></div>'
                 f'<div class="wrap tpns">{secs}</div>')
@@ -194,7 +195,8 @@ class FilmPages:
                 panels = {"about": self.film_about(fid, lang, [] if archived else shows, rates),
                           "cast": self.slot("film.cast", lang, fid=fid),
                           "similar": self.similar(fid, lang) if archived else self.slot("film.similar", lang, fid=fid),
-                          "double": self.slot("film.double", lang, fid=fid), "compare": self.slot("film.compare", lang, fid=fid)}
+                          "double": self.slot("film.double", lang, fid=fid), "compare": self.slot("film.compare", lang, fid=fid),
+                          "ask": "" if archived else self.slot("film.ask", lang, fid=fid)}
                 hero = self.film_hero(fid, lang, rates)
                 tabs = self.film_tabs(fid, lang, panels)
                 vword = L(VERDICT.get(v, VERDICT["unknown"]), lang)

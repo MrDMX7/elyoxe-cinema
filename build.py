@@ -85,7 +85,7 @@ def chunk_js(path):
 
 
 # ---------------------------------------------------------------- the counter's public settings
-COUNTER_PLACEHOLDERS = {"__COUNTER_API__": "api", "__VAPID_PUBLIC_KEY__": "vapid_public"}
+COUNTER_PLACEHOLDERS = {"__COUNTER_API__": "api", "__VAPID_PUBLIC_KEY__": "vapid_public", "__ASK_API__": "ask_api"}
 
 
 def counter_config(path=None):

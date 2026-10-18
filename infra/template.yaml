@@ -194,7 +194,7 @@ Resources:
               img-src 'self' data: blob: https:;
               media-src 'self' blob: https:;
               font-src 'self';
-              connect-src 'self' https://dpp9qwv7j4.execute-api.ap-south-1.amazonaws.com;
+              connect-src 'self' https://dpp9qwv7j4.execute-api.ap-south-1.amazonaws.com https://fndms9v719.execute-api.ap-south-1.amazonaws.com;
               frame-src https://www.youtube-nocookie.com https://www.youtube.com;
               worker-src 'self';
               manifest-src 'self';

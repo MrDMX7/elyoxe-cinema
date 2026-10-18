@@ -123,7 +123,7 @@ HOME_T = {"top": ("الأكثر عرضاً الليلة", "Most shown tonight"),
           "min": ("دقيقة", "min"), "pause": ("أوقف التقليب", "Pause the slides")}
 # the film page's words (UI redesign Task 4)
 FILM_T = {"about": ("عن الفيلم", "About"), "cast": ("الطاقم", "Cast"), "similar": ("شي يشبه", "More like it"),
-          "double": ("فيلمين ورا بعض", "Double feature"), "compare": ("قارن", "Compare"), "tabs": ("عن الفيلم وأكثر", "About the film and more"),
+          "double": ("فيلمين ورا بعض", "Double feature"), "compare": ("قارن", "Compare"), "ask": ("اسأل الفيلم", "Ask the film"), "tabs": ("عن الفيلم وأكثر", "About the film and more"),
           "more": ("المزيد", "More"), "less": ("أقل", "Less"), "share": ("شارك", "Share"), "trailer": ("الإعلان", "Trailer"),
           "opts": ("خيارات العرض", "Showtime options"), "days": ("الأيام", "Days"),
           "times": ("المواعيد والأسعار", "Showtimes and prices"),
@@ -620,6 +620,7 @@ class Kit(MediaKit, TileKit, SchedKit, TicketKit, ChromeKit, FiltersKit):
              "film.similar": "film page, «شي يشبه» tab (ctx: fid)",
              "film.double": "film page, «فيلمين ورا بعض» tab (ctx: fid); unfilled since W0-P2 (plan §4.1 #14), W2-P6 retires it",
              "film.compare": "film page, «قارن» tab (ctx: fid); the hero's «قارن» links to it",
+             "film.ask": "film page, «اسأل الفيلم» tab (ctx: fid): the question box, pages/ask.py",
              # Wave 2's places (W1-P1, MASTER-PLAN §5.2): declared before anyone fills them, so no Wave 2 package edits
              # pages/core.py, pages/_core/* or build.py to get one. A Wave 3–4 slot is declared by the package that fills it
              "head.inline": "every page's <head>, right after the «js» class script: a small inline script that must run before first paint (ctx: kind)",

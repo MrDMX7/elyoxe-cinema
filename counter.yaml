@@ -6,3 +6,5 @@
 #   aws ssm get-parameter --region ap-south-1 --name /elyoxe/cinema/counter/vapid-public --query Parameter.Value --output text
 api: "https://dpp9qwv7j4.execute-api.ap-south-1.amazonaws.com/"
 vapid_public: "BJJJ2OzHq6outtwZxWlCGKEM-nQ54oes798AuJJ8K73bPAhJ2KcDUnLZt72oYQeAJA1VGsuSp1YCmK7O2ufKlmg"
+# «اسأل الفيلم» (infra/ask, stack elyoxe-cinema-ask): the endpoint src/js/ask.js posts to (__ASK_API__)
+ask_api: "https://fndms9v719.execute-api.ap-south-1.amazonaws.com/"

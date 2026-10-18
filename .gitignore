@@ -25,3 +25,4 @@ data/*.corrupt-*
 data/.req-hash
 tmp/
 data/.pytest-tmp/
+infra/ask/build/

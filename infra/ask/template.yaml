@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  «اسأل الفيلم» (owner 2026-10-18): POST /ask — one question about one film, answered by Claude from the site's
+  /data/ask/<fid>.json facts and the film's English Wikipedia plot. Separate stack (elyoxe-cinema-ask, ap-south-1);
+  touches nothing of the site's bucket, distribution or the counter stack. Deploy: infra/ask/deploy.sh.
+
+Parameters:
+  AllowedOrigin:
+    Type: String
+    Default: "https://cinema.elyoxe.com"
+
+Resources:
+  Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: elyoxe-cinema-ask
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions: [{ AttributeName: k, AttributeType: S }]
+      KeySchema: [{ AttributeName: k, KeyType: HASH }]
+      TimeToLiveSpecification: { AttributeName: ttl, Enabled: true }
+
+  Api:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins: [!Ref AllowedOrigin]
+        AllowMethods: [POST, OPTIONS]
+        AllowHeaders: [content-type]
+        MaxAge: 86400
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 20
+        ThrottlingRateLimit: 5
+
+  Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: elyoxe-cinema-ask
+      CodeUri: build/
+      Handler: handler.handler
+      Runtime: python3.13
+      Architectures: [x86_64]
+      MemorySize: 512
+      Timeout: 30
+      Environment:
+        Variables:
+          TABLE: !Ref Table
+          ALLOWED_ORIGINS: !Ref AllowedOrigin
+          SITE: "https://cinema.elyoxe.com"
+          MODEL: claude-haiku-5-5
+          DAILY_CAP: "1500"
+          UID_CAP: "40"
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref Table }
+        - Statement:
+            - Effect: Allow
+              Action: [ssm:GetParameter]
+              Resource:
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/elyoxe/anthropic/key
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/elyoxe/cinema/ask/*
+      Events:
+        Ask:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /ask, Method: POST }
+
+  Logs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/elyoxe-cinema-ask
+      RetentionInDays: 30
+
+Outputs:
+  Endpoint:
+    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/"
