@@ -28,6 +28,10 @@ fi
 if [ -z "${SRC:-}" ]; then
   [ -s data/latest.json ] || { echo "deploy: data/latest.json missing — run refresh.py first (never deploy fixtures)" >&2; exit 2; }
   "$PY" build.py --data data/latest.json
+  # the app (owner 2026-10-18, app/build_app.py): the home, every showing film and every cinema, written over the old
+  # build's own pages at the same URLs; the old build's other pages (cards, prices, coming, questions, English) stay.
+  # A failure here keeps the old pages — they are already built — so the site still publishes.
+  "$PY" app/build_app.py --data data/latest.json --out out --live     || echo "deploy: app/build_app.py failed — publishing the old pages for this run" >&2
   if [ -s out/index.html ]; then
     SRC=out                                   # root layout (after Task 3)
   elif [ -s out/cinema/index.html ]; then     # legacy layout: stage it into the root shape

@@ -136,7 +136,10 @@ def svg(name):
 
 # ------------------------------------------------------------------ the app
 class App:
-    def __init__(self, data, disc, halls, out, base):
+    def __init__(self, data, disc, halls, out, base, live=False):
+        # live: the main site — the old URLs (/film/<fid>/, /<city>/<cinema>/), open to search engines, written over the
+        # old build's own pages in out/ (deploy.sh runs build.py first; its other pages stay: cards, prices, English…)
+        self.live = live
         # the Arabic synopsis lives in intel/<fid>.json (filmintel, item 232); the old site attaches it at build time
         try:
             import filmintel
@@ -157,9 +160,14 @@ class App:
         self.cins = sorted({s["cinema"] for s in self.shows})
         self.people = data.get("people") or {}
         self.css_name = self.js_name = None
+        self._ld, self._og = [], None
         self.fresh()
 
     def u(self, *parts):
+        if self.live and parts and parts[0] == "f":
+            return f"/film/{parts[1]}/"
+        if self.live and parts and parts[0] == "c":
+            return f"/{self.k.cinemas[parts[1]].get('city')}/{parts[1]}/"
         return self.base + "/".join(parts) + ("/" if parts else "")
 
     def chain(self, cid):
@@ -190,20 +198,50 @@ class App:
         j = json.dumps({"r": self._rows, "s": self._seats, "c": cins}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
         return f'<script type="application/json" id="shows">{j}</script>'
 
+    # -------- what search engines and shares read (live)
+    def alt(self, path):
+        if not self.live:
+            return ""
+        en = SITE + "/en" + path
+        return (f'<link rel="alternate" hreflang="ar" href="{E(SITE + path)}"><link rel="alternate" hreflang="en" href="{E(en)}">'
+                f'<link rel="alternate" hreflang="x-default" href="{E(SITE + path)}">')
+
+    def ld(self):
+        if not self._ld:
+            return ""
+        g = json.dumps({"@context": "https://schema.org", "@graph": self._ld}, ensure_ascii=False).replace("</", "<\\/")
+        return f'<script type="application/ld+json">{g}</script>'
+
+    def spec(self):
+        if self.live:
+            pats = ["/film/*", "/"] + [f"/{c}/*" for c, _ in CITIES]
+        else:
+            pats = [f"{self.base}f/*", f"{self.base}c/*", self.base]
+        return json.dumps({"prerender": [{"where": {"href_matches": pats}, "eagerness": "moderate"}]})
+
+    def footer(self):
+        """The rest of the site, one quiet line at the end: nothing lost, nothing in the way."""
+        links = [("/cards/", "البطاقات والخصومات"), ("/prices/", "أسعار التذاكر"), ("/coming/", "قريباً"), ("/q/", "أسئلة"), ("/en/", "English")]
+        return '<footer class="foot">' + "".join(f'<a href="{h}">{t}</a>' for h, t in links) + '<small>سينما من Elyoxe</small></footer>'
+
     # -------- page frame
     def page(self, path, ttl, desc, body, kind, head_extra="", canon=None):
-        canon = canon or (SITE + path)
+        canon = SITE + path if self.live else (canon or (SITE + path))
+        body = body + (self.footer() if self.live else "")
         doc = f"""<!doctype html>
 <html lang="ar" dir="rtl" data-kind="{kind}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>{E(ttl)}</title><meta name="description" content="{E(desc)}">
-<meta name="robots" content="noindex"><link rel="canonical" href="{E(canon)}">
+{"" if self.live else '<meta name="robots" content="noindex">'}<link rel="canonical" href="{E(canon)}">{self.alt(path)}
+<meta property="og:title" content="{E(ttl)}"><meta property="og:description" content="{E(desc)}"><meta property="og:type" content="website">
+<meta property="og:url" content="{E(canon)}"><meta property="og:image" content="{E(self._og or SITE + '/assets/og-ar.png')}"><meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="/manifest.webmanifest">{self.ld()}
 <meta name="theme-color" content="#F3EEE6"><meta name="color-scheme" content="light">
 <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
 <link rel="preload" href="{self.base}assets/fonts/plex-ar-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="{self.base}assets/fonts/plex-ar-700.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="{self.base}assets/{self.css_name}">{head_extra}
-<script type="speculationrules">{{"prerender":[{{"where":{{"href_matches":["{self.base}f/*","{self.base}c/*","{self.base}"]}},"eagerness":"moderate"}}]}}</script>
+<script type="speculationrules">{self.spec()}</script>
 <script>(function(){{addEventListener("pagereveal",function(e){{var t=e.viewTransition,a=window.navigation&&navigation.activation;if(t&&a&&a.from&&a.entry&&a.navigationType==="traverse"&&a.entry.index<a.from.index)document.documentElement.dataset.nav="pop";else if(t)document.documentElement.dataset.nav="push";if(t)t.finished.finally(function(){{delete document.documentElement.dataset.nav}})}});addEventListener("pageswap",function(e){{var t=e.viewTransition,a=e.activation;if(t&&a&&a.navigationType==="traverse"&&a.entry&&a.from&&a.entry.index<a.from.index)document.documentElement.dataset.nav="pop";else if(t)document.documentElement.dataset.nav="push"}})}})()</script>
 </head><body>{body}{self.table()}
 <div class="scrim" data-scrim hidden></div>
@@ -283,7 +321,7 @@ class App:
                 f'<p class="empty sm" data-soon-none hidden>ما في عروض قريبة الحين.</p></section>'
                 f'<script type="application/json" id="soon">{j}</script>')
 
-    def home(self, path=None, merged=False):
+    def home(self, path=None, merged=True):
         k = self.k
         chips = []
         for key, label in CHIPS:
@@ -393,8 +431,21 @@ class App:
 <form class="ask-f" data-ask-form><input name="q" maxlength="240" autocomplete="off" enterkeyhint="send" placeholder="مثلاً: يناسب العيال؟" aria-label="سؤالك"><button class="btn velvet" type="submit">اسأل</button></form>
 <div class="chips wrap">{"".join(f'<button type="button" class="chip" data-ask-q="{q}">{q}</button>' for q in ["شو نوع الفيلم؟", "يناسب العيال؟", "عن شو القصة؟", "شو يصير في النهاية؟"])}</div><div class="ask-out" data-ask-out></div></section>
 </div>{self.sheet()}"""
+        mv = {"@type": "Movie", "name": t, "url": SITE + self.u("f", fid), "inLanguage": "ar"}
+        if f.get("title") and f["title"] != t: mv["alternateName"] = f["title"]
+        if f.get("poster_2x") or f.get("poster"): mv["image"] = SITE + (f.get("poster_2x") or f.get("poster"))
+        if f.get("runtime"): mv["duration"] = f"PT{int(f['runtime'])}M"
+        if f.get("rating"): mv["contentRating"] = f["rating"]
+        if f.get("genres"): mv["genre"] = [GENRE_AR[g] for g in f["genres"] if g in GENRE_AR]
+        if f.get("director"): mv["director"] = {"@type": "Person", "name": f["director"]}
+        if f.get("synopsis_ar") or f.get("synopsis_en"): mv["description"] = (f.get("synopsis_ar") or f.get("synopsis_en"))[:300]
+        self._ld = [mv, {"@type": "BreadcrumbList", "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "سينما", "item": SITE + "/"},
+            {"@type": "ListItem", "position": 2, "name": t, "item": SITE + self.u("f", fid)}]}]
+        self._og = SITE + (f.get("poster_2x") or f.get("poster")) if (f.get("poster_2x") or f.get("poster")) else None
         self.page(self.u("f", fid), f"{t} — المواعيد والأسعار في سينمات الإمارات", (f.get("synopsis_ar") or t)[:150], body, "film",
                   canon=f"{SITE}/film/{fid}/")
+        self._ld, self._og = [], None
 
     # -------- cinema page
     def cinema(self, cid):
@@ -420,8 +471,13 @@ class App:
 <div class="acts">{f'<a class="btn ghost" href="{E(maps)}" target="_blank" rel="noopener">{svg("map")}Google Maps</a>' if maps else ""}{f'<a class="btn ghost" href="{E(waze)}" target="_blank" rel="noopener">{svg("map")}Waze</a>' if waze else ""}</div>
 <section class="sec">{self.dayswitch()}<div class="films">{rows}</div><p class="empty" data-past hidden>خلصت عروض اليوم هني، شوف بكرة.</p></section>
 </div>{self.sheet()}"""
+        th = {"@type": "MovieTheater", "name": name, "url": SITE + self.u("c", cid)}
+        if c.get("address"): th["address"] = c["address"]
+        if c.get("lat") is not None: th["geo"] = {"@type": "GeoCoordinates", "latitude": c["lat"], "longitude": c["lng"]}
+        self._ld = [th]
         self.page(self.u("c", cid), f"{name} — الأفلام والمواعيد اليوم", f"أفلام {name} اليوم وبكرة بمواعيدها وأسعارها.", body, "cinema",
                   canon=f"{SITE}/{c.get('city')}/{cid}/")
+        self._ld = []
 
     # -------- the ticket sheet (one per page, filled by the script)
     def sheet(self):
@@ -447,12 +503,13 @@ class App:
         open(os.path.join(a, self.js_name), "w", encoding="utf-8").write(js)
 
     def run(self):
-        shutil.rmtree(self.out, ignore_errors=True)
-        os.makedirs(self.out)
+        if not self.live:                       # the preview owns its folder; live writes over the old build's pages only
+            shutil.rmtree(self.out, ignore_errors=True)
+        os.makedirs(self.out, exist_ok=True)
         self.assets()
         self.home()
-        if os.environ.get("APP_SAMPLE"):
-            self.home(self.base + "sample/", merged=True)   # the merged home, for the owner to judge first
+        if os.environ.get("APP_SAMPLE") and not self.live:
+            self.home(self.base + "sample/", merged=True)
         for fid in self.films:
             self.film(fid)
         for cid in self.cins:
@@ -466,9 +523,10 @@ def main():
     ap.add_argument("--discounts", default=os.path.join(ROOT, "discounts.yaml"))
     ap.add_argument("--out", default=os.path.join(ROOT, "out_app"))
     ap.add_argument("--base", default="/")
+    ap.add_argument("--live", action="store_true", help="the main site: old URLs, indexable, over out/'s old pages")
     a = ap.parse_args()
     data = json.load(open(a.data, encoding="utf-8"))
-    app = App(data, load_discounts(a.discounts), Halls(os.path.join(ROOT, "halls.yaml")), a.out, a.base)
+    app = App(data, load_discounts(a.discounts), Halls(os.path.join(ROOT, "halls.yaml")), a.out, "/" if a.live else a.base, live=a.live)
     n = app.run()
     print(f"app: {n} pages -> {a.out} (base {app.base})")
 
