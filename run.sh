@@ -195,7 +195,21 @@ fi
 # --basetemp inside the checkout (2026-10-17): ~1,240 tests each build a site into tmp_path, which by default is the
 # system Temp folder — outside the laptop's Defender exclusion (cinema-runner), so every file was scanned and the
 # suite took ~1 h 28 min. data/ is gitignored; pytest empties the folder at the start of each run.
-if ! "$PY" -m pytest -q -x -p no:cacheprovider --basetemp="$HERE/data/.pytest-tmp"; then
+# CI first (2026-10-19): GitHub runs this same suite (test.yml) on every push in ~6 min; here it took 2-3 h, and
+# on 10-18 that pushed a run past the task's 4 h limit mid-upload (half the site published). A green test.yml run on
+# the EXACT commit just pulled is the gate passing; anything else (no run yet, red, gh missing or not signed in under
+# the scheduler, no network) runs the suite here as before. Under pytest only the CINEMA_CI_GREEN seam answers.
+ci_green() {
+  if [ -n "${PYTEST_CURRENT_TEST:-}" ]; then [ "${CINEMA_CI_GREEN:-}" = 1 ]; return; fi
+  local gh sha n
+  gh=$(command -v gh || echo "/c/Program Files/GitHub CLI/gh.exe")
+  sha=$(git rev-parse HEAD 2>/dev/null) || return 1
+  n=$(timeout 40 "$gh" api "repos/MrDMX7/elyoxe-cinema/actions/workflows/test.yml/runs?head_sha=$sha&status=success&per_page=1"         --jq .total_count 2>/dev/null) || return 1
+  [ "${n:-0}" -ge 1 ] 2>/dev/null
+}
+if ci_green; then
+  echo "   tests: test.yml green on GitHub for $(git rev-parse --short HEAD) — the local run is skipped"
+elif ! "$PY" -m pytest -q -x -p no:cacheprovider --basetemp="$HERE/data/.pytest-tmp"; then
   fail "الاختبارات فشلت على $(git log --oneline -1 | cut -c1-60) — ما نُشر شي، الموقع على النسخة السابقة" 6 tests
 fi
 ok_now tests "الاختبارات رجعت خضراء"

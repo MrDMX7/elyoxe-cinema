@@ -355,3 +355,25 @@ def test_a_failed_install_stops_before_tests_and_keeps_the_old_hash(sandbox):
     assert rc3 == 0, out3
     assert (tmp_path / "data" / ".req-hash").exists()
     assert "deps" not in alert_state(sandbox)
+
+
+# ================================================================ CI first (2026-10-19)
+
+def test_a_green_ci_run_on_the_pulled_commit_skips_the_local_suite(sandbox):
+    """GitHub's test.yml green on the exact commit is the gate passing: the local suite (2-3 h on the laptop,
+    past the task's 4 h limit on 10-18) is not run, so even a failing local suite does not stop the run."""
+    tmp_path, env = sandbox
+    set_tests(tmp_path, passing=False)
+    env["CINEMA_CI_GREEN"] = "1"
+    rc, out, log = run_cinema(sandbox)
+    assert rc == 0, out
+    assert "test.yml green on GitHub" in log and "FAILED" not in log
+
+
+def test_without_a_green_ci_run_the_local_suite_still_gates(sandbox):
+    tmp_path, env = sandbox
+    set_tests(tmp_path, passing=False)
+    env.pop("CINEMA_CI_GREEN", None)
+    rc, out, log = run_cinema(sandbox)
+    assert rc == 6, out
+    assert "test.yml green" not in log
