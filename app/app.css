@@ -236,3 +236,36 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 
 :focus-visible{outline:2px solid var(--door);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ── the merged top (sample): «الشاشة» as a medium card, swiped; «يبدأ قريب منك» with the flip clock ── */
+.bill{margin:4px calc(-1 * var(--gut)) 0}
+.bb-row{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:0 var(--gut)}
+.bb-row::-webkit-scrollbar{display:none}
+.bb{position:relative;flex:0 0 100%;scroll-snap-align:center;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:var(--pc);color:#fff}
+.bb img{position:absolute;inset:0;inline-size:100%;block-size:100%;object-fit:cover}
+.bb::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,16,14,0) 35%,rgba(20,16,14,.88))}
+.bb-t{position:absolute;z-index:1;inset-inline:16px;inset-block-end:14px;display:grid;gap:2px}
+.bb-t small{font-size:12px;opacity:.85}
+.bb-t b{font-size:22px;line-height:1.2}
+.bb-t i{font-size:13px;opacity:.9}
+.bb-dots{display:flex;justify-content:center;gap:5px;padding-block:8px 2px}
+.bb-dots i{inline-size:6px;block-size:6px;border-radius:3px;background:var(--line);transition:inline-size .3s,background .3s}
+.bb-dots i.on{inline-size:18px;background:var(--saff)}
+@media (min-width:900px){.bb{flex-basis:860px}}
+.soon{padding-block:14px 6px}
+.soon h2{font-size:17px;margin-block-end:8px}
+.soon h2 span{color:var(--door)}
+.sb{display:grid;gap:8px}
+.sr{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 12px;border-radius:var(--r);background:var(--paper);border:1px solid var(--line)}
+.sr:active{transform:scale(.97)}
+.flip{display:flex;gap:2px;direction:ltr}
+.flip i{display:grid;place-items:center;inline-size:22px;block-size:32px;border-radius:5px;background:var(--wood);color:var(--on);font:500 18px var(--mono);
+  background-image:linear-gradient(transparent 49%,rgba(0,0,0,.6) 50%,transparent 51%)}
+.flip i.c{background:none;color:var(--stone);inline-size:8px}
+.sr-b{display:grid;min-inline-size:0}
+.sr-b b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr-b small{font-size:12px;color:var(--stone);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr-e{display:grid;justify-items:end;line-height:1.2}
+.sr-e small{font-size:12px;color:var(--door);font-weight:500}
+.sr-e b{font:500 15px var(--mono);color:var(--saff)}
+.empty.sm{padding:8px}

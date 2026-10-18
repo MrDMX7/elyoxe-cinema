@@ -227,7 +227,47 @@ class App:
                 f'<span class="cc-km" data-km></span></small></span>'
                 f'<span class="cc-n"><b>{n}</b><small>فيلم اليوم</small></span></a>')
 
-    def home(self):
+    def billboard(self):
+        """«الشاشة» from the live site, smaller: tonight's five most-shown films that have a trailer still, a card each,
+        swiped sideways; the name, two facts and one button."""
+        k = self.k
+        top = [f for f in self.films if (k.films[f].get("backdrop") or {}).get("w640")][:5]
+        if not top:
+            return ""
+        slides = []
+        for i, fid in enumerate(top):
+            f = k.films[fid]; bd = f["backdrop"]
+            sc, kind = score(f)
+            facts = " · ".join(x for x in [runtime(f), E(f.get("rating") or ""), (f"★ {sc}" if kind == "imdb" else "")] if x)
+            lazy = "" if i == 0 else ' loading="lazy"'
+            pri = ' fetchpriority="high"' if i == 0 else ""
+            slides.append(f'<a class="bb" href="{self.u("f", fid)}" style="--pc:{E(f.get("poster_color") or "#3a302a")}">'
+                          f'<img src="{E(bd["w640"])}" srcset="{E(bd["w640"])} 640w, {E(bd.get("w1280") or bd["w640"])} 1280w" sizes="(min-width:900px) 860px, 92vw" alt=""{lazy}{pri}>'
+                          f'<span class="bb-t"><small>الأكثر عرضاً الليلة</small><b>{E(title(k, fid))}</b><i>{facts}</i></span></a>')
+        dots = "".join(f'<i{" class=\"on\"" if i == 0 else ""}></i>' for i in range(len(top)))
+        return f'<section class="bill"><div class="bb-row" data-bill>{"".join(slides)}</div><div class="bb-dots" data-dots>{dots}</div></section>'
+
+    def soon_board(self):
+        """«يبدأ قريب منك» from the live site: three rows, the flip clock, the visitor's city. The page carries today's
+        times compactly (#soon) and the script picks the next three in the city."""
+        k = self.k
+        cins = sorted({s["cinema"] for s in self.shows if s["date"] == k.today})
+        ci = {c: i for i, c in enumerate(cins)}
+        fi = {f: i for i, f in enumerate(self.films)}
+        rows = []
+        for s in self.shows:
+            if s["date"] != k.today or s["film"] not in fi:
+                continue
+            pr = [p["aed"] for p in s.get("prices") or [] if (p.get("aed") or 0) > 0]
+            rows.append([ci[s["cinema"]], fi[s["film"]], hm(s["time"]), float(num(min(pr))) if pr else 0])
+        data = {"c": [[c, f"{self.chain(c)} — {self.cname(c)}", k.cinemas[c].get("city") or ""] for c in cins],
+                "f": [[f, title(k, f)] for f in self.films], "r": rows, "d": k.today}
+        j = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+        return (f'<section class="soon" data-soon><h2>يبدأ قريب منك <span data-soon-city></span></h2><div class="sb" data-soon-rows></div>'
+                f'<p class="empty sm" data-soon-none hidden>ما في عروض قريبة الحين.</p></section>'
+                f'<script type="application/json" id="soon">{j}</script>')
+
+    def home(self, path=None, merged=False):
         k = self.k
         chips = []
         for key, label in CHIPS:
@@ -242,12 +282,12 @@ class App:
 <header class="tophead"><a class="brand" href="{self.base}">سينما</a>
 <nav class="toptabs" role="tablist"><button type="button" role="tab" class="on" data-pane="0" aria-selected="true">الأفلام</button><button type="button" role="tab" data-pane="1" aria-selected="false">السينمات</button></nav><span></span></header>
 <main class="pager" data-pager>
-<section class="pane" aria-label="الأفلام"><div class="chips" data-chips>{"".join(chips)}</div>
+<section class="pane" aria-label="الأفلام">{(self.billboard() + self.soon_board()) if merged else ""}<div class="chips" data-chips>{"".join(chips)}</div>
 <div class="grid" data-grid>{grid}</div><p class="empty" data-none hidden>ما في أفلام بهالتصنيف اليوم.</p></section>
 <section class="pane" aria-label="السينمات"><div class="chips" data-cchips>{cchips}</div>
 <p class="geo-msg" data-geo-msg hidden></p><div class="clist" data-clist>{cards}</div></section>
 </main></div>"""
-        self.page(self.base, "سينما الإمارات — الأفلام والمواعيد والأسعار", "كل أفلام سينمات الإمارات اليوم، مصنّفة، وكل سينما بمواعيدها.", body, "home")
+        self.page(path or self.base, "سينما الإمارات — الأفلام والمواعيد والأسعار", "كل أفلام سينمات الإمارات اليوم، مصنّفة، وكل سينما بمواعيدها.", body, "home")
 
     # -------- shows → time buttons
     def times(self, shows):
@@ -393,6 +433,8 @@ class App:
         os.makedirs(self.out)
         self.assets()
         self.home()
+        if os.environ.get("APP_SAMPLE"):
+            self.home(self.base + "sample/", merged=True)   # the merged home, for the owner to judge first
         for fid in self.films:
             self.film(fid)
         for cid in self.cins:

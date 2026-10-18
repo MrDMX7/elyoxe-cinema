@@ -96,6 +96,44 @@
     if (here) showNear(); else showCity(store.get("city") || "dubai");
   }
 
+  /* ── the merged top (sample): the screen's dots follow the swipe; «يبدأ قريب منك» from #soon ── */
+  var bill = q("[data-bill]");
+  if (bill) {
+    var dots = qa("[data-dots] i");
+    /* the slide whose centre is nearest the row's centre is the one on screen (RTL-safe: no scrollLeft sign) */
+    var onBill = function () {
+      var box = bill.getBoundingClientRect(), mid = box.left + box.width / 2, best = 0, bd = 1e9;
+      [].forEach.call(bill.children, function (el, j) { var r = el.getBoundingClientRect(), dd = Math.abs(r.left + r.width / 2 - mid); if (dd < bd) { bd = dd; best = j; } });
+      dots.forEach(function (x, j) { x.classList.toggle("on", best === j); });
+    };
+    bill.addEventListener("scroll", onBill, { passive: true }); onBill();
+  }
+  var soonBox = q("[data-soon]");
+  if (soonBox) {
+    var S = null; try { S = JSON.parse(q("#soon").textContent); } catch (e) {}
+    var paintSoon = function () {
+      if (!S) return;
+      var city = store.get("city") || "dubai", now = nowUAE(), rows = [];
+      q("[data-soon-city]").textContent = "في " + (CITY_AR[city] || city);
+      S.r.forEach(function (r) {
+        var c = S.c[r[0]]; if (c[2] !== city) return;
+        var st = startOf(S.d, r[2]); if (st < now - 5 * 60e3 || st > now + 3 * 3600e3) return;
+        rows.push({ st: st, r: r, c: c });
+      });
+      rows.sort(function (a, b) { return a.st - b.st; });
+      var seen = {}, pick = [];
+      rows.forEach(function (x) { if (pick.length < 3 && !seen[x.r[1]]) { seen[x.r[1]] = 1; pick.push(x); } });
+      q("[data-soon-rows]").innerHTML = pick.map(function (x) {
+        var f = S.f[x.r[1]], mins = Math.max(0, Math.round((x.st - now) / 60e3)), t = x.r[2];
+        var digits = t.split("").map(function (ch) { return ch === ":" ? '<i class="c">:</i>' : "<i>" + ch + "</i>"; }).join("");
+        return '<a class="sr" href="' + A.base + "f/" + f[0] + '/"><span class="flip">' + digits + '</span><span class="sr-b"><b>' + esc(f[1]) + "</b><small>" + esc(x.c[1]) +
+          '</small></span><span class="sr-e"><small>' + (mins < 1 ? "يبدأ الحين" : "بعد " + mins + " د") + "</small>" + (x.r[3] ? "<b>" + x.r[3] + "</b>" : "") + "</span></a>";
+      }).join("");
+      q("[data-soon-none]").hidden = pick.length > 0;
+    };
+    paintSoon(); setInterval(paintSoon, 60e3);
+  }
+
   /* ── film and cinema pages ── */
   var pg = q(".pg");
   if (pg) {
