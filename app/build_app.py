@@ -98,6 +98,21 @@ def hm(t):
     return t[:5]
 
 
+DIRHAM = '<svg class="aed" viewBox="0 0 24 24" aria-label="درهم" role="img"><path d="M7.5 4v16h4.2c4.6 0 7.8-3.3 7.8-8s-3.2-8-7.8-8z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/><path d="M3 10h18M3 14h18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>'
+
+
+def t12(t):
+    """«16:25» → («4:25», «مساء»); the small hours are «بالليل» (owner 2026-10-18: «بدال 16 نقول 4 مساء»)."""
+    h, m = int(t[:2]), t[3:5]
+    word = "بالليل" if h < 4 else "الصبح" if h < 12 else "الظهر" if h == 12 else "مساء"
+    return f"{h % 12 or 12}:{m}", word
+
+
+def ap(t):
+    """The one-letter period for a small button: ص before noon, م after."""
+    return "ص" if 4 <= int(t[:2]) < 12 else "م"
+
+
 def runtime(f):
     r = f.get("runtime")
     if not r:
@@ -260,10 +275,10 @@ class App:
                 continue
             pr = [p["aed"] for p in s.get("prices") or [] if (p.get("aed") or 0) > 0]
             rows.append([ci[s["cinema"]], fi[s["film"]], hm(s["time"]), float(num(min(pr))) if pr else 0])
-        data = {"c": [[c, f"{self.chain(c)} — {self.cname(c)}", k.cinemas[c].get("city") or ""] for c in cins],
-                "f": [[f, title(k, f)] for f in self.films], "r": rows, "d": k.today}
+        data = {"c": [[c, self.cname(c), k.cinemas[c].get("city") or "", k.cinemas[c]["chain"], self.chain(c)] for c in cins],
+                "f": [[f, title(k, f), k.films[f].get("poster") or ""] for f in self.films], "r": rows, "d": k.today}
         j = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
-        return (f'<section class="soon" data-soon><h2>يبدأ قريب منك <span data-soon-city></span></h2><div class="sb" data-soon-rows></div>'
+        return (f'<section class="soon" data-soon><h2>يبدأ قريب منك <span data-soon-city></span></h2><div class="sb" data-soon-rows></div><template id="aed">{DIRHAM}</template>'
                 f'<p class="empty sm" data-soon-none hidden>ما في عروض قريبة الحين.</p></section>'
                 f'<script type="application/json" id="soon">{j}</script>')
 
@@ -304,7 +319,7 @@ class App:
                 self._seat_i[sk] = len(self._seats); self._seats.append(seats)
             self._rows.append([s["date"], hm(s["time"]), s.get("ends") or "", hall, self.k.book_url(s), s.get("lang") or "", self._seat_i[sk]])
             out.append(f'<button type="button" class="tbtn" data-d="{s["date"]}" data-t="{hm(s["time"])}" data-i="{len(self._rows) - 1}">'
-                       f'<b>{hm(s["time"])}</b>{f"<small>{E(hall)}</small>" if hall else ""}{f"<i>{num(min(pr))}</i>" if pr else ""}</button>')
+                       f'<b>{t12(hm(s["time"]))[0]}<sup>{ap(s["time"])}</sup></b>{f"<small>{E(hall)}</small>" if hall else ""}{f"<i>{num(min(pr))}{DIRHAM}</i>" if pr else ""}</button>')
         return "".join(out)
 
     def dayswitch(self):
@@ -407,7 +422,7 @@ class App:
 
     # -------- the ticket sheet (one per page, filled by the script)
     def sheet(self):
-        return """<section class="sheet" data-sheet role="dialog" aria-modal="true" aria-labelledby="tk-film" hidden>
+        return f"""<template id="aed">{DIRHAM}</template><section class="sheet" data-sheet role="dialog" aria-modal="true" aria-labelledby="tk-film" hidden>
 <div class="grab" data-grab></div><div class="tk"><div class="tk-top"><div><p class="tk-cin" data-tk-cin></p><h3 id="tk-film" data-tk-film></h3><p class="tk-when" data-tk-when></p></div>
 <div class="tk-time"><small data-tk-day></small><b data-tk-time></b></div></div>
 <table class="tk-seats"><tbody data-tk-seats></tbody></table>

@@ -269,3 +269,30 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .sr-e small{font-size:12px;color:var(--door);font-weight:500}
 .sr-e b{font:500 15px var(--mono);color:var(--saff)}
 .empty.sm{padding:8px}
+
+/* ── the time card (owner: «شكل الساعة… أريد شي أفضل»): the hour large, its part of the day under it, on the plaster ── */
+.sr{grid-template-columns:auto 1fr}
+.tcard{display:grid;justify-items:center;align-content:center;min-inline-size:76px;padding:8px 10px;border-radius:12px;background:var(--night);
+  border:1px solid var(--line);line-height:1.1}
+.tcard b{font:500 22px var(--mono);color:var(--wood);letter-spacing:-.02em}
+.tcard small{font-size:12px;color:var(--stone);margin-block-start:2px}
+.sr-b{gap:2px}
+.sr-m{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-block-start:4px}
+.eta{font-style:normal;font-size:12px;font-weight:500;color:var(--door);background:rgba(31,111,120,.1);padding:2px 9px;border-radius:10px}
+.eta.hot{color:#fff;background:var(--door);animation:etaglow 1.6s ease-in-out infinite alternate}
+@keyframes etaglow{to{box-shadow:0 0 0 4px rgba(31,111,120,.18)}}
+.pr{display:inline-flex;align-items:center;gap:3px;font:500 15px var(--mono);color:var(--saff)}
+/* the dirham sign beside every price */
+.aed{inline-size:.95em;block-size:.95em;vertical-align:-.12em;margin-inline-start:2px;flex:none}
+.tbtn i{display:inline-flex;align-items:center;gap:1px}
+.tbtn b sup{font:500 10px var(--font);margin-inline-start:2px;vertical-align:.5em;color:var(--stone)}
+.tbtn.on b sup{color:var(--on)}
+.tk-seats td:last-child .aed{color:var(--saff)}
+
+/* «يبدأ قريب منك»: a small poster beside the film, the chain's mark beside the cinema (owner 2026-10-18) */
+.sr{grid-template-columns:auto auto 1fr}
+.sr-p{inline-size:40px;block-size:60px;object-fit:cover;border-radius:7px;box-shadow:0 3px 8px rgba(42,36,32,.18)}
+.sr-b small{display:flex;align-items:center;gap:6px}
+.chm{flex:none;font-style:normal;font-size:10px;font-weight:700;line-height:1;color:#fff;padding:3px 6px;border-radius:5px;background:#5a4c40}
+.chm.ch-vox{background:#C8102E}.chm.ch-reel{background:#1A1A1A}.chm.ch-novo{background:#5B2C83}.chm.ch-star{background:#D4A017;color:#241a00}
+.chm.ch-cineroyal{background:#8C1C2E}.chm.ch-roxy{background:#0E5B5B}.chm.ch-cinemacity{background:#E05A1E}

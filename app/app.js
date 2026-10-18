@@ -13,6 +13,9 @@
   /* UAE time (UTC+4): a show at 00:45 on a date is that night's, the next calendar day's small hours */
   function nowUAE() { return Date.now() + 4 * 3600e3; }
   function startOf(day, t) { var ms = Date.parse(day + "T" + t + ":00Z"); if (t < "04:00") ms += 864e5; return ms; }
+  /* 12-hour times (owner 2026-10-18): «16:25» → «4:25» and «مساء»; the dirham sign from the page's <template id="aed"> */
+  function t12(t) { var h = +t.slice(0, 2), m = t.slice(3, 5); return [(h % 12 || 12) + ":" + m, h < 4 ? "بالليل" : h < 12 ? "الصبح" : h === 12 ? "الظهر" : "مساء"]; }
+  var AED = (q("#aed") || {}).innerHTML || " درهم";
   function vt(fn) { if (d.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) d.startViewTransition(fn); else fn(); }
 
   /* distance (km) from the visitor, when they let us know where they are (kept for the session only) */
@@ -122,12 +125,14 @@
       });
       rows.sort(function (a, b) { return a.st - b.st; });
       var seen = {}, pick = [];
-      rows.forEach(function (x) { if (pick.length < 3 && !seen[x.r[1]]) { seen[x.r[1]] = 1; pick.push(x); } });
+      rows.forEach(function (x) { if (pick.length < 2 && !seen[x.r[1]]) { seen[x.r[1]] = 1; pick.push(x); } });   /* two films (owner) */
       q("[data-soon-rows]").innerHTML = pick.map(function (x) {
-        var f = S.f[x.r[1]], mins = Math.max(0, Math.round((x.st - now) / 60e3)), t = x.r[2];
-        var digits = t.split("").map(function (ch) { return ch === ":" ? '<i class="c">:</i>' : "<i>" + ch + "</i>"; }).join("");
-        return '<a class="sr" href="' + A.base + "f/" + f[0] + '/"><span class="flip">' + digits + '</span><span class="sr-b"><b>' + esc(f[1]) + "</b><small>" + esc(x.c[1]) +
-          '</small></span><span class="sr-e"><small>' + (mins < 1 ? "يبدأ الحين" : "بعد " + mins + " د") + "</small>" + (x.r[3] ? "<b>" + x.r[3] + "</b>" : "") + "</span></a>";
+        var f = S.f[x.r[1]], mins = Math.max(0, Math.round((x.st - now) / 60e3)), tt = t12(x.r[2]);
+        /* the time card: the hour large, its part of the day under it; «بعد N د» as a badge that glows under 15 minutes */
+        var pst = f[2] ? '<img class="sr-p" src="' + esc(f[2]) + '" alt="" loading="lazy">' : "";
+        var mark = '<i class="chm ch-' + esc(x.c[3]) + '">' + esc(x.c[4]) + "</i>";
+        return '<a class="sr" href="' + A.base + "f/" + f[0] + '/"><span class="tcard"><b>' + tt[0] + "</b><small>" + tt[1] + "</small></span>" + pst + '<span class="sr-b"><b>' + esc(f[1]) + "</b><small>" + mark + esc(x.c[1]) +
+          '</small><span class="sr-m"><em class="eta' + (mins < 15 ? " hot" : "") + '">' + (mins < 1 ? "يبدأ الحين" : "بعد " + mins + " د") + "</em>" + (x.r[3] ? '<b class="pr">' + x.r[3] + AED + "</b>" : "") + "</span></span></a>";
       }).join("");
       q("[data-soon-none]").hidden = pick.length > 0;
     };
@@ -206,12 +211,13 @@
       q("[data-tk-film]", sheet).textContent = filmRow ? (q(".fr-t", filmRow) || {}).textContent : (q(".ft") || {}).textContent;
       var when = [];
       if (s.h) when.push(s.h);
-      if (s.e) when.push("يخلص تقريباً " + s.e);
+      if (s.e) when.push("يخلص تقريباً " + t12(s.e).join(" "));
       if (s.l) when.push(({ en: "إنجليزي", ar: "عربي", hi: "هندي", ta: "تاميل", ml: "مالايالام", te: "تيلوغو" })[s.l] || s.l);
       q("[data-tk-when]", sheet).textContent = when.join(" · ");
-      q("[data-tk-time]", sheet).textContent = s.t;
-      q("[data-tk-day]", sheet).textContent = s.d === A.today ? "اليوم" : s.d === A.tomorrow ? "بكرة" : s.d;
-      q("[data-tk-seats]", sheet).innerHTML = seats.length ? seats.map(function (p) { return "<tr><td>" + esc(p[0]) + "</td><td>" + esc(p[1]) + " <small>درهم</small></td></tr>"; }).join("")
+      var tt = t12(s.t);
+      q("[data-tk-time]", sheet).textContent = tt[0];
+      q("[data-tk-day]", sheet).textContent = (s.d === A.today ? "اليوم" : s.d === A.tomorrow ? "بكرة" : s.d) + " · " + tt[1];
+      q("[data-tk-seats]", sheet).innerHTML = seats.length ? seats.map(function (p) { return "<tr><td>" + esc(p[0]) + "</td><td>" + esc(p[1]) + AED + "</td></tr>"; }).join("")
         : '<tr><td colspan="2">السعر في الشباك</td></tr>';
       var bk = q("[data-tk-book]", sheet); bk.href = s.b || "#";
       sheet.hidden = false; scrim.hidden = false;
