@@ -28,7 +28,8 @@ def test_counter_config_reads_counter_yaml_and_tolerates_a_missing_file(tmp_path
     assert cfg["__COUNTER_API__"].startswith("https://") and cfg["__COUNTER_API__"].endswith("/")
     assert len(cfg["__VAPID_PUBLIC_KEY__"]) > 40
     empty = build.counter_config(str(tmp_path / "none.yaml"))
-    assert empty == {"__COUNTER_API__": "", "__VAPID_PUBLIC_KEY__": ""}
+    assert empty == {"__COUNTER_API__": "", "__VAPID_PUBLIC_KEY__": "", "__ASK_API__": ""}
+    assert cfg["__ASK_API__"].startswith("https://")   # «اسأل الفيلم» (infra/ask)
 
 
 def test_fill_counter_replaces_both_placeholders():
