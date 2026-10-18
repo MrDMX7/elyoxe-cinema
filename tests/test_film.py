@@ -141,11 +141,11 @@ def test_tabs_are_links_to_sections_in_order(out):
     m = main_of(h)
     tabs = re.search(r'<div class="wrap tabsx" data-tabs aria-label="عن الفيلم وأكثر">(.*?)</div>', m).group(1)
     got = re.findall(r'<a href="#(\w+)" data-tab="\1"( class="js-only")?>([^<]+)</a>', tabs)
-    order = ["about", "cast", "similar", "double", "compare"]
+    order = ["about", "ask", "cast", "similar", "double", "compare"]   # «اسأل الفيلم» (2026-10-18) right after «عن الفيلم»
     keys = [k for k, _, _ in got]
     assert keys == [k for k in order if k in keys] and keys[0] == "about" and "compare" in keys
     assert dict((k, j) for k, j, _ in got)["compare"] == ' class="js-only"'    # script-drawn: so is its tab
-    labels = {"about": "عن الفيلم", "cast": "الطاقم", "similar": "شي يشبه", "double": "فيلمين ورا بعض", "compare": "قارن"}
+    labels = {"about": "عن الفيلم", "ask": "اسأل الفيلم", "cast": "الطاقم", "similar": "شي يشبه", "double": "فيلمين ورا بعض", "compare": "قارن"}
     assert [t for _, _, t in got] == [labels[k] for k in keys]
     secs = re.findall(r'<section class="tpn" id="(\w+)">', m)
     assert secs == keys                                                        # no script: the sections, in the tabs' order
