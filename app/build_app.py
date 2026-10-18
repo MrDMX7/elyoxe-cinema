@@ -181,12 +181,13 @@ class App:
         return f'<span class="{cls}" style="--pc:{pc}"><img src="{E(src)}"{ss} width="342" height="513" alt="" decoding="async"{lazy}></span>'
 
     def fresh(self):
-        self._rows, self._seats, self._seat_i = [], [], {}
+        self._rows, self._seats, self._seat_i, self._cins = [], [], {}, set()
 
     def table(self):
         if not self._rows:
             return ""
-        j = json.dumps({"r": self._rows, "s": self._seats}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+        cins = {c: [self.cname(c), self.k.cinemas[c].get("city") or "", self.k.cinemas[c]["chain"], self.chain(c)] for c in sorted(self._cins)}
+        j = json.dumps({"r": self._rows, "s": self._seats, "c": cins}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
         return f'<script type="application/json" id="shows">{j}</script>'
 
     # -------- page frame
@@ -317,7 +318,8 @@ class App:
             sk = json.dumps(seats, ensure_ascii=False)
             if sk not in self._seat_i:
                 self._seat_i[sk] = len(self._seats); self._seats.append(seats)
-            self._rows.append([s["date"], hm(s["time"]), s.get("ends") or "", hall, self.k.book_url(s), s.get("lang") or "", self._seat_i[sk]])
+            self._rows.append([s["date"], hm(s["time"]), s.get("ends") or "", hall, self.k.book_url(s), s.get("lang") or "", self._seat_i[sk], s["cinema"]])
+            self._cins.add(s["cinema"])
             out.append(f'<button type="button" class="tbtn" data-d="{s["date"]}" data-t="{hm(s["time"])}" data-i="{len(self._rows) - 1}">'
                        f'<b>{t12(hm(s["time"]))[0]}<sup>{ap(s["time"])}</sup></b>{f"<small>{E(hall)}</small>" if hall else ""}{f"<i>{num(min(pr))}{DIRHAM}</i>" if pr else ""}</button>')
         return "".join(out)
@@ -353,8 +355,8 @@ class App:
         verdict = (f'<div class="verdict v-{vw[1]}"><b>{vw[0]}</b><p>{E(vtext)}</p></div>' if vw and vtext else "")
         syn = f.get("synopsis_ar") or ""
         syn_en = "" if syn else (f.get("synopsis_en") or "")
-        story = (f'<section class="sec"><h2>القصة</h2><p class="syn">{E(syn)}</p></section>' if syn else
-                 f'<section class="sec"><h2>القصة</h2><p class="syn" lang="en" dir="ltr">{E(syn_en)}</p></section>' if syn_en else "")
+        about = (f'<section class="about" data-about><p class="syn clamp" data-clamp>{E(syn)}</p><button type="button" class="more" data-more hidden>المزيد</button></section>' if syn else
+                 f'<section class="about" data-about><p class="syn clamp" lang="en" dir="ltr" data-clamp>{E(syn_en)}</p><button type="button" class="more" data-more hidden>المزيد</button></section>' if syn_en else "")
         cast = []
         for q in (f.get("cast") or [])[:8]:
             p = self.people.get(q) if isinstance(q, str) else None
@@ -385,7 +387,8 @@ class App:
 <div class="fh-t"><h2 class="ft">{E(t)}</h2>{f'<p class="fte" lang="en" dir="ltr">{E(f["title"])}{" · " + str(f["year"]) if f.get("year") else ""}</p>' if f.get("title") and f.get("title") != t else ""}
 <div class="fchips">{"".join(chips)}</div>{f'<p class="fg">{genres}</p>' if genres else ""}</div></div></section>
 <div class="acts">{trailer}{ask}</div>
-{verdict}{where}{story}{crew}
+{about}<section class="nearest" data-nearest hidden><h2>أقرب عرض لك</h2><div data-nearest-row></div></section>
+{verdict}{where}{crew}
 <section class="sec ask" data-ask data-fid="{E(fid)}"><h2>اسأل الفيلم</h2><p class="lead">اسأل أي شي عن الفيلم، ونجاوبك من قصته ومعلوماته بس. اللي يحرق نخفيه لين تضغط.</p>
 <form class="ask-f" data-ask-form><input name="q" maxlength="240" autocomplete="off" enterkeyhint="send" placeholder="مثلاً: يناسب العيال؟" aria-label="سؤالك"><button class="btn velvet" type="submit">اسأل</button></form>
 <div class="chips wrap">{"".join(f'<button type="button" class="chip" data-ask-q="{q}">{q}</button>' for q in ["شو نوع الفيلم؟", "يناسب العيال؟", "عن شو القصة؟", "شو يصير في النهاية؟"])}</div><div class="ask-out" data-ask-out></div></section>

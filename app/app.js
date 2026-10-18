@@ -152,6 +152,15 @@
       addEventListener("scroll", onScroll, { passive: true }); onScroll();
     }
 
+    var ab = q("[data-about]");
+    if (ab) {
+      var cl = q("[data-clamp]", ab), mb = q("[data-more]", ab);
+      if (cl.scrollHeight > cl.clientHeight + 4) mb.hidden = false;
+      mb.addEventListener("click", function () { var o = ab.classList.toggle("open"); mb.textContent = o ? "أقل" : "المزيد"; });
+    }
+    var T = null;
+    try { T = JSON.parse((q("#shows") || {}).textContent || "null"); } catch (e) {}
+    var minOf = function (r) { var ss = T.s[r[6]] || []; return ss.length ? Math.min.apply(null, ss.map(function (p) { return p[1]; })) : 0; };
     var day = A.today;
     var days = qa("[data-day]");
     if (days.length && !days.some(function (b) { return b.dataset.day === A.today; })) day = days[0].dataset.day;
@@ -185,10 +194,27 @@
         bs.sort(function (a, b) { return (a._k == null ? 1e9 : a._k) - (b._k == null ? 1e9 : b._k); }).forEach(function (b) { c.appendChild(b); });
       });
     };
+    var nearest = q("[data-nearest]");
+    var paintNearest = function () {
+      if (!nearest || !T) return;
+      var now = nowUAE(), best = null;
+      T.r.forEach(function (r, i) {
+        var c = T.c[r[7]]; if (!c || c[1] !== city) return;
+        var st = startOf(r[0], r[1]); if (st < now + 5 * 60e3) return;
+        if (!best || st < best.st) best = { st: st, r: r, i: i, c: c };
+      });
+      if (!best) { nearest.hidden = true; return; }
+      var tt = t12(best.r[1]), mins = Math.round((best.st - now) / 60e3), pr = minOf(best.r);
+      var eta = mins < 60 ? "بعد " + mins + " د" : (best.r[0] === A.today ? "اليوم" : "بكرة");
+      q("[data-nearest-row]", nearest).innerHTML = '<button type="button" class="sr" data-open="' + best.i + '"><span class="tcard"><b>' + tt[0] + "</b><small>" + tt[1] +
+        '</small></span><span class="sr-b"><b><i class="chm ch-' + esc(best.c[2]) + '">' + esc(best.c[3]) + "</i> " + esc(best.c[0]) + "</b>" + (best.r[3] ? "<small>" + esc(best.r[3]) + "</small>" : "") +
+        '<span class="sr-m"><em class="eta' + (mins < 15 ? " hot" : "") + '">' + eta + "</em>" + (pr ? '<b class="pr">' + pr + AED + "</b>" : "") + "</span></span></button>";
+      nearest.hidden = false;
+    };
     days.forEach(function (b) { b.addEventListener("click", function () { day = b.dataset.day; vt(paint); }); });
-    ctabs.forEach(function (b) { b.addEventListener("click", function () { city = b.dataset.ctab; store.set("city", city); vt(paint); }); });
-    paint();
-    setInterval(paint, 60e3);
+    ctabs.forEach(function (b) { b.addEventListener("click", function () { city = b.dataset.ctab; store.set("city", city); vt(function () { paint(); paintNearest(); }); }); });
+    paint(); paintNearest();
+    setInterval(function () { paint(); paintNearest(); }, 60e3);
 
     /* the ticket */
     var sheet = q("[data-sheet]"), scrim = q("[data-scrim]"), openBtn = null;
@@ -199,10 +225,8 @@
       if (openBtn) { openBtn.classList.remove("on"); openBtn.focus({ preventScroll: true }); }
       if (!fromPop && history.state && history.state.sheet) history.back();
     };
-    var T = null;
-    try { T = JSON.parse((q("#shows") || {}).textContent || "null"); } catch (e) {}
     var open = function (b) {
-      var r = T && T.r[+b.dataset.i]; if (!r) return;
+      var r = T && T.r[+b.dataset.i]; if (!r) return;   /* r[7]: its cinema */
       var s = { d: r[0], t: r[1], e: r[2], h: r[3], b: r[4], l: r[5] }, seats = T.s[r[6]] || [];
       qa(".tbtn.on").forEach(function (x) { x.classList.remove("on"); });
       b.classList.add("on"); openBtn = b;
@@ -220,12 +244,28 @@
       q("[data-tk-seats]", sheet).innerHTML = seats.length ? seats.map(function (p) { return "<tr><td>" + esc(p[0]) + "</td><td>" + esc(p[1]) + AED + "</td></tr>"; }).join("")
         : '<tr><td colspan="2">السعر في الشباك</td></tr>';
       var bk = q("[data-tk-book]", sheet); bk.href = s.b || "#";
+      var altEl = q("[data-tk-alt]", sheet); if (altEl) altEl.remove();
+      if (pg.classList.contains("film") && T && r[7]) {
+        var mine = minOf(r), myCity = (T.c[r[7]] || [])[1], now2 = nowUAE(), cheap = null;
+        T.r.forEach(function (x, i) {
+          if (x[0] !== r[0] || (T.c[x[7]] || [])[1] !== myCity || startOf(x[0], x[1]) < now2 + 5 * 60e3) return;
+          var p = minOf(x); if (p && (!cheap || p < cheap.p)) cheap = { p: p, x: x, i: i };
+        });
+        if (mine && cheap && mine - cheap.p >= 5) {
+          var cc = T.c[cheap.x[7]], ttc = t12(cheap.x[1]);
+          var line = d.createElement("button"); line.type = "button"; line.className = "tk-alt"; line.setAttribute("data-tk-alt", ""); line.dataset.open = cheap.i;
+          line.innerHTML = "نفس الفيلم أرخص بـ<b>" + (Math.round((mine - cheap.p) * 100) / 100) + "</b>" + AED + ": " + ttc[0] + " " + ttc[1] + " في " + esc(cc[3]) + " — " + esc(cc[0]) + (cheap.x[3] ? "، " + esc(cheap.x[3]) : "");
+          bk.parentNode.insertBefore(line, bk);
+        }
+      }
       sheet.hidden = false; scrim.hidden = false;
       history.pushState({ sheet: 1 }, "");
     };
     d.addEventListener("click", function (e) {
       var b = e.target.closest && e.target.closest(".tbtn");
       if (b) { open(b); return; }
+      var o = e.target.closest && e.target.closest("[data-open]");
+      if (o) { var tb2 = q('.tbtn[data-i="' + o.dataset.open + '"]'); if (tb2) { if (sheet && !sheet.hidden) { sheet.hidden = true; scrim.hidden = true; history.back(); } setTimeout(function () { open(tb2); }, sheet && !sheet.hidden ? 60 : 0); } return; }
       if (e.target.closest && (e.target.closest("[data-tk-close]") || e.target === scrim)) close();
     });
     addEventListener("popstate", function () { if (sheet && !sheet.hidden) close(true); });

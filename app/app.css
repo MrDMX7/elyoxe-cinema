@@ -212,6 +212,18 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .tk-seats td:last-child{text-align:end;font:500 16px var(--mono);color:var(--saff)}
 .tk-seats td small{color:var(--stone);font:12px var(--font)}
 
+/* the film's synopsis, up top: three lines, «المزيد» opens the rest */
+.about{padding:14px var(--gut) 0}
+.syn.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.about.open .syn.clamp{-webkit-line-clamp:unset;display:block}
+.more{border:0;background:none;padding:4px 0;color:var(--door);font-weight:500;font-size:14px;cursor:pointer}
+/* «أقرب عرض لك»: one card, a tap opens its ticket */
+.nearest{padding:18px var(--gut) 0}
+.nearest h2{font-size:17px;margin-block-end:8px}
+.nearest .sr{cursor:pointer;inline-size:100%;text-align:start;font:inherit;color:inherit}
+/* the ticket's «نفس الفيلم أرخص» line */
+.tk-alt{display:block;padding:10px 12px;border-radius:12px;background:rgba(31,111,120,.08);color:var(--door);font-size:14px;line-height:1.6;border:0;text-align:start;cursor:pointer;font-family:inherit;inline-size:100%}
+.tk-alt b{color:var(--wood)}
 /* «اسأل الفيلم» */
 .ask-f{display:flex;gap:8px}
 .ask-f input{flex:1;min-inline-size:0;min-block-size:48px;padding-inline:14px;border-radius:12px;border:1px solid var(--line);background:var(--paper);font:inherit;font-size:16px;color:var(--wood)}
