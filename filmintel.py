@@ -161,6 +161,8 @@ def _next_check(days: int = RECHECK_DAYS) -> str:
 def needs_generate(existing: dict | None, film: dict) -> bool:
     if existing is None:
         return True
+    if existing.get("by") == "skip" and film.get("synopsis_en"):
+        return True   # a synopsis appeared since the skip (steps/film_synopsis.py): no reason to wait out its backoff
     nxt = existing.get("next_check")
     if nxt and date.today().isoformat() < nxt:
         return False   # backed off — still due, don't spend a cap slot on it this run

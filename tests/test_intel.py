@@ -548,3 +548,12 @@ def test_film_synopsis_step_fills_from_reel_then_omdb_never_overwriting(tmp_path
     assert len(asked) == 1 and asked[0]["t"] == "Jailer 2" and asked[0]["y"] == "2026"
     step.run(data | {"films": {"jailer-2": {"title": "Jailer 2", "year": 2026}}}, {"data_dir": str(tmp_path)})
     assert len(asked) == 1   # the month's cache answers the second run
+
+
+def test_a_new_synopsis_ends_a_skip_backoff():
+    """2026-10-19: Jailer 2 was skipped on 10-17 (no basis, next check 10-20); steps/film_synopsis.py found its
+    synopsis the next day, and the Arabic one waited out the backoff anyway. A synopsis is reason enough to try now."""
+    later = (date.today() + timedelta(days=3)).isoformat()
+    assert filmintel.needs_generate({"by": "skip", "next_check": later}, {"title": "x", "synopsis_en": "A retired jailer..."}) is True
+    assert filmintel.needs_generate({"by": "skip", "next_check": later}, {"title": "x"}) is False
+    assert filmintel.needs_generate({"by": "failed", "next_check": later}, {"title": "x", "synopsis_en": "A retired jailer..."}) is False
