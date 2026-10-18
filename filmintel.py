@@ -166,7 +166,7 @@ def needs_generate(existing: dict | None, film: dict) -> bool:
         return False   # backed off — still due, don't spend a cap slot on it this run
     by = existing.get("by")
     if by == "skip":
-        return has_intel_basis(film)   # a basis appeared since — try again
+        return has_intel_basis(film) or bool(film.get("synopsis_en"))   # a basis (or a synopsis) appeared since — try again
     if by == "failed":
         return True   # backoff window passed — retry
     if by == "claude":
@@ -471,6 +471,21 @@ def write_missing(data: dict, cap: int = INTEL_CAP, only_fids: set[str] | None =
         done += 1
         try:
             if not has_intel_basis(film):
+                if (existing or {}).get("by") == "claude" and existing.get("synopsis_ar"):
+                    _write(path, {**existing, "next_check": _next_check()})   # its synopsis stays; look again later
+                    continue
+                if film.get("synopsis_en"):
+                    # no scores and no Wikidata match, but a synopsis (steps/film_synopsis.py: Reel or OMDb): the
+                    # Arabic synopsis alone — reasons stay with the numbers, which this film does not have yet
+                    if client is None:
+                        client = vd._client()
+                    syn = _call_json(client, _synopsis_prompt(film), SYNOPSIS_SYSTEM_EXTRA, _validate_synopsis).get("synopsis_ar")
+                    rec = {"fid": fid, "by": "claude", "reasons": [], "audience": [], "fun_fact": None, "consensus_ar": None,
+                           "synopsis_ar": syn, "ending": None, "qa": [], "has_plot": False,
+                           "written": date.today().isoformat(), "next_check": _next_check()}
+                    _write(path, rec)
+                    results[fid] = rec
+                    continue
                 _write(path, {"fid": fid, "by": "skip", "written": date.today().isoformat(),
                               "next_check": _next_check()})
                 continue

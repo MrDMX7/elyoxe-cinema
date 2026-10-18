@@ -504,3 +504,47 @@ def test_write_missing_keeps_a_finished_record_when_the_synopsis_call_fails(tmp_
     assert filmintel.needs_generate(after, FILM_SYN) is False      # backed off now …
     after["next_check"] = (date.today() - timedelta(days=1)).isoformat()
     assert filmintel.needs_generate(after, FILM_SYN) is True       # … retried once the window passes
+
+
+# ================================================================ steps/film_synopsis.py + a synopsis-only film (2026-10-18)
+def test_a_film_with_only_a_synopsis_gets_its_arabic_synopsis_and_keeps_it(tmp_path, monkeypatch):
+    monkeypatch.setattr(filmintel, "INTEL_DIR", tmp_path)
+    monkeypatch.setattr(filmintel, "wikipedia_plot", lambda qid: (_ for _ in ()).throw(AssertionError("no plot fetch")))
+    monkeypatch.setattr(filmintel, "reddit_snippets", lambda title, year, cap=6: [])
+    film = {"title": "Jailer 2", "year": 2026, "genres": ["action"], "synopsis_en": "A retired officer's peaceful life is disrupted when a dangerous criminal returns."}
+    fake = FakeClient([json.dumps({"synopsis_ar": "ضابط متقاعد تنقلب حياته الهادية لما يرجع مجرم خطير."})])
+    monkeypatch.setattr("verdicts._client", lambda: fake)
+    out = filmintel.write_missing({"films": {"jailer-2": film}})
+    rec = json.loads((tmp_path / "jailer-2.json").read_text(encoding="utf-8"))
+    assert rec["by"] == "claude" and rec["synopsis_ar"].startswith("ضابط") and rec["reasons"] == [] and out["jailer-2"]
+    assert fake.messages.calls == 1
+    # its next check never turns it into a «skip»: the synopsis stays
+    rec["next_check"] = (date.today() - timedelta(days=1)).isoformat()
+    (tmp_path / "jailer-2.json").write_text(json.dumps(rec, ensure_ascii=False), encoding="utf-8")
+    filmintel.write_missing({"films": {"jailer-2": film}})
+    again = json.loads((tmp_path / "jailer-2.json").read_text(encoding="utf-8"))
+    assert again["by"] == "claude" and again["synopsis_ar"] == rec["synopsis_ar"] and fake.messages.calls == 1
+
+
+def test_film_synopsis_step_fills_from_reel_then_omdb_never_overwriting(tmp_path, monkeypatch):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("steps.film_synopsis", os.path.join(os.path.dirname(filmintel.__file__), "steps", "film_synopsis.py"))
+    step = importlib.util.module_from_spec(spec); spec.loader.exec_module(step)
+    monkeypatch.setattr(step, "_reel", lambda d: {step._key("Nayyi Navelli (Hindi)"): "A picture-perfect bride transforms a chaotic Meerut household into a slice of heaven."})
+    monkeypatch.setattr(omdb, "_key", lambda: "k")
+    asked = []
+    def fake_get(params, key):
+        asked.append(params)
+        return {"Response": "True", "Plot": "A retired officer's peaceful life is disrupted when a dangerous criminal returns.", "Year": "2026"}
+    monkeypatch.setattr(omdb, "_get", fake_get)
+    data = {"films": {"nayyi-navelli": {"title": "Nayyi Navelli"}, "jailer-2": {"title": "Jailer 2", "year": 2026},
+                      "has": {"title": "Has", "synopsis_en": "Already has its own synopsis from Wikipedia, untouched."}},
+            "shows": [{"film": "nayyi-navelli"}, {"film": "jailer-2"}, {"film": "has"}]}
+    r = step.run(data, {"data_dir": str(tmp_path)})
+    f = data["films"]
+    assert f["nayyi-navelli"]["synopsis_src"] == "reel" and f["jailer-2"]["synopsis_src"] == "omdb"
+    assert f["has"]["synopsis_en"].startswith("Already") and "synopsis_src" not in f["has"]
+    assert r["filled"] == {"reel": 1, "omdb": 1} and r["still_none"] == 0
+    assert len(asked) == 1 and asked[0]["t"] == "Jailer 2" and asked[0]["y"] == "2026"
+    step.run(data | {"films": {"jailer-2": {"title": "Jailer 2", "year": 2026}}}, {"data_dir": str(tmp_path)})
+    assert len(asked) == 1   # the month's cache answers the second run
