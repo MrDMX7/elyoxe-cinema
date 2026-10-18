@@ -58,7 +58,8 @@ out_of() {
 DIST=$(out_of DistributionId)
 [[ "$DIST" =~ ^E[A-Z0-9]+$ ]] || { echo "deploy: no distribution id from stack $STACK" >&2; exit 4; }
 DEST="s3://$BUCKET/"
-NEVER=(--exclude "tools/*")                   # the --preview dir, never uploaded (nor deleted: not ours to own)
+NEVER=(--exclude "tools/*" --exclude "next/*")   # the --preview dir, and /next/ (the app redesign's preview, 2026-10-18,
+                                              # uploaded by app/preview.sh): never uploaded here, never deleted
 KEEP=(--exclude "posters/*" --exclude "state/*")   # posters/: `posters.py --upload`; state/: the OLD price-history
                                               # copy, publicly served — steps/history.py moves it to the private
                                               # media bucket and removes it itself, only once the move is safe.

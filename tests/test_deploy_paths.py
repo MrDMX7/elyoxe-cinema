@@ -69,7 +69,7 @@ def test_invalidation_uses_the_cinema_stack_distribution():
 
 def test_tools_preview_dir_is_never_uploaded():
     code = _code_lines()
-    assert any('NEVER=(--exclude "tools/*")' in l for l in code)
+    assert any('NEVER=(--exclude "tools/*" --exclude "next/*")' in l for l in code)   # /next/: the redesign preview
     for l in code:
         if "aws s3 sync" in l and '--include "data/*"' not in l:
             assert '"${NEVER[@]}"' in l, l
