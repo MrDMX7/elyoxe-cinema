@@ -13,6 +13,12 @@
   /* UAE time (UTC+4): a show at 00:45 on a date is that night's, the next calendar day's small hours */
   function nowUAE() { return Date.now() + 4 * 3600e3; }
   function startOf(day, t) { var ms = Date.parse(day + "T" + t + ":00Z"); if (t < "04:00") ms += 864e5; return ms; }
+  /* the cinema day on this phone (it turns at 4 am, like startOf): a page built yesterday (the night between runs,
+     or a failed run) must not call today «بكرة» nor offer a day that is over */
+  (function () {
+    var cd = new Date(nowUAE() - 4 * 3600e3).toISOString().slice(0, 10);
+    if (A.today && cd > A.today) { A.today = cd; A.tomorrow = new Date(Date.parse(cd + "T00:00:00Z") + 864e5).toISOString().slice(0, 10); }
+  })();
   /* 12-hour times (owner 2026-10-18): «16:25» → «4:25» and «مساء»; the dirham sign from the page's <template id="aed"> */
   function t12(t) { var h = +t.slice(0, 2), m = t.slice(3, 5); return [(h % 12 || 12) + ":" + m, h < 4 ? "بالليل" : h < 12 ? "الصبح" : h === 12 ? "الظهر" : "مساء"]; }
   var AED = (q("#aed") || {}).innerHTML || " درهم";
@@ -162,7 +168,11 @@
     try { T = JSON.parse((q("#shows") || {}).textContent || "null"); } catch (e) {}
     var minOf = function (r) { var ss = T.s[r[6]] || []; return ss.length ? Math.min.apply(null, ss.map(function (p) { return p[1]; })) : 0; };
     var day = A.today;
-    var days = qa("[data-day]");
+    var days = qa("[data-day]").filter(function (b) {
+      if (b.dataset.day < A.today) { b.remove(); return false; }
+      b.textContent = b.dataset.day === A.today ? "اليوم" : b.dataset.day === A.tomorrow ? "بكرة" : b.textContent;
+      return true;
+    });
     if (days.length && !days.some(function (b) { return b.dataset.day === A.today; })) day = days[0].dataset.day;
     var city = null;
     var ctabs = qa("[data-ctab]");
