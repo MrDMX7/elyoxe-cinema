@@ -6,7 +6,6 @@
   "fid": "drishyam-the-conclusion",
   "fun_fact": null,
   "has_plot": true,
-  "next_check": "2026-10-20",
   "qa": [
     {
       "a": "المحامي البارز إندراجيت شيتي، وطلب من المحكمة أمر بحفر قبر كريستوفر.",
@@ -47,6 +46,6 @@
       "text": "ما لقينا تقييمات كافية لهالفيلم للحين"
     }
   ],
-  "retry_reason": "claude -p failed: ",
-  "written": "2026-10-09"
+  "synopsis_ar": "Drishyam: The Conclusion ثريلر إثارة وجريمة هندي بالهندية صدر عام 2026 وهو تكملة لـ Drishyam 2 (2022). كتبه وأنتجه وأخرجه Abhishek Pathak بقصة أصلية، ومب مرتبط قصصيا بنسخته المليالمية. ويمثّل فيه Ajay Devgn وTabu وShriya Saran وJaideep Ahlawat وRajat Kapoor وPrakash Raj وIshita Dutta وMrunal Jadhav.",
+  "written": "2026-10-20"
 }

@@ -11,7 +11,7 @@
   "fid": "minions-and-monsters",
   "fun_fact": null,
   "has_plot": false,
-  "next_check": "2026-10-20",
+  "next_check": "2026-10-23",
   "qa": [],
   "reasons": [
     {
@@ -27,6 +27,6 @@
       "text": "تقييم الجمهور 75% أقل من تقييم النقاد 89%"
     }
   ],
-  "retry_reason": "claude -p failed: ",
+  "retry_reason": "could not produce compliant output after 4 attempts (last: banned word \"جديد\" used — say \"يديد\" instead)",
   "written": "2026-10-09"
 }

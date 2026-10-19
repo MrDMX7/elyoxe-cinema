@@ -1,7 +1,55 @@
 {
-  "by": "failed",
+  "audience": [
+    {
+      "source": "Rotten Tomatoes",
+      "text": "أغلب من قيّموه على Rotten Tomatoes يحبّونه بشكل واضح."
+    }
+  ],
+  "by": "claude",
+  "consensus_ar": "يوصف النقاد الفيلم بأنه يجمع مشاهد أكشن مبهرة مع عواطف ناضجة وأداء مؤثر من توم هولند، ويعتبرونه بداية متجددة تخلي الشخصية تستمر على الشاشة الكبيرة لسنين.",
+  "ending": "Parker يصحى بالمستشفى، وCastle يعتذر له ويقوله إن Jean هي اللي خلته عايش بقوتها عن بعد. بعدين Jean تطلع من المدينة، وMetzger يختفي، وجهاز DODC يصير عليه تحقيق.",
   "fid": "spider-man-brand-new-day",
-  "next_check": "2026-10-20",
-  "reason": "could not produce compliant output after 4 attempts (last: tanwin (ً/ٌ/ٍ) in spoken text — never tanwin in the spoken register)",
-  "written": "2026-10-17"
+  "fun_fact": {
+    "source": "ويكيبيديا",
+    "text": "هالفيلم هو العاشر والثلاثون في الكون السينمائي لمارفل (MCU)، والرابع في سلسلة أفلام Spider-Man بعد No Way Home (2021)."
+  },
+  "has_plot": true,
+  "qa": [
+    {
+      "a": "بعد ما سحر Dr. Stephen Strange خلّى العالم ينسى إن Peter Parker موجود، ما عرّف نفسه لهم، وحماهم وهو يحمي نيويورك كـSpider-Man بالخفاء.",
+      "q": "شو اختار Parker من البداية بخصوص MJ وNed؟"
+    },
+    {
+      "a": "عشان يتصالحون ويتقاسمون خسارتهم، وشافت ذكرى May وهي تقول إنها تحبه على ما هو عليه.",
+      "q": "ليش Parker سمح لـJean تدخل عقله؟"
+    },
+    {
+      "a": "طلعت من المدينة.",
+      "q": "وين راحت Jean بعد النهاية؟"
+    },
+    {
+      "a": "لأنه حس بـCastle يطلق النار على Jean من بعيد، فحماها وأخذ الطلقة بجسمه.",
+      "q": "ليش Parker انصاب بجروح خطيرة؟"
+    },
+    {
+      "a": "هدّأ Parker الـHulk، وبعدين عطّل قوى Jean بالمانع الشامل، وMetzger خدّرها.",
+      "q": "كيف انتهت معركة Parker مع الـHulk؟"
+    },
+    {
+      "a": "من ملفات DODC المحجوبة، عرف إن Sara أخت Jean، وهي كمان telepath اختطفتها DODC.",
+      "q": "شو اكتشف Parker عن Sara؟"
+    }
+  ],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "90% من النقاد على Rotten Tomatoes إيجابيين، من أصل 438 نقد."
+    },
+    {
+      "pos": true,
+      "text": "تقييم الجمهور على Rotten Tomatoes وصل 97%."
+    }
+  ],
+  "synopsis_ar": "هالفيلم من إخراج Destin Daniel Cretton، وبطولة Tom Holland بدور Peter Parker وZendaya وSadie Sink وJacob Batalon وغيرهم. بيتر باركر يشتغل بروحه ومكرّس لحماية نيويورك كبطل Spider-Man، لكن ضغط شغله وصعوباته الشخصية تخلي قواه تتطوّر وهو يواجه تهديدا تخاطريا.",
+  "written": "2026-10-20"
 }

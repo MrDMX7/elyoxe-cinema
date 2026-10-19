@@ -9,7 +9,7 @@
     "text": "Maika Monroe تقود الفيلم، ووصفها النقاد بالشرسة في أدائها"
   },
   "has_plot": false,
-  "next_check": "2026-10-20",
+  "next_check": "2026-10-23",
   "qa": [],
   "reasons": [
     {
@@ -29,6 +29,6 @@
       "text": "عدد النقاد 36 بس، فالتقييم مبني على عينة صغيرة"
     }
   ],
-  "retry_reason": "claude -p failed: ",
-  "written": "2026-10-09"
+  "synopsis_ar": "Psycho إثارة ورعب من إخراج Zachary Wigon ومن كتابة Virginia Feito، ومقتبس من روايتها اللي نشرتها 2025. بطولة Maika Monroe و Thomasin McKenzie و Ruth Wilson و Jason Isaacs.",
+  "written": "2026-10-20"
 }

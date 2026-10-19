@@ -1,7 +1,31 @@
 {
-  "by": "failed",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "acharya",
-  "next_check": "2026-10-12",
-  "reason": "Command '['C:\\\\Users\\\\requi\\\\AppData\\\\Roaming\\\\npm\\\\claude.CMD', '-p', '--model', 'claude-haiku-5-5', '--output-format', 'json', '--tools', '', '--strict-mcp-config', '--disable-slash-commands', '--no",
-  "written": "2026-10-09"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-10-23",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "يجمع بين أكشن ودراما ورومانسي"
+    },
+    {
+      "pos": true,
+      "text": "سنة الإصدار 2025، يعني فيلم حديث"
+    },
+    {
+      "pos": false,
+      "text": "مدته 169 دقيقة، أطول من ساعتين ونص"
+    },
+    {
+      "pos": false,
+      "text": "ما لقينا تقييمات كافية لهالفيلم للحين"
+    }
+  ],
+  "synopsis_ar": "صديقان قديمان يلتقيان بعد 22 سنة داخل كوخ في الجبال. وبينما يعيدون اكتشاف علاقتهم، يصل زوجها ليجبرهم على مواجهة أسرار مؤلمة وقرارات شكّلت حياتهم.",
+  "written": "2026-10-20"
 }

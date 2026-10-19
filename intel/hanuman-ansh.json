@@ -11,7 +11,6 @@
   "fid": "hanuman-ansh",
   "fun_fact": null,
   "has_plot": true,
-  "next_check": "2026-10-20",
   "qa": [
     {
       "a": "عند جبل Kainchi القريب من Nainital.",
@@ -48,6 +47,6 @@
       "text": "ما لقينا تقييمات كافية من النقاد لهالفيلم للحين."
     }
   ],
-  "retry_reason": "claude -p failed: ",
-  "written": "2026-10-09"
+  "synopsis_ar": "«هانومان أنش» دراما بالهندية من تأليف وإخراج وإنتاج Vishal Chaturvedi، وهو أول أجزاء ثلاثية مبنية على كتابه Divine Detour. يتابع الفيلم حياة الطفل Lakshmi Narayan في الهند قبل الاستقلال، فبعد وفاة أمه يترك بيته ويبدأ رحلة يدوّر فيها على الرب في شمال الهند. ويقوم ببطولته Shobhinaw Satyaa وChandan Anand.",
+  "written": "2026-10-20"
 }

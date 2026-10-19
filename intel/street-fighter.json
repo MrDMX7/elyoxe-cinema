@@ -1,7 +1,63 @@
 {
-  "by": "failed",
+  "audience": [
+    {
+      "source": "Rotten Tomatoes",
+      "text": "الجمهور على Rotten Tomatoes أعطاه تقييم أعلى بكثير من تقييم النقاد"
+    }
+  ],
+  "by": "claude",
+  "consensus_ar": "النقاد يرون أن الفيلم يحافظ على حب واضح لمادته الأصلية وفيه أسلوب بصري قوي، لكن الحبكة مفككة والكوميديا طفولية، وهذا يجعله تراجع مخيب في اقتباس ألعاب الفيديو.",
+  "ending": "Ken يستخدم الـ Flaming Hadouken للمرة الأولى فيرجّع Ryu لطبيعته. بعدين Bison يأمر Cammy وجنوده يستعيدون جسد Akuma، وCammy تدمّر فان Chun-Li بقاذفة صواريخ فما يقدرون يلحقونهم. باليوم اللي بعده Ryu وKen وChun-Li وDan يطلعون من Shadaloo بمساعدة Guile وDhalsim، ويتفقون يشتغلون سوا لإسقاط Bison. وفي نفس الوقت Sagat المجروح يستقبل زيارة من Bison وتوابعه الباقين.",
   "fid": "street-fighter",
-  "next_check": "2026-10-20",
-  "reason": "could not produce compliant output after 4 attempts (last: tanwin (ً/ٌ/ٍ) in spoken text — never tanwin in the spoken register)",
-  "written": "2026-10-17"
+  "fun_fact": {
+    "source": "ويكيبيديا",
+    "text": "هو ثالث فيلم روائي طويل بالحركة الحية مأخوذ عن سلسلة ألعاب الفيديو Street Fighter من Capcom"
+  },
+  "has_plot": true,
+  "qa": [
+    {
+      "a": "Ken ضربه بأول Flaming Hadouken له، فرجع Ryu لطبيعته.",
+      "q": "كيف انحلّت مشكلة Ryu بعد ما تحوّل لـ Dark Ryu؟"
+    },
+    {
+      "a": "أمر Cammy وجنوده يستعيدون الجسد.",
+      "q": "شو سوّى Bison بجسد Akuma؟"
+    },
+    {
+      "a": "Cammy دمّرت فان Chun-Li بقاذفة صواريخ، فما قدروا يلحقون.",
+      "q": "ليش ما قدر Chun-Li ومن معها يلاحقون Cammy؟"
+    },
+    {
+      "a": "طلعوا باليوم اللي بعده، وGuile وDhalsim وفّروا لهم وسيلة النقل.",
+      "q": "كيف طلعوا الأبطال من Shadaloo؟"
+    },
+    {
+      "a": "اتفقوا يشتغلون سوا لإسقاط Bison.",
+      "q": "شو اتفقوا عليه قبل ما يفترقون؟"
+    },
+    {
+      "a": "Sagat المجروح استقبل زيارة من Bison وتوابعه الباقين.",
+      "q": "شو صار مع Sagat بالأخير؟"
+    }
+  ],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "تقييم الجمهور على Rotten Tomatoes وصل إلى 80%"
+    },
+    {
+      "pos": false,
+      "text": "النقاد أعطوه 42% على Rotten Tomatoes من 93 نقد"
+    },
+    {
+      "pos": true,
+      "text": "الإجماع يمدح احترامه للمادة الأصلية وأسلوبه البصري القوي"
+    },
+    {
+      "pos": false,
+      "text": "القصة المفككة والكوميديا الطفولية نقطة ضعف واضحة عند النقاد"
+    }
+  ],
+  "synopsis_ar": "الفيلم أكشن كوميدي من إخراج Kitao Sakurai وكتابة Sakurai وT. J. Fixman، وهو ثالث فيلم روائي طويل بالحركة الحية مأخوذ عن سلسلة ألعاب Street Fighter. تتابع القصة Chun-Li وهي تجنّد Ryu وKen Masters للمشاركة في بطولة ومواجهة الدكتاتور M. Bison.",
+  "written": "2026-10-20"
 }

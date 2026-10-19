@@ -14,7 +14,6 @@
     "text": "إجماع النقاد يذكر Tom Cruise وAlejandro González Iñárritu باسمهما مع «ديغر»."
   },
   "has_plot": true,
-  "next_check": "2026-10-20",
   "qa": [
     {
       "a": "بعد ما ما قدر يخلّي الله يسوي أكل، رمى رماد قطته Maggie وبعدين قفز في المحيط اللي ساهم بتلويثه.",
@@ -67,6 +66,6 @@
       "text": "بعض النكات ما توصل بسلاسة بسبب تصميمه المتكلّف."
     }
   ],
-  "retry_reason": "claude -p failed: ",
-  "written": "2026-10-09"
+  "synopsis_ar": "ديغر كوميدي أسود ساخر من إخراج Alejandro G. Iñárritu، وكتب السيناريو معه Sabina Berman وAlexander Dinelaris Jr. وNicolás Giacobone، والقصة من تأليف Iñárritu وBerman وJez Butterworth. Tom Cruise يمثّل الدور الرئيسي، وياه Riz Ahmed وJohn Goodman وSandra Hüller وMichael Stuhlbarg وJesse Plemons.",
+  "written": "2026-10-20"
 }
