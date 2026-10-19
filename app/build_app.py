@@ -158,6 +158,17 @@ class App:
             self.count[s["film"]] = self.count.get(s["film"], 0) + 1
         self.films = sorted((fid for fid in k.showing if self.count.get(fid)), key=lambda f: (-self.count[f], title(k, f)))
         self.cins = sorted({s["cinema"] for s in self.shows})
+        # today's shows that already started (refresh.carry_past_today): greyed on the film and cinema pages only,
+        # cleaned like the Kit cleans its own shows; they never count, rank or make a page of their own
+        self.past = []
+        for s in data.get("past_today") or []:
+            if s.get("date") != k.today or s.get("cinema") not in k.cinemas or s.get("film") not in k.films:
+                continue
+            s = dict(s)
+            if s.get("book") and not re.match(r"^https?://", str(s["book"])): s["book"] = None
+            if s.get("ends") and not re.match(r"^\d{2}:\d{2}$", str(s["ends"])): s["ends"] = None
+            if isinstance(s.get("subs"), (list, tuple)): s["subs"] = "+".join(str(x) for x in s["subs"] if x) or None
+            self.past.append(s)
         self.people = data.get("people") or {}
         self.css_name = self.js_name = None
         self._ld, self._og = [], None
@@ -413,7 +424,7 @@ class App:
         trailer = (f'<button type="button" class="btn ghost" data-trailer="{E(f["trailer"])}">{svg("play")}الإعلان</button>' if f.get("trailer") else "")
         ask = (f'<button type="button" class="btn ghost" data-ask-open>{svg("chat")}اسأل الفيلم</button>')
         # where it shows: city tabs (the visitor's own first, script), each city its cinemas and their times
-        shows = [s for s in self.shows if s["film"] == fid]
+        shows = [s for s in self.shows + self.past if s["film"] == fid]
         cities = [c for c, _ in CITIES if any(k.cinemas[s["cinema"]].get("city") == c for s in shows)]
         sched = ""
         for c in cities:
@@ -459,7 +470,7 @@ class App:
     def cinema(self, cid):
         self.fresh()
         k, c = self.k, self.k.cinemas[cid]
-        shows = [s for s in self.shows if s["cinema"] == cid]
+        shows = [s for s in self.shows + self.past if s["cinema"] == cid]
         films = sorted({s["film"] for s in shows}, key=lambda f: (-self.count.get(f, 0), title(k, f)))
         rows = ""
         for fid in films:

@@ -102,3 +102,37 @@ def test_every_chain_wears_its_own_icon(live):
     h = read(out, app.k.cinemas[cid]["city"], cid, "index.html")
     assert f'<span class="cc-logo lg img ch-{app.k.cinemas[cid]["chain"]}"><img src="{app.logos[app.k.cinemas[cid]["chain"]]}"' in h
     assert '"logos":{' in h.replace("logos:{", '"logos":{')        # the script's marks read window.APP.logos
+
+
+def test_refresh_keeps_todays_started_shows_apart():
+    """Owner 2026-10-19: past times show grey. A chain's feed drops a session once it starts; the refresh keeps the
+    ones the previous run had in merged["past_today"], never in merged["shows"]."""
+    import refresh
+    films, cins = {"f1": {}}, {"c1": {}}
+    prev = {"shows": [{"cinema": "c1", "film": "f1", "date": "2026-10-19", "time": t, "hall": "Standard"} for t in ("14:00", "18:30", "20:00")]
+                     + [{"cinema": "c1", "film": "f1", "date": "2026-10-19", "time": "00:45", "hall": "Standard"},     # tonight, not past
+                        {"cinema": "c1", "film": "gone", "date": "2026-10-19", "time": "13:00", "hall": "Standard"},  # no longer a film
+                        {"cinema": "c1", "film": "f1", "date": "2026-10-18", "time": "15:00", "hall": "Standard"}],   # yesterday
+            "past_today": [{"cinema": "c1", "film": "f1", "date": "2026-10-19", "time": "11:00", "hall": "Standard"}]}
+    merged = {"films": films, "cinemas": cins, "shows": [{"cinema": "c1", "film": "f1", "date": "2026-10-19", "time": "20:00", "hall": "Standard"}]}
+    refresh.carry_past_today(merged, prev, "2026-10-19T19:40:00+04:00")
+    assert sorted(s["time"] for s in merged["past_today"]) == ["11:00", "14:00", "18:30"]
+    assert len(merged["shows"]) == 1
+    refresh.carry_past_today(merged, None, "2026-10-19T19:40:00+04:00")
+    assert merged["past_today"] == []
+
+
+def test_past_shows_appear_on_the_film_and_cinema_pages_only(tmp_path):
+    data = json.load(open(DATA, encoding="utf-8"))
+    app0 = build_app.App(json.loads(json.dumps(data)), load_discounts(DISC), Halls(os.path.join(ROOT, "halls.yaml")), str(tmp_path / "a"), "/", live=True)
+    s0 = next(s for s in app0.shows if s["date"] == app0.k.today)
+    past = dict(s0, time="04:30")
+    data["past_today"] = [past]
+    out = str(tmp_path / "b")
+    app = build_app.App(data, load_discounts(DISC), Halls(os.path.join(ROOT, "halls.yaml")), out, "/", live=True)
+    app.run()
+    assert app.count == app0.count and app.films == app0.films           # never counted
+    btn = f'data-d="{app.k.today}" data-t="04:30"'
+    assert btn in read(out, "film", past["film"], "index.html")
+    assert btn in read(out, app.k.cinemas[past["cinema"]]["city"], past["cinema"], "index.html")
+    assert btn not in read(out, "index.html")

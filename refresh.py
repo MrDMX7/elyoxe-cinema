@@ -212,6 +212,28 @@ def carry_released(merged: dict, previous: dict | None) -> None:
             film["released"] = rel
 
 
+def carry_past_today(merged: dict, previous: dict | None, now: str) -> None:
+    """merged["past_today"]: today's shows that have already started (owner 2026-10-19: «أوقات العرض اللي فاتت تطلع
+    رمادي»). A chain's feed drops a session once it starts, so each run keeps the started ones the previous run had
+    (its shows and its own past_today). Kept apart from merged["shows"]: only app/build_app.py reads it, as greyed
+    times, so counts, prices, history and every other page see exactly what they saw before."""
+    previous = previous or {}
+    today, hm = now[:10], now[11:16]
+    films, cinemas = merged.get("films") or {}, merged.get("cinemas") or {}
+    key = lambda s: (s.get("cinema"), s.get("film"), s.get("date"), s.get("time"), s.get("hall"))
+    live = {key(s) for s in merged.get("shows") or []}
+    out, seen = [], set()
+    for s in (previous.get("past_today") or []) + (previous.get("shows") or []):
+        t = s.get("time") or ""
+        started = s.get("date") == today and "04:00" <= t <= hm   # an after-midnight show (00:45) is tonight's, not past
+        k = key(s)
+        if not started or k in live or k in seen or s.get("film") not in films or s.get("cinema") not in cinemas:
+            continue
+        seen.add(k)
+        out.append(dict(s))
+    merged["past_today"] = out
+
+
 RANK_KEEP_DAYS = 2   # the rank's per-city day reads keep yesterday and later (pages/pulse.py: rank.json)
 
 
@@ -682,6 +704,7 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
     merged = normalize.merge(results, previous, now)
     apply_read_times(merged, read_at)       # W1-D3: each chain's own read time, not the run's start
     carry_released(merged, previous)
+    carry_past_today(merged, previous, now)
 
     # W0-P4 (legend §4.1 #31): films whose chains disagree on the runtime by more than
     # normalize.RUNTIME_GAP_MIN minutes -- the film uses the chains' median; the gap is only reported
