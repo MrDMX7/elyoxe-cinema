@@ -486,7 +486,7 @@ class App:
         name = f"{self.chain(cid)} — {self.cname(cid)}"
         body = f"""<div class="pg cinema">{self.bar(name)}
 <section class="chead">{self.mark(cid, "lg")}<div><h2>{E(self.cname(cid))}</h2>
-<p>{E(CITY.get(c.get("city"), ""))}{" · " + E(c.get("address")) if c.get("address") else ""}</p></div></section>
+<p>{E(CITY.get(c.get("city"), ""))}</p></div></section>
 <div class="acts">{f'<a class="btn ghost" href="{E(maps)}" target="_blank" rel="noopener">{svg("map")}Google Maps</a>' if maps else ""}{f'<a class="btn ghost" href="{E(waze)}" target="_blank" rel="noopener">{svg("map")}Waze</a>' if waze else ""}</div>
 <section class="sec">{self.dayswitch()}<div class="films">{rows}</div><p class="empty" data-past hidden>خلصت عروض اليوم هني، شوف بكرة.</p></section>
 </div>{self.sheet()}"""
