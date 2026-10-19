@@ -1,6 +1,14 @@
 {
-  "by": "skip",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "matloub-3a2eleyain",
-  "next_check": "2026-10-12",
-  "written": "2026-10-09"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-10-21",
+  "qa": [],
+  "reasons": [],
+  "synopsis_ar": "فاروق مدير سوبرماركت مشغول لدرجة إنه ما يقدر يهتم ببيته وزوجته مي وأولاده. يدخل أخو مي العاطل جلال ليعيش معهم، فتنقلب حياته رأس على عقب ويورّطه في مواقف تبدو بلا حل.",
+  "written": "2026-10-18"
 }

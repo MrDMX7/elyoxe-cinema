@@ -1,6 +1,14 @@
 {
-  "by": "skip",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "cats-in-the-museum-treasures-of-egypt",
-  "next_check": "2026-10-03",
-  "written": "2026-09-30"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-10-21",
+  "qa": [],
+  "reasons": [],
+  "synopsis_ar": "بعد سنتين من أحداث الجزء الأول، موريس الفار يحلم بمغامرات يديدة، بينما فنسنت وكليوباترا حصلوا على قطّيطين مشاغبين يتوقون للمغامرة. هالفيلم أنيميشن ومغامرة يكمّل حكاية القطط داخل المتحف.",
+  "written": "2026-10-18"
 }

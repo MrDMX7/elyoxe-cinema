@@ -1,6 +1,14 @@
 {
-  "by": "skip",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "baththa",
-  "next_check": "2026-10-03",
-  "written": "2026-09-30"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-10-21",
+  "qa": [],
+  "reasons": [],
+  "synopsis_ar": "Baththa تدور أحداثه سنة 1986 في Madras، حين يحبس طفل خجول في الثامنة من عمره، بالخطأ، مجرما يخافه الناس داخل حمّام مدرسة. ومع تحوّل الرجل إلى الجوع والعزلة، تنشأ بينهما صداقة ما توقعها أحد، وتغيّر حياة الاثنين.",
+  "written": "2026-10-18"
 }

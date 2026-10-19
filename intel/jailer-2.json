@@ -1,6 +1,14 @@
 {
-  "by": "skip",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "jailer-2",
-  "next_check": "2026-10-20",
-  "written": "2026-10-17"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-10-22",
+  "qa": [],
+  "reasons": [],
+  "synopsis_ar": "Jailer 2 يتابع السجّان المتقاعد Tiger Muthuvel Pandian لما تهدد حياته الهادية خطر من عالم الجريمة السفلي، فيضطر يرجع لأسلوبه القاسي عشان يحمي عائلته وإرثه. من إخراج Nelson Dilipkumar، ومن تمثيل Rajinikanth وMohanlal وShivarajkumar وVijay Sethupathi وYogi Babu وMithun Chakraborty.",
+  "written": "2026-10-19"
 }

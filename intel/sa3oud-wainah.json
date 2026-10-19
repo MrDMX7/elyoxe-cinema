@@ -1,6 +1,14 @@
 {
-  "by": "skip",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "sa3oud-wainah",
-  "next_check": "2026-10-20",
-  "written": "2026-10-17"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-10-22",
+  "qa": [],
+  "reasons": [],
+  "synopsis_ar": "Sa3oud Wainah إثارة مدتها 80 دقيقة، وفيه خدعة سحرية تغلط بشكل مرعب. الأخوين يحاولون يعيدون الخدعة بعد سنين من تعلّمها من أبوهم.",
+  "written": "2026-10-19"
 }
