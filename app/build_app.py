@@ -173,6 +173,14 @@ class App:
     def chain(self, cid):
         return self.k.h.chain_name(self.k.cinemas[cid]["chain"], "ar")
 
+    def mark(self, cid, cls=""):
+        """The chain's own app icon (app/logos/<chain>.webp, owner 2026-10-19) in its square; the coloured name
+        tile when a chain has none."""
+        ch, name = self.k.cinemas[cid]["chain"], self.chain(cid)
+        src = self.logos.get(ch)
+        inner = f'<img src="{E(src)}" alt="{E(name)}" width="64" height="64" decoding="async">' if src else E(name)
+        return f'<span class="cc-logo{" " + cls if cls else ""}{" img" if src else ""} ch-{E(ch)}">{inner}</span>'
+
     def cname(self, cid):
         """«فوكس — الجيمي مول» → the mall alone on a card under its chain («الجيمي مول»)."""
         n = self.k.cname(cid, "ar")
@@ -245,7 +253,7 @@ class App:
 <script>(function(){{addEventListener("pagereveal",function(e){{var t=e.viewTransition,a=window.navigation&&navigation.activation;if(t&&a&&a.from&&a.entry&&a.navigationType==="traverse"&&a.entry.index<a.from.index)document.documentElement.dataset.nav="pop";else if(t)document.documentElement.dataset.nav="push";if(t)t.finished.finally(function(){{delete document.documentElement.dataset.nav}})}});addEventListener("pageswap",function(e){{var t=e.viewTransition,a=e.activation;if(t&&a&&a.navigationType==="traverse"&&a.entry&&a.from&&a.entry.index<a.from.index)document.documentElement.dataset.nav="pop";else if(t)document.documentElement.dataset.nav="push"}})}})()</script>
 </head><body>{body}{self.table()}
 <div class="scrim" data-scrim hidden></div>
-<script>window.APP={{base:"{self.base}",ask:"{ASK_API}",today:"{self.k.today}",tomorrow:"{self.k.tomorrow}"}}</script>
+<script>window.APP={{base:"{self.base}",ask:"{ASK_API}",today:"{self.k.today}",tomorrow:"{self.k.tomorrow}",logos:{json.dumps(self.logos)}}}</script>
 <script src="{self.base}assets/{self.js_name}" defer></script>
 </body></html>"""
         p = os.path.join(self.out, *[x for x in path.replace(self.base, "", 1).split("/") if x], "index.html")
@@ -276,7 +284,7 @@ class App:
         lat, lng = c.get("lat"), c.get("lng")
         geo = f' data-lat="{lat:.5f}" data-lng="{lng:.5f}"' if lat is not None and lng is not None else ""
         return (f'<a class="ccard" href="{self.u("c", cid)}" data-city="{E(c.get("city") or "")}"{geo}>'
-                f'<span class="cc-logo ch-{E(c["chain"])}">{E(self.chain(cid))}</span>'
+                + self.mark(cid) +
                 f'<span class="cc-b"><b>{E(self.cname(cid))}</b><small>{E(CITY.get(c.get("city"), ""))}'
                 f'<span class="cc-km" data-km></span></small></span>'
                 f'<span class="cc-n"><b>{n}</b><small>فيلم اليوم</small></span></a>')
@@ -414,7 +422,7 @@ class App:
                 cs = [s for s in shows if s["cinema"] == cid]
                 cc = k.cinemas[cid]
                 geo = f' data-lat="{cc["lat"]:.5f}" data-lng="{cc["lng"]:.5f}"' if cc.get("lat") is not None and cc.get("lng") is not None else ""
-                blocks += (f'<div class="cblock" data-cin="{E(cid)}"{geo}><a class="cb-h" href="{self.u("c", cid)}"><span class="cc-logo sm ch-{E(cc["chain"])}">{E(self.chain(cid))}</span>'
+                blocks += (f'<div class="cblock" data-cin="{E(cid)}"{geo}><a class="cb-h" href="{self.u("c", cid)}">{self.mark(cid, "sm")}'
                            f'<b>{E(self.cname(cid))}</b><span class="cc-km" data-km></span></a><div class="times">{self.times(cs)}</div></div>')
             sched += f'<div class="city" data-city="{c}" hidden>{blocks}</div>'
         ctabs = "".join(f'<button type="button" class="chip" data-ctab="{c}">{CITY[c]}</button>' for c in cities)
@@ -466,7 +474,7 @@ class App:
         waze = f"https://waze.com/ul?ll={ll}&navigate=yes" if ll else ""
         name = f"{self.chain(cid)} — {self.cname(cid)}"
         body = f"""<div class="pg cinema">{self.bar(name)}
-<section class="chead"><span class="cc-logo lg ch-{E(c["chain"])}">{E(self.chain(cid))}</span><div><h2>{E(self.cname(cid))}</h2>
+<section class="chead">{self.mark(cid, "lg")}<div><h2>{E(self.cname(cid))}</h2>
 <p>{E(CITY.get(c.get("city"), ""))}{" · " + E(c.get("address")) if c.get("address") else ""}</p></div></section>
 <div class="acts">{f'<a class="btn ghost" href="{E(maps)}" target="_blank" rel="noopener">{svg("map")}Google Maps</a>' if maps else ""}{f'<a class="btn ghost" href="{E(waze)}" target="_blank" rel="noopener">{svg("map")}Waze</a>' if waze else ""}</div>
 <section class="sec">{self.dayswitch()}<div class="films">{rows}</div><p class="empty" data-past hidden>خلصت عروض اليوم هني، شوف بكرة.</p></section>
@@ -500,6 +508,14 @@ class App:
         self.css_name = f"app.{hashlib.sha1(css.encode()).hexdigest()[:10]}.css"
         self.js_name = f"app.{hashlib.sha1(js.encode()).hexdigest()[:10]}.js"
         open(os.path.join(a, self.css_name), "w", encoding="utf-8").write(css)
+        self.logos = {}                          # chain -> its icon, content-hashed like the rest of assets/
+        os.makedirs(os.path.join(a, "logos"), exist_ok=True)
+        for fn in sorted(os.listdir(os.path.join(HERE, "logos"))):
+            if fn.endswith(".webp"):
+                raw = open(os.path.join(HERE, "logos", fn), "rb").read()
+                name = f"{fn[:-5]}.{hashlib.sha1(raw).hexdigest()[:10]}.webp"
+                open(os.path.join(a, "logos", name), "wb").write(raw)
+                self.logos[fn[:-5]] = f"{self.base}assets/logos/{name}"
         open(os.path.join(a, self.js_name), "w", encoding="utf-8").write(js)
 
     def run(self):

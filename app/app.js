@@ -22,6 +22,11 @@
   /* 12-hour times (owner 2026-10-18): «16:25» → «4:25» and «مساء»; the dirham sign from the page's <template id="aed"> */
   function t12(t) { var h = +t.slice(0, 2), m = t.slice(3, 5); return [(h % 12 || 12) + ":" + m, h < 4 ? "بالليل" : h < 12 ? "الصبح" : h === 12 ? "الظهر" : "مساء"]; }
   var AED = (q("#aed") || {}).innerHTML || " درهم";
+  /* a chain's mark beside a cinema's name: its own app icon (window.APP.logos), else the coloured name tag */
+  function chm(ch, name) {
+    var src = A.logos && A.logos[ch];
+    return src ? '<img class="chl" src="' + esc(src) + '" alt="' + esc(name) + '" width="20" height="20">' : '<i class="chm ch-' + esc(ch) + '">' + esc(name) + "</i>";
+  }
   function vt(fn) { if (d.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) d.startViewTransition(fn); else fn(); }
 
   /* distance (km) from the visitor, when they let us know where they are (kept for the session only) */
@@ -136,7 +141,7 @@
         var f = S.f[x.r[1]], mins = Math.max(0, Math.round((x.st - now) / 60e3)), tt = t12(x.r[2]);
         /* the time card: the hour large, its part of the day under it; «بعد N د» as a badge that glows under 15 minutes */
         var pst = f[2] ? '<img class="sr-p" src="' + esc(f[2]) + '" alt="" loading="lazy">' : "";
-        var mark = '<i class="chm ch-' + esc(x.c[3]) + '">' + esc(x.c[4]) + "</i>";
+        var mark = chm(x.c[3], x.c[4]);
         return '<a class="sr" href="' + A.base + "f/" + f[0] + '/"><span class="tcard"><b>' + tt[0] + "</b><small>" + tt[1] + "</small></span>" + pst + '<span class="sr-b"><b>' + esc(f[1]) + "</b><small>" + mark + esc(x.c[1]) +
           '</small><span class="sr-m"><em class="eta' + (mins < 15 ? " hot" : "") + '">' + (mins < 1 ? "يبدأ الحين" : "بعد " + mins + " د") + "</em>" + (x.r[3] ? '<b class="pr">' + x.r[3] + AED + "</b>" : "") + "</span></span></a>";
       }).join("");
@@ -217,7 +222,7 @@
       var tt = t12(best.r[1]), mins = Math.round((best.st - now) / 60e3), pr = minOf(best.r);
       var eta = mins < 60 ? "بعد " + mins + " د" : (best.r[0] === A.today ? "اليوم" : "بكرة");
       q("[data-nearest-row]", nearest).innerHTML = '<button type="button" class="sr" data-open="' + best.i + '"><span class="tcard"><b>' + tt[0] + "</b><small>" + tt[1] +
-        '</small></span><span class="sr-b"><b><i class="chm ch-' + esc(best.c[2]) + '">' + esc(best.c[3]) + "</i> " + esc(best.c[0]) + "</b>" + (best.r[3] ? "<small>" + esc(best.r[3]) + "</small>" : "") +
+        '</small></span><span class="sr-b"><b>' + chm(best.c[2], best.c[3]) + " " + esc(best.c[0]) + "</b>" + (best.r[3] ? "<small>" + esc(best.r[3]) + "</small>" : "") +
         '<span class="sr-m"><em class="eta' + (mins < 15 ? " hot" : "") + '">' + eta + "</em>" + (pr ? '<b class="pr">' + pr + AED + "</b>" : "") + "</span></span></button>";
       nearest.hidden = false;
     };

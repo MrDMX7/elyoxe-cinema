@@ -313,3 +313,6 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .chm{flex:none;font-style:normal;font-size:10px;font-weight:700;line-height:1;color:#fff;padding:3px 6px;border-radius:5px;background:#5a4c40}
 .chm.ch-vox{background:#C8102E}.chm.ch-reel{background:#1A1A1A}.chm.ch-novo{background:#5B2C83}.chm.ch-star{background:#D4A017;color:#241a00}
 .chm.ch-cineroyal{background:#8C1C2E}.chm.ch-roxy{background:#0E5B5B}.chm.ch-cinemacity{background:#E05A1E}
+/* the chains' own app icons (owner 2026-10-19): the square is the icon; the tag is the fallback */
+.cc-logo.img{padding:0;overflow:hidden;background:none}.cc-logo.img img{display:block;inline-size:100%;block-size:100%;object-fit:cover}
+.chl{flex:none;inline-size:20px;block-size:20px;border-radius:5px;vertical-align:-5px}

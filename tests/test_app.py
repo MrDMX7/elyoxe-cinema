@@ -88,3 +88,17 @@ def test_deploy_builds_the_app_after_the_old_site_and_falls_back_to_it():
 def test_the_app_script_parses():
     r = subprocess.run(["node", "--check", os.path.join(ROOT, "app", "app.js")], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
+
+
+def test_every_chain_wears_its_own_icon(live):
+    """Owner 2026-10-19: the chain's logo beside each cinema — its app icon from app/logos/, content-hashed."""
+    out, app = live
+    chains = {c["chain"] for c in app.k.cinemas.values()}
+    assert chains <= set(app.logos), chains - set(app.logos)
+    for url in app.logos.values():
+        assert re.fullmatch(r"/assets/logos/[a-z]+\.[0-9a-f]{10}\.webp", url)
+        assert os.path.getsize(os.path.join(out, *url.lstrip("/").split("/"))) < 8000
+    cid = app.cins[0]
+    h = read(out, app.k.cinemas[cid]["city"], cid, "index.html")
+    assert f'<span class="cc-logo lg img ch-{app.k.cinemas[cid]["chain"]}"><img src="{app.logos[app.k.cinemas[cid]["chain"]]}"' in h
+    assert '"logos":{' in h.replace("logos:{", '"logos":{')        # the script's marks read window.APP.logos
