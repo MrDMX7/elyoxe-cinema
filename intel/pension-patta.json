@@ -1,6 +1,14 @@
 {
-  "by": "skip",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "pension-patta",
-  "next_check": "2026-10-03",
-  "written": "2026-09-30"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-10-22",
+  "qa": [],
+  "reasons": [],
+  "synopsis_ar": "بعد وفاة جندي غوركا سابق، يكتشف ابنه راجان أن وثيقة معاش العائلة تحمل اسم امرأة أخرى، هي الزوجة الأولى لأبيه. بحثه عن هالمرأة الغامضة يأخذه في رحلة عاطفية.",
+  "written": "2026-10-19"
 }
