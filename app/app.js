@@ -194,6 +194,7 @@
         var st = startOf(b.dataset.d, b.dataset.t), past = st < now - 10 * 60e3;
         b.hidden = b.dataset.d !== day;
         b.classList.toggle("past", past);
+        b.disabled = past;
         b.classList.toggle("soon", !past && st < soon);
         if (!b.hidden && !past) left++;
       });
@@ -278,7 +279,7 @@
     };
     d.addEventListener("click", function (e) {
       var b = e.target.closest && e.target.closest(".tbtn");
-      if (b) { open(b); return; }
+      if (b) { if (!b.classList.contains("past")) open(b); return; }
       var o = e.target.closest && e.target.closest("[data-open]");
       if (o) { var tb2 = q('.tbtn[data-i="' + o.dataset.open + '"]'); if (tb2) { if (sheet && !sheet.hidden) { sheet.hidden = true; scrim.hidden = true; history.back(); } setTimeout(function () { open(tb2); }, sheet && !sheet.hidden ? 60 : 0); } return; }
       if (e.target.closest && (e.target.closest("[data-tk-close]") || e.target === scrim)) close();

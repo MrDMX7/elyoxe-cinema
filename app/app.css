@@ -172,7 +172,9 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .tbtn b{font:500 16px var(--mono)}
 .tbtn small{font-size:11px;color:var(--door);max-inline-size:96px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tbtn i{font:500 12px var(--mono);color:var(--saff)}
-.tbtn.past{display:none}
+/* a time that has gone stays in today's list, grey and not pressable (owner 2026-10-19) */
+.tbtn.past{background:transparent;border-color:transparent;color:var(--stone);opacity:.55;cursor:default}
+.tbtn.past small,.tbtn.past i{color:inherit}
 .tbtn.soon{border-color:var(--door)}
 .tbtn.on{background:var(--velvet);border-color:var(--velvet);color:var(--on)}
 .tbtn.on small,.tbtn.on i{color:var(--on)}
