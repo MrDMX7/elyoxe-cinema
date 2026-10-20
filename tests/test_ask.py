@@ -100,3 +100,23 @@ def test_an_unreadable_question_is_refused_before_any_cache_or_model(monkeypatch
     assert r["statusCode"] == 400
     ev["headers"]["origin"] = "https://evil.example"
     assert h.handler(ev, None)["statusCode"] == 403
+
+
+def test_the_facts_carry_our_own_schedule(site):
+    """Owner 2026-10-20: «فيه IMAX؟», «وين أرخص تذكرة؟», «فيه ترجمة عربي؟» come from our own shows."""
+    d = json.load(open(DATA, encoding="utf-8"))
+    fid = d["shows"][0]["film"]
+    sc = json.loads(read(site, "data", "ask", fid + ".json"))["schedule_uae"]
+    assert sc["as_of"]
+    days = [sc[k] for k in ("today", "tomorrow") if k in sc]
+    assert days and all(x["shows_to_come"] > 0 and x["next_show"] and x["last_show"] for x in days)
+    if "cheapest" in sc:
+        assert sc["cheapest"]["aed"] > 0 and sc["cheapest"]["cinema"]
+
+
+def test_a_schedule_answer_lasts_until_the_cinema_day_ends(monkeypatch):
+    import time as _t
+    h = _handler(monkeypatch)
+    end = h.until_4am()
+    assert 0 < end - _t.time() <= 24 * 3600
+    assert h.datetime.fromtimestamp(end, h.DUBAI).hour == 4

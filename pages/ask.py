@@ -31,6 +31,44 @@ CHIPS = {
 }
 
 
+def _late(t):
+    """A show's place in its cinema day: 00:45 is that night's last show, after 23:30."""
+    return (t < "04:00", t)
+
+
+def schedule(site, shows):
+    """Our own showing facts (owner 2026-10-20): per day, how many shows and the first and last; the hall formats and
+    in how many cinemas; the subtitle and audio languages; the cheapest seat and where. Times are 24h UAE time, and the
+    day's counts are what was still to come when the data was read (as_of)."""
+    out = {"as_of": str(site.d.get("generated") or "")[:16].replace("T", " ")}
+    for label, day in (("today", site.today), ("tomorrow", site.tomorrow)):
+        ts = sorted((s["time"] for s in shows if s["date"] == day), key=_late)
+        if ts:
+            out[label] = {"date": day, "shows_to_come": len(ts), "next_show": ts[0], "last_show": ts[-1]}
+    halls = {}
+    for s in shows:
+        h = site.hname(s, "en")
+        if h and site.hkey(s) != "Standard":
+            halls.setdefault(h, set()).add(s["cinema"])
+    if halls:
+        out["special_halls_cinema_count"] = {h: len(c) for h, c in sorted(halls.items(), key=lambda x: -len(x[1]))}
+    subs = sorted({k for s in shows for k in str(s.get("subs") or "").split("+") if k})
+    if subs:
+        out["subtitles"] = lang_words("+".join(subs), "en")
+    langs = sorted({s.get("lang") for s in shows if s.get("lang")})
+    if langs:
+        out["audio"] = lang_words("+".join(langs), "en")
+    best = None
+    for s in shows:
+        for pr in s.get("prices") or []:
+            if (pr.get("aed") or 0) > 0 and (best is None or pr["aed"] < best[0]):
+                best = (pr["aed"], s)
+    if best:
+        out["cheapest"] = {"aed": float(money(best[0])), "cinema": site.cname(best[1]["cinema"], "en"),
+                           "hall": site.hname(best[1], "en"), "date": best[1]["date"], "time": best[1]["time"]}
+    return out if len(out) > 1 else {}
+
+
 def facts(site, fid, ppl=None):
     """The one JSON the backend answers from (all English keys; values in the site's own words)."""
     f = site.films[fid]
@@ -62,6 +100,7 @@ def facts(site, fid, ppl=None):
         "showing_in_uae": {"cities": cities, "cinemas": len({s["cinema"] for s in shows}),
                            "chains": sorted({site.cinemas[s["cinema"]]["chain"] for s in shows}),
                            "from_aed": float(money(min(prices))) if prices else None} if shows else None,
+        "schedule_uae": schedule(site, shows) or None,
         "qid": (f.get("wikidata") or {}).get("qid"),
     }
     return {k: v for k, v in out.items() if v not in (None, [], {}, "")}

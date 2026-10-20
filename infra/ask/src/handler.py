@@ -1,6 +1,7 @@
 """«اسأل الفيلم» — POST /ask (owner 2026-10-18): a visitor asks one film a question; Claude answers from that film's
-own facts (the site's /data/ask/<fid>.json), its whole Wikipedia article (plot, cast, production, music, release,
-reception, box office — English, else Arabic) and its Wikidata cast table (actor, character, citizenship), nothing else.
+own facts (the site's /data/ask/<fid>.json, with our own schedule: shows, halls, subtitles, cheapest seat), its whole
+Wikipedia article (plot, cast, production, music, release, reception, box office — English, else Arabic) and its
+Wikidata (cast with characters and citizenship; series, sequels, based on, country, crew, awards, budget), nothing else.
 (2026-10-20: the plot section alone could not answer «أمتع لقطة» or «كم شخصية عربية».)
 
 Request  {"fid": "street-fighter", "q": "شو نوع الفيلم؟", "lang": "ar"|"en", "uid": "<optional daily id>"}
@@ -210,18 +211,28 @@ def _ids(claims, prop):
     return [(((c.get("mainsnak") or {}).get("datavalue") or {}).get("value") or {}).get("id") for c in claims.get(prop) or []]
 
 
-def cast_of(fid, qid):
-    """The film's cast from Wikidata — [{"actor", "character", "citizenship"}] — cached 7 days; [] when none."""
-    k = f"cast#{fid}"
+WD_ITEMS = {"P179": "series", "P155": "follows", "P156": "followed_by", "P144": "based_on", "P495": "country_of_origin",
+            "P364": "original_language", "P57": "director", "P58": "screenwriter", "P86": "composer",
+            "P272": "production_company", "P915": "filming_location", "P166": "awards"}
+WD_AMOUNTS = {"P2130": "budget", "P2142": "box_office"}
+
+
+def wikidata_of(fid, qid):
+    """The film's Wikidata: its cast ([{"actor", "character", "citizenship"}]) and its film facts — series, what it
+    follows and what follows it, what it is based on, country and original language, director, writers, composer,
+    production companies, filming locations, awards, budget and box office (owner 2026-10-20: «جزء ثاني؟ لازم أشوف
+    الأول؟», «مأخوذ عن رواية؟»). Cached 7 days; {} when none."""
+    k = f"wd#{fid}"
     hit = TABLE.get_item(Key={"k": k}).get("Item")
     if hit:
-        return json.loads(hit.get("v") or "[]")
-    rows = []
+        return json.loads(hit.get("v") or "{}")
+    out = {}
     if qid and re.match(r"^Q\d+$", str(qid)):
         try:
             film = _labels([qid]).get(qid) or {}
+            claims = film.get("claims") or {}
             members = []
-            for c in (film.get("claims") or {}).get("P161") or []:
+            for c in claims.get("P161") or []:
                 actor = (((c.get("mainsnak") or {}).get("datavalue") or {}).get("value") or {}).get("id")
                 role = None
                 for qv in (c.get("qualifiers") or {}).get("P453") or []:
@@ -229,17 +240,52 @@ def cast_of(fid, qid):
                 if actor:
                     members.append((actor, role))
             members = members[:40]
-            people = _labels([a for a, _ in members] + [r for _, r in members if r])
+            item_ids = {p: [i for i in _ids(claims, p) if i][:12] for p in WD_ITEMS}
+            units = []
+            for p in WD_AMOUNTS:
+                for c in claims.get(p) or []:
+                    u = str((((c.get("mainsnak") or {}).get("datavalue") or {}).get("value") or {}).get("unit") or "")
+                    if "/Q" in u:
+                        units.append(u.rsplit("/", 1)[1])
+            people = _labels([a for a, _ in members] + [r for _, r in members if r]
+                             + [i for ids in item_ids.values() for i in ids] + units)
             countries = _labels([c for a, _ in members for c in _ids((people.get(a) or {}).get("claims") or {}, "P27")])
+            cast = []
             for a, r in members:
                 pa = people.get(a) or {}
-                rows.append({"actor": pa.get("label"), "character": (people.get(r) or {}).get("label") if r else None,
+                cast.append({"actor": pa.get("label"), "character": (people.get(r) or {}).get("label") if r else None,
                              "citizenship": [(countries.get(c) or {}).get("label") for c in _ids(pa.get("claims") or {}, "P27") if c] or None})
+            if cast:
+                out["cast"] = cast
+            for p, name in WD_ITEMS.items():
+                vals = [(people.get(i) or {}).get("label") for i in item_ids[p]]
+                vals = [v for v in vals if v]
+                if vals:
+                    out[name] = vals
+            for p, name in WD_AMOUNTS.items():
+                vals = []
+                for c in claims.get(p) or []:
+                    v = ((c.get("mainsnak") or {}).get("datavalue") or {}).get("value") or {}
+                    u = str(v.get("unit") or "")
+                    unit = (people.get(u.rsplit("/", 1)[1]) or {}).get("label") if "/Q" in u else None
+                    if v.get("amount"):
+                        vals.append(f'{v["amount"].lstrip("+")} {unit or ""}'.strip())
+                if vals:
+                    out[name] = vals
         except Exception as e:  # noqa: BLE001
-            print(json.dumps({"cast_error": str(e)[:200], "fid": fid}))
-            return []
-    TABLE.put_item(Item={"k": k, "v": json.dumps(rows, ensure_ascii=False), "ttl": ttl(7)})
-    return rows
+            print(json.dumps({"wikidata_error": str(e)[:200], "fid": fid}))
+            return {}
+    TABLE.put_item(Item={"k": k, "v": json.dumps(out, ensure_ascii=False), "ttl": ttl(7)})
+    return out
+
+
+def until_4am():
+    """Seconds-since-epoch of the next 04:00 in Dubai: the end of a cinema day."""
+    now = datetime.now(DUBAI)
+    end = now.replace(hour=4, minute=0, second=0, microsecond=0)
+    if end <= now:
+        end += timedelta(days=1)
+    return int(end.timestamp())
 
 
 def bump(k, field="n", by=1, days=3):
@@ -249,9 +295,9 @@ def bump(k, field="n", by=1, days=3):
     return int(r["Attributes"][field])
 
 
-def context_block(facts, cast, article):
+def context_block(facts, wd, article):
     lines = ["<facts>", json.dumps(facts, ensure_ascii=False), "</facts>"]
-    lines += ['<cast source="Wikidata">', json.dumps(cast, ensure_ascii=False) if cast else "(no cast table)", "</cast>"]
+    lines += ["<wikidata>", json.dumps(wd, ensure_ascii=False) if wd else "(nothing)", "</wikidata>"]
     lines += ["<article>", article or "(no article available yet)", "</article>"]
     return "\n".join(lines)
 
@@ -299,7 +345,7 @@ def handler(event, _ctx):
     except Exception:
         return reply(404, origin, {"error": "film"})
     qid = facts.pop("qid", None) or find_qid(fid, facts.get("title"), str(facts.get("uae_release_date") or facts.get("year") or "")[:4])
-    article, cast = article_of(fid, qid), cast_of(fid, qid)
+    article, wd = article_of(fid, qid), wikidata_of(fid, qid)
 
     t0 = time.time()
     try:
@@ -309,7 +355,7 @@ def handler(event, _ctx):
             # the film's context is its own cached block: a second question on the same film within minutes reads it
             # from the cache (it is long: the whole article)
             system=[{"type": "text", "text": SYSTEM},
-                    {"type": "text", "text": context_block(facts, cast, article), "cache_control": {"type": "ephemeral"}}],
+                    {"type": "text", "text": context_block(facts, wd, article), "cache_control": {"type": "ephemeral"}}],
             messages=[{"role": "user", "content": f"<lang>{lang}</lang>\n<question>{q}</question>"}],
         )
     except anthropic.RateLimitError:
@@ -338,6 +384,8 @@ def handler(event, _ctx):
     bump(f"tok#{day}", "out", u.output_tokens, days=40)
     # «ما عندنا» is kept a day only: the film's article may arrive (a new link, a new section) and the question deserves
     # a fresh try; a real answer is kept a month
-    TABLE.put_item(Item={"k": key, "v": json.dumps(out, ensure_ascii=False), "q": q[:240], "ttl": ttl(30 if out.get("known") else 1)})
+    # an answer from our showing facts (times, halls, prices) holds only for this cinema day
+    exp = ttl(30) if out.get("known") and out.get("source") in ("plot", "article") else (until_4am() if out.get("known") else ttl(1))
+    TABLE.put_item(Item={"k": key, "v": json.dumps(out, ensure_ascii=False), "q": q[:240], "ttl": exp})
     out["cached"] = False
     return reply(200, origin, out)
