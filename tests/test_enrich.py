@@ -625,3 +625,32 @@ def test_fold_merged_moves_or_deletes(vdir):
     assert not (d / "fall-2.json").exists() and (d / "fall-2-deadpoint.json").exists()
     assert _read(d, "moana")["verdict"] == "mixed" and _read(d, "moana")["fid"] == "moana"
     assert _read(d, "the-vvaan-force-of-the-forest")["verdict"] == "skip"
+
+
+def test_an_undated_new_film_matches_only_by_exact_title_and_a_recent_imdb_id():
+    """2026-10-20: Jailer 2's Wikidata item (Q133255153) has no publication date, so the year filter dropped it and the
+    film went without its article. An undated item counts only with its exact English title and a recent IMDb id; an
+    old id, a near title, or a dated accepted-year film beside it all keep the old behaviour."""
+    film = {"id": "Q11424"}
+
+    def ent(label, imdb=None, year=None):
+        c = {"P31": [{"mainsnak": {"datavalue": {"value": film}}}]}
+        if imdb:
+            c["P345"] = [{"mainsnak": {"datavalue": {"value": imdb}}}]
+        if year:
+            c["P577"] = [{"mainsnak": {"datavalue": {"value": {"time": f"+{year}-01-01T00:00:00Z"}}}}]
+        return {"labels": {"en": {"value": label}}, "claims": c}
+
+    by_id = {"Q_NEW": ent("Jailer 2", "tt33318732"), "Q_OLDID": ent("Jailer 2", "tt0123456"),
+             "Q_NEAR": ent("Jailer 2: Rise", "tt33318733"), "Q_DATED": ent("Jailer 2", "tt30000000", 2026)}
+    enrich_mod._wikidata_entities = lambda ids: {i: by_id[i] for i in ids if i in by_id}
+    hit = lambda q: {"id": q, "description": "film"}
+    yrs = {datetime.now().year, datetime.now().year - 1}
+    try:
+        assert enrich_mod._best_film_in_hits([hit("Q_NEW")], yrs, "Jailer 2") == "Q_NEW"
+        assert enrich_mod._best_film_in_hits([hit("Q_OLDID")], yrs, "Jailer 2") is None
+        assert enrich_mod._best_film_in_hits([hit("Q_NEAR")], yrs, "Jailer 2") is None
+        assert enrich_mod._best_film_in_hits([hit("Q_NEW"), hit("Q_DATED")], yrs, "Jailer 2") == "Q_DATED"
+        assert enrich_mod._best_film_in_hits([hit("Q_NEW")], {2019}, "Jailer 2") is None      # an old year_hint
+    finally:
+        enrich_mod._wikidata_entities = _real_wikidata_entities

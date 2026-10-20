@@ -1,8 +1,10 @@
 """«اسأل الفيلم» — POST /ask (owner 2026-10-18): a visitor asks one film a question; Claude answers from that film's
-own facts (the site's /data/ask/<fid>.json) and its English Wikipedia plot, nothing else.
+own facts (the site's /data/ask/<fid>.json), its whole Wikipedia article (plot, cast, production, music, release,
+reception, box office — English, else Arabic) and its Wikidata cast table (actor, character, citizenship), nothing else.
+(2026-10-20: the plot section alone could not answer «أمتع لقطة» or «كم شخصية عربية».)
 
 Request  {"fid": "street-fighter", "q": "شو نوع الفيلم؟", "lang": "ar"|"en", "uid": "<optional daily id>"}
-Answer   {"answer": "...", "spoiler": bool, "known": bool, "source": "plot"|"facts"|"none", "cached": bool}
+Answer   {"answer": "...", "spoiler": bool, "known": bool, "source": "plot"|"article"|"facts"|"none", "cached": bool}
 
 Honesty: the model may answer only from the context block; anything not in it is «ما عندنا هالمعلومة» (known=false),
 never a guess. spoiler=true when the answer reveals events past the premise — the page hides it behind a tap.
@@ -34,7 +36,9 @@ DAILY_CAP = int(os.environ.get("DAILY_CAP", "1500"))
 UID_CAP = int(os.environ.get("UID_CAP", "40"))
 UA = {"User-Agent": "elyoxe-cinema-ask/1.0 (+https://cinema.elyoxe.com)"}
 FID = re.compile(r"^[a-z0-9][a-z0-9-]{0,99}$")
-PLOT_HEADINGS = {"plot", "plot summary", "synopsis"}
+DROP_SECTIONS = {"references", "external links", "notes", "see also", "further reading", "footnotes", "citations",
+                 "bibliography", "sources", "المراجع", "وصلات خارجية", "انظر أيضا", "مصادر", "ملاحظات"}
+ARTICLE_MAX = 40000
 SYSTEM = open(os.path.join(os.path.dirname(__file__), "system.txt"), encoding="utf-8").read()
 LEX = json.load(open(os.path.join(os.path.dirname(__file__), "lexicon.json"), encoding="utf-8"))
 WORD = re.compile(r"[\u0621-\u064A\u0671-\u06D3]+")   # Arabic letters only: \u00AB\u060C\u00BB and \u00AB\u061F\u00BB sit in the same block
@@ -51,7 +55,7 @@ _client = None
 
 SCHEMA = {"type": "object", "additionalProperties": False, "required": ["answer", "spoiler", "known", "source"],
           "properties": {"answer": {"type": "string"}, "spoiler": {"type": "boolean"}, "known": {"type": "boolean"},
-                         "source": {"type": "string", "enum": ["plot", "facts", "none"]}}}
+                         "source": {"type": "string", "enum": ["plot", "article", "facts", "none"]}}}
 
 
 def cors(origin):
@@ -107,43 +111,135 @@ def get_json(url, params=None):
         return json.loads(r.read().decode("utf-8"))
 
 
-def plot_of(fid, title):
-    """The English Wikipedia «Plot» section as plain text (cached 7 days, "" when there is none)."""
-    if not title:
-        return ""
-    k = f"plot#{fid}"
+def wiki_title(qid):
+    """(lang, page title) of the film's Wikipedia article — English first, else Arabic — from its Wikidata sitelinks."""
+    if not qid or not re.match(r"^Q\d+$", str(qid)):
+        return None, None
+    try:
+        ent = (get_json("https://www.wikidata.org/w/api.php", {"action": "wbgetentities", "ids": qid, "props": "sitelinks",
+                                                              "format": "json"}).get("entities") or {}).get(qid) or {}
+        links = ent.get("sitelinks") or {}
+        for lang in ("en", "ar"):
+            t = (links.get(lang + "wiki") or {}).get("title")
+            if t:
+                return lang, t
+    except Exception:  # noqa: BLE001
+        pass
+    return None, None
+
+
+def find_qid(fid, title, year):
+    """A film the site has no Wikidata id for (Wikidata may hold it without a release date, which enrich.py refuses):
+    English Wikipedia's search for «<title> <year> film»; a hit counts only when its title starts with the film's own
+    title and its text names the year (or the year before), so an older film of the same name never answers. Cached
+    7 days ("" = none)."""
+    k = f"qid#{fid}"
+    hit = TABLE.get_item(Key={"k": k}).get("Item")
+    if hit:
+        return hit.get("v") or None
+    qid = None
+    if title and year:
+        try:
+            api = "https://en.wikipedia.org/w/api.php"
+            res = (get_json(api, {"action": "query", "list": "search", "srsearch": f"{title} {year} film", "srlimit": 5,
+                                  "format": "json"}).get("query") or {}).get("search") or []
+            norm_t = re.sub(r"[^a-z0-9]+", "", title.lower())
+            for r in res:
+                if not re.sub(r"[^a-z0-9]+", "", r.get("title", "").lower()).startswith(norm_t):
+                    continue
+                pages = (get_json(api, {"action": "query", "prop": "pageprops|extracts", "explaintext": 1, "exintro": 1,
+                                        "titles": r["title"], "redirects": 1, "format": "json"}).get("query") or {}).get("pages") or {}
+                pg = next(iter(pages.values()), {})
+                intro = pg.get("extract") or ""
+                if "film" in intro.lower() and (str(year) in intro or str(int(year) - 1) in intro):
+                    qid = (pg.get("pageprops") or {}).get("wikibase_item")
+                    break
+        except Exception as e:  # noqa: BLE001
+            print(json.dumps({"find_qid_error": str(e)[:200], "fid": fid}))
+            return None
+    TABLE.put_item(Item={"k": k, "v": qid or "", "ttl": ttl(7)})
+    return qid
+
+
+def article_of(fid, qid):
+    """The film's whole Wikipedia article as plain text with its == headings == (references and links dropped), cached
+    7 days; "" when there is none."""
+    k = f"art#{fid}"
     hit = TABLE.get_item(Key={"k": k}).get("Item")
     if hit:
         return hit.get("v", "")
     text = ""
-    try:
-        api = "https://en.wikipedia.org/w/api.php"
-        secs = (get_json(api, {"action": "parse", "page": title, "prop": "sections", "format": "json", "redirects": 1})
-                .get("parse") or {}).get("sections") or []
-        idx = next((s.get("index") for s in secs if re.sub(r"\s+", " ", s.get("line") or "").strip().lower() in PLOT_HEADINGS), None)
-        if idx:
-            html = ((get_json(api, {"action": "parse", "page": title, "prop": "text", "section": idx, "format": "json",
-                                    "redirects": 1}).get("parse") or {}).get("text") or {}).get("*") or ""
-            html = re.sub(r"<sup[^>]*>.*?</sup>", "", html, flags=re.S)
-            text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html)).strip()
-            text = re.sub(r"^\S+\s*\[\s*edit\s*\]\s*", "", text)
-    except Exception as e:  # noqa: BLE001 - no plot is an answer too («ما عندنا هالمعلومة»)
-        print(json.dumps({"plot_error": str(e)[:200], "fid": fid}))
-        return ""
-    TABLE.put_item(Item={"k": k, "v": text[:24000], "ttl": ttl(7)})
-    return text[:24000]
+    lang, title = wiki_title(qid)
+    if title:
+        try:
+            pages = (get_json(f"https://{lang}.wikipedia.org/w/api.php", {
+                "action": "query", "prop": "extracts", "explaintext": 1, "titles": title, "redirects": 1,
+                "format": "json"}).get("query") or {}).get("pages") or {}
+            raw = next(iter(pages.values()), {}).get("extract") or ""
+            keep, out = True, []
+            for line in raw.split("\n"):
+                m = re.match(r"^(=+)\s*(.*?)\s*\1\s*$", line)
+                if m and len(m.group(1)) == 2:
+                    keep = m.group(2).strip().lower() not in DROP_SECTIONS
+                if keep and line.strip():
+                    out.append(line.strip())
+            text = (f"[{lang} Wikipedia: {title}]\n" + "\n".join(out))[:ARTICLE_MAX]
+        except Exception as e:  # noqa: BLE001 - no article is an answer too («ما عندنا هالمعلومة»)
+            print(json.dumps({"article_error": str(e)[:200], "fid": fid}))
+            return ""
+    TABLE.put_item(Item={"k": k, "v": text, "ttl": ttl(7)})
+    return text
 
 
-def enwiki_title(qid):
-    """The English Wikipedia page title for a Wikidata id, or None."""
-    if not qid or not re.match(r"^Q\d+$", str(qid)):
-        return None
-    try:
-        ent = (get_json("https://www.wikidata.org/w/api.php", {"action": "wbgetentities", "ids": qid, "props": "sitelinks",
-                                                              "format": "json"}).get("entities") or {}).get(qid) or {}
-        return ((ent.get("sitelinks") or {}).get("enwiki") or {}).get("title")
-    except Exception:
-        return None
+def _labels(ids):
+    """{Qid: {"label", "claims"}} for the given ids, 50 a call (English label, else Arabic, else any)."""
+    out = {}
+    ids = [i for i in dict.fromkeys(ids) if i and re.match(r"^Q\d+$", str(i))]
+    for n in range(0, len(ids), 50):
+        ents = get_json("https://www.wikidata.org/w/api.php", {"action": "wbgetentities", "ids": "|".join(ids[n:n + 50]),
+                                                               "props": "labels|claims", "languages": "en|ar",
+                                                               "format": "json"}).get("entities") or {}
+        for q, e in ents.items():
+            lb = e.get("labels") or {}
+            out[q] = {"label": (lb.get("en") or lb.get("ar") or next(iter(lb.values()), {})).get("value"),
+                      "claims": e.get("claims") or {}}
+    return out
+
+
+def _ids(claims, prop):
+    return [(((c.get("mainsnak") or {}).get("datavalue") or {}).get("value") or {}).get("id") for c in claims.get(prop) or []]
+
+
+def cast_of(fid, qid):
+    """The film's cast from Wikidata — [{"actor", "character", "citizenship"}] — cached 7 days; [] when none."""
+    k = f"cast#{fid}"
+    hit = TABLE.get_item(Key={"k": k}).get("Item")
+    if hit:
+        return json.loads(hit.get("v") or "[]")
+    rows = []
+    if qid and re.match(r"^Q\d+$", str(qid)):
+        try:
+            film = _labels([qid]).get(qid) or {}
+            members = []
+            for c in (film.get("claims") or {}).get("P161") or []:
+                actor = (((c.get("mainsnak") or {}).get("datavalue") or {}).get("value") or {}).get("id")
+                role = None
+                for qv in (c.get("qualifiers") or {}).get("P453") or []:
+                    role = ((qv.get("datavalue") or {}).get("value") or {}).get("id") or role
+                if actor:
+                    members.append((actor, role))
+            members = members[:40]
+            people = _labels([a for a, _ in members] + [r for _, r in members if r])
+            countries = _labels([c for a, _ in members for c in _ids((people.get(a) or {}).get("claims") or {}, "P27")])
+            for a, r in members:
+                pa = people.get(a) or {}
+                rows.append({"actor": pa.get("label"), "character": (people.get(r) or {}).get("label") if r else None,
+                             "citizenship": [(countries.get(c) or {}).get("label") for c in _ids(pa.get("claims") or {}, "P27") if c] or None})
+        except Exception as e:  # noqa: BLE001
+            print(json.dumps({"cast_error": str(e)[:200], "fid": fid}))
+            return []
+    TABLE.put_item(Item={"k": k, "v": json.dumps(rows, ensure_ascii=False), "ttl": ttl(7)})
+    return rows
 
 
 def bump(k, field="n", by=1, days=3):
@@ -153,9 +249,10 @@ def bump(k, field="n", by=1, days=3):
     return int(r["Attributes"][field])
 
 
-def context_block(facts, plot):
+def context_block(facts, cast, article):
     lines = ["<facts>", json.dumps(facts, ensure_ascii=False), "</facts>"]
-    lines += ["<plot source=\"English Wikipedia\">", plot or "(no plot available yet)", "</plot>"]
+    lines += ['<cast source="Wikidata">', json.dumps(cast, ensure_ascii=False) if cast else "(no cast table)", "</cast>"]
+    lines += ["<article>", article or "(no article available yet)", "</article>"]
     return "\n".join(lines)
 
 
@@ -184,9 +281,9 @@ def handler(event, _ctx):
     nq = norm(q)
     if len(re.sub(r"[\W_]", "", nq)) < 2:   # no readable letters (a mis-encoded «????»): never one shared cache key
         return reply(400, origin, {"error": "fields"})
-    key = f"ans#{fid}#{lang}#" + hashlib.sha1(nq.encode()).hexdigest()[:20]
+    key = f"ans2#{fid}#{lang}#" + hashlib.sha1(nq.encode()).hexdigest()[:20]   # ans2: answered from the whole article
     hit = TABLE.get_item(Key={"k": key}).get("Item")
-    if hit:
+    if hit and int(hit.get("ttl") or 0) > time.time():   # DynamoDB removes expired items up to two days late
         out = json.loads(hit["v"])
         out["cached"] = True
         return reply(200, origin, out)
@@ -201,16 +298,19 @@ def handler(event, _ctx):
         facts = get_json(f"{SITE}/data/ask/{fid}.json")
     except Exception:
         return reply(404, origin, {"error": "film"})
-    plot = plot_of(fid, enwiki_title(facts.pop("qid", None)))
+    qid = facts.pop("qid", None) or find_qid(fid, facts.get("title"), str(facts.get("uae_release_date") or facts.get("year") or "")[:4])
+    article, cast = article_of(fid, qid), cast_of(fid, qid)
 
     t0 = time.time()
     try:
         resp = client().messages.create(
             model=MODEL, max_tokens=2048,
             output_config={"effort": "medium", "format": {"type": "json_schema", "schema": SCHEMA}},
-            system=[{"type": "text", "text": SYSTEM}],
-            messages=[{"role": "user", "content": context_block(facts, plot)
-                       + f"\n\n<lang>{lang}</lang>\n<question>{q}</question>"}],
+            # the film's context is its own cached block: a second question on the same film within minutes reads it
+            # from the cache (it is long: the whole article)
+            system=[{"type": "text", "text": SYSTEM},
+                    {"type": "text", "text": context_block(facts, cast, article), "cache_control": {"type": "ephemeral"}}],
+            messages=[{"role": "user", "content": f"<lang>{lang}</lang>\n<question>{q}</question>"}],
         )
     except anthropic.RateLimitError:
         return reply(429, origin, {"error": "busy"})
@@ -236,6 +336,8 @@ def handler(event, _ctx):
                       "known": out.get("known"), "spoiler": out.get("spoiler")}))
     bump(f"tok#{day}", "in", u.input_tokens, days=40)
     bump(f"tok#{day}", "out", u.output_tokens, days=40)
-    TABLE.put_item(Item={"k": key, "v": json.dumps(out, ensure_ascii=False), "q": q[:240], "ttl": ttl(30)})
+    # «ما عندنا» is kept a day only: the film's article may arrive (a new link, a new section) and the question deserves
+    # a fresh try; a real answer is kept a month
+    TABLE.put_item(Item={"k": key, "v": json.dumps(out, ensure_ascii=False), "q": q[:240], "ttl": ttl(30 if out.get("known") else 1)})
     out["cached"] = False
     return reply(200, origin, out)

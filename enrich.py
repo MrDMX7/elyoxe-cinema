@@ -111,7 +111,7 @@ RATINGS_TTL = timedelta(days=3)
 NOT_FOUND_TTL = timedelta(days=3)
 ERROR_TTL = timedelta(hours=6)
 FILM_QIDS = {"Q11424", "Q24862", "Q24869"}  # film, short film, television film
-LOOKUP_VERSION = 3          # 2: re-release fallback. 3 (2026-09-30 regression fix): search widened with
+LOOKUP_VERSION = 4          # 4 (2026-10-20): an undated just-released item counts (_recent_undated). 2: re-release fallback. 3 (2026-09-30 regression fix): search widened with
                              # a full-text fallback — wbsearchentities alone buries a brand-new,
                              # low-notability film behind an older/unrelated same-titled one. A
                              # "not_found" from an older version is retried once, capped per run —
@@ -455,6 +455,23 @@ def _looks_like_a_film(hit, ent):
     return bool(_DESC_FILM.search(desc)) and not _DESC_NOT_FILM.search(desc)
 
 
+RECENT_IMDB = 20_000_000   # IMDb ids from tt20000000 on were issued from 2022 (tt33318732 = Jailer 2, 2026)
+
+
+def _recent_undated(ent, label, want):
+    """2026-10-20: a just-released film's Wikidata item often has no publication date yet (Jailer 2, Q133255153), so the
+    year filter never sees it and the film goes without its article, cast and scores. Such an item counts only when its
+    English label is exactly the title asked for AND its IMDb id is recent (>= tt20000000) — an older film of the same
+    name has an old id (or a date, which the year filter judges as before)."""
+    if not want or _claim_year(ent) is not None or _norm_title(label or "") != want:
+        return False
+    for v in _claim_values(ent, "P345"):
+        m = re.match(r"^tt(\d+)$", str(v))
+        if m and int(m.group(1)) >= RECENT_IMDB:
+            return True
+    return False
+
+
 def _best_film_in_hits(hits, accepted_years, want_title=None):
     """Given search hits (wbsearchentities, full-text, or the two merged), returns the qid of a
     film-shaped hit whose own publication year is in `accepted_years`, or None.
@@ -477,7 +494,8 @@ def _best_film_in_hits(hits, accepted_years, want_title=None):
         return None
     entities = _wikidata_entities([h["id"] for h in hits])
     want = _norm_title(want_title) if want_title else None
-    candidates = []
+    candidates, undated = [], []
+    recent = max(accepted_years or {0}) >= datetime.now().year - 1   # only for a current release, never a year_hint of old
     for h in hits:
         qid = h["id"]
         ent = entities.get(qid)
@@ -485,8 +503,10 @@ def _best_film_in_hits(hits, accepted_years, want_title=None):
             continue
         if _claim_year(ent) in accepted_years:
             candidates.append((qid, ent))
+        elif recent and _recent_undated(ent, _label(entities, qid, "en"), want):
+            undated.append(qid)
     if not candidates:
-        return None
+        return undated[0] if undated else None   # a dated accepted-year film always wins over an undated one
     if want:
         for qid, ent in candidates:
             if _norm_title(_label(entities, qid, "en")) == want:
