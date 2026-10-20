@@ -1,0 +1,26 @@
+{
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "klara-and-the-sun",
+  "fun_fact": {
+    "source": "رواية Kazuo Ishiguro (2021)",
+    "text": "الفيلم مقتبس عن رواية Kazuo Ishiguro الصادرة عام 2021"
+  },
+  "has_plot": false,
+  "next_check": "2026-10-24",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": false,
+      "text": "تقييم النقاد على Rotten Tomatoes هو 29% من 17 نقد"
+    },
+    {
+      "pos": false,
+      "text": "عدد النقاد الذين قيّموه 17 بس، والعينة صغيرة شوي لحكم عام"
+    }
+  ],
+  "synopsis_ar": "«كلارا والشمس» فيلم خيال علمي ديستوبي من إخراج Taika Waititi، وكتبه Waititi مع Dahvi Waller، ومقتبس عن رواية Kazuo Ishiguro الصادرة عام 2021. يشارك في البطولة Jenna Ortega وAmy Adams وMia Tharia وAran Murphy وSteve Buscemi وNatasha Lyonne.",
+  "written": "2026-10-21"
+}

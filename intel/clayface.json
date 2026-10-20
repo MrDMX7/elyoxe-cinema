@@ -1,0 +1,30 @@
+{
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "clayface",
+  "fun_fact": {
+    "source": "ويكيبيديا",
+    "text": "الإنتاج لـ Matt Reeves وLynn Harris مع James Gunn وPeter Safran من DC Studios"
+  },
+  "has_plot": false,
+  "next_check": "2026-10-24",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "«كلايفيس» هو ثالث فيلم في عالم DC Universe (DCU)"
+    },
+    {
+      "pos": true,
+      "text": "الإخراج لـ James Watkins، والسيناريو لـ Mike Flanagan وHossein Amini"
+    },
+    {
+      "pos": false,
+      "text": "ما لقينا تقييمات نقدية كافية لهالفيلم للحين"
+    }
+  ],
+  "synopsis_ar": "«كلايفيس» فيلم رعب ونفسي إثارة أمريكي مستوحى من شخصية Clayface في DC Comics. يلعب Tom Rhys Harries دور Matt Hagen، ممثل وجهه مشوّه، يلجأ إلى عالمة (Naomi Ackie) تحوّل جسده إلى طين، لكنه يبدأ يفقد عقله لأنه ما يقدر يتعرّف على نفسه. ومن الممثلين أيضا David Dencik وMax Minghella وEddie Marsan.",
+  "written": "2026-10-21"
+}

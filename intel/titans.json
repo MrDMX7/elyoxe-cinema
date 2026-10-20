@@ -1,0 +1,39 @@
+{
+  "audience": [
+    {
+      "source": "Rotten Tomatoes",
+      "text": "الجمهور قيّمه بنسبة 67% على Rotten Tomatoes"
+    }
+  ],
+  "by": "claude",
+  "consensus_ar": "يقول النقاد إن الفيلم يغرق في أكشن فوضوي كثير وما يقدّم إثارة حقيقية، وما استغل وحشه الأسطوري كامل رغم لفّات سردية مبتكرة.",
+  "ending": null,
+  "fid": "titans",
+  "fun_fact": {
+    "source": "ويكيبيديا",
+    "text": "من إخراج Mike P. Nelson وسيناريو Alan B. McElroy"
+  },
+  "has_plot": false,
+  "next_check": "2026-10-24",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "الجمهور أعطاه 67% على Rotten Tomatoes، وهذا أعلى من تقييم النقاد البالغ 57% من 58 نقد"
+    },
+    {
+      "pos": true,
+      "text": "إجماع النقاد يذكر لفّات سردية مبتكرة فيه"
+    },
+    {
+      "pos": false,
+      "text": "النقاد يرون أن الأكشن فوضوي وكثير، وما فيه إثارة حقيقية بالقدر الكافي"
+    },
+    {
+      "pos": false,
+      "text": "حسب إجماع النقاد، ما استغل وحشه الأسطوري بالشكل الكامل"
+    }
+  ],
+  "synopsis_ar": "من إخراج Mike P. Nelson وسيناريو Alan B. McElroy، ومن بطولة Kiana Madeira وJessica Rothe وLogan Marshall-Green. الأحداث تتابع بعثة طبية داخل غابة الأمازون تصادف ثعبانا أسطوريا ضخما.",
+  "written": "2026-10-21"
+}

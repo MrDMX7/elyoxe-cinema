@@ -1,0 +1,26 @@
+{
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "always-yours-never-mine",
+  "fun_fact": {
+    "source": "ويكيبيديا",
+    "text": "كتبه Vanessa R. Valdez من قصة شاركت في تطويرها Olivia M. Lamasan وTrishtan Perez"
+  },
+  "has_plot": false,
+  "next_check": "2026-10-24",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "يجمع Joshua Garcia وJulia Barretto، وهذا أول فيلم لهم بعد Un/Happy for You قبل سنتين"
+    },
+    {
+      "pos": false,
+      "text": "ما لقينا تقييمات كافية لهالفيلم للحين"
+    }
+  ],
+  "synopsis_ar": "قصة حب بين شخصين تمتد على ثلاثين سنة من الفرص الضايعة. من بطولة Joshua Garcia وJulia Barretto، وإخراج Cathy Garcia-Sampana.",
+  "written": "2026-10-21"
+}

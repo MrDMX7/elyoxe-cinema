@@ -1,0 +1,14 @@
+{
+  "ar": "Titans حصل على 57% من 58 نقد، والجمهور أعطاه 67%، والنتيجة متوسطة. النقاد يشتكون من أكشن كثير وإثارة قليلة، بس بعض الحبكات فيه ذكية.",
+  "basis": "RT 57% (من 58 نقد) · الجمهور 67%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 57,
+    "rt_count": 58
+  },
+  "by": "claude",
+  "en": "Titans holds a 57% critics score on Rotten Tomatoes from 58 reviews, with a 67% audience score. Critics say it devours too much chaotic action and lacks genuine thrills, though some narrative twists are creative.",
+  "fid": "titans",
+  "verdict": "mixed",
+  "written": "2026-10-21"
+}
