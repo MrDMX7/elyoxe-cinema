@@ -56,3 +56,11 @@ def test_the_family_section_names_the_original_cut_and_credits_the_source():
     assert 'href="https://www.doesthedogdie.com/media/7"' in h and "Does the Dog Die" in h
     assert h.index("<details") < h.index("يموت طفل")                  # a death sits behind a tap
     assert app.family({}) == "" and app.family({"content": {"flags": [], "credits": None}}) == ""
+
+
+def test_the_family_section_opens_with_the_uae_rating_and_says_what_the_votes_cannot():
+    import build_app
+    app = build_app.App.__new__(build_app.App)
+    h = app.family({"rating": "G", "content": {"flags": ["nudity"], "credits": True, "url": None}})
+    assert h.index("التصنيف في الإمارات") < h.index("عري")
+    assert "للكل" in h and "مب قد إيش قوية" in h

@@ -49,6 +49,10 @@ FAMILY = {"sex": "مشاهد جنسية", "nudity": "عري", "sexual_assault": 
           "ghosts": "أشباح", "possession": "مسّ", "demons": "شياطين", "drugs": "مخدرات", "alcohol": "شرب خمر",
           "smoking": "تدخين"}
 DEATHS = {"child_dies": "يموت طفل", "animal_dies": "يموت حيوان"}
+# the UAE rating in words — the official guide, first in «للعائلة» (2026-10-20: a cartoon rated G showed «عري», a
+# community yes/no that says nothing of how strong the scene is)
+AGES = {"G": "للكل", "PG": "للكل، مع إرشاد الأهل", "PG13": "من 13 سنة وفوق", "PG15": "من 15 سنة وفوق",
+        "15+": "من 15 سنة وفوق", "18+": "من 18 سنة وفوق"}
 TABS = [("cinemas", "السينمات", "seat"), ("films", "الأفلام", "film"), ("coming", "قريباً", "cal")]
 DAYS_AR = ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
 MONTHS_AR = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
@@ -469,6 +473,8 @@ class App:
         if not flags and not deaths and cr is None:
             return ""
         out = ['<section class="sec fam"><h2>للعائلة</h2>']
+        if f.get("rating") in AGES:
+            out.append(f'<p class="fam-age">التصنيف في الإمارات <b dir="ltr">{E(f["rating"])}</b>: {AGES[f["rating"]]}</p>')
         if cr is not None:
             out.append(f'<p class="fam-cr">{"فيه مشهد بعد النهاية، لا تطلع بدري." if cr else "ما فيه مشهد بعد النهاية."}</p>')
         if flags:
@@ -478,7 +484,7 @@ class App:
                        + "".join(f"<li>{E(x)}</li>" for x in deaths) + "</ul></details>")
         link = f'<a href="{E(c["url"])}" target="_blank" rel="noopener nofollow">Does the Dog Die</a>' if c.get("url") else "Does the Dog Die"
         out.append(f'<p class="fam-src">عن النسخة الأصلية من الفيلم، والنسخة اللي تنعرض في الإمارات ممكن تكون مقصوصة. '
-                   f'من تقييمات جمهور {link}.</p></section>')
+                   f'من تقييمات جمهور {link}: تقول إذا اللقطة موجودة، مب قد إيش قوية.</p></section>')
         return "".join(out)
 
     def film(self, fid):
