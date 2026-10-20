@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "Jailer 2 نال 85% من النقاد في Rotten Tomatoes و93% من الجمهور. هو أكشن كوميدي بلغة تاميل من إخراج Nelson Dilipkumar.",
+  "basis": "RT 85% (13 نقد) · الجمهور 93%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 85,
+    "rt_count": 13
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "Jailer 2 holds 85% from critics on Rotten Tomatoes and 93% from audiences. It is a Tamil-language action comedy directed by Nelson Dilipkumar.",
   "fid": "jailer-2",
-  "verdict": "unknown",
-  "written": "2026-10-17"
+  "verdict": "yes",
+  "written": "2026-10-20"
 }
