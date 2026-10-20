@@ -48,21 +48,30 @@
     }, fail, { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 });
   }
 
-  /* ── home: the two tabs and the pager ── */
+  /* ── home: the bottom bar and the pager (owner 2026-10-19: السينمات · الأفلام · قريباً) ── */
   var pager = q("[data-pager]");
   if (pager) {
-    var tabs = qa(".toptabs [data-pane]"), panes = qa(".pane", pager);
+    var tabs = qa(".tabbar [data-tab]"), panes = qa(".pane", pager), ttl = q("[data-tab-title]");
+    var KEYS = panes.map(function (p) { return p.dataset.key; });
     var setTab = function (i) {
       tabs.forEach(function (t, j) { t.classList.toggle("on", i === j); t.setAttribute("aria-selected", i === j ? "true" : "false"); });
-      try { sessionStorage.setItem("cinema.pane", i); } catch (e) {}
+      if (ttl) ttl.textContent = panes[i].getAttribute("aria-label");
+      store.set("tab", KEYS[i]);
     };
-    tabs.forEach(function (t, i) { t.addEventListener("click", function () { panes[i].scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" }); setTab(i); }); });
+    var go = function (i, smooth) { panes[i].scrollIntoView({ behavior: smooth ? "smooth" : "auto", inline: "start", block: "nearest" }); setTab(i); };
+    tabs.forEach(function (t, i) { t.addEventListener("click", function () {
+      if (t.classList.contains("on")) panes[i].scrollTo({ top: 0, behavior: "smooth" });   /* the active tab again: back to its top */
+      go(i, true);
+    }); });
     if ("IntersectionObserver" in window) {
       var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) setTab(panes.indexOf(e.target)); }); }, { root: pager, threshold: 0.6 });
       panes.forEach(function (p) { io.observe(p); });
     }
-    var last = +(sessionStorage.getItem("cinema.pane") || 0);
-    if (last === 1) { panes[1].scrollIntoView({ inline: "start", block: "nearest" }); setTab(1); }
+    /* first: a link's #films / #coming, else the tab this visitor used last, else السينمات */
+    var tab0 = location.hash.slice(1) || store.get("tab") || "cinemas";
+    if (location.hash) history.replaceState(history.state, "", location.pathname + location.search);
+    var wi = KEYS.indexOf(tab0);
+    go(wi < 0 ? 0 : wi, false);
 
     /* genre chips: the grid shows only what the chip names; the reflow is a view transition */
     var grid = q("[data-grid]"), none = q("[data-none]");
@@ -79,36 +88,65 @@
       });
     });
 
-    /* the cinemas: a city, or the nearest first */
-    var clist = q("[data-clist]"), msg = q("[data-geo-msg]");
-    var showCity = function (city) {
+    /* السينمات: the cities first; a city (or «أقرب سينما») opens its cinemas, and the phone's back returns */
+    var clist = q("[data-clist]"), msg = q("[data-geo-msg]"), cities = q("[data-cities]"), cv = q("[data-cv]"), cvT = q("[data-cv-title]");
+    var ccs = qa(".ccard", clist), order = ccs.slice();
+    var cur = "cities|";
+    var cvShow = function (mode, city) {
+      if (cur === mode + "|" + (city || "")) return;   /* a back that only closed a ticket */
+      cur = mode + "|" + (city || "");
       vt(function () {
-        qa("[data-cchips] .chip").forEach(function (x) { x.classList.toggle("on", x.dataset.city === city); });
-        qa(".ccard", clist).forEach(function (c) { c.hidden = c.dataset.city !== city; });
-        msg.hidden = true;
+        cities.hidden = mode !== "cities";
+        cv.hidden = clist.hidden = mode === "cities";
+        if (mode === "city") {
+          order.forEach(function (c) { var k = km(c); q("[data-km]", c).textContent = kmText(k); c.hidden = c.dataset.city !== city; clist.appendChild(c); });
+          var b = q('.crow[data-city="' + city + '"] b'); cvT.textContent = b ? b.textContent : "";
+          msg.hidden = true;
+        } else if (mode === "near") {
+          ccs.forEach(function (c) { var k = km(c); c._k = k == null ? 1e9 : k; q("[data-km]", c).textContent = kmText(k); });
+          ccs.slice().sort(function (a, b) { return a._k - b._k; }).forEach(function (c, i) { c.hidden = i >= 12; clist.appendChild(c); });
+          cvT.textContent = "أقرب سينما لك";
+          msg.hidden = true;
+        }
       });
-      store.set("city", city);
+      panes[0].scrollTo({ top: 0 });
     };
-    var showNear = function () {
-      var cards = qa(".ccard", clist);
-      cards.forEach(function (c) { var k = km(c); c._k = k == null ? 1e9 : k; q("[data-km]", c).textContent = kmText(k); });
-      vt(function () {
-        qa("[data-cchips] .chip").forEach(function (x) { x.classList.toggle("on", x.hasAttribute("data-near")); });
-        cards.sort(function (a, b) { return a._k - b._k; }).forEach(function (c, i) { c.hidden = i >= 12; clist.appendChild(c); });
-        msg.hidden = false; msg.textContent = "أقرب السينمات لك، الأقرب أول.";
-      });
-      var near = cards[0];
-      if (near && near._k < 60) store.set("city", near.dataset.city);
+    var cvOpen = function (mode, city) {
+      history.pushState({ cv: mode, city: city || "" }, "");
+      cvShow(mode, city);
+      if (mode === "city") store.set("city", city);
     };
-    qa("[data-cchips] [data-city]").forEach(function (c) { c.addEventListener("click", function () { showCity(c.dataset.city); }); });
+    qa(".crow", cities).forEach(function (r) { r.addEventListener("click", function () { cvOpen("city", r.dataset.city); }); });
+    q("[data-cv-back]").addEventListener("click", function () { history.state && history.state.cv ? history.back() : cvShow("cities"); });
+    addEventListener("popstate", function (e) { var st = e.state || {}; cvShow(st.cv === "near" && !here ? "cities" : (st.cv || "cities"), st.city); });
     var nb = q("[data-near]");
     if (nb) nb.addEventListener("click", function () {
-      if (here) { showNear(); return; }
+      var done = function () {
+        var cs = ccs.filter(function (c) { return km(c) != null; }).sort(function (a, b) { return km(a) - km(b); });
+        if (cs[0] && km(cs[0]) < 60) store.set("city", cs[0].dataset.city);
+        cvOpen("near");
+      };
+      if (here) { done(); return; }
       msg.hidden = false; msg.textContent = "لحظة، نحدد مكانك…";
-      locate(showNear, function () { msg.textContent = "ما قدرنا نعرف مكانك — اختار مدينتك."; });
+      locate(done, function () { msg.textContent = "ما قدرنا نعرف مكانك — اختار مدينتك."; });
     });
-    if (here) showNear(); else showCity(store.get("city") || "dubai");
+    /* back from a cinema page into a reloaded home: the view it left */
+    var st0 = history.state || {};
+    if (st0.cv === "city" || (st0.cv === "near" && here)) cvShow(st0.cv, st0.city);
   }
+
+  /* a trailer, from any [data-trailer] (a film's button, a coming film's poster) */
+  d.addEventListener("click", function (e) {
+    var tb = e.target.closest && e.target.closest("[data-trailer]");
+    if (!tb) return;
+    var o = d.createElement("div");
+    o.className = "trl";
+    o.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(tb.dataset.trailer) + '?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="الإعلان"></iframe><button type="button" aria-label="سكّر">×</button>';
+    d.body.appendChild(o);
+    var shut = function () { o.remove(); };
+    q("button", o).addEventListener("click", shut);
+    o.addEventListener("click", function (ev) { if (ev.target === o) shut(); });
+  });
 
   /* ── the merged top (sample): the screen's dots follow the swipe; «يبدأ قريب منك» from #soon ── */
   var bill = q("[data-bill]");
@@ -297,17 +335,6 @@
       });
     }
 
-    /* the trailer */
-    var tb = q("[data-trailer]");
-    if (tb) tb.addEventListener("click", function () {
-      var o = d.createElement("div");
-      o.className = "trl";
-      o.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + encodeURIComponent(tb.dataset.trailer) + '?autoplay=1&rel=0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="الإعلان"></iframe><button type="button" aria-label="سكّر">×</button>';
-      d.body.appendChild(o);
-      var shut = function () { o.remove(); };
-      q("button", o).addEventListener("click", shut);
-      o.addEventListener("click", function (e) { if (e.target === o) shut(); });
-    });
 
     /* «اسأل الفيلم» */
     var ask = q("[data-ask]");

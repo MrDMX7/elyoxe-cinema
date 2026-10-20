@@ -63,7 +63,7 @@ def test_live_pages_are_indexable_with_their_canonical_and_film_json_ld(live):
 def test_the_home_is_the_approved_merge(live):
     out, _ = live
     h = read(out, "index.html")
-    assert 'data-pager' in h and 'data-pane="0"' in h and 'data-pane="1"' in h   # الأفلام / السينمات
+    assert 'data-pager' in h and 'data-key="cinemas"' in h and 'data-key="films"' in h and 'data-key="coming"' in h
     assert 'data-soon' in h and 'id="soon"' in h                               # «يبدأ قريب منك»
     assert 'data-chips' in h and 'class="grid"' in h
 
@@ -136,3 +136,18 @@ def test_past_shows_appear_on_the_film_and_cinema_pages_only(tmp_path):
     assert btn in read(out, "film", past["film"], "index.html")
     assert btn in read(out, app.k.cinemas[past["cinema"]]["city"], past["cinema"], "index.html")
     assert btn not in read(out, "index.html")
+
+
+def test_the_home_opens_on_the_cinemas_with_the_cities_and_a_bottom_bar(live):
+    """Owner 2026-10-19: the cinemas first, as cities («أقرب سينما» on top); a bottom bar السينمات · الأفلام · قريباً
+    on every page, its tabs linking back into the home from a film or cinema page."""
+    out, app = live
+    h = read(out, "index.html")
+    panes = re.findall(r'<section class="pane" data-key="([a-z]+)"', h)
+    assert panes == ["cinemas", "films", "coming"]
+    assert 'data-near>' in h and "أقرب سينما" in h
+    cities = re.findall(r'<button type="button" class="crow" data-city="([a-z-]+)">', h)
+    assert cities and set(cities) == {app.k.cinemas[c].get("city") for c in app.cins}
+    assert h.count('class="tabbar"') == 1 and h.count('data-tab="') == 3
+    f = read(out, "film", app.films[0], "index.html")
+    assert '<nav class="tabbar"' in f and 'href="/#films" class="on"' in f and 'href="/#cinemas"' in f

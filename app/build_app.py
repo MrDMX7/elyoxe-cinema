@@ -43,6 +43,9 @@ CITIES = [("dubai", "دبي"), ("abu-dhabi", "أبوظبي"), ("sharjah", "ال�
 CITY = dict(CITIES)
 INDIAN = {"Hindi", "Tamil", "Malayalam", "Telugu", "Kannada", "Punjabi", "Marathi", "Bengali"}
 # the chips, in the order a person scans them; each matches a film by its genres (or its language)
+TABS = [("cinemas", "السينمات", "seat"), ("films", "الأفلام", "film"), ("coming", "قريباً", "cal")]
+DAYS_AR = ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
+MONTHS_AR = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
 CHIPS = [("all", "الكل"), ("action", "أكشن"), ("comedy", "كوميديا"), ("horror", "رعب"), ("thriller", "إثارة"),
          ("drama", "دراما"), ("adventure", "مغامرة"), ("family", "عائلي"), ("scifi", "خيال"), ("romance", "رومانسي"),
          ("arabic", "عربي"), ("indian", "هندي")]
@@ -130,6 +133,8 @@ def svg(name):
          "chat": '<path d="M5 5h14v10H9l-4 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>',
          "map": '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="2"/>',
          "film": '<rect x="4" y="5" width="16" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 9h16M4 15h16M9 5v14M15 5v14" stroke="currentColor" stroke-width="1.6"/>',
+         "fwd": '<path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+         "cal": '<rect x="4" y="5.5" width="16" height="14.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 10.5h16M9 3.5v4M15 3.5v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
          "seat": '<path d="M6 11V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4M4 11h16v5H4zM6 16v3M18 16v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>'}
     return f'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">{p[name]}</svg>'
 
@@ -246,6 +251,8 @@ class App:
     # -------- page frame
     def page(self, path, ttl, desc, body, kind, head_extra="", canon=None):
         canon = SITE + path if self.live else (canon or (SITE + path))
+        if kind != "home":
+            body += self.tabbar({"film": "films", "cinema": "cinemas"}.get(kind))
         body = body + (self.footer() if self.live else "")
         doc = f"""<!doctype html>
 <html lang="ar" dir="rtl" data-kind="{kind}"><head><meta charset="utf-8">
@@ -270,6 +277,22 @@ class App:
         p = os.path.join(self.out, *[x for x in path.replace(self.base, "", 1).split("/") if x], "index.html")
         os.makedirs(os.path.dirname(p), exist_ok=True)
         open(p, "w", encoding="utf-8").write(doc)
+
+    def tabbar(self, on=None, home=False):
+        """The bottom bar (owner 2026-10-19): السينمات · الأفلام · قريباً. On the home its buttons turn the pager; on a
+        film or cinema page they are links back to that tab (/#films …)."""
+        out = []
+        for i, (key, label, icon) in enumerate(TABS):
+            inner = svg(icon) + "<span>" + label + "</span>"
+            if home:
+                sel = "true" if key == on else "false"
+                cls = ' class="on"' if key == on else ""
+                out.append('<button type="button" role="tab" data-tab="%d" aria-selected="%s"%s>%s</button>' % (i, sel, cls, inner))
+            else:
+                cls = ' class="on" aria-current="page"' if key == on else ""
+                out.append('<a href="%s#%s"%s>%s</a>' % (self.base, key, cls, inner))
+        role = ' role="tablist"' if home else ""
+        return '<nav class="tabbar" aria-label="الأقسام"%s>%s</nav>' % (role, "".join(out))
 
     def bar(self, ttl, back=True):
         b = (f'<a class="pg-back" href="{self.base}" data-back aria-label="رجوع">{svg("back")}</a>' if back else "<span></span>")
@@ -340,6 +363,40 @@ class App:
                 f'<p class="empty sm" data-soon-none hidden>ما في عروض قريبة الحين.</p></section>'
                 f'<script type="application/json" id="soon">{j}</script>')
 
+    def coming(self):
+        """«قريباً»: the films the chains list as coming (data["coming"]), by release day, poster and genre; a tap plays
+        the trailer when there is one."""
+        import datetime as _dt
+        k, today = self.k, self.k.today
+        horizon = (_dt.date.fromisoformat(today) + _dt.timedelta(days=75)).isoformat()
+        items = [(fid, c) for fid, c in (self.d.get("coming") or {}).items()
+                 if c.get("poster") and today < str(c.get("release_date") or "") <= horizon and fid not in self.count]
+        items.sort(key=lambda x: (x[1]["release_date"], (x[1].get("title") or "").lower()))
+        labels = dict(CHIPS)
+        out, day = [], None
+        for fid, c in items[:72]:
+            if c["release_date"] != day:
+                if day is not None:
+                    out.append("</div>")
+                day = c["release_date"]
+                dd = _dt.date.fromisoformat(day)
+                n = (dd - _dt.date.fromisoformat(today)).days
+                rel = "بكرة" if n == 1 else "بعد يومين" if n == 2 else ("بعد %d أيام" % n if n <= 10 else "")
+                out.append('<h3 class="cday">%s %d %s%s</h3><div class="grid">' % (
+                    DAYS_AR[dd.weekday()], dd.day, MONTHS_AR[dd.month - 1], ' <small>%s</small>' % rel if rel else ""))
+            g = [labels[t] for t in sorted(tags({"genres": [x.lower() for x in c.get("genres") or []]})) if t in labels and t != "all"][:2]
+            name = c.get("title_ar") or c.get("title") or fid
+            img = '<span class="pst"><img src="%s" width="342" height="513" alt="" loading="lazy" decoding="async"></span>' % E(c["poster"])
+            play = '<i class="cplay">%s</i>' % svg("play") if c.get("trailer") else ""
+            inner = '<span class="tp">%s%s</span><span class="tt">%s</span><span class="tm">%s</span>' % (img, play, E(name), E("، ".join(g)))
+            if c.get("trailer"):
+                out.append('<button type="button" class="tile ct" data-trailer="%s">%s</button>' % (E(c["trailer"]), inner))
+            else:
+                out.append('<div class="tile ct">%s</div>' % inner)
+        if day is not None:
+            out.append("</div>")
+        return "".join(out) or '<p class="empty">ما في أفلام معلنة للأسابيع الياية.</p>'
+
     def home(self, path=None, merged=True):
         k = self.k
         chips = []
@@ -347,19 +404,27 @@ class App:
             if key == "all" or any(key in tags(k.films[f]) for f in self.films):
                 chips.append(f'<button type="button" class="chip{" on" if key == "all" else ""}" data-chip="{key}">{label}</button>')
         grid = "".join(self.tile(f) for f in self.films)
-        cities = [c for c, _ in CITIES if any(k.cinemas[x].get("city") == c for x in self.cins)]
-        cchips = (f'<button type="button" class="chip near" data-near>{svg("pin")}الأقرب</button>'
-                  + "".join(f'<button type="button" class="chip" data-city="{c}">{CITY[c]}</button>' for c in cities))
+        # السينمات (owner 2026-10-19): «أقرب سينما», then the cities; a city opens its cinemas
+        per_city = {}
+        for c in self.cins:
+            per_city[k.cinemas[c].get("city")] = per_city.get(k.cinemas[c].get("city"), 0) + 1
+        def howmany(n):
+            return "سينما وحدة" if n == 1 else "سينمتين" if n == 2 else "%d سينمات" % n if n <= 10 else "%d سينما" % n
+        rows = "".join('<button type="button" class="crow" data-city="%s"><b>%s</b><small>%s</small>%s</button>'
+                       % (c, CITY[c], howmany(per_city[c]), svg("fwd")) for c, _ in CITIES if per_city.get(c))
         cards = "".join(self.ccard(c) for c in sorted(self.cins, key=lambda c: (k.cinemas[c].get("city") or "", self.cname(c))))
         body = f"""<div class="app">
-<header class="tophead"><a class="brand" href="{self.base}">سينما</a>
-<nav class="toptabs" role="tablist"><button type="button" role="tab" class="on" data-pane="0" aria-selected="true">الأفلام</button><button type="button" role="tab" data-pane="1" aria-selected="false">السينمات</button></nav><span></span></header>
+<header class="tophead"><a class="brand" href="{self.base}">سينما</a><h1 class="th-t" data-tab-title>السينمات</h1><span></span></header>
 <main class="pager" data-pager>
-<section class="pane" aria-label="الأفلام">{(self.billboard() + self.soon_board()) if merged else ""}<div class="chips" data-chips>{"".join(chips)}</div>
+<section class="pane" data-key="cinemas" aria-label="السينمات">
+<button type="button" class="nearbtn" data-near>{svg("pin")}أقرب سينما</button><p class="geo-msg" data-geo-msg hidden></p>
+<div class="cities" data-cities>{rows}</div>
+<div class="cv" data-cv hidden><button type="button" class="cv-back" data-cv-back>{svg("back")}كل المدن</button><h2 data-cv-title></h2></div>
+<div class="clist" data-clist hidden>{cards}</div></section>
+<section class="pane" data-key="films" aria-label="الأفلام">{(self.billboard() + self.soon_board()) if merged else ""}<div class="chips" data-chips>{"".join(chips)}</div>
 <div class="grid" data-grid>{grid}</div><p class="empty" data-none hidden>ما في أفلام بهالتصنيف اليوم.</p></section>
-<section class="pane" aria-label="السينمات"><div class="chips" data-cchips>{cchips}</div>
-<p class="geo-msg" data-geo-msg hidden></p><div class="clist" data-clist>{cards}</div></section>
-</main></div>"""
+<section class="pane" data-key="coming" aria-label="قريباً">{self.coming()}</section>
+</main>{self.tabbar("cinemas", home=True)}</div>"""
         self.page(path or self.base, "سينما الإمارات — الأفلام والمواعيد والأسعار", "كل أفلام سينمات الإمارات اليوم، مصنّفة، وكل سينما بمواعيدها.", body, "home")
 
     # -------- shows → time buttons
