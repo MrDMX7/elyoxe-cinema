@@ -347,3 +347,11 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .ct .tp{position:relative}
 .cplay{position:absolute;inset-block-end:8px;inset-inline-end:8px;display:grid;place-items:center;inline-size:34px;block-size:34px;border-radius:50%;background:rgba(20,16,14,.6);color:#fff}
 .cplay svg{inline-size:16px;block-size:16px}
+
+/* «للعائلة»: the content flags as quiet tags, the source in small type */
+.fam-cr{margin:0 0 10px;font-size:15px;font-weight:500}
+.fam-f{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.fam-f li{padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--paper);font-size:13px}
+.fam-sp summary{cursor:pointer;min-block-size:44px;display:flex;align-items:center;color:var(--stone);font-size:14px}
+.fam-src{margin:4px 0 0;color:var(--stone);font-size:12px;line-height:1.6}
+.fam-src a{color:inherit;text-decoration:underline;text-underline-offset:3px}

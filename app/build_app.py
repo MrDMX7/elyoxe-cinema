@@ -43,6 +43,12 @@ CITIES = [("dubai", "دبي"), ("abu-dhabi", "أبوظبي"), ("sharjah", "ال�
 CITY = dict(CITIES)
 INDIAN = {"Hindi", "Tamil", "Malayalam", "Telugu", "Kannada", "Punjabi", "Marathi", "Bengali"}
 # the chips, in the order a person scans them; each matches a film by its genres (or its language)
+# steps/content_warnings.py's keys in the page's words; DEATHS give part of the story away, so they sit behind a tap
+FAMILY = {"sex": "مشاهد جنسية", "nudity": "عري", "sexual_assault": "اعتداء جنسي", "blood": "دم وعنف",
+          "body_horror": "رعب جسدي", "torture": "تعذيب", "guns": "عنف بالسلاح", "jump_scares": "لقطات تخرّع فجأة",
+          "ghosts": "أشباح", "possession": "مسّ", "demons": "شياطين", "drugs": "مخدرات", "alcohol": "شرب خمر",
+          "smoking": "تدخين"}
+DEATHS = {"child_dies": "يموت طفل", "animal_dies": "يموت حيوان"}
 TABS = [("cinemas", "السينمات", "seat"), ("films", "الأفلام", "film"), ("coming", "قريباً", "cal")]
 DAYS_AR = ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
 MONTHS_AR = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
@@ -453,6 +459,28 @@ class App:
         return f'<div class="segs" data-days>{btn(k.today, "اليوم", True)}{btn(k.tomorrow, "بكرة", k.today not in has)}</div>'
 
     # -------- film page
+    def family(self, f):
+        """«للعائلة» (owner 2026-10-20): the content flags and the end-credits answer from Does the Dog Die? — the
+        original cut, which the line says — with the credit its terms ask for. Nothing known: no section."""
+        c = f.get("content") or {}
+        flags = [FAMILY[k] for k in c.get("flags") or [] if k in FAMILY]
+        deaths = [DEATHS[k] for k in c.get("flags") or [] if k in DEATHS]
+        cr = c.get("credits")
+        if not flags and not deaths and cr is None:
+            return ""
+        out = ['<section class="sec fam"><h2>للعائلة</h2>']
+        if cr is not None:
+            out.append(f'<p class="fam-cr">{"فيه مشهد بعد النهاية، لا تطلع بدري." if cr else "ما فيه مشهد بعد النهاية."}</p>')
+        if flags:
+            out.append('<ul class="fam-f">' + "".join(f"<li>{E(x)}</li>" for x in flags) + "</ul>")
+        if deaths:
+            out.append('<details class="fam-sp"><summary>تحذيرات تحرق شوي</summary><ul class="fam-f">'
+                       + "".join(f"<li>{E(x)}</li>" for x in deaths) + "</ul></details>")
+        link = f'<a href="{E(c["url"])}" target="_blank" rel="noopener nofollow">Does the Dog Die</a>' if c.get("url") else "Does the Dog Die"
+        out.append(f'<p class="fam-src">عن النسخة الأصلية من الفيلم، والنسخة اللي تنعرض في الإمارات ممكن تكون مقصوصة. '
+                   f'من تقييمات جمهور {link}.</p></section>')
+        return "".join(out)
+
     def film(self, fid):
         self.fresh()
         k, f = self.k, self.k.films[fid]
@@ -510,7 +538,7 @@ class App:
 <div class="fchips">{"".join(chips)}</div>{f'<p class="fg">{genres}</p>' if genres else ""}</div></div></section>
 <div class="acts">{trailer}{ask}</div>
 {about}<section class="nearest" data-nearest hidden><h2>أقرب عرض لك</h2><div data-nearest-row></div></section>
-{verdict}{where}{crew}
+{verdict}{self.family(f)}{where}{crew}
 <section class="sec ask" data-ask data-fid="{E(fid)}"><h2>اسأل الفيلم</h2><p class="lead">اسأل أي شي عن الفيلم، ونجاوبك من قصته ومعلوماته بس. اللي يحرق نخفيه لين تضغط.</p>
 <form class="ask-f" data-ask-form><input name="q" maxlength="240" autocomplete="off" enterkeyhint="send" placeholder="مثلاً: يناسب العيال؟" aria-label="سؤالك"><button class="btn velvet" type="submit">اسأل</button></form>
 <div class="chips wrap">{"".join(f'<button type="button" class="chip" data-ask-q="{q}">{q}</button>' for q in ["شو نوع الفيلم؟", "يناسب العيال؟", "عن شو القصة؟", "شو يصير في النهاية؟"])}</div><div class="ask-out" data-ask-out></div></section>

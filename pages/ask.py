@@ -31,6 +31,12 @@ CHIPS = {
 }
 
 
+CONTENT_EN = {"sex": "sexual content", "nudity": "nudity", "sexual_assault": "sexual assault", "blood": "blood/gore",
+              "body_horror": "body horror", "torture": "torture", "guns": "gun violence", "jump_scares": "jump scares",
+              "ghosts": "ghosts", "possession": "possession", "demons": "demons", "drugs": "drug use",
+              "alcohol": "alcohol abuse", "smoking": "smoking", "child_dies": "a child dies", "animal_dies": "an animal dies"}
+
+
 def _late(t):
     """A show's place in its cinema day: 00:45 is that night's last show, after 23:30."""
     return (t < "04:00", t)
@@ -101,6 +107,9 @@ def facts(site, fid, ppl=None):
                            "chains": sorted({site.cinemas[s["cinema"]]["chain"] for s in shows}),
                            "from_aed": float(money(min(prices))) if prices else None} if shows else None,
         "schedule_uae": schedule(site, shows) or None,
+        # Does the Dog Die? community ratings (steps/content_warnings.py): the ORIGINAL cut, UAE screenings may be edited
+        "content_in_original_cut": [CONTENT_EN[k] for k in (f.get("content") or {}).get("flags") or [] if k in CONTENT_EN] or None,
+        "end_credits_scene": (f.get("content") or {}).get("credits"),
         "qid": (f.get("wikidata") or {}).get("qid"),
     }
     return {k: v for k, v in out.items() if v not in (None, [], {}, "")}
