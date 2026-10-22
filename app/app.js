@@ -27,6 +27,65 @@
     var src = A.logos && A.logos[ch];
     return src ? '<img class="chl" src="' + esc(src) + '" alt="' + esc(name) + '" width="20" height="20">' : '<i class="chm ch-' + esc(ch) + '">' + esc(name) + "</i>";
   }
+  /* a short buzz on a tap that changes something (Android; iPhones ignore it) */
+  function buzz() { try { if (navigator.vibrate && !matchMedia("(prefers-reduced-motion: reduce)").matches) navigator.vibrate(8); } catch (e) {} }
+  var toastEl = q("[data-toast]"), toastT = 0;
+  function toast(msg) {
+    if (!toastEl) return;
+    toastEl.innerHTML = "<span>" + esc(msg) + "</span>"; toastEl.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(function () { toastEl.hidden = true; }, 2200);
+  }
+  /* share: the phone's sheet, else the link to the clipboard */
+  function share(title, text, url) {
+    var data = { title: title, text: text, url: url };
+    if (navigator.share) { navigator.share(data).catch(function () {}); return; }
+    var s = (text ? text + "\n" : "") + url;
+    if (navigator.clipboard) navigator.clipboard.writeText(s).then(function () { toast("انحفظ الرابط"); }, function () { toast(url); });
+    else toast(url);
+  }
+  d.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-share]");
+    if (b) { buzz(); share(b.dataset.share, b.dataset.share, location.origin + location.pathname); }
+  });
+  /* سينماتي (owner 2026-10-22): starred cinemas, kept on this phone */
+  var favs = [];
+  try { favs = JSON.parse(store.get("favs") || "[]"); if (!Array.isArray(favs)) favs = []; } catch (e) { favs = []; }
+  function paintFavs() {
+    qa("[data-fav]").forEach(function (b) { var on = favs.indexOf(b.dataset.fav) >= 0; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); });
+  }
+  d.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-fav]");
+    if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    var cid = b.dataset.fav, i = favs.indexOf(cid);
+    if (i >= 0) favs.splice(i, 1); else favs.push(cid);
+    store.set("favs", JSON.stringify(favs)); buzz(); paintFavs();
+    toast(i >= 0 ? "انشالت من سينماتي" : "انضافت لسينماتي");
+    if (typeof paintFavList === "function") paintFavList();
+  }, true);
+  paintFavs();
+  /* a poster fades in when it has loaded; until then its frame shimmers */
+  function posterReady(img) { img.classList.add("ok"); var f = img.closest(".pst"); if (f) f.classList.add("ok"); }
+  qa(".pst img").forEach(function (img) {
+    if (img.complete && img.naturalWidth) posterReady(img);
+    else { img.addEventListener("load", function () { posterReady(img); }); img.addEventListener("error", function () { posterReady(img); }); }
+  });
+  qa(".pst:not(:has(img))").forEach(function (f) { f.classList.add("ok"); });
+  /* the poster travels (owner 2026-10-22): the tapped tile's poster is the one the film page's hero grows from, and
+     coming back it returns to its tile */
+  function nameTile(tile) { qa(".pst.vt").forEach(function (x) { x.classList.remove("vt"); }); var ps = tile && q(".pst", tile); if (ps) ps.classList.add("vt"); }
+  d.addEventListener("click", function (e) {
+    var t = e.target.closest && e.target.closest(".tile[href]");
+    if (t) { buzz(); nameTile(t); }
+  });
+  addEventListener("pagereveal", function (e) {
+    var a = window.navigation && navigation.activation;
+    if (e.viewTransition && a && a.from && a.navigationType === "traverse") {
+      var from = a.from.url || "", t = qa(".tile[href]").filter(function (x) { return from.indexOf(x.getAttribute("href")) >= 0; })[0];
+      if (t) { nameTile(t); e.viewTransition.finished.finally(function () { q(".pst", t).classList.remove("vt"); }); }
+    }
+  });
+
   function vt(fn) { if (d.startViewTransition && !matchMedia("(prefers-reduced-motion: reduce)").matches) d.startViewTransition(fn); else fn(); }
 
   /* distance (km) from the visitor, when they let us know where they are (kept for the session only) */
@@ -61,7 +120,7 @@
     var go = function (i, smooth) { panes[i].scrollIntoView({ behavior: smooth ? "smooth" : "auto", inline: "start", block: "nearest" }); setTab(i); };
     tabs.forEach(function (t, i) { t.addEventListener("click", function () {
       if (t.classList.contains("on")) panes[i].scrollTo({ top: 0, behavior: "smooth" });   /* the active tab again: back to its top */
-      go(i, true);
+      buzz(); go(i, true);
     }); });
     if ("IntersectionObserver" in window) {
       var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) setTab(panes.indexOf(e.target)); }); }, { root: pager, threshold: 0.6 });
@@ -73,11 +132,78 @@
     var wi = KEYS.indexOf(tab0);
     go(wi < 0 ? 0 : wi, false);
 
-    /* genre chips: the grid shows only what the chip names; the reflow is a view transition */
+    /* ── search (owner 2026-10-22): films and cinemas by their Arabic or English names, as the visitor types ── */
+    var srch = q("[data-search]"), sin = q("[data-search-in]"), sout = q("[data-search-out]"), IDX = null;
+    try { IDX = JSON.parse((q("#idx") || {}).textContent || "null"); } catch (e) {}
+    var fold = function (t) {
+      return String(t || "").toLowerCase().replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/[^؀-ۿa-z0-9 ]+/g, " ").replace(/\s+/g, " ").trim();
+    };
+    var hit = function (hay, needle) { var h = fold(hay); return h.indexOf(needle) >= 0 || h.split(" ").some(function (w) { return w.indexOf(needle) === 0; }); };
+    var openSearch = function () {
+      if (!srch) return;
+      srch.hidden = false; html.style.overflow = "hidden";
+      history.pushState({ search: 1 }, "");
+      setTimeout(function () { sin.focus(); }, 50);
+    };
+    var closeSearch = function (fromPop) {
+      if (!srch || srch.hidden) return;
+      srch.hidden = true; html.style.overflow = ""; sin.value = ""; sout.innerHTML = "";
+      if (!fromPop && history.state && history.state.search) history.back();
+    };
+    var paintSearch = function () {
+      var needle = fold(sin.value);
+      if (!IDX || needle.length < 2) { sout.innerHTML = ""; return; }
+      var fs = IDX.f.filter(function (f) { return hit(f[1], needle) || hit(f[2], needle); }).slice(0, 12);
+      var cs = IDX.c.filter(function (c) { return hit(c[1], needle) || hit(c[2], needle) || hit(c[3] + " " + c[1], needle) || hit(c[4], needle); }).slice(0, 12);
+      var out = "";
+      if (fs.length) out += '<p class="srch-h">الأفلام</p>' + fs.map(function (f) {
+        return '<a class="sr-r" href="' + esc(f[4]) + '"><span class="pst ok">' + (f[3] ? '<img class="ok" src="' + esc(f[3]) + '" alt="" loading="lazy">' : "") + "</span><span><b>" + esc(f[1]) + "</b>" + (f[2] && f[2] !== f[1] ? "<small>" + esc(f[2]) + "</small>" : "") + "</span></a>";
+      }).join("");
+      if (cs.length) out += '<p class="srch-h">السينمات</p>' + cs.map(function (c) {
+        return '<a class="sr-r" href="' + esc(c[6]) + '">' + chm(c[5], c[3]).replace('class="chl"', 'class="chl" width="34" height="34" style="inline-size:34px;block-size:34px;border-radius:9px"') + "<span><b>" + esc(c[1]) + "</b><small>" + esc(c[3]) + " · " + esc(c[4]) + "</small></span></a>";
+      }).join("");
+      sout.innerHTML = out || '<p class="empty">ما لقينا شي بهالاسم.</p>';
+    };
+    if (srch) {
+      q("[data-search-open]").addEventListener("click", function () { buzz(); openSearch(); });
+      q("[data-search-close]").addEventListener("click", function () { closeSearch(false); });
+      sin.addEventListener("input", paintSearch);
+      sin.addEventListener("keydown", function (e) { if (e.key === "Escape") closeSearch(false); });
+      addEventListener("popstate", function (e) { if (!(e.state && e.state.search)) closeSearch(true); });
+      addEventListener("keydown", function (e) { if (e.key === "/" && srch.hidden && d.activeElement.tagName !== "INPUT") { e.preventDefault(); openSearch(); } });
+    }
+
+    /* ── sort (owner 2026-10-22): the most shown, the best rated, the newest ── */
     var grid = q("[data-grid]"), none = q("[data-none]");
+    var sortMenu = q("[data-sort-menu]"), sortLabel = q("[data-sort-label]");
+    var applySort = function (key) {
+      var tiles = qa(".tile", grid);
+      tiles.sort(function (a, b) {
+        if (key === "sc") return (+b.dataset.sc || 0) - (+a.dataset.sc || 0) || (+b.dataset.n || 0) - (+a.dataset.n || 0);
+        if (key === "rel") return (b.dataset.rel || "").localeCompare(a.dataset.rel || "") || (+b.dataset.n || 0) - (+a.dataset.n || 0);
+        return (+b.dataset.n || 0) - (+a.dataset.n || 0);
+      });
+      vt(function () { tiles.forEach(function (t) { grid.appendChild(t); }); });
+      qa("[data-sort]", sortMenu).forEach(function (b) { b.classList.toggle("on", b.dataset.sort === key); if (b.dataset.sort === key) sortLabel.textContent = b.textContent; });
+      store.set("sort", key);
+    };
+    if (sortMenu) {
+      q("[data-sort-open]").addEventListener("click", function (e) {
+        e.stopPropagation(); buzz();
+        var r = e.currentTarget.getBoundingClientRect();
+        sortMenu.style.top = (r.bottom + 6) + "px"; sortMenu.style.right = Math.max(8, innerWidth - r.right) + "px";
+        sortMenu.hidden = !sortMenu.hidden;
+      });
+      qa("[data-sort]", sortMenu).forEach(function (b) { b.addEventListener("click", function () { sortMenu.hidden = true; buzz(); applySort(b.dataset.sort); }); });
+      d.addEventListener("click", function () { sortMenu.hidden = true; });
+      var s0 = store.get("sort"); if (s0 && s0 !== "n") applySort(s0);
+    }
+
+    /* genre chips: the grid shows only what the chip names; the reflow is a view transition */
     qa("[data-chip]").forEach(function (c) {
       c.addEventListener("click", function () {
         var k = c.dataset.chip;
+        buzz();
         vt(function () {
           qa("[data-chip]").forEach(function (x) { x.classList.toggle("on", x === c); });
           var n = 0;
@@ -91,6 +217,16 @@
     /* السينمات: the cities first; a city (or «أقرب سينما») opens its cinemas, and the phone's back returns */
     var clist = q("[data-clist]"), msg = q("[data-geo-msg]"), cities = q("[data-cities]"), cv = q("[data-cv]"), cvT = q("[data-cv-title]");
     var ccs = qa(".ccard", clist), order = ccs.slice();
+    var favBox = q("[data-favs]"), favList = q("[data-favlist]");
+    var paintFavList = function () {
+      if (!favBox) return;
+      favList.innerHTML = "";
+      favs.forEach(function (cid) { var c = ccs.filter(function (x) { return x.dataset.cid === cid; })[0]; if (c) { var k = c.cloneNode(true); k.hidden = false; q("[data-km]", k).textContent = kmText(km(c)); favList.appendChild(k); } });
+      favBox.hidden = !favList.children.length;
+      paintFavs();
+    };
+    window.paintFavList = paintFavList;
+    paintFavList();
     var cur = "cities|";
     var cvShow = function (mode, city) {
       if (cur === mode + "|" + (city || "")) return;   /* a back that only closed a ticket */
@@ -314,10 +450,20 @@
       }
       sheet.hidden = false; scrim.hidden = false;
       history.pushState({ sheet: 1 }, "");
+      var sh = q("[data-tk-share]", sheet);
+      if (sh) sh.onclick = function () {
+        buzz();
+        var film = q("[data-tk-film]", sheet).textContent, cin = q("[data-tk-cin]", sheet).textContent;
+        share(film, film + " — " + cin + "، " + q("[data-tk-day]", sheet).textContent.replace(" · ", " ") + " " + tt[0], location.origin + location.pathname);
+      };
     };
+    /* سينماتي first in «وين يعرض» (the starred cinemas of the city at the top) */
+    if (favs.length) qa(".city[data-city]").forEach(function (cityEl) {
+      qa(".cblock[data-cin]", cityEl).reverse().forEach(function (blk) { if (favs.indexOf(blk.dataset.cin) >= 0) cityEl.insertBefore(blk, cityEl.firstChild); });
+    });
     d.addEventListener("click", function (e) {
       var b = e.target.closest && e.target.closest(".tbtn");
-      if (b) { if (!b.classList.contains("past")) open(b); return; }
+      if (b) { if (!b.classList.contains("past")) { buzz(); open(b); } return; }
       var o = e.target.closest && e.target.closest("[data-open]");
       if (o) { var tb2 = q('.tbtn[data-i="' + o.dataset.open + '"]'); if (tb2) { if (sheet && !sheet.hidden) { sheet.hidden = true; scrim.hidden = true; history.back(); } setTimeout(function () { open(tb2); }, sheet && !sheet.hidden ? 60 : 0); } return; }
       if (e.target.closest && (e.target.closest("[data-tk-close]") || e.target === scrim)) close();
