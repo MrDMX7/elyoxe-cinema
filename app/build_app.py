@@ -145,6 +145,11 @@ def svg(name):
          "film": '<rect x="4" y="5" width="16" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 9h16M4 15h16M9 5v14M15 5v14" stroke="currentColor" stroke-width="1.6"/>',
          "fwd": '<path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
          "cal": '<rect x="4" y="5.5" width="16" height="14.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 10.5h16M9 3.5v4M15 3.5v4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+         "search": '<circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M16 16l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+         "share": '<circle cx="18" cy="5" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" fill="none" stroke="currentColor" stroke-width="2"/>',
+         "staro": '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>',
+         "sort": '<path d="M4 7h16M7 12h10M10 17h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
+         "close": '<path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
          "seat": '<path d="M6 11V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4M4 11h16v5H4zM6 16v3M18 16v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>'}
     return f'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">{p[name]}</svg>'
 
@@ -272,7 +277,7 @@ class App:
 <meta property="og:title" content="{E(ttl)}"><meta property="og:description" content="{E(desc)}"><meta property="og:type" content="website">
 <meta property="og:url" content="{E(canon)}"><meta property="og:image" content="{E(self._og or SITE + '/assets/og-ar.png')}"><meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="/manifest.webmanifest">{self.ld()}
-<meta name="theme-color" content="#F3EEE6"><meta name="color-scheme" content="light">
+<meta name="theme-color" content="#F3EEE6" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#17120F" media="(prefers-color-scheme: dark)"><meta name="color-scheme" content="light dark">
 <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
 <link rel="preload" href="{self.base}assets/fonts/plex-ar-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="{self.base}assets/fonts/plex-ar-700.woff2" as="font" type="font/woff2" crossorigin>
@@ -280,7 +285,7 @@ class App:
 <script type="speculationrules">{self.spec()}</script>
 <script>(function(){{addEventListener("pagereveal",function(e){{var t=e.viewTransition,a=window.navigation&&navigation.activation;if(t&&a&&a.from&&a.entry&&a.navigationType==="traverse"&&a.entry.index<a.from.index)document.documentElement.dataset.nav="pop";else if(t)document.documentElement.dataset.nav="push";if(t)t.finished.finally(function(){{delete document.documentElement.dataset.nav}})}});addEventListener("pageswap",function(e){{var t=e.viewTransition,a=e.activation;if(t&&a&&a.navigationType==="traverse"&&a.entry&&a.from&&a.entry.index<a.from.index)document.documentElement.dataset.nav="pop";else if(t)document.documentElement.dataset.nav="push"}})}})()</script>
 </head><body>{body}{self.table()}
-<div class="scrim" data-scrim hidden></div>
+<div class="scrim" data-scrim hidden></div><div class="toast" data-toast role="status" hidden></div>
 <script>window.APP={{base:"{self.base}",ask:"{ASK_API}",today:"{self.k.today}",tomorrow:"{self.k.tomorrow}",logos:{json.dumps(self.logos)}}}</script>
 <script src="{self.base}assets/{self.js_name}" defer></script>
 </body></html>"""
@@ -304,9 +309,14 @@ class App:
         role = ' role="tablist"' if home else ""
         return '<nav class="tabbar" aria-label="الأقسام"%s>%s</nav>' % (role, "".join(out))
 
-    def bar(self, ttl, back=True):
+    def bar(self, ttl, back=True, right=""):
         b = (f'<a class="pg-back" href="{self.base}" data-back aria-label="رجوع">{svg("back")}</a>' if back else "<span></span>")
-        return f'<header class="pgbar">{b}<h1>{E(ttl)}</h1><span></span></header>'
+        return f'<header class="pgbar">{b}<h1>{E(ttl)}</h1>{right or "<span></span>"}</header>'
+
+    def share_btn(self, text):
+        """«شارك» (owner 2026-10-22): the phone's share sheet with the page's own title and link; no share sheet (a
+        desktop), the link is copied and a toast says so."""
+        return f'<button type="button" class="pg-act" data-share="{E(text)}" aria-label="شارك">{svg("share")}</button>'
 
     # -------- home
     def tile(self, fid):
@@ -318,8 +328,13 @@ class App:
         if sc:
             meta.append(f'<span class="m-sc {kind}">{svg("star") if kind == "imdb" else ""}<b>{E(sc)}</b>{"<small>IMDb</small>" if kind == "imdb" else "<small>النقاد</small>"}</span>')
         age = f'<i class="age">{E(f["rating"])}</i>' if f.get("rating") else ""
-        return (f'<a class="tile" href="{self.u("f", fid)}" data-g="{E(" ".join(sorted(tags(f))))}">'
-                f'<span class="tp">{self.poster(fid)}{age}</span>'
+        # the sort keys (owner 2026-10-22): shows, a 0-100 score (IMDb ×10, else the critics' %), the release day
+        imdb, rt = f.get("imdb_score"), (f.get("rt") or {}).get("critics")
+        scn = float(imdb) * 10 if imdb else (float(rt) if rt is not None else 0)
+        top = '<i class="top">ممتاز</i>' if scn >= 75 else ""
+        return (f'<a class="tile" href="{self.u("f", fid)}" data-g="{E(" ".join(sorted(tags(f))))}" data-n="{self.count.get(fid, 0)}" '
+                f'data-sc="{scn:g}" data-rel="{E(f.get("released") or "")}">'
+                f'<span class="tp">{self.poster(fid)}{age}{top}</span>'
                 f'<span class="tt">{E(title(k, fid))}</span><span class="tm">{"".join(meta)}</span></a>')
 
     def ccard(self, cid):
@@ -327,11 +342,12 @@ class App:
         n = len({s["film"] for s in self.shows if s["cinema"] == cid and s["date"] == self.k.today})
         lat, lng = c.get("lat"), c.get("lng")
         geo = f' data-lat="{lat:.5f}" data-lng="{lng:.5f}"' if lat is not None and lng is not None else ""
-        return (f'<a class="ccard" href="{self.u("c", cid)}" data-city="{E(c.get("city") or "")}"{geo}>'
+        return (f'<a class="ccard" href="{self.u("c", cid)}" data-city="{E(c.get("city") or "")}" data-cid="{E(cid)}"{geo}>'
                 + self.mark(cid) +
                 f'<span class="cc-b"><b>{E(self.cname(cid))}</b><small>{E(CITY.get(c.get("city"), ""))}'
                 f'<span class="cc-km" data-km></span></small></span>'
-                f'<span class="cc-n"><b>{n}</b><small>فيلم اليوم</small></span></a>')
+                f'<span class="cc-n"><b>{n}</b><small>فيلم اليوم</small></span>'
+                f'<span class="fav" data-fav="{E(cid)}" role="button" tabindex="0" aria-label="سينماتي" aria-pressed="false">{svg("staro")}{svg("star")}</span></a>')
 
     def billboard(self):
         """«الشاشة» from the live site, smaller: tonight's five most-shown films that have a trailer still, a card each,
@@ -423,15 +439,29 @@ class App:
         rows = "".join('<button type="button" class="crow" data-city="%s"><b>%s</b><small>%s</small>%s</button>'
                        % (c, CITY[c], howmany(per_city[c]), svg("fwd")) for c, _ in CITIES if per_city.get(c))
         cards = "".join(self.ccard(c) for c in sorted(self.cins, key=lambda c: (k.cinemas[c].get("city") or "", self.cname(c))))
+        # the search index (owner 2026-10-22): every showing film and cinema, by their Arabic and English names
+        idx = {"f": [[fid, title(k, fid), k.films[fid].get("title") or "", k.films[fid].get("poster") or "", self.u("f", fid)] for fid in self.films],
+               "c": [[c, self.cname(c), k.cname(c, "en"), self.chain(c), CITY.get(k.cinemas[c].get("city"), ""), k.cinemas[c]["chain"], self.u("c", c)]
+                     for c in self.cins]}
+        idx_js = json.dumps(idx, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+        search = (f'<button type="button" class="th-btn" data-search-open aria-label="بحث">{svg("search")}</button>'
+                  f'<div class="srch" data-search hidden><div class="srch-bar"><input type="search" data-search-in placeholder="فيلم أو سينما…" '
+                  f'autocomplete="off" enterkeyhint="search" aria-label="بحث"><button type="button" class="th-btn" data-search-close aria-label="سكّر">{svg("close")}</button></div>'
+                  f'<div class="srch-out" data-search-out></div></div><script type="application/json" id="idx">{idx_js}</script>')
+        sort = f'<button type="button" class="chip sort" data-sort-open>{svg("sort")}<span data-sort-label>الأكثر عرضاً</span></button>'
+        sort_menu = ('<div class="menu" data-sort-menu hidden>' + "".join(
+                    f'<button type="button" data-sort="{key}"{" class=\"on\"" if key == "n" else ""}>{label}</button>'
+                    for key, label in (("n", "الأكثر عرضاً"), ("sc", "الأعلى تقييماً"), ("rel", "الأحدث"))) + "</div>")
         body = f"""<div class="app">
-<header class="tophead"><a class="brand" href="{self.base}">سينما</a><h1 class="th-t" data-tab-title>السينمات</h1><span></span></header>
+<header class="tophead"><a class="brand" href="{self.base}">سينما</a><h1 class="th-t" data-tab-title>السينمات</h1>{search}</header>
 <main class="pager" data-pager>
 <section class="pane" data-key="cinemas" aria-label="السينمات">
 <button type="button" class="nearbtn" data-near>{svg("pin")}أقرب سينما</button><p class="geo-msg" data-geo-msg hidden></p>
+<div class="favs" data-favs hidden><h2>سينماتي</h2><div class="clist" data-favlist></div></div>
 <div class="cities" data-cities>{rows}</div>
 <div class="cv" data-cv hidden><button type="button" class="cv-back" data-cv-back>{svg("back")}كل المدن</button><h2 data-cv-title></h2></div>
 <div class="clist" data-clist hidden>{cards}</div></section>
-<section class="pane" data-key="films" aria-label="الأفلام">{(self.billboard() + self.soon_board()) if merged else ""}<div class="chips" data-chips>{"".join(chips)}</div>
+<section class="pane" data-key="films" aria-label="الأفلام">{(self.billboard() + self.soon_board()) if merged else ""}<div class="chips" data-chips>{sort}{"".join(chips)}</div>{sort_menu}
 <div class="grid" data-grid>{grid}</div><p class="empty" data-none hidden>ما في أفلام بهالتصنيف اليوم.</p></section>
 <section class="pane" data-key="coming" aria-label="قريباً">{self.coming()}</section>
 </main>{self.tabbar("cinemas", home=True)}</div>"""
@@ -538,8 +568,8 @@ class App:
         ctabs = "".join(f'<button type="button" class="chip" data-ctab="{c}">{CITY[c]}</button>' for c in cities)
         where = (f'<section class="sec where"><h2>وين يعرض</h2>{self.dayswitch()}<div class="chips" data-ctabs>{ctabs}</div>{sched}'
                  f'<p class="empty" data-past hidden>خلصت عروض اليوم هني، شوف بكرة.</p></section>') if shows else ""
-        body = f"""<div class="pg film">{self.bar(t)}
-<section class="fhero" style="--pc:{E(f.get('poster_color') or '#3a302a')}">{hero_bg}<div class="fh-in">{self.poster(fid, cls="pst big", eager=True)}
+        body = f"""<div class="pg film">{self.bar(t, right=self.share_btn(t + " — سينما الإمارات"))}
+<section class="fhero" style="--pc:{E(f.get('poster_color') or '#3a302a')}">{hero_bg}<div class="fh-in">{self.poster(fid, cls="pst big vt", eager=True)}
 <div class="fh-t"><h2 class="ft">{E(t)}</h2>{f'<p class="fte" lang="en" dir="ltr">{E(f["title"])}{" · " + str(f["year"]) if f.get("year") else ""}</p>' if f.get("title") and f.get("title") != t else ""}
 <div class="fchips">{"".join(chips)}</div>{f'<p class="fg">{genres}</p>' if genres else ""}</div></div></section>
 <div class="acts">{trailer}{ask}</div>
@@ -583,9 +613,9 @@ class App:
         maps = f"https://www.google.com/maps/dir/?api=1&destination={ll}" if ll else (c.get("maps") or "")
         waze = f"https://waze.com/ul?ll={ll}&navigate=yes" if ll else ""
         name = f"{self.chain(cid)} — {self.cname(cid)}"
-        body = f"""<div class="pg cinema">{self.bar(name)}
+        body = f"""<div class="pg cinema">{self.bar(name, right=self.share_btn(name + " — المواعيد"))}
 <section class="chead">{self.mark(cid, "lg")}<div><h2>{E(self.cname(cid))}</h2>
-<p>{E(CITY.get(c.get("city"), ""))}</p></div></section>
+<p>{E(CITY.get(c.get("city"), ""))}</p></div><button type="button" class="fav big" data-fav="{E(cid)}" aria-label="سينماتي" aria-pressed="false">{svg("staro")}{svg("star")}</button></section>
 <div class="acts">{f'<a class="btn ghost" href="{E(maps)}" target="_blank" rel="noopener">{svg("map")}Google Maps</a>' if maps else ""}{f'<a class="btn ghost" href="{E(waze)}" target="_blank" rel="noopener">{svg("map")}Waze</a>' if waze else ""}</div>
 <section class="sec">{self.dayswitch()}<div class="films">{rows}</div><p class="empty" data-past hidden>خلصت عروض اليوم هني، شوف بكرة.</p></section>
 </div>{self.sheet()}"""
@@ -604,7 +634,7 @@ class App:
 <div class="tk-time"><small data-tk-day></small><b data-tk-time></b></div></div>
 <table class="tk-seats"><tbody data-tk-seats></tbody></table>
 <a class="btn velvet wide" data-tk-book target="_blank" rel="noopener nofollow">احجز</a>
-<button type="button" class="btn ghost wide" data-tk-close>سكّر</button></div></section>"""
+<div class="tk-row"><button type="button" class="btn ghost" data-tk-share>{svg("share")}شارك</button><button type="button" class="btn ghost" data-tk-close>سكّر</button></div></div></section>"""
 
     # -------- assets
     def assets(self):

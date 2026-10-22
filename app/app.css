@@ -13,6 +13,7 @@
   --m-page:300ms; --m-pop:150ms; --ease-out:cubic-bezier(.2,.7,.2,1); --ease-sheet:cubic-bezier(.32,.72,0,1);
   --night:#F3EEE6; --paper:#FFFDF9; --line:#E2D8CA; --wood:#2A2420; --stone:#7E7366; --sand:#4A4038;
   --saff:#A2690F; --door:#1F6F78; --velvet:#8C1C2E; --on:#FFF8F0; --red:#B3392E;
+  --press:#F7F1E8; --well:#E9E1D5; --bar:rgba(255,253,249,.94); --shadow:rgba(42,36,32,.16);
   --r:14px; --gut:16px; --head:54px;
   --font:"Plex","Segoe UI",Tahoma,system-ui,sans-serif; --mono:"PlexMono","Plex",ui-monospace,monospace;
 }
@@ -69,7 +70,7 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 @media (min-width:640px){.grid{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:24px 16px}}
 .tile{display:flex;flex-direction:column;gap:6px;min-inline-size:0;cursor:pointer}
 .tp{position:relative;display:block}
-.pst{display:block;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:var(--pc,#3a302a);box-shadow:0 6px 18px rgba(42,36,32,.16)}
+.pst{display:block;aspect-ratio:2/3;border-radius:12px;overflow:hidden;background:var(--pc,#3a302a);box-shadow:0 6px 18px var(--shadow)}
 .pst img{inline-size:100%;block-size:100%;object-fit:cover}
 .pst.np{display:flex;align-items:flex-end;padding:12px;color:#fff;font-weight:700;font-size:18px;line-height:1.2}
 .age{position:absolute;inset-block-start:6px;inset-inline-start:6px;padding:0 6px;border-radius:6px;background:rgba(20,16,14,.72);color:#fff;
@@ -87,8 +88,8 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 /* the cinema cards */
 .clist{display:grid;gap:10px}
 @media (min-width:760px){.clist{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}}
-.ccard{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px;border-radius:var(--r);background:var(--paper);border:1px solid var(--line)}
-.ccard:active{background:#F7F1E8}
+.ccard{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:12px;border-radius:var(--r);background:var(--paper);border:1px solid var(--line)}
+.ccard:active{background:var(--press)}
 .cc-b{display:grid;gap:2px;min-inline-size:0}
 .cc-b b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cc-b small{color:var(--stone);font-size:13px}
@@ -157,7 +158,7 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .lead{font-size:14px;color:var(--stone);margin-block-end:12px}
 
 /* the day switch, the city chips, the cinemas and their times */
-.segs{display:inline-flex;padding:4px;border-radius:12px;background:#E9E1D5;margin-block-end:4px}
+.segs{display:inline-flex;padding:4px;border-radius:12px;background:var(--well);margin-block-end:4px}
 .seg{border:0;background:none;padding:7px 22px;border-radius:9px;font-size:14px;color:var(--stone);cursor:pointer}
 .seg.on{background:var(--paper);color:var(--wood);font-weight:700;box-shadow:0 1px 3px rgba(42,36,32,.15)}
 .cblock{padding:12px 0;border-block-end:1px solid var(--line)}
@@ -319,7 +320,7 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 :root{--tb:60px}
 .tabbar{position:fixed;inset-inline:0;inset-block-end:0;z-index:30;display:grid;grid-template-columns:repeat(3,1fr);
   block-size:calc(var(--tb) + env(safe-area-inset-bottom));padding-block-end:env(safe-area-inset-bottom);
-  background:rgba(255,253,249,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-block-start:1px solid var(--line);view-transition-name:tabbar}
+  background:var(--bar);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-block-start:1px solid var(--line);view-transition-name:tabbar}
 .tabbar a,.tabbar button{display:grid;place-items:center;align-content:center;gap:2px;border:0;background:none;color:var(--stone);
   font:inherit;font-size:11px;font-weight:500;text-decoration:none;cursor:pointer;transition:color .15s,transform .15s var(--ease-out)}
 .tabbar svg{inline-size:22px;block-size:22px}
@@ -355,3 +356,76 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .fam-sp summary{cursor:pointer;min-block-size:44px;display:flex;align-items:center;color:var(--stone);font-size:14px}
 .fam-src{margin:4px 0 0;color:var(--stone);font-size:12px;line-height:1.6}
 .fam-src a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+
+/* ── dark (owner 2026-10-22): follows the phone; the Meylis wood as the ground, the same saffron and teal lifted ── */
+@media (prefers-color-scheme:dark){
+  :root{--night:#17120F;--paper:#231C18;--line:#3A302A;--wood:#F3EEE6;--stone:#A89A8C;--sand:#D9CFC2;--saff:#E0B15A;--door:#5FB8C2;
+    --velvet:#A3283C;--on:#FFF8F0;--red:#E06A5E;--press:#2C241F;--well:#2C241F;--bar:rgba(23,18,15,.92);--shadow:rgba(0,0,0,.5)}
+  .chip.on{background:var(--saff);border-color:var(--saff);color:#1a1300}
+  .verdict.v-s b{color:var(--red)}
+  .tbtn.on{background:var(--velvet);border-color:var(--velvet)}
+  .scrim{background:rgba(0,0,0,.6)}
+  .tk-alt{background:rgba(95,184,194,.12)}
+  .cc-logo.img{background:#fff}
+}
+
+/* ── the top-bar buttons: search on the home, share on a page ── */
+.th-btn,.pg-act{display:grid;place-items:center;inline-size:44px;block-size:44px;margin-inline-start:auto;border:0;border-radius:22px;background:none;color:var(--wood);cursor:pointer}
+.th-btn svg,.pg-act svg{inline-size:22px;block-size:22px}
+.film .pgbar .pg-act{color:#fff;background:rgba(20,16,14,.35)}
+.film.scrolled .pgbar .pg-act{color:var(--wood);background:none}
+
+/* ── search (owner 2026-10-22): a sheet over the home; results as the visitor types ── */
+.srch{position:fixed;inset:0;z-index:35;background:var(--night);padding:env(safe-area-inset-top) var(--gut) 0;animation:fade .15s}
+.srch-bar{display:flex;align-items:center;gap:6px;block-size:var(--head)}
+.srch-bar input{flex:1;min-inline-size:0;block-size:40px;padding-inline:14px;border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--wood);font:inherit;font-size:16px}
+.srch-bar input:focus{outline:2px solid var(--door);outline-offset:-1px}
+.srch-out{display:grid;gap:4px;padding-block:8px 24px;overflow-y:auto;max-block-size:calc(100dvh - var(--head) - env(safe-area-inset-top))}
+.srch-h{margin:12px 0 4px;font-size:12px;color:var(--stone);font-weight:500}
+.sr-r{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;min-block-size:56px;padding:6px 8px;border-radius:12px;color:inherit}
+.sr-r:active{background:var(--press)}
+.sr-r .pst{inline-size:34px;flex:none}
+.sr-r b{display:block;font-size:15px}
+.sr-r small{color:var(--stone);font-size:12px}
+.sr-r mark{background:none;color:var(--saff);font-weight:700}
+.srch .empty{padding-block:40px}
+
+/* ── سينماتي: the star on a card and on a cinema's header; the block above the cities ── */
+.fav{position:relative;display:grid;place-items:center;inline-size:40px;block-size:40px;margin-inline-start:-6px;border:0;background:none;color:var(--stone);cursor:pointer;border-radius:20px}
+.fav svg{position:absolute;inline-size:22px;block-size:22px;transition:transform .2s var(--ease-out),opacity .15s}
+.fav svg:last-child{opacity:0;transform:scale(.6);color:var(--saff)}
+.fav.on svg:first-child{opacity:0}
+.fav.on svg:last-child{opacity:1;transform:scale(1)}
+.fav.big{margin-inline-start:auto;inline-size:44px;block-size:44px}
+.favs h2{font-size:18px;margin:4px 0 10px}
+.favs{margin-block-end:18px}
+
+/* ── sort: a chip that opens a small menu ── */
+.chip.sort{color:var(--door);border-color:var(--door)}
+.menu{position:fixed;z-index:36;display:grid;min-inline-size:170px;padding:6px;border-radius:12px;background:var(--paper);border:1px solid var(--line);box-shadow:0 10px 30px var(--shadow);animation:fade .12s}
+.menu button{border:0;background:none;padding:10px 12px;border-radius:8px;text-align:start;font:inherit;font-size:15px;color:var(--wood);cursor:pointer}
+.menu button.on{color:var(--door);font-weight:700}
+.menu button:active{background:var(--press)}
+
+/* ── «ممتاز» on a poster (IMDb 7.5+ or the critics 85%+) ── */
+.top{position:absolute;inset-block-start:6px;inset-inline-end:6px;padding:2px 7px;border-radius:6px;background:#E3A008;color:#1a1300;font-size:11px;font-weight:700;line-height:1.5}
+
+/* ── the poster travels to the film page (shared element over the page slide) ── */
+.pst.vt{view-transition-name:poster}
+::view-transition-group(poster){animation-duration:var(--m-page);animation-timing-function:var(--ease-out);z-index:2}
+::view-transition-old(poster){display:none}
+::view-transition-new(poster){animation:none;mix-blend-mode:normal;inline-size:100%;block-size:100%;object-fit:cover}
+
+/* ── a poster loads: the frame shimmers until the image is there, then it fades in ── */
+.pst img{opacity:0;transition:opacity .25s}
+.pst img.ok{opacity:1}
+.pst:not(.ok)::before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.12) 50%,transparent 70%);background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+.pst{position:relative}
+@keyframes shimmer{from{background-position:120% 0}to{background-position:-80% 0}}
+@media (prefers-reduced-motion:reduce){.pst:not(.ok)::before{animation:none}}
+
+/* ── a toast ── */
+.toast{position:fixed;inset-inline:0;inset-block-end:calc(var(--tb) + 16px + env(safe-area-inset-bottom));z-index:50;display:grid;justify-items:center;pointer-events:none}
+.toast span{padding:10px 18px;border-radius:999px;background:var(--wood);color:var(--night);font-size:14px;font-weight:500;animation:fade .15s}
+.tk-row{display:flex;gap:10px}
+.tk-row .btn{flex:1}
