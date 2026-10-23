@@ -1,14 +1,14 @@
 {
-  "ar": "ديغر بطولة Tom Cruise وإخراج Alejandro González Iñárritu، وتقييم النقاد له 53% بس. والجمهور أعطاه 73%، فالحكم مختلط بين النقاد والمشاهدين.",
-  "basis": "RT 53% (299 نقد) · الجمهور 73%",
+  "ar": "«ديجر» يمزج الكوميدي والدراما والأكشن، والنقاد مب متفقين عليه: 52% من 336 نقد. الجمهور رفعه لـ76%.",
+  "basis": "RT 52% (336 نقد) · الجمهور 76%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": 53,
-    "rt_count": 299
+    "rt": 52,
+    "rt_count": 336
   },
   "by": "claude",
-  "en": "Digger, starring Tom Cruise and directed by Alejandro González Iñárritu, earns 53% from critics and 73% from audiences on Rotten Tomatoes.",
+  "en": "Digger mixes comedy, drama, and action, and critics are divided on it, with 52% from 336 reviews on Rotten Tomatoes. Audiences rate it 76%.",
   "fid": "digger",
   "verdict": "mixed",
-  "written": "2026-10-09"
+  "written": "2026-10-23"
 }
