@@ -32,6 +32,8 @@ if [ -z "${SRC:-}" ]; then
   # build's own pages at the same URLs; the old build's other pages (cards, prices, coming, questions, English) stay.
   # A failure here keeps the old pages — they are already built — so the site still publishes.
   "$PY" app/build_app.py --data data/latest.json --out out --live     || echo "deploy: app/build_app.py failed — publishing the old pages for this run" >&2
+  # the English site, the same pages under /en/ (2026-10-23); a failure there leaves the old English pages
+  "$PY" app/build_app.py --data data/latest.json --out out/en --live --lang en || echo "deploy: app/build_app.py --lang en failed — publishing the old English pages for this run" >&2
   if [ -s out/index.html ]; then
     SRC=out                                   # root layout (after Task 3)
   elif [ -s out/cinema/index.html ]; then     # legacy layout: stage it into the root shape

@@ -11,6 +11,7 @@ DATA="${DATA:-C:/Users/requi/cinema-runner/data/latest.json}"
 OUT="$(mktemp -d)"; OUTW="$(cygpath -m "$OUT" 2>/dev/null || echo "$OUT")"
 trap 'rm -rf "$OUT"' EXIT
 "$PY" "$HERE/build_app.py" --data "$DATA" --out "$OUTW/next" --base /next/
+"$PY" "$HERE/build_app.py" --data "$DATA" --out "$OUTW/next/en" --base /next/en/ --lang en
 BUCKET=elyoxe-cinema-574771023173
 aws s3 sync "$OUTW/next/assets/" "s3://$BUCKET/next/assets/" --region ap-south-1 --cache-control "public, max-age=31536000, immutable" --only-show-errors
 aws s3 sync "$OUTW/next/" "s3://$BUCKET/next/" --region ap-south-1 --delete --exclude "assets/*" \

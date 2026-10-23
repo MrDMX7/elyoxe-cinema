@@ -181,3 +181,36 @@ def test_the_indexnow_key_is_in_static_and_the_tool_lists_the_live_pages(live, t
     assert urls[0] == "https://cinema.elyoxe.com/" and f"https://cinema.elyoxe.com/film/{app.films[0]}/" in urls
     sh = open(os.path.join(ROOT, "deploy.sh"), encoding="utf-8").read()
     assert "tools/indexnow.py" in sh and sh.index("tools/indexnow.py") > sh.index('echo "deployed:')
+
+
+def test_the_english_site_is_the_same_pages_under_en(tmp_path):
+    """Owner 2026-10-23: English in the new design. The same film and cinema pages under /en/, LTR, every UI phrase
+    English (tr()), the data's own English names, hreflang both ways, no Arabic left but the «العربية» link."""
+    out = str(tmp_path / "en")
+    os.makedirs(out)
+    data = json.load(open(DATA, encoding="utf-8"))
+    build_app.LANG = "en"
+    try:
+        app = build_app.App(data, load_discounts(DISC), Halls(os.path.join(ROOT, "halls.yaml")), out, "/en/", live=True)
+        app.run()
+        fid, cid = app.films[0], app.cins[0]
+        home, film = read(out, "index.html"), read(out, "film", fid, "index.html")
+        cin = read(out, app.k.cinemas[cid]["city"], cid, "index.html")
+        for h in (home, film, cin):
+            assert '<html lang="en" dir="ltr"' in h
+            body = re.sub(r"<script.*?</script>", "", h, flags=re.S)
+            left = {x.strip() for x in re.findall(r"[؀-ۿ][^<>\"]*", body)}
+            assert left <= {"العربية"}, left
+            assert 'href="/en/film/' in h or 'href="/en/' in h
+        assert '<link rel="canonical" href="https://cinema.elyoxe.com/en/">' in home
+        assert f'hreflang="ar" href="https://cinema.elyoxe.com/film/{fid}/"' in film and f'hreflang="en" href="https://cinema.elyoxe.com/en/film/{fid}/"' in film
+        assert "Where it's showing" in film and "Ask the film" in film and ">Films<" in film
+        assert re.search(r"<title>[^<]*showtimes", film) and '"inLanguage": "en"' in film
+        assert ',t:{"' in home and "Link copied" in home          # the script's phrases in English
+    finally:
+        build_app.LANG = "ar"
+
+
+def test_deploy_builds_the_english_site_under_en():
+    sh = open(os.path.join(ROOT, "deploy.sh"), encoding="utf-8").read()
+    assert "--out out/en --live --lang en" in sh and sh.index("--lang en") > sh.index('app/build_app.py --data data/latest.json --out out --live')

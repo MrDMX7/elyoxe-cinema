@@ -433,3 +433,5 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .tk-row{display:flex;gap:10px}
 .tk-row .btn{flex:1}
 .sr-only{position:absolute;inline-size:1px;block-size:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* the English site reads left to right: the back and forward chevrons turn with it */
+[dir=ltr] .pg-back svg,[dir=ltr] .cv-back svg,[dir=ltr] .crow svg{transform:scaleX(-1)}
