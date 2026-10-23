@@ -113,7 +113,8 @@ def hm(t):
     return t[:5]
 
 
-DIRHAM = '<svg class="aed" viewBox="0 0 24 24" aria-label="درهم" role="img"><path d="M7.5 4v16h4.2c4.6 0 7.8-3.3 7.8-8s-3.2-8-7.8-8z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/><path d="M3 10h18M3 14h18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>'
+DIRHAM_PATH = '<path d="M7.5 4v16h4.2c4.6 0 7.8-3.3 7.8-8s-3.2-8-7.8-8z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/><path d="M3 10h18M3 14h18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>'
+DIRHAM = '<svg class="aed" aria-label="درهم" role="img"><use href="#i-aed"/></svg>'
 
 
 def t12(t):
@@ -136,8 +137,7 @@ def runtime(f):
     return f'<bdi dir="ltr" class="n">{r // 60}:{r % 60:02d}</bdi>' if r >= 60 else f'<bdi class="n">{r}</bdi> د'
 
 
-def svg(name):
-    p = {"back": '<path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
+ICONS = {"back": '<path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>',
          "pin": '<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="9.5" r="2.5" fill="currentColor"/>',
          "star": '<path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z" fill="currentColor"/>',
          "play": '<path d="M8 5v14l11-7z" fill="currentColor"/>',
@@ -153,7 +153,16 @@ def svg(name):
          "sort": '<path d="M4 7h16M7 12h10M10 17h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
          "close": '<path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>',
          "seat": '<path d="M6 11V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4M4 11h16v5H4zM6 16v3M18 16v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>'}
-    return f'<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">{p[name]}</svg>'
+
+ICONS["aed"] = DIRHAM_PATH
+SPRITE = '<svg hidden xmlns="http://www.w3.org/2000/svg">' + "".join(f'<symbol id="i-{k}" viewBox="0 0 24 24">{v}</symbol>' for k, v in ICONS.items()) + "</svg>"
+
+
+def svg(name):
+    """An icon by reference: the page's sprite (SPRITE, once after <body>) holds the drawing."""
+    assert name in ICONS, name
+    return f'<svg width="20" height="20" aria-hidden="true"><use href="#i-{name}"/></svg>'
+
 
 
 # ------------------------------------------------------------------ the app
@@ -278,6 +287,7 @@ class App:
 {"" if self.live else '<meta name="robots" content="noindex">'}<link rel="canonical" href="{E(canon)}">{self.alt(path)}
 <meta property="og:title" content="{E(ttl)}"><meta property="og:description" content="{E(desc)}"><meta property="og:type" content="website">
 <meta property="og:url" content="{E(canon)}"><meta property="og:image" content="{E(self._og or SITE + '/assets/og-ar.png')}"><meta name="twitter:card" content="summary_large_image">
+<meta property="og:locale" content="ar_AE"><meta property="og:site_name" content="سينما الإمارات">{'<meta name="robots" content="max-image-preview:large">' if self.live else ''}
 <link rel="manifest" href="/manifest.webmanifest">{self.ld()}
 <meta name="theme-color" content="#F3EEE6" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#17120F" media="(prefers-color-scheme: dark)"><meta name="color-scheme" content="light dark">
 <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
@@ -286,7 +296,7 @@ class App:
 <link rel="stylesheet" href="{self.base}assets/{self.css_name}">{head_extra}
 <script type="speculationrules">{self.spec()}</script>
 <script>(function(){{addEventListener("pagereveal",function(e){{var t=e.viewTransition,a=window.navigation&&navigation.activation;if(t&&a&&a.from&&a.entry&&a.navigationType==="traverse"&&a.entry.index<a.from.index)document.documentElement.dataset.nav="pop";else if(t)document.documentElement.dataset.nav="push";if(t)t.finished.finally(function(){{delete document.documentElement.dataset.nav}})}});addEventListener("pageswap",function(e){{var t=e.viewTransition,a=e.activation;if(t&&a&&a.navigationType==="traverse"&&a.entry&&a.from&&a.entry.index<a.from.index)document.documentElement.dataset.nav="pop";else if(t)document.documentElement.dataset.nav="push"}})}})()</script>
-</head><body>{body}{self.table()}
+</head><body>{SPRITE}{body}{self.table()}
 <div class="scrim" data-scrim hidden></div><div class="toast" data-toast role="status" hidden></div>
 <script>window.APP={{base:"{self.base}",ask:"{ASK_API}",today:"{self.k.today}",tomorrow:"{self.k.tomorrow}",logos:{json.dumps(self.logos)}}}</script>
 <script src="{self.base}assets/{self.js_name}" defer></script>
@@ -457,7 +467,8 @@ class App:
                     f'<button type="button" data-sort="{key}"{" class=\"on\"" if key == "n" else ""}>{label}</button>'
                     for key, label in (("n", "الأكثر عرضاً"), ("sc", "الأعلى تقييماً"), ("rel", "الأحدث"))) + "</div>")
         body = f"""<div class="app">
-<header class="tophead"><a class="brand" href="{self.base}">سينما</a><h1 class="th-t" data-tab-title>السينمات</h1>{search}</header>
+<header class="tophead"><a class="brand" href="{self.base}">سينما</a><p class="th-t" data-tab-title>السينمات</p>{search}</header>
+<h1 class="sr-only">سينما الإمارات: مواعيد أفلام اليوم في كل السينمات وأسعار التذاكر</h1>
 <main class="pager" data-pager>
 <section class="pane" data-key="cinemas" aria-label="السينمات">
 <button type="button" class="nearbtn" data-near>{svg("pin")}أقرب سينما</button><p class="geo-msg" data-geo-msg hidden></p>
@@ -469,7 +480,17 @@ class App:
 <div class="grid" data-grid>{grid}</div><p class="empty" data-none hidden>ما في أفلام بهالتصنيف اليوم.</p></section>
 <section class="pane" data-key="coming" aria-label="قريباً">{self.coming()}</section>
 </main>{self.tabbar("cinemas", home=True)}</div>"""
-        self.page(path or self.base, "سينما الإمارات — الأفلام والمواعيد والأسعار", "كل أفلام سينمات الإمارات اليوم، مصنّفة، وكل سينما بمواعيدها.", body, "home")
+        import datetime as _dt
+        dd = _dt.date.fromisoformat(k.today)
+        nf, nc = len(self.films), len(self.cins)
+        self._ld = [{"@type": "WebSite", "name": "سينما الإمارات", "url": SITE + "/", "inLanguage": "ar"},
+                    {"@type": "ItemList", "name": "أفلام اليوم في سينمات الإمارات", "itemListOrder": "https://schema.org/ItemListOrderDescending",
+                     "numberOfItems": nf, "itemListElement": [{"@type": "ListItem", "position": i + 1, "url": SITE + self.u("f", fid), "name": title(k, fid)}
+                                                               for i, fid in enumerate(self.films[:20])]}]
+        self.page(path or self.base, "سينما الإمارات — مواعيد أفلام اليوم في كل السينمات وأسعار التذاكر",
+                  f"{nf} فيلم في {nc} سينما في دبي وأبوظبي والشارقة والعين وباقي الإمارات، {DAYS_AR[dd.weekday()]} {dd.day} {MONTHS_AR[dd.month - 1]}. "
+                  "المواعيد والأسعار والتذكرة الأرخص وأقرب عرض لك.", body, "home")
+        self._ld = []
 
     # -------- shows → time buttons
     def times(self, shows):
@@ -594,9 +615,19 @@ class App:
         self._ld = [mv, {"@type": "BreadcrumbList", "itemListElement": [
             {"@type": "ListItem", "position": 1, "name": "سينما", "item": SITE + "/"},
             {"@type": "ListItem", "position": 2, "name": t, "item": SITE + self.u("f", fid)}]}]
+        # the next shows as ScreeningEvent (today first, then tomorrow; 24 at most), in site_kit's one shape
+        live_shows = sorted((x for x in shows if x in self.shows), key=lambda x: (x["date"], x["time"] < "04:00", x["time"]))
+        self._ld += [k.screening_ld(x, "ar") for x in live_shows[:24]]
         self._og = SITE + (f.get("poster_2x") or f.get("poster")) if (f.get("poster_2x") or f.get("poster")) else None
-        self.page(self.u("f", fid), f"{t} — المواعيد والأسعار في سينمات الإمارات", (f.get("synopsis_ar") or t)[:150], body, "film",
-                  canon=f"{SITE}/film/{fid}/")
+        today_shows = [x for x in live_shows if x["date"] == k.today]
+        ncin = len({x["cinema"] for x in today_shows})
+        prices = [p["aed"] for x in today_shows for p in (x.get("prices") or []) if (p.get("aed") or 0) > 0]
+        cities = [CITY[c] for c, _ in CITIES if any(k.cinemas[x["cinema"]].get("city") == c for x in today_shows)]
+        when = f"اليوم في {ncin} سينما" if ncin else "بكرة في سينمات الإمارات"
+        ttl = f"{t} — مواعيد {when}" + (f"، من {int(min(prices))} درهم" if prices else "") + (" | سينما الإمارات" if ncin else "")
+        desc = (f"{t}: {len(today_shows)} عرض اليوم في {'، '.join(cities[:4])}" + (f"، التذكرة من {int(min(prices))} درهم" if prices else "") + ". "
+                if today_shows else f"{t} في سينمات الإمارات بكرة. ") + (f.get("synopsis_ar") or "")[:120]
+        self.page(self.u("f", fid), ttl, desc, body, "film", canon=f"{SITE}/film/{fid}/")
         self._ld, self._og = [], None
 
     # -------- cinema page
@@ -626,9 +657,21 @@ class App:
         th = {"@type": "MovieTheater", "name": name, "url": SITE + self.u("c", cid)}
         if c.get("address"): th["address"] = c["address"]
         if c.get("lat") is not None: th["geo"] = {"@type": "GeoCoordinates", "latitude": c["lat"], "longitude": c["lng"]}
-        self._ld = [th]
-        self.page(self.u("c", cid), f"{name} — الأفلام والمواعيد اليوم", f"أفلام {name} اليوم وبكرة بمواعيدها وأسعارها.", body, "cinema",
-                  canon=f"{SITE}/{c.get('city')}/{cid}/")
+        live_shows = sorted((x for x in shows if x in self.shows), key=lambda x: (x["date"], x["time"] < "04:00", x["time"]))
+        self._ld = [th, {"@type": "BreadcrumbList", "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "سينما", "item": SITE + "/"},
+            {"@type": "ListItem", "position": 2, "name": CITY.get(c.get("city"), ""), "item": SITE + "/#cinemas"},
+            {"@type": "ListItem", "position": 3, "name": name, "item": SITE + self.u("c", cid)}]}]
+        self._ld += [k.screening_ld(x, "ar") for x in live_shows[:24]]
+        today_shows = [x for x in live_shows if x["date"] == k.today]
+        nf = len({x["film"] for x in today_shows})
+        prices = [p["aed"] for x in today_shows for p in (x.get("prices") or []) if (p.get("aed") or 0) > 0]
+        ts = [x["time"] for x in today_shows]
+        ttl = f"{name} — {nf} فيلم اليوم ومواعيدها" if nf else f"{name} — أفلام بكرة ومواعيدها"
+        desc = (f"{nf} فيلم اليوم في {name}، أول عرض {t12(hm(ts[0]))[0]} {t12(hm(ts[0]))[1]} وآخر عرض {t12(hm(ts[-1]))[0]} {t12(hm(ts[-1]))[1]}"
+                + (f"، التذكرة من {int(min(prices))} درهم" if prices else "") + ". المواعيد والأسعار والحجز." if ts
+                else f"أفلام {name} بكرة بمواعيدها وأسعارها.")
+        self.page(self.u("c", cid), ttl, desc, body, "cinema", canon=f"{SITE}/{c.get('city')}/{cid}/")
         self._ld = []
 
     # -------- the ticket sheet (one per page, filled by the script)

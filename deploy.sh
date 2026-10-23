@@ -111,3 +111,5 @@ check "$SITE/en/" "</html>"
 check "$SITE/sitemap.xml" "<urlset"
 echo "$pages" > data/.last_pages
 echo "deployed: $SITE/ ($pages pages, $films films)"
+# search engines hear of today's pages at once (IndexNow: Bing, Yandex, Naver, Seznam); never fatal
+"$PY" tools/indexnow.py --out "$SRC" || echo "indexnow: failed (not fatal)" >&2

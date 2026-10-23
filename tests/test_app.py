@@ -151,3 +151,33 @@ def test_the_home_opens_on_the_cinemas_with_the_cities_and_a_bottom_bar(live):
     assert h.count('class="tabbar"') == 1 and h.count('data-tab="') == 3
     f = read(out, "film", app.films[0], "index.html")
     assert '<nav class="tabbar"' in f and 'href="/#films" class="on"' in f and 'href="/#cinemas"' in f
+
+
+def test_search_engines_get_numbers_events_and_one_sprite(live):
+    """SEO wave 1 (owner 2026-10-23): the icon sprite once per page (the film page carried 1,045 inline copies), the
+    film's and cinema's next shows as ScreeningEvent, the home's WebSite + ItemList and a real H1, numbers in titles."""
+    out, app = live
+    fid, cid = app.films[0], app.cins[0]
+    for pth in (("index.html",), ("film", fid, "index.html"), (app.k.cinemas[cid]["city"], cid, "index.html")):
+        h = read(out, *pth)
+        assert h.count("<symbol ") >= 15 and h.count("<svg hidden") == 1
+        assert 'aria-label="درهم"' not in h or '<use href="#i-aed"/>' in h
+    ld = lambda h: [x["@type"] for x in json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', h, re.S).group(1))["@graph"]]
+    home = read(out, "index.html")
+    assert "WebSite" in ld(home) and "ItemList" in ld(home) and '<h1 class="sr-only">' in home
+    film = read(out, "film", fid, "index.html")
+    assert ld(film).count("ScreeningEvent") >= 1 and re.search(r"<title>[^<]*\d", film)
+    cin = read(out, app.k.cinemas[cid]["city"], cid, "index.html")
+    assert "BreadcrumbList" in ld(cin) and ld(cin).count("ScreeningEvent") >= 1
+
+
+def test_the_indexnow_key_is_in_static_and_the_tool_lists_the_live_pages(live, tmp_path):
+    sys.path.insert(0, os.path.join(ROOT, "tools"))
+    import indexnow
+    k = indexnow.key()
+    assert k and re.fullmatch(r"[0-9a-f]{32}", k)
+    out, app = live
+    urls = indexnow.urls(out)
+    assert urls[0] == "https://cinema.elyoxe.com/" and f"https://cinema.elyoxe.com/film/{app.films[0]}/" in urls
+    sh = open(os.path.join(ROOT, "deploy.sh"), encoding="utf-8").read()
+    assert "tools/indexnow.py" in sh and sh.index("tools/indexnow.py") > sh.index('echo "deployed:')
