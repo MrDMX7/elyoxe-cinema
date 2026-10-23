@@ -499,7 +499,7 @@ def test_dates_are_human_and_english_runs_marked(site):
     assert "E0816F" not in build.css_source()
     # font preloads: the Arabic display + body faces (en: the latin body face); the digits' latin subset comes via the stylesheet
     assert 'href="/assets/fonts/plex-ar-400.woff2"' in read(out) and 'href="/assets/fonts/plex-ar-700.woff2"' in read(out)   # Plex since 2026-10-23
-    assert read(out).count('as="font"') == 2 and read(out, "en").count('as="font"') == 1
+    assert read(out).count('as="font"') == 2 and read(out, "en").count('as="font"') == 2   # Plex 400 + 700 in both (2026-10-23)
     assert 'href="/assets/fonts/plex-la-400.woff2"' in read(out, "en")
     assert "fonts/readex-latin.woff2" in build.css_source()
 
