@@ -13,7 +13,7 @@ Wiring: pages/_core/film.py's film_schedule links each city's <summary> to its o
 `getattr(site, "city_seo_urls", None)` so a build without this module (or a golden-fixture build) is unaffected."""
 import os
 
-from site_kit import CITY, FILM_T, SITE, Emit, L, P, Page, Plugin, ar_count, esc
+from site_kit import CITY, FILM_T, NOINDEX, SITE, Emit, L, P, Page, Plugin, ar_count, esc
 
 
 MAX_PAIRS = 600  # a safety ceiling on the phone's build time, well above the ~260 pairs today's real data makes;
@@ -110,6 +110,6 @@ def forward_gone(site, sc):
             for lang in ("ar", "en"):
                 to = SITE + P(lang, "film", fid)
                 html = (f'<!doctype html><html lang="{lang}"><head><meta charset="utf-8"><title>{esc(fid)}</title>'
-                        f'<link rel="canonical" href="{to}"><meta http-equiv="refresh" content="0; url={to}">'
+                        f'{NOINDEX if site.noindex else ""}<link rel="canonical" href="{to}"><meta http-equiv="refresh" content="0; url={to}">'
                         f'</head><body><a href="{to}">{to}</a></body></html>')
                 site.write(os.path.join(site.out, *(["en"] if lang == "en" else []), "film", fid, city, "index.html"), html)

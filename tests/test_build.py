@@ -484,6 +484,7 @@ def test_og_images_exist(site):
     for f in all_files(out):
         if f.endswith("offline.html"): continue   # the service worker's fallback, never shared
         if not f.endswith(".html"): continue
+        if 'http-equiv="refresh"' in open(f, encoding="utf-8").read(): continue   # a gone film x city pair's forward (seo_city)
         m = re.search(r'<meta property="og:image" content="([^"]+)">', open(f, encoding="utf-8").read())
         assert m, f
         if m.group(1).startswith(build.SITE + "/assets/"):

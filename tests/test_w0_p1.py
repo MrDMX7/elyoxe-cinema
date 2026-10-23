@@ -174,7 +174,7 @@ def test_no_page_preloads_the_bundle(out):
     n = 0
     for p in pages(out):
         h = open(p, encoding="utf-8").read()
-        if 'rel="canonical"' not in h: continue
+        if 'rel="canonical"' not in h or 'http-equiv="refresh"' in h: continue   # forwards (seo_city) load nothing
         assert 'as="script"' not in h, p
         assert re.search(r'<script id="boot">.*\("/assets/cinema\.[0-9a-f]{10}\.js",document\)</script>', h), p
         n += 1
