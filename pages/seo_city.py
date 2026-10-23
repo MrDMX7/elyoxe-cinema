@@ -11,7 +11,9 @@ here is a plain Kit method, reachable straight off `site`.
 Wiring: pages/_core/film.py's film_schedule links each city's <summary> to its own page here when one was built
 (the film page's own «city sections», per the spec) — see the one-line change there, guarded by
 `getattr(site, "city_seo_urls", None)` so a build without this module (or a golden-fixture build) is unaffected."""
-from site_kit import CITY, FILM_T, L, P, Page, Plugin, ar_count, esc
+import os
+
+from site_kit import CITY, FILM_T, SITE, Emit, L, P, Page, Plugin, ar_count, esc
 
 
 MAX_PAIRS = 600  # a safety ceiling on the phone's build time, well above the ~260 pairs today's real data makes;
@@ -91,4 +93,23 @@ def register(site):
     # pages/_core/film.py reads this to link a city section (film_schedule's <summary>) to its own page here,
     # only for a pair this module actually built (a film with no show today/tomorrow in that city gets no link)
     site.city_seo_urls = {(fid, city) for fid, city in sc.pairs}
-    return Plugin(pages=pages)
+    return Plugin(pages=pages + [Emit(lambda: forward_gone(site, sc))])
+
+
+def forward_gone(site, sc):
+    """A pair's page lives only while the film shows in that city today or tomorrow, so yesterday's page answered
+    404 the day after. Search Console listed hundreds of those (2026-10-24). Each film page this build wrote now
+    leaves a stub at every city it has no page for: an instant meta refresh plus a canonical to the film's own page,
+    which Google reads as a permanent redirect. The stubs are not in the sitemap, and a real page overwrites its stub
+    on the day the film comes back to that city."""
+    films = [parts[1] for parts in site.urls if len(parts) == 2 and parts[0] == "film"]
+    for fid in films:
+        for city in CITY:
+            if (fid, city) in sc.pairs:
+                continue
+            for lang in ("ar", "en"):
+                to = SITE + P(lang, "film", fid)
+                html = (f'<!doctype html><html lang="{lang}"><head><meta charset="utf-8"><title>{esc(fid)}</title>'
+                        f'<link rel="canonical" href="{to}"><meta http-equiv="refresh" content="0; url={to}">'
+                        f'</head><body><a href="{to}">{to}</a></body></html>')
+                site.write(os.path.join(site.out, *(["en"] if lang == "en" else []), "film", fid, city, "index.html"), html)
