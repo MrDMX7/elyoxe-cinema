@@ -1,0 +1,51 @@
+/* ui-meylis — the bridge (owner 2026-10-23: «كمل تطوير على باقي الموقع»). The app (app/) wears the Meylis «جص»: paper
+   light, IBM Plex, saffron and teal, a bottom bar. The pages this stylesheet still dresses (questions, people, cards,
+   prices, the city hubs, halls…) kept the first design's night and gold; this last partial re-points its tokens and
+   the few hard-coded dark colours at the same palette, loads Plex, and turns the phone tab bar into the app's. Loaded
+   last, so it wins without touching the partials above it. Dark follows the phone, as the app does. */
+@font-face{font-family:"Plex";font-weight:400;font-display:swap;src:url(fonts/plex-ar-400.woff2) format("woff2");unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF,U+200C-200F}
+@font-face{font-family:"Plex";font-weight:500;font-display:swap;src:url(fonts/plex-ar-500.woff2) format("woff2");unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF,U+200C-200F}
+@font-face{font-family:"Plex";font-weight:700;font-display:swap;src:url(fonts/plex-ar-700.woff2) format("woff2");unicode-range:U+0600-06FF,U+0750-077F,U+FB50-FDFF,U+FE70-FEFF,U+200C-200F}
+@font-face{font-family:"Plex";font-weight:400;font-display:swap;src:url(fonts/plex-la-400.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+20AC,U+2122}
+@font-face{font-family:"Plex";font-weight:500;font-display:swap;src:url(fonts/plex-la-500.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+20AC,U+2122}
+@font-face{font-family:"Plex";font-weight:700;font-display:swap;src:url(fonts/plex-la-700.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+20AC,U+2122}
+:root{
+  --night:#F3EEE6; --velvet:#8C1C2E; --gold:#A2690F; --gold-hi:#8F5400; --screen:#2A2420; --seat:#7E7366; --dim:#4A4038;
+  --live:#1B6F5A; --tile:#FFFDF9; --vnight:#FFFDF9;
+  --line:#E2D8CA; --line-2:#CFC3B2; --tint:rgba(42,36,32,.05);
+  --display:"Plex","Segoe UI",Tahoma,system-ui,sans-serif; --dw:700; --body:"Plex","Segoe UI",Tahoma,system-ui,sans-serif;
+  --bar:rgba(255,253,249,.94);
+  color-scheme:light;
+}
+:root[lang=en]{--display:"Plex","Segoe UI",system-ui,sans-serif; --dw:700}
+@media (color-gamut:p3){:root{--gold:#A2690F; --velvet:#8C1C2E}}
+@media (prefers-color-scheme:dark){
+  :root{--night:#17120F; --velvet:#A3283C; --gold:#E0B15A; --gold-hi:#F0C870; --screen:#F3EEE6; --seat:#A89A8C; --dim:#D9CFC2;
+    --live:#5CC9A4; --tile:#231C18; --vnight:#231C18; --line:#3A302A; --line-2:#4A3F37; --tint:rgba(255,255,255,.05); --bar:rgba(23,18,15,.92);
+    color-scheme:dark}
+}
+/* no velvet glow at the top of a page: the paper is plain */
+body::before{display:none!important}
+body{line-height:1.55}
+/* the header: paper, the wordmark in Plex saffron; the pills as the app's chips */
+.top{background:var(--night)}
+.js body[data-hero] .top{background:linear-gradient(rgba(23,18,15,.55),rgba(23,18,15,0)) border-box}
+.mark,[lang=en] .mark{font-family:var(--body);font-weight:700;color:var(--gold)}
+.pill{background:var(--tile);border-color:var(--line);border-radius:999px;color:var(--screen)}
+.pill[aria-expanded=true]{border-color:var(--gold)}
+.icon{color:var(--screen)}
+.gnote{background:var(--tile);color:var(--dim)}
+/* buttons and switches that carried a dark tint */
+.btn.ghost{background:var(--tile);border:1px solid var(--line);color:var(--screen)}
+.btn{border-radius:12px}
+.switch{background:var(--line-2)}
+.tm.clash{border-color:var(--line-2)}
+.tm.past{color:var(--seat)}
+/* the phone tab bar becomes the app's bottom bar: paper with a blur, saffron for the current one, no top rule */
+.tabs{background:var(--bar);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-block-start:1px solid var(--line)}
+.tabs a{color:var(--seat);border-block-start:0;font-size:11px;font-weight:500;gap:2px}
+.tabs svg{inline-size:22px;block-size:22px}
+.tabs a[aria-current]{color:var(--gold);font-weight:700;border-block-start:0}
+/* type: Plex everywhere; headings a little tighter, like the app's */
+h1,h2,h3{font-family:var(--body);letter-spacing:0}
+.pt{font-size:clamp(26px,7vw,36px)}

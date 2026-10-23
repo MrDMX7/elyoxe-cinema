@@ -70,7 +70,7 @@ def test_every_page_has_one_header_one_tab_bar_of_four_the_pills_and_no_duplicat
         assert h.count('<header class="top">') == 1, rel
         assert h.count('<nav class="tabs"') == 1, rel
         tabs = between(h, '<nav class="tabs"', "</nav>")
-        assert tabs.count("<a ") == 4, rel
+        assert tabs.count("<a ") == 3, rel          # the app's three (2026-10-23)
         assert h.count('<footer class="foot">') == 1, rel
         p = Ids(); p.feed(h)
         for i in ("pill-city", "pill-card", "sheet-city", "sheet-card", "main") + (("sheet-me",) if ME_TAB else ()):
@@ -123,15 +123,15 @@ def test_card_sheet_replaces_the_bank_select(out):
 
 def test_tab_bar_marks_where_you_are_and_search_opens_the_overlay(out):
     home = between(read(out, "index.html"), '<nav class="tabs"', "</nav>")
-    assert re.search(r'<a href="/" aria-current="page">', home)
+    assert re.search(r'<a href="/#films" aria-current="page">', home)      # the home is the films pane
     # D2 (owner, yes): the fourth tab is «قائمتي»; search is the header's icon on every page (W2-P5). The flag off puts
     # «بحث» back: tests/test_w2_p5.py builds both
     fourth = ("قائمتي", "My list") if ME_TAB else ("بحث", "Search")
-    assert fourth[0] in home and ('data-search aria-haspopup="dialog"' in home) is not ME_TAB
+    # 2026-10-23: the bar is the app's three tabs (the home's panes); «قائمتي»/«بحث» left it
     city = between(read(out, "dubai", "index.html"), '<nav class="tabs"', "</nav>")
-    assert re.search(r'<a href="/cinemas/" aria-current="page">', city)
+    assert re.search(r'<a href="/#cinemas" aria-current="page">', city)
     en = between(read(out, "en", "index.html"), '<nav class="tabs"', "</nav>")
-    assert all(w in en for w in ("Home", "Cinemas", "Coming soon", fourth[1]))
+    assert all(w in en for w in ("Cinemas", "Films", "Coming soon")) and 'href="/en/#films"' in en
     head = between(read(out, "index.html"), '<header class="top">', "</header>")
     assert 'class="icon srch-b" data-search aria-haspopup="dialog"' in head
 

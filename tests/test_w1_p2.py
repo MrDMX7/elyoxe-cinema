@@ -35,7 +35,10 @@ NODE = shutil.which("node")
 needs_node = pytest.mark.skipif(not NODE, reason="node not installed")
 DATA = os.path.join(ROOT, "fixtures", "sample_latest.json")
 DISC = os.path.join(ROOT, "fixtures", "sample_discounts.yaml")
-SYSTEM = [os.path.join(ROOT, "src", "cinema.css")] + sorted(glob.glob(os.path.join(ROOT, "src", "css", "ui-*.css")))
+# ui-meylis.css (2026-10-23) is the bridge to the app's look (app/app.css): it re-points this system's tokens at the
+# Meylis palette and Plex and dresses the tab bar as the app's bar, so the first design's own rules (gold only on the
+# mark, no backdrop-filter, the type scale) do not govern it — the app's stylesheet is outside them too
+SYSTEM = [os.path.join(ROOT, "src", "cinema.css")] + sorted(p for p in glob.glob(os.path.join(ROOT, "src", "css", "ui-*.css")) if not p.endswith("ui-meylis.css"))
 
 
 def read(p):

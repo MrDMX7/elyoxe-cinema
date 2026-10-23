@@ -256,7 +256,7 @@ JS_WARN_GZ, JS_FAIL_GZ = 36_000, 39_000   # the initial bundle, /assets/cinema.<
 # the gap to JS_FAIL_GZ over 1024 on purpose: tests/test_build.py pads a fixture to JS_WARN_GZ + 1024 bytes and
 # expects a warning, not a failure. The line moves deliberately for real filled-in features, not quietly for
 # bloat; a future package that grows the bundle further should still move its own code into a lazy chunk first.
-CSS_FAIL_GZ = 19_000                      # the shared sheet, /assets/cinema.css (render-blocking)
+CSS_FAIL_GZ = 21_500                      # the shared sheet, /assets/cinema.css (render-blocking); 2026-10-23: +ui-meylis (Plex faces, the bridge)
 HTML_MAX = 150_000                        # a page, raw (the spec's rule; Kit.fit keeps schedules under it)
 
 

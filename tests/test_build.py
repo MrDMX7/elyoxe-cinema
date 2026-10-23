@@ -498,9 +498,9 @@ def test_dates_are_human_and_english_runs_marked(site):
     assert '<span class="basis rates">' in read(out, "film", "crawlers") and '<bdi dir="ltr" lang="en">' not in read(out, "film", "crawlers")
     assert "E0816F" not in build.css_source()
     # font preloads: the Arabic display + body faces (en: the latin body face); the digits' latin subset comes via the stylesheet
-    assert 'href="/assets/fonts/readex-arabic.woff2"' in read(out) and 'href="/assets/fonts/markazi-700-arabic.woff2"' in read(out)
+    assert 'href="/assets/fonts/plex-ar-400.woff2"' in read(out) and 'href="/assets/fonts/plex-ar-700.woff2"' in read(out)   # Plex since 2026-10-23
     assert read(out).count('as="font"') == 2 and read(out, "en").count('as="font"') == 1
-    assert 'href="/assets/fonts/readex-latin.woff2"' in read(out, "en")
+    assert 'href="/assets/fonts/plex-la-400.woff2"' in read(out, "en")
     assert "fonts/readex-latin.woff2" in build.css_source()
 
 

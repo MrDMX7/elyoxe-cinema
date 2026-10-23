@@ -45,7 +45,7 @@ def test_thursday_nav_link_repoints_to_coming(out):
     nav = re.search(r'<nav class="nav".*?</nav>', home, re.S).group(0)
     assert '<a href="/coming/">قريباً في السينما</a>' in nav           # owner rename 2026-09-30: the header keeps room for the full label
     tabs = re.search(r'<nav class="tabs".*?</nav>', home, re.S).group(0)
-    assert '<a href="/coming/">' in tabs                              # the phone's tab bar follows it
+    assert '<a href="/#coming">' in tabs                              # the phone's tab bar: the app's «قريباً» pane (2026-10-23)
     assert '<span>قريباً</span>' in tabs                               # 344px has no room for the header's full label
 
 
@@ -125,7 +125,7 @@ def test_phone_bottom_bar_is_four_tabs_and_the_hubs_are_in_the_footer(out):
     home = read(out, "index.html")
     # (legend: the redesign's markup, UI redesign Task 2: the phone's bar is nav.tabs, the footer's row nav.foot-l)
     tabs = re.search(r'<nav class="tabs".*?</nav>', home, re.S).group(0)
-    assert tabs.count("<a ") == 4 and "/arabic/" not in tabs and "/events/" not in tabs
+    assert tabs.count("<a ") == 3 and "/arabic/" not in tabs and "/events/" not in tabs
     nav = re.search(r'<nav class="nav".*?</nav>', home, re.S).group(0)
     assert nav.count("<a ") == 4 and "/arabic/" not in nav and "/events/" not in nav
     foot = re.search(r'<nav class="foot-l".*?</nav>', home, re.S).group(0)

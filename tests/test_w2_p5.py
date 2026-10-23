@@ -145,15 +145,15 @@ def test_a_cards_best_number():
 
 # ------------------------------------------------------------------ D2: «قائمتي»
 def test_the_fourth_tab_is_my_list_and_search_stays_the_headers_icon(out):
+    """2026-10-23: the phone's bar is the app's three tabs (the home's panes) with or without ME_TAB; «قائمتي» (its
+    sheet) stays on the page, search stays the header's icon."""
     assert chrome.ME_TAB is True                                                # the owner's yes (2026-09-28)
-    for parts, word in (((), "قائمتي"), (("en",), "My list")):
+    for parts, words in (((), ("السينمات", "الأفلام", "قريباً")), (("en",), ("Cinemas", "Films", "Coming soon"))):
         h = read(out, *parts, "index.html")
         t = tabs_of(h)
         a = re.findall(r"<a [^>]*>", t)
-        assert len(a) == 4
-        assert a[3] == '<a href="#me" class="js-only" data-sheet-open="sheet-me" data-me-tab>'           # no script: not drawn
-        assert '<path d="M6 3h12v18l-6-4-6 4z"/>' in t and f"<span>{word}</span></a></nav>" in t        # the bookmark
-        assert "data-search" not in t
+        assert len(a) == 3 and all(f"<span>{w}</span>" in t for w in words)
+        assert "data-search" not in t and "data-me-tab" not in t
         assert h.count("data-search") == 1 and 'class="icon srch-b" data-search' in h                    # the header's icon
     n = 0
     for dp, _, fs in os.walk(out):
@@ -162,7 +162,7 @@ def test_the_fourth_tab_is_my_list_and_search_stays_the_headers_icon(out):
             h = open(os.path.join(dp, f), encoding="utf-8").read()
             if '<nav class="tabs"' not in h: continue
             n += 1
-            assert h.count('id="sheet-me"') == 1 and 'data-sheet-open="sheet-me"' in tabs_of(h), f
+            assert h.count('id="sheet-me"') == 1, f
             assert 'class="icon srch-b" data-search' in h, f
     assert n > 100
 
@@ -181,11 +181,12 @@ def test_my_list_promises_nothing_that_does_not_exist(out):
 
 
 def test_with_the_flag_off_search_is_the_fourth_tab_again(out_off):
+    """With the flag off there is no «قائمتي» sheet; the bar is still the app's three tabs and search the header's icon."""
     h = read(out_off, "index.html")
     t = tabs_of(h)
-    assert re.search(r'<a href="/#all" data-search aria-haspopup="dialog">', t) and "بحث" in t
+    assert len(re.findall(r"<a [^>]*>", t)) == 3 and "data-search" not in t
     assert 'id="sheet-me"' not in h and "قائمتي" not in h
-    assert h.count("data-search") == 2
+    assert h.count("data-search") == 1
 
 
 # ------------------------------------------------------------------ the drag chunk

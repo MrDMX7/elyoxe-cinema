@@ -208,7 +208,7 @@ POSTER_SIZES = {"pst": "(min-width:1024px) 15vw, 150px", "pst big": "(min-width:
 # large: a swap from the fallback reflows everything under them) and the body face of the page's script.
 # The digits' latin subset is small in the layout and comes through the stylesheet; every preload shares a
 # slow phone link with the LCP poster.
-FONTS = {"ar": ("markazi-700-arabic.woff2", "readex-arabic.woff2"), "en": ("readex-latin.woff2",)}
+FONTS = {"ar": ("plex-ar-400.woff2", "plex-ar-700.woff2"), "en": ("plex-la-400.woff2", "plex-la-700.woff2")}   # 2026-10-23: Plex, as the app
 # a show with no booking URL still books somewhere: the chain's own site
 CHAIN_SITE = {"vox": "https://uae.voxcinemas.com/", "star": "https://www.starcinemas.ae/", "novo": "https://uae.novocinemas.com/",
               "reel": "https://www.reelcinemas.ae/", "roxy": "https://www.theroxycinemas.com/", "cineroyal": "https://cineroyal.ae/",

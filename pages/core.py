@@ -29,7 +29,8 @@ JS = ("core", "pure", "disc", "flip", "prices", "near", "prayer", "home", "filte
 # the shared stylesheet: src/cinema.css (tokens and base), then these partials in this order (W1-P1 split the rest of
 # cinema.css by owner, MASTER-PLAN §6.2), then every feature's src/css/<name>.css in module order
 CSS = ("ui-paper", "ui-chrome", "ui-tabs", "ui-sheet", "ui-bill", "ui-fhero", "ui-lights", "ui-rows", "ui-tile", "ui-grid",
-       "ui-film", "ui-sched", "ui-dock", "ui-ticket", "ui-places", "ui-money")
+       "ui-film", "ui-sched", "ui-dock", "ui-ticket", "ui-places", "ui-money",
+       "ui-meylis")   # last: the bridge to the app's look (2026-10-23) — it re-points the tokens above
 # page-scoped: a second small stylesheet on that page kind only (build.page_css_files); the 404's leader is W2-P10's
 PAGE_CSS = {"404": ("ui-edge",)}
 # drag.js: the sheets' drag (W2-P5), loaded on idle by the page that asks for it; empty until then

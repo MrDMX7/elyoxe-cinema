@@ -169,10 +169,12 @@ class ChromeKit:
         # no script is «كل الأفلام» on the home page and with it the search overlay (src/js/search.js)
         fourth = (("#me", "bookmark", esc(L(CHROME_W2["me"], lang)), "", ' class="js-only" data-sheet-open="sheet-me" data-me-tab')
                   if ME_TAB else (P(lang) + "#all", "search", vals["s_search"], "", ' data-search aria-haspopup="dialog"'))
-        tabs = [(vals["hub"], "home", vals["s_films"], cur(pagekind == "home"), ""),
-                (vals["cinemas_page"], "pin", vals["s_cinemas"], cur(nav == "cinemas"), ""),
-                (vals["thursday_href"], "cal", vals["s_thursday"], cur(nav == "thursday"), ""),
-                fourth]
+        # 2026-10-23: the app's own three tabs (app/build_app.py TABS) — the home's panes; «قائمتي» stays reachable from
+        # the header's pills, not the bar (the app has no fourth tab)
+        tabs = [(P(lang) + "#cinemas", "pin", vals["s_cinemas"], cur(nav == "cinemas"), ""),
+                (P(lang) + "#films", "home", esc("الأفلام" if lang == "ar" else "Films"), cur(pagekind == "home"), ""),
+                (P(lang) + "#coming", "cal", vals["s_thursday"], cur(nav == "thursday"), "")]
+        del fourth
         vals["tabs"] = "".join(f'<a href="{h}"{c}{x}>{icon(i)}<span>{t}</span></a>' for h, i, t, c, x in tabs)
         # the header's own «قريباً في السينما» is the full label (room allows, min-width:1024px); the tab bar above
         # already baked in the short "s_thursday" it needed, so this can only widen the header's {{s_thursday}}
