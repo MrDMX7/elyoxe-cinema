@@ -176,17 +176,19 @@
     /* ── sort (owner 2026-10-22): the most shown, the best rated, the newest ── */
     var grid = q("[data-grid]"), none = q("[data-none]");
     var sortMenu = q("[data-sort-menu]"), sortLabel = q("[data-sort-label]");
-    var applySort = function (key) {
+    var sortTiles = function (key) {
       var tiles = qa(".tile", grid);
       tiles.sort(function (a, b) {
         if (key === "sc") return (+b.dataset.sc || 0) - (+a.dataset.sc || 0) || (+b.dataset.n || 0) - (+a.dataset.n || 0);
         if (key === "rel") return (b.dataset.rel || "").localeCompare(a.dataset.rel || "") || (+b.dataset.n || 0) - (+a.dataset.n || 0);
         return (+b.dataset.n || 0) - (+a.dataset.n || 0);
       });
-      vt(function () { tiles.forEach(function (t) { grid.appendChild(t); }); });
+      tiles.forEach(function (t) { grid.appendChild(t); });
+      if (typeof soon2hOn === "function" && soon2hOn()) paintSoon2h();
       qa("[data-sort]", sortMenu).forEach(function (b) { b.classList.toggle("on", b.dataset.sort === key); if (b.dataset.sort === key) sortLabel.textContent = b.textContent; });
       store.set("sort", key);
     };
+    var applySort = function (key) { vt(function () { sortTiles(key); }); };
     if (sortMenu) {
       q("[data-sort-open]").addEventListener("click", function (e) {
         e.stopPropagation(); buzz();
@@ -199,20 +201,50 @@
       var s0 = store.get("sort"); if (s0 && s0 !== "n") applySort(s0);
     }
 
-    /* genre chips: the grid shows only what the chip names; the reflow is a view transition */
+    /* genre chips: the grid shows only what the chip names; the reflow is a view transition.
+       «يبدأ خلال ساعتين» (owner 2026-10-23): the films with a show in the visitor's city starting within two hours,
+       earliest first, each tile saying when and where — from the same board as «يبدأ قريب منك» (#soon). */
+    var S2 = null; try { S2 = JSON.parse((q("#soon") || {}).textContent || "null"); } catch (e) {}
+    var paintSoon2h = function () {
+      var city = store.get("city") || "dubai", now = nowUAE(), best = {};
+      if (S2) S2.r.forEach(function (r) {
+        var c = S2.c[r[0]]; if (c[2] !== city) return;
+        var st = startOf(S2.d, r[2]); if (st < now - 10 * 60e3 || st > now + 2 * 3600e3) return;
+        var fid = S2.f[r[1]][0];
+        if (!best[fid] || st < best[fid].st) best[fid] = { st: st, c: c, t: r[2] };
+      });
+      var tiles = qa(".tile", grid), n = 0;
+      tiles.forEach(function (t) {
+        var b = best[t.dataset.fid]; t.hidden = !b; if (!b) return;
+        n++;
+        var mins = Math.max(0, Math.round((b.st - now) / 60e3)), e = q(".tm .eta", t);
+        if (!e) { e = d.createElement("em"); e.className = "eta"; q(".tm", t).appendChild(e); }
+        e.className = "eta" + (mins < 15 ? " hot" : "");
+        e.textContent = (mins < 1 ? "يبدأ الحين" : "بعد " + mins + " د") + " · " + b.c[1];
+      });
+      tiles.filter(function (t) { return !t.hidden; }).sort(function (x, y) { return best[x.dataset.fid].st - best[y.dataset.fid].st; }).forEach(function (t) { grid.appendChild(t); });
+      none.textContent = "ما في فيلم يبدأ خلال ساعتين في " + (CITY_AR[city] || city) + ".";
+      none.hidden = n > 0;
+    };
+    var soon2hOn = function () { var c = q('[data-chip="soon2h"]'); return !!(c && c.classList.contains("on")); };
     qa("[data-chip]").forEach(function (c) {
       c.addEventListener("click", function () {
         var k = c.dataset.chip;
         buzz();
         vt(function () {
           qa("[data-chip]").forEach(function (x) { x.classList.toggle("on", x === c); });
+          if (k === "soon2h") { paintSoon2h(); return; }
+          qa(".tm .eta", grid).forEach(function (e) { e.remove(); });
           var n = 0;
           qa(".tile", grid).forEach(function (t) { var on = k === "all" || (" " + t.dataset.g + " ").indexOf(" " + k + " ") >= 0; t.hidden = !on; if (on) n++; });
+          none.textContent = "ما في أفلام بهالتصنيف اليوم.";
           none.hidden = n > 0;
+          if (sortMenu) sortTiles(store.get("sort") || "n");   /* the chip's own order back, in the same transition */
         });
         c.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
       });
     });
+    setInterval(function () { if (soon2hOn()) paintSoon2h(); }, 60e3);
 
     /* السينمات: the cities first; a city (or «أقرب سينما») opens its cinemas, and the phone's back returns */
     var clist = q("[data-clist]"), msg = q("[data-geo-msg]"), cities = q("[data-cities]"), cv = q("[data-cv]"), cvT = q("[data-cv-title]");

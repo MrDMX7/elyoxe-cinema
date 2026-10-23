@@ -402,6 +402,9 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 
 /* ── sort: a chip that opens a small menu ── */
 .chip.sort{color:var(--door);border-color:var(--door)}
+.chip.soon2h{color:var(--door);border-color:var(--door)}
+.chip.soon2h.on{background:var(--door);border-color:var(--door);color:var(--on)}
+.tm .eta{flex-basis:100%;text-align:center;font-size:11px;padding:2px 6px;margin-block-start:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .menu{position:fixed;z-index:36;display:grid;min-inline-size:170px;padding:6px;border-radius:12px;background:var(--paper);border:1px solid var(--line);box-shadow:0 10px 30px var(--shadow);animation:fade .12s}
 .menu button{border:0;background:none;padding:10px 12px;border-radius:8px;text-align:start;font:inherit;font-size:15px;color:var(--wood);cursor:pointer}
 .menu button.on{color:var(--door);font-weight:700}

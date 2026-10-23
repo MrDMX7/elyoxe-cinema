@@ -58,7 +58,7 @@ DAYS_AR = ["الاثنين", "الثلاثاء", "الأربعاء", "الخمي
 MONTHS_AR = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
 CHIPS = [("all", "الكل"), ("action", "أكشن"), ("comedy", "كوميديا"), ("horror", "رعب"), ("thriller", "إثارة"),
          ("drama", "دراما"), ("adventure", "مغامرة"), ("family", "عائلي"), ("scifi", "خيال"), ("romance", "رومانسي"),
-         ("arabic", "عربي"), ("indian", "هندي")]
+         ("arabic", "عربي"), ("indian", "هندي"), ("english", "إنجليزي")]
 GENRE_AR = {"action": "أكشن", "comedy": "كوميديا", "horror": "رعب", "thriller": "إثارة", "drama": "دراما",
             "adventure": "مغامرة", "family": "عائلي", "animation": "أنيميشن", "scifi": "خيال علمي", "fantasy": "فانتازيا",
             "romance": "رومانسي", "crime": "جريمة", "music": "موسيقى", "mystery": "غموض", "war": "حرب",
@@ -104,6 +104,8 @@ def tags(f):
         out.add("arabic")
     if f.get("lang") in INDIAN:
         out.add("indian")
+    if f.get("lang") == "English":
+        out.add("english")
     return out
 
 
@@ -332,7 +334,7 @@ class App:
         imdb, rt = f.get("imdb_score"), (f.get("rt") or {}).get("critics")
         scn = float(imdb) * 10 if imdb else (float(rt) if rt is not None else 0)
         top = '<i class="top">ممتاز</i>' if scn >= 75 else ""
-        return (f'<a class="tile" href="{self.u("f", fid)}" data-g="{E(" ".join(sorted(tags(f))))}" data-n="{self.count.get(fid, 0)}" '
+        return (f'<a class="tile" href="{self.u("f", fid)}" data-fid="{E(fid)}" data-g="{E(" ".join(sorted(tags(f))))}" data-n="{self.count.get(fid, 0)}" '
                 f'data-sc="{scn:g}" data-rel="{E(f.get("released") or "")}">'
                 f'<span class="tp">{self.poster(fid)}{age}{top}</span>'
                 f'<span class="tt">{E(title(k, fid))}</span><span class="tm">{"".join(meta)}</span></a>')
@@ -429,6 +431,8 @@ class App:
         for key, label in CHIPS:
             if key == "all" or any(key in tags(k.films[f]) for f in self.films):
                 chips.append(f'<button type="button" class="chip{" on" if key == "all" else ""}" data-chip="{key}">{label}</button>')
+            if key == "all":
+                chips.append(f'<button type="button" class="chip soon2h" data-chip="soon2h">{svg("clock")}يبدأ خلال ساعتين</button>')
         grid = "".join(self.tile(f) for f in self.films)
         # السينمات (owner 2026-10-19): «أقرب سينما», then the cities; a city opens its cinemas
         per_city = {}
