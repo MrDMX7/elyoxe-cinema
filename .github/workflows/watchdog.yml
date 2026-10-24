@@ -24,7 +24,7 @@ jobs:
           age=$(( $(date +%s) - $(date -d "$lm" +%s) ))
           echo "last deploy: $lm — $((age / 3600)) h $(((age % 3600) / 60)) min ago"
           if [ "$age" -le 25200 ]; then exit 0; fi
-          msg="cinema.elyoxe.com ما تحدّث من $((age / 3600)) ساعة (آخر نشر: $lm). افحص cinema-runner/logs على اللابتوب."
+          msg="cinema.elyoxe.com ما تحدّث من $((age / 3600)) ساعة (آخر نشر: $lm). افحص تشغيلات cinema-refresh في GitHub Actions (والمرحّل على اللابتوب: cinema-runner/logs/relay-*)."
           curl -sS -m 30 -o /dev/null -w "contact form: %{http_code}\n" \
             -H "Origin: https://elyoxe.com" -H "Content-Type: application/json" \
             -X POST https://hybw54y21l.execute-api.ap-south-1.amazonaws.com/ \
