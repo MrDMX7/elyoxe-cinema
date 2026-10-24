@@ -115,13 +115,37 @@ jobs:
           for f in claude-off; do aws s3 cp "$M/.elyoxe/$f" "$HOME/.elyoxe/$f" --only-show-errors 2>/dev/null && echo "switch on: ~/.elyoxe/$f"; done; true
           rm -f data/.run.lock; rm -rf data/.run.lock.d data/.pytest-tmp
           python tools/ci_state.py backdrops-in
+      - name: test.yml on this commit, when it is still running
+        # run.sh's gate takes test.yml's green run on HEAD and otherwise runs the suite here, on the real data/, where a
+        # data test can fail on a chain's new cinema (vox-galleria-mall-dubai-moonlight, 2026-10-24) — so wait for it
+        if: steps.gate.outputs.go == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha=$(git rev-parse HEAD)
+          for i in $(seq 1 40); do
+            st=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/test.yml/runs?head_sha=$sha&per_page=1" --jq '.workflow_runs[0].status // "none"' || echo none)
+            [ "$st" = completed ] || [ "$st" = none ] && break
+            [ "$i" = 1 ] && echo "test.yml is $st on ${sha:0:7}: waiting"
+            sleep 30
+          done
+          echo "test.yml on ${sha:0:7}: $st"
       - name: run.sh
         if: steps.gate.outputs.go == '1'
         id: run
         env:
           GH_TOKEN: ${{ github.token }}
           ELYOXE_USAGE_LOG: ${{ runner.temp }}/usage.jsonl
-        run: bash run.sh --chains "$CHAINS" ${{ inputs.args }}
+        run: |
+          before=$(git rev-parse HEAD)
+          rc=0; bash run.sh --chains "$CHAINS" ${{ inputs.args }} || rc=$?
+          # run.sh pushed verdicts/intel with this job's token, which starts no push workflow: start test.yml on the new
+          # HEAD by hand, so the next run's gate finds it green instead of running the suite on the real data/
+          after=$(git rev-parse HEAD)
+          if [ "$after" != "$before" ] && [ "$(git rev-parse origin/main)" = "$after" ]; then
+            gh workflow run test.yml -R "$GITHUB_REPOSITORY" --ref main && echo "test.yml started for ${after:0:7}"
+          fi
+          exit $rc
       - name: The run's data for the laptop's backdrops, its Claude usage for the cost report
         if: always() && steps.gate.outputs.go == '1'
         env:
