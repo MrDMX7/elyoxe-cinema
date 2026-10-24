@@ -17,6 +17,13 @@ import subprocess
 
 import pytest
 
+# The GitHub refresh (cinema-refresh.yml) sets these for its run, and run.sh runs this suite inside that same
+# environment when test.yml has not passed the commit yet: the tests describe the code's defaults, never the runner's
+# (CINEMA_BACKDROPS_MAX=0 turned a backdrops test red on 2026-10-24). Dropped before any test module imports.
+for _k in ("CINEMA_RELAY_CHAINS", "CINEMA_RELAY_WAIT_S", "CINEMA_RELAY_FRESH_MIN", "CINEMA_BACKDROPS_MAX",
+           "CINEMA_BACKDROPS_BUDGET_S", "CINEMA_CLAUDE_VIA", "ELYOXE_USAGE_LOG"):
+    os.environ.pop(_k, None)
+
 LOOPBACK = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
 ATTEMPTS: list[str] = []
 _LIVE_NETWORK = False   # flipped true only inside the `live_network` fixture, for that one test
