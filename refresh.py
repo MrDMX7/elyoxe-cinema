@@ -51,6 +51,7 @@ import price_table
 import verdicts as verdicts_mod
 from statefile import load_state_json, write_json_atomic, write_state_json
 from readers import cinemacity, cineroyal, novo, reel, roxy, star, vox
+from readers import relay
 
 ROOT = Path(__file__).resolve().parent
 DATA_DIR = ROOT / "data"
@@ -291,7 +292,10 @@ def _fetch_chain(chain: str, days: int, offline: bool, price_cache: dict | None 
     kwargs = {}
     if price_cache is not None and chain in PRICE_CACHE_CHAINS:
         kwargs["cache"] = price_cache
-    return CHAIN_READERS[chain](days=days, **kwargs)
+    # CINEMA_RELAY_CHAINS (the GitHub run, 2026-10-24): these chains are read on the laptop and handed over through
+    # S3 (readers/relay.py) -- their raw read comes from there instead of from the chain itself
+    fetch = relay.reader(chain) if chain in relay.relay_chains() else CHAIN_READERS[chain]
+    return fetch(days=days, **kwargs)
 
 
 def _run_chain(chain: str, days: int, offline: bool, timeout: float, price_cache: dict | None = None) -> dict:
@@ -402,6 +406,8 @@ def _fix_verdict_text(data: dict) -> dict:
 
 
 def chain_timeout(chain: str) -> float:
+    if chain in relay.relay_chains():   # a relayed chain waits for the laptop's read, then only downloads it
+        return relay.wait_s() + 120.0
     return CHAIN_TIMEOUTS.get(chain, DEFAULT_TIMEOUT)
 
 
@@ -634,7 +640,9 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
                                   price_cache=private_cache)
             ok, error, seconds, raw = outcome["ok"], outcome["error"], outcome["seconds"], outcome["result"]
             if ok:
-                read_at[chain] = now_iso()
+                # a relayed read (readers/relay.py) carries the laptop's own read time; any other read finished now
+                relayed_at = raw.pop("_relay_read_at", None) if isinstance(raw, dict) else None
+                read_at[chain] = relayed_at or now_iso()
                 _write_json_atomic(_raw_path(chain), {**raw, "_run_id": run_id, "_read_at": read_at[chain]})
                 if private_cache is not None:
                     # only a chain that actually finished within its timeout gets to update the

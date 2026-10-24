@@ -1,0 +1,145 @@
+# cinema-refresh — the scheduled refresh + deploy of cinema.elyoxe.com (moved off the laptop's Task Scheduler on
+# 2026-10-24). The job is run.sh, unchanged: pull -> tests (test.yml's green run on this commit, else the suite here)
+# -> refresh.py -> posters -> deploy.sh -> verdicts/intel committed back -> alerts (SES mail, tools/notify_mail.py).
+#
+# Chains: the cinema-probe (2026-10-24) read vox, star, reel, roxy and cinemacity from a GitHub runner like the laptop
+# does. cineroyal (load balancer 403) and novo (Cloudflare challenge) refuse datacenter addresses, so the laptop reads
+# them (tools/relay.py fetch, «Elyoxe Cinema Relay») and this run takes the read from S3 (readers/relay.py) — or keeps
+# their previous shows, never an empty chain. YouTube refuses runners too (yt-dlp: «confirm you're not a bot»), so the
+# backdrops are made on the laptop (tools/relay.py backdrops) and only attached here (CINEMA_BACKDROPS_MAX=0).
+#
+# State: data/ and out/ (~300 MB: latest.json, the daily price cache, film history, alerts, posters, og, lastmod, the
+# last page count deploy.sh's floor compares with) ride actions/cache under a rolling key; with no cache left the run
+# starts from s3://elyoxe-media-574771023173/cinema-ci/seed/state.tar.gz, which this job refreshes once a day.
+# On time: the AWS ticker (saas/football/infra/ticker, schedules cinema-refresh-HHMM) dispatches this at :10 UAE;
+# GitHub's own cron below is the fallback and skips itself when a run started in the last 150 minutes.
+name: cinema-refresh
+on:
+  schedule:
+    - cron: "10 2,5,8,11,14,17,20 * * *"   # 06:10 09:10 12:10 15:10 18:10 21:10 00:10 UAE
+  workflow_dispatch:
+    inputs:
+      args:
+        description: extra refresh.py arguments (e.g. --force)
+        default: ""
+      relay_wait:
+        description: seconds to wait for the laptop's cineroyal/novo read
+        default: "900"
+permissions:
+  id-token: write        # AWS by OIDC (role cinema-github-actions)
+  contents: write        # run.sh commits verdicts/ and intel/ back to main
+  actions: write         # reads test.yml's runs (run.sh's CI gate) and prunes this job's old caches
+concurrency:
+  group: cinema-refresh
+  cancel-in-progress: false
+env:
+  TZ: Asia/Dubai
+  PYTHONIOENCODING: utf-8
+  PYTHONUNBUFFERED: "1"
+  CHAINS: vox,star,reel,roxy,cinemacity,cineroyal,novo   # the relayed chains last: the laptop has the first minutes
+  CINEMA_RELAY_CHAINS: cineroyal,novo
+  CINEMA_RELAY_WAIT_S: ${{ inputs.relay_wait || '900' }}
+  CINEMA_BACKDROPS_MAX: "0"          # yt-dlp is refused here; tools/relay.py backdrops makes them on the laptop
+  CINEMA_CLAUDE_VIA: api             # no `claude` CLI on a runner: verdicts/intel through the API key (SSM)
+  SEED: s3://elyoxe-media-574771023173/cinema-ci/seed/state.tar.gz
+  RELAY: s3://elyoxe-media-574771023173/cinema-ci/relay
+jobs:
+  refresh:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    steps:
+      - name: A fallback cron run skips when the ticker already started one
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          go=1
+          if [ "${{ github.event_name }}" = schedule ]; then
+            since=$(date -u -d '150 minutes ago' +%FT%TZ)
+            n=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/cinema-refresh.yml/runs?created=%3E%3D$since&per_page=20" \
+                  --jq "[.workflow_runs[] | select(.id != ${{ github.run_id }})] | length" || echo 0)
+            [ "${n:-0}" -gt 0 ] && { echo "a run started since $since — this cron run skips"; go=0; }
+          fi
+          echo "go=$go" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.go == '1'
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        if: steps.gate.outputs.go == '1'
+        with:
+          python-version: "3.13"
+          cache: pip
+      - uses: actions/setup-node@v4        # the suite's JS tests, when run.sh has to run it here
+        if: steps.gate.outputs.go == '1'
+        with:
+          node-version: "22"
+      - name: Packages
+        if: steps.gate.outputs.go == '1'
+        run: |
+          python -m pip install -q --disable-pip-version-check -r requirements.txt
+          python -c "from PIL import features; assert features.check('raqm')" 2>/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq libraqm0 libfribidi0 libharfbuzz0b; }
+          git config user.name "MrDMX7"
+          git config user.email "28853734+MrDMX7@users.noreply.github.com"
+      - uses: aws-actions/configure-aws-credentials@v4
+        if: steps.gate.outputs.go == '1'
+        with:
+          role-to-assume: arn:aws:iam::574771023173:role/cinema-github-actions
+          aws-region: ap-south-1
+          role-duration-seconds: "10800"
+      - name: Restore data/ and out/
+        if: steps.gate.outputs.go == '1'
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data
+            out
+            !data/.pytest-tmp
+          key: cinema-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: cinema-state-
+      - name: No cache left, so the seed from S3
+        if: steps.gate.outputs.go == '1' && steps.cache.outputs.cache-matched-key == ''
+        run: |
+          aws s3 cp "$SEED" "$RUNNER_TEMP/seed.tgz" --only-show-errors
+          tar -xzf "$RUNNER_TEMP/seed.tgz"
+          echo "seeded: $(du -sh data out | tr '\n' ' ')"
+      - name: Inputs from outside the repo, and the laptop's backdrops
+        if: steps.gate.outputs.go == '1'
+        run: |
+          # the workspace's fast uploader (deploy.sh falls back to the CLI without it) and the owner's switches, from the
+          # mirror of ~ that Tifo's laptop push keeps (saas/football/tools/ci_bridge.py)
+          M=s3://elyoxe-football-574771023173-ap-south-1/ci/home
+          aws s3 cp "$M/workspace/tools/s3fast.py" "$HOME/workspace/tools/s3fast.py" --only-show-errors || echo "no s3fast.py: deploy.sh uses the CLI"
+          for f in claude-off; do aws s3 cp "$M/.elyoxe/$f" "$HOME/.elyoxe/$f" --only-show-errors 2>/dev/null && echo "switch on: ~/.elyoxe/$f"; done; true
+          rm -f data/.run.lock; rm -rf data/.run.lock.d data/.pytest-tmp
+          python tools/ci_state.py backdrops-in
+      - name: run.sh
+        if: steps.gate.outputs.go == '1'
+        id: run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ELYOXE_USAGE_LOG: ${{ runner.temp }}/usage.jsonl
+        run: bash run.sh --chains "$CHAINS" ${{ inputs.args }}
+      - name: The run's data for the laptop's backdrops, its Claude usage for the cost report
+        if: always() && steps.gate.outputs.go == '1'
+        env:
+          ELYOXE_USAGE_LOG: ${{ runner.temp }}/usage.jsonl
+        run: python tools/ci_state.py out || true
+      - name: Save data/ and out/
+        if: (success() || failure()) && steps.gate.outputs.go == '1'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            data
+            out
+            !data/.pytest-tmp
+          key: cinema-state-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: The S3 seed, once a day
+        if: success() && steps.gate.outputs.go == '1'
+        run: python tools/ci_state.py seed-if-old
+      - name: Keep the newest two caches of this job
+        if: always() && steps.gate.outputs.go == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh cache list -R "$GITHUB_REPOSITORY" --key cinema-state- --sort created_at --order desc --limit 50 --json id --jq '.[2:][].id' | xargs -r -n1 gh cache delete -R "$GITHUB_REPOSITORY"
