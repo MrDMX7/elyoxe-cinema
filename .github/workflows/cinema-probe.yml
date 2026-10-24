@@ -1,0 +1,51 @@
+# cinema-probe — can a GitHub runner read the seven chains (and YouTube) the way refresh.py does? (2026-10-24)
+# By hand only. Nothing is deployed: tools/ci_probe.py calls each chain's reader as refresh.py does, with the laptop's
+# price samples of the day (s3://elyoxe-media-…/cinema-ci/probe/price_cache.json) so the chains are not re-sampled,
+# and writes a verdict per chain (works / partial / blocked) to the job summary and an artifact.
+name: cinema-probe
+on:
+  workflow_dispatch:
+    inputs:
+      chains:
+        description: comma-separated chains
+        default: vox,star,cineroyal,novo,reel,roxy,cinemacity
+      trailer:
+        description: a YouTube trailer id for the yt-dlp check (empty = skip)
+        default: teyF15t-8lQ
+permissions:
+  id-token: write
+  contents: read
+env:
+  TZ: Asia/Dubai
+  PYTHONIOENCODING: utf-8
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: pip install -q -r requirements.txt yt-dlp
+      - run: sudo apt-get install -y -qq ffmpeg >/dev/null
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::574771023173:role/cinema-github-actions
+          aws-region: ap-south-1
+      - run: aws s3 cp s3://elyoxe-media-574771023173/cinema-ci/probe/price_cache.json "$RUNNER_TEMP/price_cache.json" --only-show-errors || true
+      - name: probe
+        run: |
+          curl -sS -m 10 https://ipinfo.io/json | python -c "import json,sys; d=json.load(sys.stdin); print('runner IP org:', d.get('org'), d.get('country'))" || true
+          python tools/ci_probe.py --cache "$RUNNER_TEMP/price_cache.json" --out probe --chains "${{ inputs.chains }}" --trailer "${{ inputs.trailer }}"
+          cat probe/summary.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: probe
+          path: probe/
+          retention-days: 7
