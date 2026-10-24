@@ -1,0 +1,14 @@
+{
+  "ar": "بيتلجوس (1988) من إخراج Tim Burton، وفيه Michael Keaton بأداء مجنون وممتع. النقاد عطوه 83% والجمهور 82%، والفيلم غريب ومضحك بعد.",
+  "basis": "RT 83% (121 نقد) · الجمهور 82%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 83,
+    "rt_count": 121
+  },
+  "by": "claude",
+  "en": "Beetlejuice (1988), directed by Tim Burton, features Michael Keaton's manic performance. Critics gave it 83% and audiences 82%, and it's bizarre yet funny.",
+  "fid": "beetlejuice",
+  "verdict": "yes",
+  "written": "2026-10-24"
+}

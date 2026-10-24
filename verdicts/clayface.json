@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "«كلايفيس» من إخراج James Watkins، ويجمع بين الرعب والإثارة والأكشن والدراما. النقاد يقولون إنه ياخذ وقته بالبداية بس يتحول لثريلر انتقامي ممتع.",
+  "basis": "RT 76% (147 نقد) · الجمهور 93%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 76,
+    "rt_count": 147
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "Directed by James Watkins, Clayface starts slowly but becomes a satisfying revenge thriller, according to critics.",
   "fid": "clayface",
-  "verdict": "unknown",
-  "written": "2026-10-21"
+  "verdict": "yes",
+  "written": "2026-10-24"
 }

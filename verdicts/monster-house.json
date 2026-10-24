@@ -1,0 +1,14 @@
+{
+  "ar": "«المنزل المتوحش» أنيميشن كوميدي ورعب من إخراج Gil Kenan، ونال 75% من 161 نقد. النقاد يشوفونه مرح وذكي، والجمهور أعطاه 64%.",
+  "basis": "RT 75% (161 نقد) · الجمهور 64%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 75,
+    "rt_count": 161
+  },
+  "by": "claude",
+  "en": "Monster House, an animated comedy-horror directed by Gil Kenan, has a 75% Rotten Tomatoes score from 161 critics. Audiences gave it 64%.",
+  "fid": "monster-house",
+  "verdict": "yes",
+  "written": "2026-10-24"
+}

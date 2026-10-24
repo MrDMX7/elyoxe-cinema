@@ -1,14 +1,14 @@
 {
-  "ar": "«كلارا والشمس» مب مرضي عنه عند النقاد، والتقييم 29% بس من 17 نقد. إذا ما أنت من عشاق الخيال العلمي الدرامي، ما ننصحك تشوفه.",
-  "basis": "RT 29% (17 نقد)",
+  "ar": "«كلارا والشمس» قبوله ضعيف عند النقاد: 24% بس من 62 نقد على Rotten Tomatoes. النقاد يقولون إنه يسطّح الأفكار الغنية للمادة الأصلية ويطلع معسول زيادة.",
+  "basis": "RT 24% (62 نقد)",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": 29,
-    "rt_count": 17
+    "rt": 24,
+    "rt_count": 62
   },
   "by": "claude",
-  "en": "Critics are largely unimpressed with Klara and the Sun, which holds a 29% Rotten Tomatoes score from 17 reviews.",
+  "en": "Klara and the Sun has a 24% Rotten Tomatoes score from 62 critics, who say it flattens its source material's nuanced ideas into something cloying and twee.",
   "fid": "klara-and-the-sun",
   "verdict": "skip",
-  "written": "2026-10-21"
+  "written": "2026-10-24"
 }
