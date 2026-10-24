@@ -1,8 +1,9 @@
 """readers/relay.py — a chain read on the laptop, handed to the GitHub run (2026-10-24).
 
-The refresh moved to GitHub Actions, but two chains answer a datacenter address with a refusal (the cinema-probe of
-2026-10-24: Cine Royal's load balancer 403s, Novo's API sits behind a Cloudflare challenge). Their readers keep running
-on the laptop's residential line (tools/relay.py fetch, Task Scheduler «Elyoxe Cinema Relay», the same 7 times), which
+The refresh moved to GitHub Actions, but three chains do not read whole from a datacenter address (the cinema-probe of
+2026-10-24: Cine Royal's load balancer 403s, Novo's API sits behind a Cloudflare challenge, and Roxy's Akamai let a
+real run through with two of its six cinemas missing). Their readers keep running
+on the laptop's residential line (tools/relay.py fetch roxy,cineroyal,novo, Task Scheduler «Elyoxe Cinema Relay», the same 7 times), which
 writes each raw read to s3://<RELAY_BUCKET>/<RELAY_PREFIX><chain>.json:
 
     {"cinemas": [...], "shows": [...], "price_health": {...}, "_read_at": <ISO>}      a read

@@ -2,9 +2,10 @@
 # 2026-10-24). The job is run.sh, unchanged: pull -> tests (test.yml's green run on this commit, else the suite here)
 # -> refresh.py -> posters -> deploy.sh -> verdicts/intel committed back -> alerts (SES mail, tools/notify_mail.py).
 #
-# Chains: the cinema-probe (2026-10-24) read vox, star, reel, roxy and cinemacity from a GitHub runner like the laptop
-# does. cineroyal (load balancer 403) and novo (Cloudflare challenge) refuse datacenter addresses, so the laptop reads
-# them (tools/relay.py fetch, «Elyoxe Cinema Relay») and this run takes the read from S3 (readers/relay.py) — or keeps
+# Chains: the cinema-probe (2026-10-24) read vox, star, reel and cinemacity from a GitHub runner like the laptop does.
+# cineroyal (load balancer 403) and novo (Cloudflare challenge) refuse datacenter addresses, and roxy (Akamai) answered
+# the probe but lost two of its six cinemas on the second real run (177 shows against the laptop's ~470), so the laptop
+# reads those three (tools/relay.py fetch, «Elyoxe Cinema Relay») and this run takes the read from S3 (readers/relay.py) — or keeps
 # their previous shows, never an empty chain. YouTube refuses runners too (yt-dlp: «confirm you're not a bot»), so the
 # backdrops are made on the laptop (tools/relay.py backdrops) and only attached here (CINEMA_BACKDROPS_MAX=0).
 #
@@ -23,7 +24,7 @@ on:
         description: extra refresh.py arguments (e.g. --force)
         default: ""
       relay_wait:
-        description: seconds to wait for the laptop's cineroyal/novo read
+        description: seconds to wait for the laptop's roxy/cineroyal/novo reads
         default: "900"
 permissions:
   id-token: write        # AWS by OIDC (role cinema-github-actions)
@@ -36,8 +37,8 @@ env:
   TZ: Asia/Dubai
   PYTHONIOENCODING: utf-8
   PYTHONUNBUFFERED: "1"
-  CHAINS: vox,star,reel,roxy,cinemacity,cineroyal,novo   # the relayed chains last: the laptop has the first minutes
-  CINEMA_RELAY_CHAINS: cineroyal,novo
+  CHAINS: vox,star,reel,cinemacity,roxy,cineroyal,novo   # the relayed chains last: the laptop has the first minutes
+  CINEMA_RELAY_CHAINS: roxy,cineroyal,novo
   CINEMA_RELAY_WAIT_S: ${{ inputs.relay_wait || '900' }}
   CINEMA_BACKDROPS_MAX: "0"          # yt-dlp is refused here; tools/relay.py backdrops makes them on the laptop
   CINEMA_CLAUDE_VIA: api             # no `claude` CLI on a runner: verdicts/intel through the API key (SSM)

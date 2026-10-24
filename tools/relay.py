@@ -1,12 +1,12 @@
 """tools/relay.py — the laptop's share of «سينما» since the refresh moved to GitHub Actions (2026-10-24).
 
-The cinema-probe found three things a GitHub runner cannot read: Cine Royal (its load balancer 403s datacenter
-addresses), Novo (a Cloudflare challenge) and YouTube (yt-dlp: «Sign in to confirm you're not a bot»). Everything else —
-the other five chains, the merge, enrich, verdicts, the build and the deploy — runs on GitHub (cinema-refresh.yml).
+The cinema-probe found what a GitHub runner cannot read whole: Cine Royal (its load balancer 403s datacenter addresses),
+Novo (a Cloudflare challenge), Roxy (Akamai: a real run lost two of its six cinemas) and YouTube (yt-dlp: «Sign in to
+confirm you're not a bot»). Everything else — the other four chains, the merge, enrich, verdicts, the build and the deploy — runs on GitHub (cinema-refresh.yml).
 This is what the laptop still does, from the clean checkout C:/Users/requi/cinema-runner, by Task Scheduler
 «Elyoxe Cinema Relay» at the refresh's own 7 times:
 
-    python tools/relay.py fetch cineroyal,novo   each chain's reader, as refresh.py calls it (days=2, today's price
+    python tools/relay.py fetch roxy,cineroyal,novo   each chain's reader, as refresh.py calls it (days=2, today's price
                                                  samples in data/relay_price_cache.json) -> s3://…/cinema-ci/relay/<chain>.json
                                                  (a failed read uploads {"_read_at", "_error"}, so the GitHub run does
                                                  not wait for it); readers/relay.py takes it from there
