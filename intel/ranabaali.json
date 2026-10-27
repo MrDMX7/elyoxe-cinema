@@ -6,9 +6,10 @@
   "fid": "ranabaali",
   "fun_fact": null,
   "has_plot": false,
-  "next_check": "2026-10-28",
+  "next_check": "2026-10-31",
   "qa": [],
   "reasons": [],
+  "retry_reason": "could not produce compliant output after 4 attempts (last: banned word \"وش\" used — say \"شو\" instead)",
   "synopsis_ar": "Ranabaali يحكي عن محارب متمرّد في جنوب الهند خلال المجاعة الكبرى في سبعينات القرن التاسع عشر، يواجه مفوّض بريطاني وهو يحمي منطقته وأهلها. من إخراج Rahul Sankrityan، وببطولة Vijay Deverakonda وRashmika Mandanna وArnold Vosloo.",
   "written": "2026-10-25"
 }
