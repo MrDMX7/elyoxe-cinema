@@ -138,6 +138,10 @@ def _fetch_cinema_list(client: _Client) -> list[dict]:
 
 
 def _parse_showtimes(html: str, cinema_name: str, date_str: str) -> list[dict]:
+    # VOX's ?d= page is a business day: its 12:45am closes that night's list (after the 11:15pm), so an
+    # hh:mm before 06:00 starts on the next calendar day -- dated as the page, tonight's late show read as
+    # this morning's, already over, and dropped (Always Yours, Never Mine at Al Jimi Mall, 2026-10-27).
+    next_day = (datetime.strptime(date_str, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
     soup = BeautifulSoup(html, "lxml")
     shows = []
     for art in soup.select("article.movie-compare"):
@@ -179,7 +183,7 @@ def _parse_showtimes(html: str, cinema_name: str, date_str: str) -> list[dict]:
                         "film_lang": film_lang,
                         "film_rating": film_rating,
                         "runtime": runtime,
-                        "date": date_str,
+                        "date": next_day if time_24 < "06:00" else date_str,
                         "time": time_24,
                         "hall": hall,
                         "hall_label": hall_label,
@@ -280,6 +284,9 @@ def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict
     cinemas, shows = [], []
     now = datetime.now(DUBAI)
     today = now.date()
+    window = {(today + timedelta(days=i)).isoformat() for i in range(days)}
+    # before 06:00 the night's remaining shows sit on yesterday's page; past that hour they're all over
+    first = -1 if now.hour < 6 else 0
     calls = failed = 0
 
     for c in cinemas_raw:
@@ -305,7 +312,7 @@ def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict
             "lng": None,
         })
 
-        for offset in range(days):
+        for offset in range(first, days):
             d = today + timedelta(days=offset)
             d_str = d.strftime("%Y%m%d")
             date_str = d.strftime("%Y-%m-%d")
@@ -315,6 +322,8 @@ def fetch(days: int = 2, prices: bool = True, cache: dict | None = None) -> dict
                 failed += 1
                 continue
             for show in _parse_showtimes(r.text, name, date_str):
+                if show["date"] not in window:
+                    continue
                 show["cinema"] = cid
                 shows.append(show)
 

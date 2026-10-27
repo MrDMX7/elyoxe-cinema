@@ -187,3 +187,17 @@ def test_vox_price_health_from_mocked_guest_path(monkeypatch):
     assert out["shows"][0]["prices"] == [{"seat": "Regular", "aed": 50.0}]
     assert any("/abandon" in u for u in visited), "guest order must be abandoned"
     _assert_health(out, attempted=1, priced=1)
+
+
+def test_vox_after_midnight_show_is_next_calendar_day():
+    """VOX's ?d= page is a business day: 12:45am after 11:15pm starts the next calendar day."""
+    from readers.vox import _parse_showtimes
+
+    html = ('<article class="movie-compare" data-slug="always-yours-never-mine-tagalog">'
+            '<aside class="movie-hero"><h2>Always Yours, Never Mine</h2></aside>'
+            '<div class="dates"><ol class="showtimes"><li><strong>Standard</strong><ol>'
+            '<li><a class="action showtime" href="/booking/1">11:15pm</a></li>'
+            '<li><a class="action showtime" href="/booking/2">12:45am</a></li>'
+            '</ol></li></ol></div></article>')
+    got = [(s["date"], s["time"]) for s in _parse_showtimes(html, "Al Jimi Mall", "2026-10-27")]
+    assert got == [("2026-10-27", "23:15"), ("2026-10-28", "00:45")]
