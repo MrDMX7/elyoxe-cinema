@@ -1,6 +1,7 @@
 {
-  "by": "skip",
+  "by": "failed",
   "fid": "418",
-  "next_check": "2026-10-25",
-  "written": "2026-10-22"
+  "next_check": "2026-10-31",
+  "reason": "could not produce compliant output after 4 attempts (last: banned word \"جديد\" used — say \"يديد\" instead)",
+  "written": "2026-10-28"
 }
