@@ -1,0 +1,14 @@
+{
+  "ar": "«وايلدوود» حصّل 99% من 129 نقد على Rotten Tomatoes، والجمهور أعطاه 97%. إجماع النقاد يمدح صنعته التقنية وتأثيره العاطفي وسحر الستوب موشن فيه.",
+  "basis": "RT 99% (129 نقد) · الجمهور 97%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 99,
+    "rt_count": 129
+  },
+  "by": "claude",
+  "en": "Wildwood earned 99% from 129 critics on Rotten Tomatoes and 97% from audiences. Critics praise its technical craft, emotional impact, and stop-motion wizardry.",
+  "fid": "wildwood",
+  "verdict": "yes",
+  "written": "2026-10-28"
+}
