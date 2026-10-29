@@ -9,7 +9,7 @@
     "text": "الفيلم مقتبس عن رواية Kazuo Ishiguro الصادرة عام 2021"
   },
   "has_plot": false,
-  "next_check": "2026-10-30",
+  "next_check": "2026-11-02",
   "qa": [],
   "reasons": [
     {
@@ -21,6 +21,7 @@
       "text": "عدد النقاد الذين قيّموه 17 بس، والعينة صغيرة شوي لحكم عام"
     }
   ],
+  "retry_reason": "could not produce compliant output after 4 attempts (last: inflected form of banned root \"تجي\" used — say \"تصريف إيي المناسب للمخاطَب\" instead)",
   "synopsis_ar": "«كلارا والشمس» فيلم خيال علمي ديستوبي من إخراج Taika Waititi، وكتبه Waititi مع Dahvi Waller، ومقتبس عن رواية Kazuo Ishiguro الصادرة عام 2021. يشارك في البطولة Jenna Ortega وAmy Adams وMia Tharia وAran Murphy وSteve Buscemi وNatasha Lyonne.",
   "written": "2026-10-27"
 }
