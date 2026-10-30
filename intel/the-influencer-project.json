@@ -1,7 +1,7 @@
 {
   "by": "failed",
   "fid": "the-influencer-project",
-  "next_check": "2026-10-31",
-  "reason": "could not produce compliant output after 4 attempts (last: opens with \"فيلم <title>\" — a repeated, dull template; vary the opening)",
-  "written": "2026-10-28"
+  "next_check": "2026-11-03",
+  "reason": "could not produce compliant output after 4 attempts (last: banned word \"لسا\" used — say \"بعد / بعدهم\" instead)",
+  "written": "2026-10-31"
 }
