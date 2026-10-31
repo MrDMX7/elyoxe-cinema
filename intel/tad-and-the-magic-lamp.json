@@ -6,7 +6,7 @@
   "fid": "tad-and-the-magic-lamp",
   "fun_fact": null,
   "has_plot": false,
-  "next_check": "2026-11-01",
+  "next_check": "2026-11-04",
   "qa": [],
   "reasons": [
     {
@@ -22,6 +22,7 @@
       "text": "ما لقينا تقييمات نقدية كافية لهالفيلم للحين"
     }
   ],
+  "retry_reason": "could not produce compliant output after 4 attempts (last: tanwin (ً/ٌ/ٍ) in spoken text — never tanwin in the spoken register)",
   "synopsis_ar": null,
   "written": "2026-10-29"
 }
