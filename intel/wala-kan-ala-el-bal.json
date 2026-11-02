@@ -1,7 +1,14 @@
 {
-  "by": "failed",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "wala-kan-ala-el-bal",
-  "next_check": "2026-11-03",
-  "reason": "could not produce compliant output after 4 attempts (last: banned word \"زي\" used — say \"شرات\" instead)",
-  "written": "2026-10-31"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-06",
+  "qa": [],
+  "reasons": [],
+  "synopsis_ar": "شاب يشتغل مرشد سياحي في الأقصر يقبل صفقة غريبة من رجل أعمال ثري: يكسب قلب بنته ويساعدها تنسى حبيبها السابق. بس الأمور ما تمشي كما خُطط لها، ويلقى حسن نفسه داخل سلسلة مواقف كوميدية غير متوقعة، وقصة حب ما كان يتوقعها أبدا.",
+  "written": "2026-11-03"
 }
