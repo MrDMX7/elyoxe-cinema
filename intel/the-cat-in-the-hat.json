@@ -1,0 +1,26 @@
+{
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "the-cat-in-the-hat",
+  "fun_fact": {
+    "source": "ويكيبيديا",
+    "text": "هذا ثاني اقتباس سينمائي للكتاب، بعد نسخة الحركة الحية من عام 2003."
+  },
+  "has_plot": false,
+  "next_check": "2026-11-07",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "الفيلم من إنتاج أنيميشن عائلي يجمع الكوميدي والمغامرة والفانتازيا، ويعتمد على كتاب دكتور سوس الشهير من عام 1957."
+    },
+    {
+      "pos": false,
+      "text": "ما لقينا تقييمات نقدية أو أرقام تقييم كافية لهالفيلم للحين، فالحكم يبقى مفتوح."
+    }
+  ],
+  "synopsis_ar": "أنيميشن كوميدي فانتازي من إخراج Alessandro Carloni وErica Rivinoja، مقتبس بتصرّف عن كتاب Dr. Seuss. يُعبّر عن شخصية القط الرئيسية Bill Hader، ويشارك في الأصوات Matt Berry وQuinta Brunson وXochitl Gomez وGiancarlo Esposito وAmerica Ferrera.",
+  "written": "2026-11-04"
+}

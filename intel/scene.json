@@ -1,0 +1,7 @@
+{
+  "by": "failed",
+  "fid": "scene",
+  "next_check": "2026-11-07",
+  "reason": "could not produce compliant output after 4 attempts (last: reasons must be a list of 2 to 4 items)",
+  "written": "2026-11-04"
+}
