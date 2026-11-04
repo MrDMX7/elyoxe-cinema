@@ -39,6 +39,15 @@ def test_ingest_rejects_bad_origin():
     assert r["statusCode"] == 403
 
 
+def test_ingest_counts_a_known_source_on_a_view_only(monkeypatch):
+    seen = []
+    monkeypatch.setattr(ingest, "bump", lambda date, key, n=1: seen.append(key))
+    ingest.handler(http_event("POST", {"page": "home", "event": "view", "src": "instagram"}), None)
+    ingest.handler(http_event("POST", {"page": "home", "event": "view", "src": "https://evil.example/"}), None)
+    ingest.handler(http_event("POST", {"page": "home", "event": "return", "src": "google"}), None)
+    assert [k for k in seen if "#src#" in k] == ["_#src#instagram"]
+
+
 def test_ingest_rejects_unknown_event():
     r = ingest.handler(http_event("POST", {"page": "home", "event": "hack"}), None)
     assert r["statusCode"] == 400

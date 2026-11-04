@@ -3,7 +3,7 @@
    `uid` is a daily-rotating value computed on-device from today's date + a random value kept in localStorage
    under "cinema.salt" (never sent anywhere else, never read back by us); the server keeps it two days, only to
    count distinct visitors a day. What is sent (infra/counter/lambdas/ingest.py is the contract):
-     view        once per page, on pagehide / the tab going hidden (never `unload`: it blocks bfcache)
+     view        once per page, on pagehide / the tab going hidden (never `unload`: it blocks bfcache), with its source category
      return      once a day, how many days since the visitor's last day here (bucketed on-device)
      book_click  a tap on a chain's own booking link («احجز من موقع …»), with how long after landing (bucketed)
    A lazy chunk (build.chunk_js): this file's own scope receives the page's helpers as K. Target ≤ 0.6 KB gz. */
@@ -37,7 +37,20 @@
   }
   window.cinemaBeacon = send;
 
-  function view() { send("view", null, true); }
+  // where the visit came from, as a category only (the referrer itself is never sent; same list as elyoxe.com/tools)
+  function source() {
+    var u = ""; try { u = (new URLSearchParams(location.search).get("utm_source") || "").toLowerCase(); } catch (e) {}
+    var U = { ig: "instagram", instagram: "instagram", tiktok: "tiktok", x: "x", twitter: "x", fb: "facebook", facebook: "facebook", wa: "whatsapp", whatsapp: "whatsapp", snapchat: "snapchat" };
+    if (U[u]) return U[u];
+    var h = ""; try { h = new URL(document.referrer).hostname.replace(/^(www|m|l|lm|mobile)\./, ""); } catch (e) { return "direct"; }
+    var M = [[/(^|\.)elyoxe\.com$/, "site"], [/gemini\.google\.com$/, "chatgpt"], [/(^|\.)google\./, "google"], [/(^|\.)bing\.com$/, "bing"], [/duckduckgo|yahoo|yandex|ecosia|brave\.com|baidu/, "search"],
+      [/^(x\.com|t\.co|twitter\.com)$/, "x"], [/instagram\.com$/, "instagram"], [/(facebook\.com|fb\.com|messenger\.com)$/, "facebook"], [/tiktok\.com$/, "tiktok"],
+      [/whatsapp\.(com|net)$/, "whatsapp"], [/(t\.me|telegram\.org)$/, "telegram"], [/(linkedin\.com|lnkd\.in)$/, "linkedin"], [/(youtube\.com|youtu\.be)$/, "youtube"],
+      [/snapchat\.com$/, "snapchat"], [/reddit\.com$/, "reddit"], [/(chatgpt\.com|openai\.com|perplexity\.ai|claude\.ai|copilot\.microsoft\.com)$/, "chatgpt"]];
+    for (var i = 0; i < M.length; i++) if (M[i][0].test(h)) return M[i][1];
+    return "other";
+  }
+  function view() { send("view", { src: source() }, true); }
   addEventListener("pagehide", view);
   addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") view(); });
 

@@ -7,6 +7,7 @@ below ever reach `print()`. The client sends one JSON body per beacon:
      "event": "view"|"ticket_open"|"book_click"|"return",
      "return_bucket": "0"|"1"|"2-7"|"8-30"|"30+",   # only with event == "return", computed on the device
      "ttb_bucket": "0-3s"|"3-10s"|"10-30s"|"30s+",  # optional, only on a "book_click" (landing -> tapped «احجز»)
+     "src": "google"|"instagram"|...,  # optional, only on a "view": source category worked out in the browser (SOURCES)
      "uid": "<opaque daily-rotating salted hash, client-computed, <=128 chars>"}  # optional
 
 `uid` is never a cookie and never persists across days — it is an opaque, client-generated id
@@ -30,6 +31,8 @@ PAGES = {"home", "film", "cinema", "city", "coming", "_"}
 EVENTS = {"view", "ticket_open", "book_click", "return"}
 RETURN_BUCKETS = {"0", "1", "2-7", "8-30", "30+"}
 TTB_BUCKETS = {"0-3s", "3-10s", "10-30s", "30s+"}
+SOURCES = {"direct", "site", "google", "bing", "search", "x", "instagram", "facebook", "tiktok", "whatsapp", "telegram",
+           "linkedin", "youtube", "snapchat", "reddit", "chatgpt", "other"}
 
 
 def cors(origin):
@@ -86,6 +89,10 @@ def handler(event, _ctx):
     ttb = data.get("ttb_bucket")
     if ev == "book_click" and ttb in TTB_BUCKETS:
         bump(date, f"_#ttb#{ttb}")
+
+    src = data.get("src")
+    if ev == "view" and src in SOURCES:
+        bump(date, f"_#src#{src}")
 
     uid = data.get("uid")
     if isinstance(uid, str) and 0 < len(uid) <= 128:
