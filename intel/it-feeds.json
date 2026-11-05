@@ -1,7 +1,7 @@
 {
   "by": "failed",
   "fid": "it-feeds",
-  "next_check": "2026-11-06",
+  "next_check": "2026-11-09",
   "reason": "could not produce compliant output after 4 attempts (last: opens with \"فيلم <title>\" — a repeated, dull template; vary the opening)",
-  "written": "2026-11-03"
+  "written": "2026-11-06"
 }
