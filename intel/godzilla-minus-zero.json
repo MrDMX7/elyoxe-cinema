@@ -1,7 +1,7 @@
 {
   "by": "failed",
   "fid": "godzilla-minus-zero",
-  "next_check": "2026-11-07",
-  "reason": "could not produce compliant output after 4 attempts (last: opens with \"فيلم <title>\" — a repeated, dull template; vary the opening)",
-  "written": "2026-11-04"
+  "next_check": "2026-11-10",
+  "reason": "could not produce compliant output after 4 attempts (last: banned phrase \"ما نقدر نحكم\" used — say \"لا تعتذر — إن ما في أساس فالسطر يكون القالب الثابت\" instead)",
+  "written": "2026-11-07"
 }

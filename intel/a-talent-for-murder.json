@@ -1,7 +1,26 @@
 {
-  "by": "failed",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": "النقاد يرون أن Helen Mirren وAlden Ehrenreich ثنائي شرير مناسب، والفيلم يلعب بمرح على إرث Patricia Highsmith ويحوّله إلى متعة متلاعبة.",
+  "ending": null,
   "fid": "a-talent-for-murder",
-  "next_check": "2026-11-07",
-  "reason": "could not produce compliant output after 4 attempts (last: tanwin (ً/ٌ/ٍ) in spoken text — never tanwin in the spoken register)",
-  "written": "2026-11-04"
+  "fun_fact": {
+    "source": "ويكيبيديا",
+    "text": "الفيلم مقتبس من مسرحية Switzerland لعام 2014 من تأليف Joanna Murray-Smith."
+  },
+  "has_plot": false,
+  "next_check": "2026-11-10",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "الفيلم من إخراج Anton Corbijn ومن بطولة Helen Mirren وAlden Ehrenreich وOlivia Cooke."
+    },
+    {
+      "pos": false,
+      "text": "ما فيه تقييم نقدي رقمي للحين، والمصدر الوحيد المتوفر هو إجماع نقدي عام."
+    }
+  ],
+  "synopsis_ar": "إثارة من إخراج Anton Corbijn مقتبسة عن مسرحية Switzerland، تجمع Helen Mirren وAlden Ehrenreich وOlivia Cooke، وتدور حول عالم الجريمة والخداع بروح لعوبة تستعيد أجواء أدب Patricia Highsmith.",
+  "written": "2026-11-07"
 }

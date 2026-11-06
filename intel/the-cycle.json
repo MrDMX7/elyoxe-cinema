@@ -6,7 +6,7 @@
   "fid": "the-cycle",
   "fun_fact": null,
   "has_plot": false,
-  "next_check": "2026-11-07",
+  "next_check": "2026-11-10",
   "qa": [],
   "reasons": [
     {
@@ -18,6 +18,7 @@
       "text": "مدة الفيلم 111 دقيقة، والسنة غير متوفرة في المعطيات."
     }
   ],
+  "retry_reason": "could not produce compliant output after 4 attempts (last: tanwin (ً/ٌ/ٍ) in spoken text — never tanwin in the spoken register)",
   "synopsis_ar": "عالمة أنثروبولوجيا جنائية تكتشف أن جثة أبوها المفقود منذ زمن ظهرت فجأة في مسرح جريمة، فتضطر تواجه ماضيه المظلم. الفيلم يمزج بين إجراءات التحقيق الجنائي وعناصر رعب الكائنات.",
   "written": "2026-11-04"
 }
