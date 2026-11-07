@@ -1,7 +1,14 @@
 {
-  "by": "failed",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "summer-holidays",
-  "next_check": "2026-11-08",
-  "reason": "could not produce compliant output after 4 attempts (last: inflected form of banned root \"يجي\" used — say \"إيي (أو تصريفها: تييك، إيينا... حسب المخاطَب)\" instead)",
-  "written": "2026-11-05"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-11",
+  "qa": [],
+  "reasons": [],
+  "synopsis_ar": "يتابع الفيلم مجموعة من الأصدقاء والأقارب بعد عودتهم من عطلتهم الصيفية، حيث تتشابك حياتهم اليومية وتظهر علاقاتهم بعد الإجازة. تمزج القصة بين لحظات كوميدية ولحظات دافئة من دراما العائلة.",
+  "written": "2026-11-08"
 }
