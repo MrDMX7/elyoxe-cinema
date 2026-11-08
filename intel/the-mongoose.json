@@ -1,7 +1,7 @@
 {
   "by": "failed",
   "fid": "the-mongoose",
-  "next_check": "2026-11-09",
-  "reason": "could not produce compliant output after 4 attempts (last: opens with \"فيلم <title>\" — a repeated, dull template; vary the opening)",
-  "written": "2026-11-06"
+  "next_check": "2026-11-12",
+  "reason": "could not produce compliant output after 4 attempts (last: reasons must be a list of 2 to 4 items)",
+  "written": "2026-11-09"
 }
