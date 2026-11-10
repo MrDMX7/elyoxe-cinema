@@ -1,0 +1,23 @@
+{
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "ebenezer",
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-14",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "الفيلم من إخراج Ti West وبطولة Johnny Depp بدور Ebenezer Scrooge، ويعتمد على رواية A Christmas Carol لتشارلز ديكنز."
+    },
+    {
+      "pos": false,
+      "text": "ما لقينا تقييمات نقدية كافية لهالفيلم للحين، فالحكم على جودته يبقى غير واضح."
+    }
+  ],
+  "synopsis_ar": "إبنزر فيلم غوثيك فانتازيا مظلمة وكوميديا سوداء من إخراج Ti West، مستوحى من رواية ديكنز القديمة. الفيلم من بطولة Johnny Depp في دور Scrooge، مع Rupert Grint وAndrea Riseborough وDaisy Ridley وIan McKellen.",
+  "written": "2026-11-11"
+}

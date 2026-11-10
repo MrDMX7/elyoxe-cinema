@@ -1,0 +1,23 @@
+{
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "les-miserables",
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-14",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "الفيلم فرنسي من إخراج Fred Cavayé ومقتبس عن رواية فيكتور هوغو عام 1862."
+    },
+    {
+      "pos": false,
+      "text": "مدته 180 دقيقة، وهذا طول كبير يحتاج صبر من المشاهد."
+    }
+  ],
+  "synopsis_ar": "يتابع الفيلم جان فالجان الذي قضى 19 سنة في السجن ويسعى للتكفير عن ماضيه، بينما يطارده المفتش جافير بلا هوادة.",
+  "written": "2026-11-11"
+}
