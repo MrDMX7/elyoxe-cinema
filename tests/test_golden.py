@@ -71,6 +71,10 @@ REDESIGN_CHANGED = re.compile(r"(\.html|^assets/cinema\.css)$")
 # change to the file this test otherwise guards word-for-word. Not folded into REDESIGN_CHANGED (that regex is
 # for .html/.css only): sw.js is compared everywhere except this file, which the golden test always rewrites anyway.
 GOLDEN_CHANGED = re.compile(r"^sw\.js$")
+# 2026-11-19: /cards/'s title and description name the programmes and chains the page shows (Novo left the UAE and took
+# Esaad's only official offer with it), and /halls/'s and the IMAX text no longer name Novo — their title and
+# description are compared no more; everything else these pages are still is
+META_CHANGED = re.compile(r"^(en/)?(cards|halls)/index\.html$")
 
 
 def sitemap_urls(b):
@@ -275,7 +279,12 @@ def test_core_build_is_byte_identical_to_phase1(phase1, tmp_path, name, data, di
     # the pages' markup is the redesign's, but what each page IS must not move: links, title, description, robots,
     # JSON-LD, its price cells and showtimes; window.CT only gains keys; no template placeholder is ever left
     html = [p for p in before if p.endswith(".html")]
-    moved = [p for p in html if not same_page(p, inv(before[p]), inv(after[p]))]
+    def ident(p, b):
+        x = inv(b)
+        if META_CHANGED.match(p):
+            x.pop("title", None); x.pop("desc", None)
+        return x
+    moved = [p for p in html if not same_page(p, ident(p, before[p]), ident(p, after[p]))]
     assert not moved, moved[:10]
     lost = [p for p in html if not ct_keys(before[p]) <= ct_keys(after[p])]
     assert not lost, lost[:10]

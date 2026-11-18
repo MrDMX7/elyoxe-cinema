@@ -123,9 +123,17 @@ class MoneyPages:
             body += (f'<section class="wrap"><div class="cph-l">{"".join(self.card_block(card, chains, lang) for card in self.cards)}</div>'
                      f'<div class="xwrap"><table class="matrix"><thead><tr><th></th>{head}</tr></thead><tbody>{rows}</tbody></table></div>'
                      f'<p class="hint">{"1+1 = تذكرتين بسعر وحدة." if lang == "ar" else "1+1 = buy one, get one."}</p></section>')
-            title = ("خصومات السينما في الإمارات — فزعة وإسعاد وعروض البنوك" if lang == "ar" else "UAE cinema discounts — Fazaa, Esaad and bank cards")
-            desc = ("جدول واحد لكل خصومات السينما الرسمية في الإمارات: فزعة وإسعاد والبنوك، في فوكس وستار ونوفو وريل وروكسي وسيني رويال وسينما سيتي." if lang == "ar"
-                    else "One table of every official UAE cinema discount: Fazaa, Esaad and banks, at VOX, Star, Novo, Reel, Roxy, Cine Royal and Cinemacity.")
+            # what the page shows, not a list written once: Novo left (2026-10) and took Esaad's only official offer with it
+            gov = [c for c in self.cards if c.get("kind") == "gov"]
+            progs_ar = " و".join(c["name_ar"] for c in gov) or "البطاقات"
+            progs_en = ", ".join(c["name_en"] for c in gov) or "cards"
+            order = ["vox", "star", "reel", "roxy", "cineroyal", "cinemacity", "novo"]
+            shown = sorted(set(self.rules) | {c["chain"] for c in self.cinemas.values()}, key=lambda ch: (order.index(ch) if ch in order else 99, ch))
+            chains_ar = " و".join(self.h.chain_name(ch, "ar") for ch in shown)
+            chains_en = ", ".join(self.h.chain_name(ch, "en") for ch in shown)
+            title = (f"خصومات السينما في الإمارات — {progs_ar} وعروض البنوك" if lang == "ar" else f"UAE cinema discounts — {progs_en} and bank cards")
+            desc = (f"جدول واحد لكل خصومات السينما الرسمية في الإمارات: {progs_ar} والبنوك، في {chains_ar}." if lang == "ar"
+                    else f"One table of every official UAE cinema discount: {progs_en} and banks, at {chains_en}.")
             self.page(lang, ("cards",), title, desc, body, [self.breadcrumb_ld(lang, (L(UI["s_cards"], lang), P(lang, "cards")))], "cards", nav="cards")
 
     def card_block(self, card, chains, lang):
@@ -181,8 +189,8 @@ class MoneyPages:
                     faq.append(((f"شو فيها قاعة {e.get('name') or e['key']} في {self.h.chain_name(chain, lang)}؟" if lang == "ar" else f"What is {e.get('name') or e['key']} at {self.h.chain_name(chain, lang)}?"), what))
                 body += '</div></section>'
             title = ("قاعات السينما في الإمارات — GOLD وTHEATRE وIMAX وSUITES، شو الفرق وكم السعر؟" if lang == "ar" else "UAE premium cinema halls — GOLD, THEATRE, IMAX, SUITES: what’s the difference?")
-            desc = ("شو الفرق بين قاعات فوكس جولد وثياتر وماكس، وستار سويتس، ونوفو سفن ستار، وروكسي بلاتينيوم، وريل دولبي، وكم سعرها اليوم." if lang == "ar"
-                    else "The difference between VOX GOLD, THEATRE and MAX, Star Suites, Novo 7 Star, Roxy Platinum, Reel Dolby and more — and what they cost today.")
+            desc = ("شو الفرق بين قاعات فوكس جولد وثياتر وماكس، وستار سويتس، وروكسي بلاتينيوم، وريل دولبي، وكم سعرها اليوم." if lang == "ar"
+                    else "The difference between VOX GOLD, THEATRE and MAX, Star Suites, Roxy Platinum, Reel Dolby and more — and what they cost today.")
             graph = [{"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in faq if a]},
                      self.breadcrumb_ld(lang, (L(UI["s_halls"], lang), P(lang, "halls")))]
             self.page(lang, ("halls",), title, desc, body, graph, "halls")

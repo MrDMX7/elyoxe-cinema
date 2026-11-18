@@ -24,10 +24,9 @@ HUB_DESC = ("IMAX، 4DX، MX4D، ScreenX، Dolby، القاعات الفاخرة
 FORMAT_DEFS = [
     ("imax", "آيماكس (IMAX)", "IMAX", ("IMAX",),
      ("شاشة IMAX أطول من العادية وتغطي نظرك أكثر، وبعض الأفلام تُصوَّر لها خصيصا فتطلع لك صورة أكبر فوق وتحت. النسخة "
-      "الأحدث «آيماكس ليزر» فيها عرض ليزر بدقة أعلى وصوت من 12 قناة — نوفو تشغّلها في سينما آي إم جي وورلدز بدبي.",
+      "الأحدث «آيماكس ليزر» فيها عرض ليزر بدقة أعلى وصوت من 12 قناة.",
       "A taller IMAX screen that fills more of your view; some films are shot specifically for it, showing more of "
-      "the frame. The newer «IMAX with Laser» adds sharper laser projection and 12-channel sound — Novo runs it at "
-      "IMG Worlds Cinemas in Dubai."),
+      "the frame. The newer «IMAX with Laser» adds sharper laser projection and 12-channel sound."),
      ("يستاهل لأفلام الأكشن والخيال العلمي والمغامرة اللي تعتمد على المشهد الكبير.",
       "Worth it for action, sci-fi and adventure films built around the big picture."),
      ("IMAX", "https://www.imax.com/")),
