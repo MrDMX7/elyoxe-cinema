@@ -400,7 +400,7 @@ class App:
 <script>(function(){{addEventListener("pagereveal",function(e){{var t=e.viewTransition,a=window.navigation&&navigation.activation;if(t&&a&&a.from&&a.entry&&a.navigationType==="traverse"&&a.entry.index<a.from.index)document.documentElement.dataset.nav="pop";else if(t)document.documentElement.dataset.nav="push";if(t)t.finished.finally(function(){{delete document.documentElement.dataset.nav}})}});addEventListener("pageswap",function(e){{var t=e.viewTransition,a=e.activation;if(t&&a&&a.navigationType==="traverse"&&a.entry&&a.from&&a.entry.index<a.from.index)document.documentElement.dataset.nav="pop";else if(t)document.documentElement.dataset.nav="push"}})}})()</script>
 </head><body>{SPRITE}{body}{self.table()}
 <div class="scrim" data-scrim hidden></div><div class="toast" data-toast role="status" hidden></div>
-<script>window.APP={{base:"{self.base}",lang:"{LANG}",ask:"{ASK_API}",today:"{self.k.today}",tomorrow:"{self.k.tomorrow}",logos:{json.dumps(self.logos)},cities:{json.dumps({c: cityname(c) for c, _ in CITIES}, ensure_ascii=False)},t:{json.dumps({k: EN[k] for k in JS_KEYS} if LANG == "en" else {}, ensure_ascii=False)}}}</script>
+<script>window.APP={{base:"{self.base}",film:"{self.u('f', '')[:-1]}",lang:"{LANG}",ask:"{ASK_API}",today:"{self.k.today}",tomorrow:"{self.k.tomorrow}",logos:{json.dumps(self.logos)},cities:{json.dumps({c: cityname(c) for c, _ in CITIES}, ensure_ascii=False)},t:{json.dumps({k: EN[k] for k in JS_KEYS} if LANG == "en" else {}, ensure_ascii=False)}}}</script>
 <script src="{self.base}assets/{self.js_name}" defer></script>
 </body></html>"""
         if LANG == "en":

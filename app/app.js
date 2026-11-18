@@ -350,7 +350,7 @@
         /* the time card: the hour large, its part of the day under it; «بعد N د» as a badge that glows under 15 minutes */
         var pst = f[2] ? '<img class="sr-p" src="' + esc(f[2]) + '" alt="" loading="lazy">' : "";
         var mark = chm(x.c[3], x.c[4]);
-        return '<a class="sr" href="' + A.base + "f/" + f[0] + '/"><span class="tcard"><b>' + tt[0] + "</b><small>" + tt[1] + "</small></span>" + pst + '<span class="sr-b"><b>' + esc(f[1]) + "</b><small>" + mark + esc(x.c[1]) +
+        return '<a class="sr" href="' + A.film + f[0] + '/"><span class="tcard"><b>' + tt[0] + "</b><small>" + tt[1] + "</small></span>" + pst + '<span class="sr-b"><b>' + esc(f[1]) + "</b><small>" + mark + esc(x.c[1]) +
           '</small><span class="sr-m"><em class="eta' + (mins < 15 ? " hot" : "") + '">' + (mins < 1 ? tx("يبدأ الحين") : tx("بعد") + " " + mins + " " + tx("د")) + "</em>" + (x.r[3] ? '<b class="pr">' + x.r[3] + AED + "</b>" : "") + "</span></span></a>";
       }).join("");
       q("[data-soon-none]").hidden = pick.length > 0;

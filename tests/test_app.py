@@ -44,6 +44,17 @@ def test_live_writes_over_the_old_urls_and_keeps_the_rest(live):
     assert not os.path.exists(os.path.join(out, "f")) and not os.path.exists(os.path.join(out, "c"))
 
 
+def test_links_the_script_builds_reach_the_live_film_pages(live):
+    """«يبدأ قريب منك» rows are drawn by app.js: they linked A.base + "f/<fid>/" — the /next/ preview's URL — and on the
+    live site every tap was the 404 page (owner's screenshot, 2026-11-18). The page hands the script its film prefix."""
+    out, app = live
+    home = read(out, "index.html")
+    assert re.search(r'window\.APP=\{[^<]*\bfilm:"/film/"', home)
+    assert os.path.exists(os.path.join(out, "film", app.films[0], "index.html"))
+    js = read(ROOT, "app", "app.js")
+    assert '"f/"' not in js and "A.film + " in js
+
+
 def test_live_pages_are_indexable_with_their_canonical_and_film_json_ld(live):
     out, app = live
     fid = app.films[0]
