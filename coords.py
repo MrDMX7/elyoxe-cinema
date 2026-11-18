@@ -20,6 +20,7 @@ python coords.py [--force] [--only cid,cid]
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import re
 import sys
@@ -107,6 +108,13 @@ def name_matches(query: str, display_name: str) -> bool:
     return bool(want) and all(w in have for w in want)
 
 
+def vox_map_ll(page: str):
+    """[lat, lng] from a VOX cinema page's MAP button: maps.google.com/maps?g=<lat>,<lng> or ?q=<lat>,<lng>, the `=`
+    HTML-escaped as &#x3D; since November 2026 (VOX Moonlight's page) — else None."""
+    m = re.search(r"google\.[a-z.]+/maps\?[gq]=(-?\d+\.\d+),(-?\d+\.\d+)", html.unescape(page or ""))
+    return [float(m.group(1)), float(m.group(2))] if m else None
+
+
 def in_box(city, lat, lng) -> bool:
     b = CITY_BOX.get(city)
     if not b:
@@ -136,20 +144,23 @@ def known_cinemas() -> dict:
 
 
 class Geo:
-    def __init__(self):
+    def __init__(self, cache_path: Path = CACHE):
+        """cache_path: coords.py's own data/geocode_cache.json by default; steps/cinema_coords.py passes its own file,
+        because test_every_nominatim_coordinate_is_a_name_matched_cached_hit reads this one whenever it exists."""
         from curl_cffi import requests as cr
 
         self.cr = cr
         self.s = cr.Session(impersonate="chrome")
         self.last = 0.0
+        self.cache_path = Path(cache_path)
         try:
-            self.cache = json.loads(CACHE.read_text(encoding="utf-8"))
+            self.cache = json.loads(self.cache_path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             self.cache = {}
 
     def save(self):
-        CACHE.parent.mkdir(parents=True, exist_ok=True)
-        CACHE.write_text(json.dumps(self.cache, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
+        self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+        self.cache_path.write_text(json.dumps(self.cache, ensure_ascii=False, indent=1, sort_keys=True), encoding="utf-8")
 
     def _wait(self, gap):
         w = gap - (time.monotonic() - self.last)
@@ -158,13 +169,11 @@ class Geo:
         self.last = time.monotonic()
 
     def vox_page(self, slug):
-        key = f"vox2:{slug}"
+        key = f"vox3:{slug}"   # vox2 cached misses from before the &#x3D; spelling was read
         if key not in self.cache:
             self._wait(1.2)
             r = self.s.get(f"https://uae.voxcinemas.com/cinemas/{slug}", timeout=30)
-            # the MAP button: maps.google.com/maps?g=<lat>,<lng> or google.com/maps?q=<lat>,<lng>
-            m = re.search(r"google\.[a-z.]+/maps\?[gq]=(-?\d+\.\d+),(-?\d+\.\d+)", r.text) if r.status_code == 200 else None
-            self.cache[key] = [float(m.group(1)), float(m.group(2))] if m else None
+            self.cache[key] = vox_map_ll(r.text) if r.status_code == 200 else None
         return self.cache[key]
 
     def cinemacity_page(self, code):

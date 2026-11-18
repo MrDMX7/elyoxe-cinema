@@ -173,27 +173,37 @@ def test_finalize_attaches_coordinates_and_maps_link():
 
 
 # ---------------------------------------------------------------- coordinates for every real cinema
-def _real_cinema_ids():
-    ids = set()
-    for p in list((ROOT / "fixtures").glob("*.json")) + [ROOT / "data" / "latest.json"]:
+def _cinemas_of(paths):
+    out = {}
+    for p in paths:
         if not p.exists() or p.name == "sample_latest.json":
             continue
         d = json.loads(p.read_text(encoding="utf-8"))
         cin = d.get("cinemas") or {}
-        ids |= set(cin) if isinstance(cin, dict) else {c["id"] for c in cin}
-    return ids
+        out.update(cin if isinstance(cin, dict) else {c["id"]: c for c in cin})
+    return out
 
 
-def test_every_real_cinema_has_coordinates_in_cinemas_yaml():
+def test_every_fixture_cinema_has_coordinates_in_cinemas_yaml():
+    """The committed readers' cinemas: the yaml must place every one of them by hand-checked coordinates."""
     meta = normalize.load_cinema_meta()
-    ids = _real_cinema_ids()
+    ids = set(_cinemas_of((ROOT / "fixtures").glob("*.json")))
     assert len(ids) >= 60
     missing = sorted(cid for cid in ids if not (meta.get(cid) or {}).get("lat") or not meta[cid].get("lng"))
     assert not missing, f"cinemas without lat/lng in cinemas.yaml: {missing}"
     for cid in ids:
         m = meta[cid]
         assert 22.0 < m["lat"] < 26.5 and 51.0 < m["lng"] < 56.6, cid
-        assert m.get("coord_source"), f"{cid} has no coord_source"
+
+
+def test_a_live_cinema_the_yaml_does_not_know_yet_never_stops_the_publish():
+    """data/latest.json is the LAST run's data, and the run's gate runs this suite on it: a cinema a chain opened since
+    (VOX Moonlight, 2026-11-12 — a week frozen) is placed by steps/cinema_coords.py or published without coordinates,
+    and refresh.yaml_health() mails one «cinemas.yaml» alert. Only coordinates it does carry are checked: inside the UAE."""
+    live = _cinemas_of([ROOT / "data" / "latest.json"])
+    for cid, c in live.items():
+        if c.get("lat") is not None or c.get("lng") is not None:
+            assert 22.0 < c["lat"] < 26.5 and 51.0 < c["lng"] < 56.6, cid
 
 
 # ---------------------------------------------------------------- posters

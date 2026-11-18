@@ -328,6 +328,14 @@ def _run_chain(chain: str, days: int, offline: bool, timeout: float, price_cache
     return {"ok": True, "result": payload, "error": None, "seconds": seconds}
 
 
+def yaml_health(merged: dict, meta: dict) -> dict:
+    """health["cinemas.yaml"]: a cinema the chains sell that has no cinemas.yaml line yet (a new one: VOX Moonlight,
+    2026-11-12). The site still publishes it (reader name; steps/cinema_coords.py finds its coordinates), so this is one
+    low-priority alert when it starts and one when its line is written (alerts.py), never a stopped run."""
+    new = sorted(cid for cid in (merged.get("cinemas") or {}) if cid not in meta)
+    return {"ok": not new, "error": ("سينما جديدة: " + ", ".join(new)) if new else None, "new": new}
+
+
 def run_steps(data: dict, ctx: dict, steps_dir: Path | None = None) -> dict:
     """Run every steps/<name>.py that defines run(data, ctx), sorted by name, each isolated.
     Returns {name: {"ok", "error", **whatever run returned}} for health.json."""
@@ -796,6 +804,10 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
                        "error": None if all(r["ok"] for r in step_results.values())
                        else ", ".join(n for n, r in step_results.items() if not r["ok"]),
                        "items": step_results}
+    try:
+        health["cinemas.yaml"] = yaml_health(merged, normalize.load_cinema_meta())
+    except Exception as e:  # noqa: BLE001
+        print(f"refresh: yaml_health failed: {e}", file=sys.stderr)
 
     # film history: archive a film that's confirmed gone (permanent page, see update_film_history),
     # and collect fids appearing for the first time ever -- for run.sh's one new-film notification.
