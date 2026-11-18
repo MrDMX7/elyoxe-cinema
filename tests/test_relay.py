@@ -74,3 +74,25 @@ def test_without_the_env_nothing_changes(monkeypatch):
     monkeypatch.setitem(refresh.CHAIN_READERS, "cineroyal", lambda days, cache=None: {"shows": ["direct"]})
     assert refresh._fetch_chain("cineroyal", 2, False, price_cache={}) == {"shows": ["direct"]}
     assert refresh.chain_timeout("cineroyal") == refresh.CHAIN_TIMEOUTS.get("cineroyal", refresh.DEFAULT_TIMEOUT)
+
+
+def test_a_runs_relayed_chains_share_one_wait(monkeypatch):
+    """A manual run off the laptop's schedule waited 15 min for each of three chains (2026-11-18): they share one
+    deadline now, so the second stale chain checks once and gives up with the first."""
+    monkeypatch.setenv("CINEMA_RELAY_WAIT_S", "600")
+    monkeypatch.setattr(relay, "_RUN", {"deadline": None})
+    t = [0.0]
+    naps = {"cineroyal": 0, "roxy": 0}
+    stale = NOW - timedelta(hours=3)
+    s3 = FakeS3({key("cineroyal"): read(stale), key("roxy"): read(stale)})
+
+    def run(chain):
+        def nap(s):
+            naps[chain] += 1
+            t[0] += s
+        with pytest.raises(RuntimeError, match="no read within"):
+            relay.fetch_relayed(chain, client=s3, sleep=nap, clock=lambda: NOW,
+                                deadline=relay.shared_deadline(now=t[0]), monotonic=lambda: t[0])
+    run("cineroyal")
+    run("roxy")
+    assert naps == {"cineroyal": 20, "roxy": 0}

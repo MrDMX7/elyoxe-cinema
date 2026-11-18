@@ -67,10 +67,24 @@ def _age(raw: dict, now: datetime) -> timedelta | None:
     return now - (at if at.tzinfo else at.replace(tzinfo=timezone.utc))
 
 
-def fetch_relayed(chain: str, client=None, sleep=time.sleep, clock=None) -> dict:
-    """The laptop's fresh read of `chain` (a dict with "_relay_read_at"), or RuntimeError."""
+# one wait for all the relayed chains of a run: the laptop sends the three reads together, so when the first chain has
+# waited RELAY_WAIT_S for nothing the others would too — each with its own deadline a manual run off the laptop's
+# schedule waited 3 × 15 min (2026-11-18). refresh.py runs in its own process, so this lives exactly one run.
+_RUN = {"deadline": None}
+
+
+def shared_deadline(now: float | None = None) -> float:
+    if _RUN["deadline"] is None:
+        _RUN["deadline"] = (time.monotonic() if now is None else now) + wait_s()
+    return _RUN["deadline"]
+
+
+def fetch_relayed(chain: str, client=None, sleep=time.sleep, clock=None, deadline: float | None = None,
+                  monotonic=time.monotonic) -> dict:
+    """The laptop's fresh read of `chain` (a dict with "_relay_read_at"), or RuntimeError. `deadline`
+    (monotonic seconds): wait no later than this — shared_deadline() for a run's relayed chains."""
     clock = clock or (lambda: datetime.now(timezone.utc))
-    deadline = time.monotonic() + wait_s()
+    deadline = monotonic() + wait_s() if deadline is None else deadline
     fresh = timedelta(minutes=fresh_min())
     last = None
     while True:
@@ -85,7 +99,7 @@ def fetch_relayed(chain: str, client=None, sleep=time.sleep, clock=None) -> dict
             raw["_relay_read_at"] = raw.pop("_read_at")
             return raw
         last = raw
-        if time.monotonic() >= deadline:
+        if monotonic() >= deadline:
             break
         sleep(30)
     when = (last or {}).get("_read_at") if isinstance(last, dict) else None
@@ -96,6 +110,6 @@ def fetch_relayed(chain: str, client=None, sleep=time.sleep, clock=None) -> dict
 def reader(chain: str):
     """A fetch(days=..., cache=...) stand-in for refresh.CHAIN_READERS."""
     def fetch(days: int = 2, cache: dict | None = None, **_ignored) -> dict:
-        return fetch_relayed(chain)
+        return fetch_relayed(chain, deadline=shared_deadline())
     fetch.__name__ = f"relay_{chain}"
     return fetch
