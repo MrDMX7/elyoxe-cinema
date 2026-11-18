@@ -54,7 +54,7 @@ rules:
       value: 20
       note_ar: "بالبطاقة الفعلية فقط — ستار لا تذكر إسعاد في صفحتها الرسمية"
       source: "https://www.manafethme.com/blog/esaad-card"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: third-party
     homat:
       status: none_found
@@ -76,70 +76,87 @@ rules:
       status: none_found
       note_ar: "ما لقينا عرض فزعة قائم الآن — الرابط الرسمي رجع Page Not Found"
       source: "https://uae.voxcinemas.com/ticket-offer/summary"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     esaad:
       status: none_found
       note_ar: "ما لقينا خصم"
       source: "https://uae.voxcinemas.com/ticket-offer/summary"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     homat:
       status: none_found
       note_ar: "ما لقينا خصم"
       source: "https://uae.voxcinemas.com/ticket-offer/summary"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     enbd:
       type: bogo
       note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
       source: "https://uae.voxcinemas.com/ticket-offer/summary"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     fab:
       type: bogo
       note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
       source: "https://uae.voxcinemas.com/ticket-offer/summary"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     adcb:
       type: bogo
       note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
       source: "https://uae.voxcinemas.com/ticket-offer/summary"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     mashreq:
       type: percent
       value: 50
       note_ar: "خصم 50% على التذكرة"
       source: "https://uae.voxcinemas.com/ticket-offer/summary"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     rakbank:
       type: percent
       value: 50
-      note_ar: "خصم 50% على التذكرة"
-      source: "https://uae.voxcinemas.com/ticket-offer/summary"
-      checked: "2026-09-25"
+      note_ar: "خصم 50% على التذكرة — لبطاقات World وWatani وElevate وAir Arabia Platinum الائتمانية"
+      source: "https://uae.voxcinemas.com/ticket-offer/rak-bank"
+      checked: "2026-11-18"
       confidence: official
     cbd:
       type: percent
       value: 50
       note_ar: "خصم 50% على التذكرة"
       source: "https://uae.voxcinemas.com/ticket-offer/summary"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     hsbc:
       type: bogo
       note_ar: "اشترِ تذكرة وخذ الثانية مجاناً + خصم 25% على المأكولات"
       source: "https://uae.voxcinemas.com/ticket-offer/summary"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     standard_chartered:
       type: bogo
       note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
       source: "https://uae.voxcinemas.com/ticket-offer/summary"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
+      confidence: official
+    # added 2026-11-18: both appeared on VOX's bank-offer page (discounts_watch flagged it); the terms are their own pages'
+    citibank:
+      type: bogo
+      included_halls: [Standard, MAX, KIDS, PREMIER]
+      valid_until: "2027-04-30"
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً، أو خصم 30% لو تذكرة وحدة — من موقع فوكس أو تطبيقها بعضوية، مب على IMAX وGOLD وTHEATRE"
+      source: "https://uae.voxcinemas.com/ticket-offer/citibank"
+      checked: "2026-11-18"
+      confidence: official
+    arab_bank:
+      type: bogo
+      max_tickets: 4
+      excluded_halls: [THEATRE]
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً، 4 تذاكر بالعرض بالكثير ومب على THEATRE، وخصم 25% على المأكولات فوق 40 درهم"
+      source: "https://uae.voxcinemas.com/ticket-offer/arab-bank"
+      checked: "2026-11-18"
       confidence: official
 
   novo:
@@ -311,37 +328,37 @@ rules:
       status: none_found
       note_ar: "ما لقينا خصم"
       source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: unconfirmed
     homat:
       status: none_found
       note_ar: "ما لقينا خصم"
       source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: unconfirmed
     hsbc:
       type: bogo
       note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
       source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     fab:
       type: bogo
       note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
       source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     arab_bank:
       type: bogo
       note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
       source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     citibank:
       type: bogo
       note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
       source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
 
   cinemacity:
