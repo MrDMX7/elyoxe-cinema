@@ -21,6 +21,16 @@ aliases:
   dhoomaketu: dhoomakethu
   bethlahem-kudumba-unit: bethlehem-kudumba-unit
   moana-live-action: moana
+  # 2026-11-19: one film on several pages. OM's three spellings across chains (a number in the title keeps the automatic
+  # rule off); Ramayana: Part One is Rise of a Legend's working title (India Today 2026-09-29, Letterboxd's alternative
+  # titles), «Ramayana - English» its English version; the last two are the old ids before clean_title decoded
+  # «&#039;» and dropped a leading «3D», so their verdict files fold into the film
+  om-chapter-1-udhiram: om-chapter-1-udhiram-the-blood
+  om-chapter-1-udhiram-the-blood-wood: om-chapter-1-udhiram-the-blood
+  ramayana-part-one: ramayana-rise-of-a-legend
+  ramayana-english: ramayana-rise-of-a-legend
+  3d-ramayana-rise-of-a-legend: ramayana-rise-of-a-legend
+  bachelor-party-dand-039-eux: bachelor-party-d-eux
 
 titles:
   the-vvaan-force-of-the-forest: "The Vvaan: Force of the Forest"

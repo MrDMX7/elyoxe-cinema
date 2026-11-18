@@ -333,3 +333,23 @@ def test_chain_arabic_titles_are_cleaned_and_english_copies_dropped():
     assert arabic_title("انترستيلر (إعادة اصدار)") == "انترستيلر"
     assert arabic_title("بريشـر") == "بريشر"
     assert arabic_title("Sacrifice") is None and arabic_title("") is None and arabic_title(None) is None
+
+
+def test_titles_with_entities_or_a_leading_format_join_their_film():
+    """2026-11-19: «Bachelor Party D&#039;eux» became bachelor-party-dand-039-eux and «3D Ramayana: Rise of a Legend» its
+    own film, each a second page of a film already on the site."""
+    assert normalize.film_fid("Bachelor Party D&#039;eux") == normalize.film_fid("Bachelor Party D'eux") == "bachelor-party-d-eux"
+    assert normalize.film_fid("3D Ramayana: Rise of a Legend") == "ramayana-rise-of-a-legend"
+    assert normalize.film_fid("2D: Avatar") == "avatar" and normalize.film_fid("Tom &amp; Jerry") == "tom-and-jerry"
+    assert normalize.film_fid("D3D Strike") == "d3d-strike" and normalize.film_fid("3D") == ""   # never a word, never the whole title
+
+
+def test_one_film_under_several_chain_titles_is_one_page():
+    """OM's three spellings and Ramayana's working, English and international titles (aliases.yaml, 2026-11-19)."""
+    aliases = normalize.load_aliases()
+    acc = lambda t: {"title": t, "runtime": None, "lang": None}
+    films = {normalize.film_fid(t): acc(t) for t in [
+        "OM - Chapter 1: Udhiram - The Blood", "OM Chapter 1 Udhiram", "OM Chapter 1: Udhiram - The Blood Wood",
+        "Ramayana: Part One", "Ramayana - English", "Ramayana: Rise of a Legend", "3D Ramayana: Rise of a Legend"]}
+    merged, moved = normalize.merge_duplicates(films, aliases)
+    assert set(merged) == {"om-chapter-1-udhiram-the-blood", "ramayana-rise-of-a-legend"}

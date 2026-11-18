@@ -7,6 +7,8 @@ slug()) so "Heart of the Beast" and "HEART OF THE BEAST (PG13)" become one film.
 """
 from __future__ import annotations
 
+import html
+
 import os
 import re
 from datetime import datetime, timedelta, timezone
@@ -41,14 +43,18 @@ _TRAILING_BRACKETS = re.compile(r"\s*\[[^\]]*\]\s*$")
 _TRAILING_IMAX = re.compile(r"\s*-?\s*IMAX\s*$", re.IGNORECASE)
 _TRAILING_3D2D = re.compile(r"\s*-?\s*[23]D\s*$", re.IGNORECASE)
 _TRAILING_DUBBED = re.compile(r"\s*-\s*Dubbed\s*$", re.IGNORECASE)
+# 2026-11-19: «3D Ramayana: Rise of a Legend» (a chain puts the format first) made its own film page
+_LEADING_3D2D = re.compile(r"^\s*[23]D\s*[-:]?\s+(?=\S)", re.IGNORECASE)
 
 
 def clean_title(title: str) -> str:
-    """Strip chain-specific decoration from a film title, keeping "Encore" intact."""
-    t = title.strip()
+    """Strip chain-specific decoration from a film title, keeping "Encore" intact. HTML entities are decoded first:
+    a chain's «Bachelor Party D&#039;eux» was slugged «bachelor-party-dand-039-eux», a second page (2026-11-19)."""
+    t = html.unescape(title).strip()
     prev = None
     while prev != t:
         prev = t
+        t = _LEADING_3D2D.sub("", t)
         t = _TRAILING_PARENS.sub("", t)
         t = _TRAILING_BRACKETS.sub("", t)
         t = _TRAILING_IMAX.sub("", t)
