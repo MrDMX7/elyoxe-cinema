@@ -328,6 +328,18 @@ def _run_chain(chain: str, days: int, offline: bool, timeout: float, price_cache
     return {"ok": True, "result": payload, "error": None, "seconds": seconds}
 
 
+def price_share(attempted: int, priced: int, cached: int) -> tuple[float, bool]:
+    """(% of the price keys that have a price, degraded?). The readers' `priced` counts every key with a price —
+    the ones reused from today's cache too — while `attempted` counts only this run's live reads, so the old
+    priced/attempted printed «priced=12000%» or «0%» (VOX, 2026-11-18) and could hide live sampling failing behind
+    the cache. Keys looked at = attempted + cached; nothing looked at is neither 0% nor degraded."""
+    looked = (attempted or 0) + (cached or 0)
+    if not looked:
+        return 100.0 if priced else 0.0, False
+    share = min(1.0, (priced or 0) / looked)
+    return share * 100, share < PRICES_DEGRADED_THRESHOLD
+
+
 def yaml_health(merged: dict, meta: dict) -> dict:
     """health["cinemas.yaml"]: a cinema the chains sell that has no cinemas.yaml line yet (a new one: VOX Moonlight,
     2026-11-12). The site still publishes it (reader name; steps/cinema_coords.py finds its coordinates), so this is one
@@ -678,8 +690,7 @@ def refresh(chains=None, offline: bool = False, no_verdicts: bool = False, days:
                 attempted = total
                 priced = sum(1 for s in raw.get("shows", []) if s.get("prices") is not None)
             cached_reused = reader_price_health.get("cached") or 0
-            pct = (priced / attempted * 100) if attempted else 0.0
-            degraded = bool(attempted > 0 and (priced / attempted) < PRICES_DEGRADED_THRESHOLD)
+            pct, degraded = price_share(attempted, priced, cached_reused)
 
             results[chain] = raw
             health[chain] = {"ok": True, "at": read_at.get(chain, now), "error": None, "shows": total,

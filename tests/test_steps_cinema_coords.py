@@ -125,3 +125,12 @@ def test_a_cinema_missing_from_the_yaml_is_one_low_priority_alert_until_its_line
     meta["vox-galleria-mall-dubai-moonlight"] = {"ar": "فوكس — مونلايت", "lat": 25.2, "lng": 55.25}
     state, line = alerts.health_line(state, {"cinemas.yaml": refresh.yaml_health(data, meta)}, NOW)
     assert "رجع طبيعي" in line
+
+
+def test_the_price_share_counts_cached_keys_too():
+    """VOX 2026-11-18: «priced=12000%» (120 priced keys, most from today's cache, over 1 live read) and «0%» (all
+    cached, none read live); the site itself had 98-99% of VOX shows priced."""
+    assert refresh.price_share(1, 120, 119) == (100.0, False)
+    assert refresh.price_share(0, 49, 50) == (98.0, False)
+    assert refresh.price_share(20, 2, 0) == (10.0, True)          # live reads failing, nothing cached: degraded
+    assert refresh.price_share(0, 0, 0) == (0.0, False)           # nothing to price: not degraded
