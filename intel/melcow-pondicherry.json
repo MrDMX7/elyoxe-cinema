@@ -1,7 +1,6 @@
 {
-  "by": "failed",
+  "by": "skip",
   "fid": "melcow-pondicherry",
-  "next_check": "2026-11-14",
-  "reason": "could not produce compliant output after 4 attempts (last: banned word \"جديد\" used — say \"يديد\" instead)",
-  "written": "2026-11-11"
+  "next_check": "2026-11-21",
+  "written": "2026-11-18"
 }
