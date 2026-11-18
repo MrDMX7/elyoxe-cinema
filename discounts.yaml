@@ -77,10 +77,11 @@ rules:
       checked: "2026-11-19"
       confidence: official
     homat:
+      # 2026-11-19: the Homat Al Watan app itself lists cinema partners VOX, Reel, Roxy and Al Shaab only.
       status: none_found
-      note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
-      source: "https://www.starcinemas.ae/offers"
-      checked: "2026-11-18"
+      note_ar: "ما لقينا خصم في تطبيق حماة الوطن"
+      source: "https://play.google.com/store/apps/details?id=com.dhaen.homatalwatan"
+      checked: "2026-11-19"
       confidence: official
     fab:
       type: percent
@@ -120,10 +121,15 @@ rules:
       checked: "2026-11-18"
       confidence: official
     homat:
-      status: none_found
-      note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
-      source: "https://uae.voxcinemas.com/ticket-offer/summary"
-      checked: "2026-11-18"
+      # 2026-11-19: read in the Homat Al Watan app itself (the owner's phone, at his request; the programme has no public
+      # offers page). Store «فوكس سينما», 15%: «إبرز بطاقة حماة الوطن الصالحة الخاصة بك
+      # واستمتع بخصم 15% على الفاتورة»; not with other offers. No end date shown.
+      type: percent
+      value: 15
+      box_office_only: true
+      note_ar: "خصم 15% على الفاتورة لما تبرز بطاقة حماة الوطن، وما يجتمع مع عروض ثانية"
+      source: "https://play.google.com/store/apps/details?id=com.dhaen.homatalwatan"
+      checked: "2026-11-19"
       confidence: official
     enbd:
       type: bogo
@@ -315,10 +321,11 @@ rules:
       checked: "2026-09-25"
       confidence: official
     homat:
+      # 2026-11-19: the Homat Al Watan app itself lists cinema partners VOX, Reel, Roxy and Al Shaab only.
       status: none_found
-      note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
-      source: "https://cineroyal.ae/home/fazaa"
-      checked: "2026-11-18"
+      note_ar: "ما لقينا خصم في تطبيق حماة الوطن"
+      source: "https://play.google.com/store/apps/details?id=com.dhaen.homatalwatan"
+      checked: "2026-11-19"
       confidence: official
     fab:
       # The page sets the ticket PRICE (AED 20 excl. VAT) at four branches — the 20% is on food only.
@@ -403,11 +410,20 @@ rules:
       checked: "2026-11-19"
       confidence: official
     homat:
-      status: none_found
-      note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
-      source: "https://www.reelcinemas.com/en-ae/offers/"
-      checked: "2026-11-18"
-      confidence: unconfirmed
+      # 2026-11-19: read in the Homat Al Watan app itself (the owner's phone, at his request; the programme has no public
+      # offers page). Store «ريل سينما», up to 25%: 25% on the Standard ticket, Standard
+      # Plus, Dolby Cinema Plus and Premier tickets, 20% on food and drink; a valid card, the member + up to 6 guests in
+      # all, not with other offers, same-day tickets, not online, every day but public holidays. No end date shown.
+      # Platinum Suites, MX4D, ScreenX and Boutique are not in its list, so they are left out.
+      type: percent
+      value: 25
+      box_office_only: true
+      max_tickets: 6
+      excluded_halls: ["PLATINUM", "MX4D", "SCREENX", "BOUTIQUE"]
+      note_ar: "خصم 25% على التذاكر و20% على الأكل، من الشباك بس، لين 6 أشخاص مع حامل البطاقة، ومب في العطل الرسمية"
+      source: "https://play.google.com/store/apps/details?id=com.dhaen.homatalwatan"
+      checked: "2026-11-19"
+      confidence: official
     hsbc:
       type: bogo
       note_ar: "اشترِ تذكرة وخذ الثانية مجاناً + خصم 20% على المأكولات"
@@ -539,11 +555,16 @@ rules:
       checked: "2026-11-19"
       confidence: official
     homat:
-      status: none_found
-      note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
-      source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
-      checked: "2026-11-18"
-      confidence: unconfirmed
+      # 2026-11-19: read in the Homat Al Watan app itself (the owner's phone, at his request; the programme has no public
+      # offers page). Store «روكسي سينما», 20%: «إبرز بطاقة حماة الوطن الصالحة الخاصة بك
+      # واستمتع بخصم 20% لدى روكسي سينما». No other terms, no end date shown.
+      type: percent
+      value: 20
+      box_office_only: true
+      note_ar: "خصم 20% لما تبرز بطاقة حماة الوطن"
+      source: "https://play.google.com/store/apps/details?id=com.dhaen.homatalwatan"
+      checked: "2026-11-19"
+      confidence: official
     hsbc:
       type: bogo
       note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — السعر للشخص"
@@ -593,11 +614,12 @@ rules:
       checked: "2026-09-26"
       confidence: official
     homat:
+      # 2026-11-19: the Homat Al Watan app itself lists cinema partners VOX, Reel, Roxy and Al Shaab only.
       status: none_found
-      note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
-      source: "https://www.cinemacity.ae/offers-and-promotions/"
-      checked: "2026-11-18"
-      confidence: unconfirmed
+      note_ar: "ما لقينا خصم في تطبيق حماة الوطن"
+      source: "https://play.google.com/store/apps/details?id=com.dhaen.homatalwatan"
+      checked: "2026-11-19"
+      confidence: official
     moe_staff:
       type: percent
       value: 22
