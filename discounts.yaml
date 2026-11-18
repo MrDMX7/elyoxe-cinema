@@ -34,6 +34,14 @@ cards:
   - {id: standard_chartered, name_ar: "ستاندرد تشارترد", name_en: "Standard Chartered", kind: bank}
   - {id: citibank, name_ar: "سيتي بنك", name_en: "Citibank", kind: bank}
   - {id: arab_bank, name_ar: "البنك العربي", name_en: "Arab Bank", kind: bank}
+  # added 2026-11-18 (owner: «فيه دسكاونت ل credit cards بعد»): every bank VOX's and Reel's offer pages list
+  - {id: eib, name_ar: "الإمارات الإسلامي", name_en: "Emirates Islamic", kind: bank}
+  - {id: liv, name_ar: "ليف", name_en: "Liv", kind: bank}
+  - {id: nbf, name_ar: "بنك الفجيرة الوطني", name_en: "NBF", kind: bank}
+  - {id: uab, name_ar: "البنك العربي المتحد", name_en: "UAB", kind: bank}
+  - {id: deem, name_ar: "ديم للتمويل", name_en: "Deem", kind: bank}
+  - {id: aafaq, name_ar: "آفاق الإسلامية للتمويل", name_en: "Aafaq", kind: bank}
+  - {id: mawarid, name_ar: "موارد للتمويل", name_en: "Mawarid Finance", kind: bank}
   - {id: adnoc, name_ar: "مكافآت أدنوك", name_en: "ADNOC Rewards", kind: bank}
   - {id: etisalat_smiles, name_ar: "اتصالات سمايلز", name_en: "Etisalat Smiles", kind: bank}
 
@@ -65,10 +73,11 @@ rules:
     fab:
       type: percent
       value: 50
+      included_halls: ["Standard"]
       valid_until: "2026-12-30"
-      note_ar: "خصم 50% على التذكرة"
+      note_ar: "خصم 50% على تذاكر Standard 2D بس، أونلاين، ببطاقة FAB الائتمانية (مب الخصم) وبشرط الصرف الشهري للبنك"
       source: "https://www.starcinemas.ae/offers"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
 
   vox:
@@ -156,6 +165,56 @@ rules:
       excluded_halls: [THEATRE]
       note_ar: "اشترِ تذكرة وخذ الثانية مجاناً، 4 تذاكر بالعرض بالكثير ومب على THEATRE، وخصم 25% على المأكولات فوق 40 درهم"
       source: "https://uae.voxcinemas.com/ticket-offer/arab-bank"
+      checked: "2026-11-18"
+      confidence: official
+    # added 2026-11-18 from each bank's own page under uae.voxcinemas.com/ticket-offer/ (the halls are their tables')
+    eib:
+      type: bogo
+      included_halls: ["Standard", "KIDS", "PREMIER"]
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً — Switch Cashback تذكرتين مجانية بالشهر وSkywards Black أربع، أونلاين بس + خصم 25% على المأكولات فوق 40 درهم"
+      source: "https://uae.voxcinemas.com/ticket-offer/Emirates-islamic"
+      checked: "2026-11-18"
+      confidence: official
+    liv:
+      type: bogo
+      included_halls: ["Standard", "KIDS", "PREMIER"]
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً ببطاقتي Liv Cashback وCashback Plus (الثانية تشمل 4DX بعد)، أونلاين بس + خصم 25% على المأكولات فوق 40 درهم"
+      source: "https://uae.voxcinemas.com/ticket-offer/liv"
+      checked: "2026-11-18"
+      confidence: official
+    nbf:
+      type: bogo
+      included_halls: ["Standard", "KIDS", "PREMIER", "MAX", "IMAX"]
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً ببطاقات NBF Visa الائتمانية التقليدية، 4 تذاكر مجانية بالشهر بشرط صرف 2000 درهم بالشهر"
+      source: "https://uae.voxcinemas.com/ticket-offer/NBF-bank"
+      checked: "2026-11-18"
+      confidence: official
+    uab:
+      type: bogo
+      excluded_halls: ["THEATRE"]
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً ببطاقات UAB الائتمانية، 3 تذاكر مجانية بالشهر بالكثير، مب على THEATRE"
+      source: "https://uae.voxcinemas.com/ticket-offer/United-Arab-Bank"
+      checked: "2026-11-18"
+      confidence: official
+    deem:
+      type: bogo
+      included_halls: ["Standard"]
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً: Titanium تذكرتين بالشهر وPlatinum ثلاث على Standard 2D، وWorld أربع وتشمل IMAX + خصم 25% على المأكولات فوق 40 درهم"
+      source: "https://uae.voxcinemas.com/ticket-offer/deem"
+      checked: "2026-11-18"
+      confidence: official
+    aafaq:
+      type: bogo
+      included_halls: ["Standard", "KIDS", "PREMIER", "MAX", "IMAX"]
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً: Platinum أربع تذاكر بالشهر، وWorld Elite بلا حد وتشمل GOLD وTHEATRE بعد — مب على IMAX مول الإمارات"
+      source: "https://uae.voxcinemas.com/ticket-offer/aafaq"
+      checked: "2026-11-18"
+      confidence: official
+    mawarid:
+      type: percent
+      value: 50
+      note_ar: "خصم 50% على كل التجارب إلا THEATRE مول الإمارات، 3 إلى 10 تذاكر بالشهر حسب البطاقة، أونلاين بس"
+      source: "https://uae.voxcinemas.com/ticket-offer/mawarid"
       checked: "2026-11-18"
       confidence: official
 
@@ -315,6 +374,75 @@ rules:
       note_ar: "اشترِ تذكرة وخذ الثانية مجاناً في القاعات العادية وDolby وScreenX وJunior (مب Platinum Suites)، أونلاين أو بالتطبيق مسجّل دخول + خصم 20% على المأكولات"
       source: "https://www.sc.com/ae/promotions/cinema-offers/"
       checked: "2026-09-26"
+      confidence: official
+    # added 2026-11-18 from each offer's own window on reelcinemas.com/en-ae/offers/ (rendered by script: read in a
+    # browser). Hall keys from halls.yaml (PLATINUM, DOLBY, MX4D, SCREENX). Monthly caps and minimum spends are the
+    # banks' and stay in the note; Jaywan (1 free ticket a month, Fridays only) is left out: the site has no weekday rule.
+    enbd:
+      type: bogo
+      included_halls: ["Standard", "PLATINUM", "DOLBY", "MX4D"]
+      valid_until: "2026-12-31"
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً ببطاقات الإمارات دبي الوطني المحددة (U by Emaar وSkywards وغيرها)، 2 إلى 3 تذاكر مجانية بالشهر وبشرط صرف 5000 درهم بالشهر"
+      source: "https://www.reelcinemas.com/en-ae/offers/?offer=bogo"
+      checked: "2026-11-18"
+      confidence: official
+    adcb:
+      type: bogo
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً ببطاقات خصم ADCB المحددة وبطاقات Shukran-Talabat وLuLu Platinum وEssential Cashback الائتمانية، تذكرتين مجانية بالشهر + خصم 20% على المأكولات"
+      source: "https://www.reelcinemas.com/en-ae/offers/"
+      checked: "2026-11-18"
+      confidence: official
+    mashreq:
+      type: percent
+      value: 50
+      included_halls: ["Standard", "KIDS", "SCREENX"]
+      note_ar: "خصم 50% ببطاقات المشرق Solitaire وPlatinum Elite (والإسلامية)، 8 إلى 10 تذاكر بالشهر + خصم 20% على المأكولات"
+      source: "https://www.reelcinemas.com/en-ae/offers/?offer=mashreq_movie_food_offer"
+      checked: "2026-11-18"
+      confidence: official
+    citibank:
+      type: bogo
+      included_halls: ["Standard", "PLATINUM", "DOLBY", "MX4D", "SCREENX", "KIDS"]
+      valid_until: "2027-12-31"
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً ببطاقتي Citi Ultima وCiti Prestige بس، على أول تذكرتين بالشهر + خصم 20% على المأكولات"
+      source: "https://www.reelcinemas.com/en-ae/offers/?offer=Citi_Bank"
+      checked: "2026-11-18"
+      confidence: official
+    arab_bank:
+      type: bogo
+      included_halls: ["Standard", "PLATINUM", "DOLBY", "KIDS"]
+      valid_until: "2027-12-31"
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً ببطاقات البنك العربي الائتمانية + خصم 20% على المأكولات فوق 20 درهم"
+      source: "https://www.reelcinemas.com/en-ae/offers/"
+      checked: "2026-11-18"
+      confidence: official
+    eib:
+      type: bogo
+      included_halls: ["Standard"]
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً في القاعات العادية بس، تذكرتين إلى 3 مجانية بالشهر حسب البطاقة"
+      source: "https://www.reelcinemas.com/en-ae/offers/"
+      checked: "2026-11-18"
+      confidence: official
+    deem:
+      type: bogo
+      included_halls: ["Standard", "DOLBY", "SCREENX", "KIDS"]
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً: World أربع تذاكر مجانية بالشهر وPlatinum ثلاث وTitanium ثنتين، بشرط صرف 3000 درهم بالشهر + خصم 20% على المأكولات"
+      source: "https://www.reelcinemas.com/en-ae/offers/"
+      checked: "2026-11-18"
+      confidence: official
+    uab:
+      type: bogo
+      included_halls: ["Standard", "SCREENX", "DOLBY", "MX4D", "KIDS"]
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً بكل بطاقات UAB الائتمانية، 3 تذاكر بالشهر بالكثير"
+      source: "https://www.reelcinemas.com/en-ae/offers/"
+      checked: "2026-11-18"
+      confidence: official
+    nbf:
+      type: bogo
+      included_halls: ["Standard", "SCREENX", "DOLBY", "KIDS"]
+      note_ar: "اشترِ تذكرة وخذ الثانية مجاناً ببطاقات NBF Visa الائتمانية التقليدية، 4 تذاكر مجانية بالشهر بشرط صرف 2000 درهم بالشهر"
+      source: "https://www.reelcinemas.com/en-ae/offers/"
+      checked: "2026-11-18"
       confidence: official
 
   roxy:
