@@ -348,7 +348,9 @@ def test_fill_scores_real_omdb_call_heart_of_the_beast(live_network):
     if not key:
         pytest.skip("no OMDb key configured (env OMDB_KEY / AWS SSM /elyoxe/omdb/key)")
     score = omdb._fetch("tt7526136", key)
-    assert score == 7.5
+    # a live IMDb score moves (7.5 at round 3, 7.1 on 2026-11-18): the integration is proven by a real score coming
+    # back, not by its value — on the runner (the key is in SSM) a fixed value froze the publish gate on its own
+    assert isinstance(score, float) and 1.0 <= score <= 10.0, score
 
 
 # ------------------------------------------------------------------------------------------- pages/intel.py
