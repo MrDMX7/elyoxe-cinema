@@ -54,14 +54,16 @@ cards:
 rules:
   star:
     fazaa:
+      # 2026-11-19: read in the Fazaa app itself (the owner's phone, at his request): «STAR CINEMAS — Discount 20%», valid all year
+      # including holidays and weekends, 4 tickets per day/transaction at the box office, «available until 01/08/2027».
       type: percent
       value: 20
       box_office_only: true
       max_tickets: 4
-      valid_until: "2027-08-05"
-      note_ar: "من الشباك فقط، 4 تذاكر باليوم"
+      valid_until: "2027-08-01"
+      note_ar: "من الشباك فقط، 4 تذاكر باليوم، ويشمل العطل ونهاية الأسبوع"
       source: "https://www.starcinemas.ae/offers"
-      checked: "2026-09-25"
+      checked: "2026-11-19"
       confidence: official
     esaad:
       # 2026-11-19: read in the Esaad app itself (Dubai Police; the owner's phone, at his request): «Star Cinemas — 20% OFF,
@@ -101,10 +103,15 @@ rules:
 
   vox:
     fazaa:
+      # 2026-11-19: read in the Fazaa app itself (the owner's phone, at his request): no VOX discount at the counter. It sells a PACKAGE
+      # instead — «VOX Cinemas and Food & Beverage»: a ticket + Reg popcorn/nachos + Reg soft drink for AED 69 instead of
+      # AED 95, bought in the app (50 a month), STANDARD (Regular/Premium View) or PREMIER (Regular) screens only; not
+      # PREMIUM, 3D, MAX, IMAX, 4DX, KIDS, GOLD, THEATRE, OUTDOOR, VIP, Moonlight, ONYX. Vouchers last 3 months.
+      # No rule type fits a ticket+food bundle bought in advance, so it stays none_found with the package in the note.
       status: none_found
-      note_ar: "ما لقينا عرض فزعة قائم الآن — الرابط الرسمي رجع Page Not Found"
+      note_ar: "ما في خصم فزعة عند الشباك — في تطبيق فزعة حزمة تذكرة + فشار ومشروب بـ69 درهم بدل 95 (قاعات Standard وPremier)"
       source: "https://uae.voxcinemas.com/ticket-offer/summary"
-      checked: "2026-11-18"
+      checked: "2026-11-19"
       confidence: official
     esaad:
       status: none_found
@@ -293,9 +300,13 @@ rules:
       value: 20
       box_office_only: true
       max_tickets: 4
+      # re-read in the Fazaa app 2026-11-19: «Royal Cinemas — Up to 20%»: Platinum, Gold, Silver, Front Line and Hemam
+      # members 20% + a free cola upgrade at the box office, 4 tickets a day, 7 days but not public holidays,
+      # «available until 16/09/2027»
+      valid_until: "2027-09-16"
       note_ar: "من الشباك فقط، لا يشمل العطل الرسمية — البطاقة الأساسية (البيضاء) تاخذ 10% بس"
       source: "https://cineroyal.ae/home/fazaa"
-      checked: "2026-09-25"
+      checked: "2026-11-19"
       confidence: official
     esaad:
       status: none_found
@@ -376,7 +387,8 @@ rules:
       valid_until: "2026-12-16"
       note_ar: "عند الشباك يشمل قاعات SUITES فقط — للتذاكر العادية اشترِ حزمة عبر تطبيق فزعة"
       source: "https://www.fazaa.ae/offers/view/reel-cinema"
-      checked: "2026-09-25"
+      # re-read in the Fazaa app 2026-11-19: «Up to 25%», counter discount on Platinum Suites + F&B only, «until 16/12/2026»
+      checked: "2026-11-19"
       confidence: official
     esaad:
       # 2026-11-19: Emaar Entertainment (Reel's owner) lists it on its own page, and the Esaad app shows «Reel Cinemas —
@@ -506,11 +518,15 @@ rules:
 
   roxy:
     fazaa:
+      # 2026-11-19: read in the Fazaa app itself (the owner's phone, at his request): no Roxy discount at the counter. It sells a PACKAGE —
+      # «Roxy Cinemas Platinum Voucher and F&B»: a Platinum ticket + popcorn/nachos + soft drink/slush for AED 155 instead
+      # of AED 255, bought in the app (100 a month), redeemed at Roxy counters only, every site except the Outdoor at
+      # Galleria Al Barsha; family and friends may use it.
       status: none_found
-      note_ar: "صفحة فزعة الرسمية رجعت Page Not Found وقت الفحص — عرض قديم بنسبة 20% قد يكون انتهى"
+      note_ar: "ما في خصم فزعة عند الشباك — في تطبيق فزعة حزمة بلاتينيوم + فشار ومشروب بـ155 درهم بدل 255"
       source: "https://www.fazaa.ae/offers/view/the-roxy-cinemas"
-      checked: "2026-09-25"
-      confidence: unconfirmed
+      checked: "2026-11-19"
+      confidence: official
     esaad:
       # 2026-11-19: read in the Esaad app itself (the owner's phone, at his request): «Roxy Cinemas — 20% OFF, valid till
       # January 31th, 2027» at its Dubai branches. Esaad offers are redeemed at the outlet.
@@ -559,10 +575,14 @@ rules:
       value: 20
       box_office_only: true
       max_tickets: 4
-      valid_until: "2026-11-16"
-      note_ar: "من الشباك فقط، 4 تذاكر باليوم"
+      # 2026-11-19: read in the Fazaa app itself (the owner's phone, at his request): a 20% tile for every branch (Arabian Center, Dubai,
+      # IMAX Sharjah, Al Rahmania, Al Qana). Arabian Center + Fountain Views: tickets at the box office, all days
+      # including public holidays, 4 tickets a day and 4 visits a month, «available until 01/02/2027». Our date said
+      # 2026-11-16, so the site had shown it as ended for three days.
+      valid_until: "2027-02-01"
+      note_ar: "من الشباك فقط، 4 تذاكر باليوم و4 زيارات بالشهر، ويشمل العطل الرسمية"
       source: "https://www.fazaa.ae/offers/view/cinemacity-alqana"
-      checked: "2026-09-25"
+      checked: "2026-11-19"
       confidence: official
     esaad:
       # The cited page lists Fazaa (20%) and Ministry of Education (22%) — no Esaad offer at all; the
