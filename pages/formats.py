@@ -94,6 +94,8 @@ class Formats(Pages):
         them (vox first: the chain most of these formats started at)."""
         out = []
         for chain, c in self.h.y.items():
+            if chain in getattr(self, "gone", ()):   # a withdrawn chain (site_kit.Kit.gone)
+                continue
             for e in c.get("halls", []):
                 if e.get("key") in keys: out.append((chain, e))
         return out

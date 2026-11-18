@@ -207,6 +207,7 @@ def _formats(site):
     (halls.yaml), each to its /q/ answer when that page is indexed today, else to /halls/; and /halls/ itself."""
     urls = {tuple(u) for u in getattr(site, "urls", ())}
     chains = site.h.y if getattr(site, "h", None) else {}
+    chains = {ch: c for ch, c in chains.items() if ch not in getattr(site, "gone", ())}   # a withdrawn chain: no hall
     names = {}
     for ch, c in chains.items():
         for e in c.get("halls") or []:

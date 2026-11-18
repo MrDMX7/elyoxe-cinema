@@ -151,3 +151,30 @@ def test_a_chain_wide_note_replaces_the_failed_refresh_line():
     k = Kit.__new__(Kit)
     k.d, k.now = data, None
     assert "قطر" in k.fresh("novo", "ar") and "ما قدرنا" not in k.fresh("novo", "ar")
+
+
+def test_a_withdrawn_chain_with_no_show_leaves_every_page_and_comes_back_with_one(tmp_path):
+    """Novo (owner 2026-11-19): its UAE system lists no cinema since October and its branches were seen closed. While
+    it has no show its cinemas, card rules and cards leave the site; one show from its reader brings them all back."""
+    import json as _json
+    from site_kit import Halls, Kit, load_discounts
+    import normalize
+    fx = os.path.join(ROOT, "fixtures", "sample_latest.json")
+    disc = load_discounts(os.path.join(ROOT, "fixtures", "sample_discounts.yaml"))
+    halls = Halls(os.path.join(ROOT, "halls.yaml"))
+
+    def kit(keep_a_show):
+        data = _json.load(open(fx, encoding="utf-8"))
+        novo = {cid for cid, c in data["cinemas"].items() if c["chain"] == "novo"}
+        assert novo
+        data["shows"] = [s for s in data["shows"] if s["cinema"] not in novo] + (
+            [next(s for s in _json.load(open(fx, encoding="utf-8"))["shows"] if s["cinema"] in novo)] if keep_a_show else [])
+        data.setdefault("chains", {}).setdefault("novo", {})
+        normalize.finalize(data, cinema_meta={})                 # chains.yaml's «withdrawn» reaches the data
+        assert data["chains"]["novo"]["withdrawn"]
+        return Kit(data, disc, halls, str(tmp_path)), novo
+
+    k, novo = kit(keep_a_show=False)
+    assert k.gone == {"novo"} and not (novo & set(k.cinemas)) and "novo" not in k.rules
+    k, novo = kit(keep_a_show=True)
+    assert k.gone == set() and novo <= set(k.cinemas) and "novo" in k.rules

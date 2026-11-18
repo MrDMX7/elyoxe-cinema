@@ -683,6 +683,14 @@ class Kit(MediaKit, TileKit, SchedKit, TicketKit, ChromeKit, FiltersKit):
         self.now = parse_iso(data.get("generated") or dt.datetime.now().isoformat())
         self.today = self.now.date().isoformat()
         self.tomorrow = (self.now.date() + dt.timedelta(days=1)).isoformat()
+        # a chain that left the UAE (chains.yaml «withdrawn»: Novo, 2026-10) and has no show in the data: no page, no
+        # cinema in any list, no card offer, no hall in search — back by itself the day its reader brings a show again
+        cins = data.get("cinemas") or {}
+        live_chains = {(cins.get(s.get("cinema")) or {}).get("chain") for s in data.get("shows") or []}
+        self.gone = {ch for ch, info in (data.get("chains") or {}).items() if (info or {}).get("withdrawn") and ch not in live_chains}
+        if self.gone:
+            data["cinemas"] = {cid: c for cid, c in cins.items() if c.get("chain") not in self.gone}
+            disc = dict(disc, rules={ch: r for ch, r in (disc.get("rules") or {}).items() if ch not in self.gone})
         self.rules = official_rules(disc["rules"])            # third-party/unconfirmed never published
         self.cards = confirmed_cards(disc, self.today)        # only cards with a current official discount
         self.films, self.cinemas = data.get("films", {}), data.get("cinemas", {})

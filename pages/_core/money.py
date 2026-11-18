@@ -21,7 +21,7 @@ class MoneyPages:
 
     def sources(self, lang):
         rows = []
-        for chain, ch in sorted(self.d.get("chains", {}).items()):
+        for chain, ch in sorted((k, v) for k, v in self.d.get("chains", {}).items() if k not in getattr(self, "gone", ())):
             at = parse_iso(ch["at"]) if ch.get("at") else None
             state = ("" if ch.get("ok", True) else f' <span class="stale">{"ما قدرنا نحدّث آخر مرة" if lang == "ar" else "last refresh failed"}</span>')
             rows.append(f'<li><b>{esc(self.h.chain_name(chain, lang))}</b> '
