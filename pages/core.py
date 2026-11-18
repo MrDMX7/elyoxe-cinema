@@ -35,6 +35,10 @@ CSS = ("ui-paper", "ui-chrome", "ui-tabs", "ui-sheet", "ui-bill", "ui-fhero", "u
 PAGE_CSS = {"404": ("ui-edge",)}
 # drag.js: the sheets' drag (W2-P5), loaded on idle by the page that asks for it; empty until then
 LAZY_JS = ("drag",)
+# the rule fields /data/discounts.json carries to the client: everything src/js/disc.js reads (tests/test_parity.py
+# holds that), plus what the pages show. `days` was missing on 2026-11-18 and the browser priced Jaywan every day.
+CLIENT_RULE_KEYS = ("status", "type", "value", "excluded_halls", "halls_excluded", "included_halls", "included_cinemas",
+                    "valid_until", "days", "confidence", "box_office_only", "max_tickets", "note_ar")
 DIRS = tuple(c for c, _, _ in CITIES) + ("film", "cards", "halls", "data", "assets", "en", "cinema", "cinemas", "sources")
 
 
@@ -111,7 +115,7 @@ class CorePages(HomePages, BillPages, FilmPages, PlacesPages, MoneyPages, EdgePa
         geo = {cid: [c.get("city"), c["chain"], round(float(c["lat"]), 5), round(float(c["lng"]), 5), self.cname(cid, "ar"), self.cname(cid, "en")]
                for cid, c in self.cinemas.items() if c.get("lat") is not None and c.get("lng") is not None}
         self.write(os.path.join(ddir, "cinemas.json"), json.dumps(geo, ensure_ascii=False, separators=(",", ":")))
-        rules = {ch: {card: {k: v for k, v in r.items() if k in ("status", "type", "value", "excluded_halls", "halls_excluded", "included_halls", "included_cinemas", "valid_until", "confidence", "box_office_only", "max_tickets", "note_ar")}
+        rules = {ch: {card: {k: v for k, v in r.items() if k in CLIENT_RULE_KEYS}
                       for card, r in (cards or {}).items()} for ch, cards in self.rules.items()}
         chains = {ch: self.h.chain_name(ch, "ar") for ch in sorted(set(self.rules) | {c["chain"] for c in self.cinemas.values()})}
         chains_en = {ch: self.h.chain_name(ch, "en") for ch in chains}

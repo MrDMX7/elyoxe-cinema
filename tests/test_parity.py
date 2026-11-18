@@ -107,6 +107,14 @@ def test_python_and_js_discounts_agree(tmp_path):
     assert any(j["per"] == "PP" for j in js)
 
 
+def test_every_field_the_client_reads_reaches_it():
+    """/data/discounts.json keeps only pages.core.CLIENT_RULE_KEYS: a field disc.js reads and the export drops is a rule
+    the browser applies without its condition (`days` on 2026-11-18: Reel's Jaywan offer priced on every day)."""
+    from pages.core import CLIENT_RULE_KEYS
+    read = set(re.findall(r"\br\.([a-z_]+)", _js_block()))
+    assert read and read <= set(CLIENT_RULE_KEYS), sorted(read - set(CLIENT_RULE_KEYS))
+
+
 def test_branches_give_the_expected_answers():
     rules = _rules()
 
