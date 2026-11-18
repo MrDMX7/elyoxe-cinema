@@ -223,10 +223,9 @@ def test_coming_row_only_from_sunday_to_wednesday_evening(full, tmp_path, monkey
 
 
 def test_no_last_chance_row_or_tag_even_with_the_step_on(tmp_path, monkeypatch):
-    """«آخر فرصة» and the «آخر أسبوع» tags are deleted (W2-P4, MASTER-PLAN §4.2 #23): with a 2-day read window the data
-    flags every film older than 14 days. Switching steps/last_chance.py back on brings neither back."""
-    from steps import last_chance
-    monkeypatch.setattr(last_chance, "ENABLED", True)
+    """«آخر فرصة» and the «آخر أسبوع» tags are deleted from the old home (W2-P4, MASTER-PLAN §4.2 #23): with a 2-day read
+    window the first rule flagged every film older than 14 days. The step's show-count rule (2026-11-18) is drawn by the
+    app (app/build_app.py), never by this page."""
     m = main_of(read(build_full(tmp_path)))
     assert "r-last" not in m and "آخر أسبوع" not in m and "آخر فرصة" not in m
 
