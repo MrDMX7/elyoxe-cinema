@@ -42,6 +42,12 @@ cards:
   - {id: deem, name_ar: "ديم للتمويل", name_en: "Deem", kind: bank}
   - {id: aafaq, name_ar: "آفاق الإسلامية للتمويل", name_en: "Aafaq", kind: bank}
   - {id: mawarid, name_ar: "موارد للتمويل", name_en: "Mawarid Finance", kind: bank}
+  - {id: jaywan, name_ar: "جيوان", name_en: "Jaywan", kind: bank}
+  # students & staff (kind: group, its own row in the card sheet): offers a chain gives to a group by its ID, 2026-11-18
+  - {id: student, name_ar: "طالب", name_en: "Student", kind: group}
+  - {id: lulu_staff, name_ar: "موظفي لولو", name_en: "LuLu staff", kind: group}
+  - {id: moe_staff, name_ar: "موظفي وزارة التربية", name_en: "Ministry of Education staff", kind: group}
+  - {id: adnoc_staff, name_ar: "موظفي أدنوك", name_en: "ADNOC staff", kind: group}
   - {id: adnoc, name_ar: "مكافآت أدنوك", name_en: "ADNOC Rewards", kind: bank}
   - {id: etisalat_smiles, name_ar: "اتصالات سمايلز", name_en: "Etisalat Smiles", kind: bank}
 
@@ -66,9 +72,9 @@ rules:
       confidence: third-party
     homat:
       status: none_found
-      note_ar: "ما لقينا خصم"
+      note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
       source: "https://www.starcinemas.ae/offers"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     fab:
       type: percent
@@ -76,6 +82,15 @@ rules:
       included_halls: ["Standard"]
       valid_until: "2026-12-30"
       note_ar: "خصم 50% على تذاكر Standard 2D بس، أونلاين، ببطاقة FAB الائتمانية (مب الخصم) وبشرط الصرف الشهري للبنك"
+      source: "https://www.starcinemas.ae/offers"
+      checked: "2026-11-18"
+      confidence: official
+    lulu_staff:
+      type: percent
+      value: 15
+      box_office_only: true
+      valid_until: "2026-12-31"
+      note_ar: "خصم 15% لموظفي لولو بالهوية الإماراتية، من الشباك بس"
       source: "https://www.starcinemas.ae/offers"
       checked: "2026-11-18"
       confidence: official
@@ -95,7 +110,7 @@ rules:
       confidence: official
     homat:
       status: none_found
-      note_ar: "ما لقينا خصم"
+      note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
       source: "https://uae.voxcinemas.com/ticket-offer/summary"
       checked: "2026-11-18"
       confidence: official
@@ -286,9 +301,9 @@ rules:
       confidence: official
     homat:
       status: none_found
-      note_ar: "ما لقينا خصم"
+      note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
       source: "https://cineroyal.ae/home/fazaa"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: official
     fab:
       # The page sets the ticket PRICE (AED 20 excl. VAT) at four branches — the 20% is on food only.
@@ -323,6 +338,30 @@ rules:
       source: "https://www.rakbank.ae/en/cards/card-offers/cine-royal-cinema"
       checked: "2026-09-26"
       confidence: official
+    student:
+      type: fixed
+      value: 35
+      included_halls: ["Standard"]
+      note_ar: "التذكرة بـ35 درهم لـ2D Standard بهوية المدرسة أو الجامعة"
+      source: "https://cineroyal.ae/home/studentOffer"
+      checked: "2026-11-18"
+      confidence: official
+    adnoc_staff:
+      type: percent
+      value: 20
+      box_office_only: true
+      note_ar: "خصم 20% لموظفي أدنوك بهوية الموظف، من الشباك، مب في العطل الرسمية + خصم 10% على المأكولات فوق 30 درهم"
+      source: "https://cineroyal.ae/home/adnocOffer"
+      checked: "2026-11-18"
+      confidence: official
+    etisalat_smiles:
+      type: percent
+      value: 25
+      included_halls: ["Standard", "VIP"]
+      note_ar: "خصم 25% على كومبو تذكرة + فشار + كوكا بقسيمة من تطبيق سمايلز، 2D Standard أو VIP، مب في العطل الرسمية"
+      source: "https://cineroyal.ae/home/smilesOffer"
+      checked: "2026-11-18"
+      confidence: official
 
   reel:
     fazaa:
@@ -343,9 +382,9 @@ rules:
       confidence: unconfirmed
     homat:
       status: none_found
-      note_ar: "ما لقينا خصم"
+      note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
       source: "https://www.reelcinemas.com/en-ae/offers/"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: unconfirmed
     hsbc:
       type: bogo
@@ -377,7 +416,17 @@ rules:
       confidence: official
     # added 2026-11-18 from each offer's own window on reelcinemas.com/en-ae/offers/ (rendered by script: read in a
     # browser). Hall keys from halls.yaml (PLATINUM, DOLBY, MX4D, SCREENX). Monthly caps and minimum spends are the
-    # banks' and stay in the note; Jaywan (1 free ticket a month, Fridays only) is left out: the site has no weekday rule.
+    # banks' and stay in the note. Jaywan is Fridays only: `days` (discounts.covers) holds it to Friday shows.
+    jaywan:
+      type: bogo
+      days: [fri]
+      included_halls: ["Standard", "DOLBY", "SCREENX", "KIDS"]
+      valid_until: "2028-05-31"
+      note_ar: "يوم الجمعة بس: اشترِ تذكرة وخذ الثانية مجاناً ببطاقات Jaywan Royal، تذكرة مجانية وحدة بالشهر + خصم 20% على المأكولات فوق 20 درهم"
+      excluded_note_ar: "عرض Jaywan يوم الجمعة بس، في القاعات العادية وDolby وScreenX وJunior"
+      source: "https://www.reelcinemas.com/en-ae/offers/"
+      checked: "2026-11-18"
+      confidence: official
     enbd:
       type: bogo
       included_halls: ["Standard", "PLATINUM", "DOLBY", "MX4D"]
@@ -460,7 +509,7 @@ rules:
       confidence: unconfirmed
     homat:
       status: none_found
-      note_ar: "ما لقينا خصم"
+      note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
       source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
       checked: "2026-11-18"
       confidence: unconfirmed
@@ -510,7 +559,16 @@ rules:
       confidence: official
     homat:
       status: none_found
-      note_ar: "ما لقينا خصم"
+      note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
       source: "https://www.cinemacity.ae/offers-and-promotions/"
-      checked: "2026-09-25"
+      checked: "2026-11-18"
       confidence: unconfirmed
+    moe_staff:
+      type: percent
+      value: 22
+      box_office_only: true
+      max_tickets: 1
+      note_ar: "خصم 22% لموظفي وزارة التربية والتعليم، تذكرة وحدة للموظف بالبطاقة الفعلية، من الشباك"
+      source: "https://www.cinemacity.ae/offers-and-promotions/"
+      checked: "2026-11-18"
+      confidence: official
