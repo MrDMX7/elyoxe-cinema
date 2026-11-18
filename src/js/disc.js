@@ -8,12 +8,18 @@ function discState(r, today) {
   if (r.valid_until && String(r.valid_until) < today) return "expired";
   return r.type === "percent" || r.type === "bogo" || r.type === "fixed" ? "ok" : "none_found";
 }
-function discCovers(r, hall, hk, cin) {
+// "2026-11-20" -> "fri"; null without a date (a rule with `days` then covers nothing — discounts.weekday())
+function discWeekday(d) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(d || ""));
+  return m ? ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).getUTCDay()] : null;
+}
+function discCovers(r, hall, hk, cin, d) {
   var names = [hall, hk].filter(function (h) { return h; }), ex = r.excluded_halls || r.halls_excluded || [], inc = r.included_halls;
   var any = function (list) { return names.some(function (h) { return list.indexOf(h) >= 0; }); };
   if (any(ex)) return false;
   if (inc != null && !any(inc)) return false;
   if (r.included_cinemas != null && r.included_cinemas.indexOf(cin) < 0) return false;
+  if (r.days && r.days.length && r.days.indexOf(discWeekday(d)) < 0) return false;
   return true;
 }
 function discR2(x) { return Math.round(x * 100) / 100; }
@@ -22,12 +28,12 @@ function discPrice(r, aed) {
   if (r.type === "fixed") return discR2(Math.min(aed, +r.value || 0));
   return discR2(aed * (1 - (+r.value || 0) / 100));
 }
-// hk: a halls.yaml key, or the slices' «chain|key» (the key is after the bar)
-function discAfter(rules, today, aed, chain, hall, hk, cin, c) {
+// hk: a halls.yaml key, or the slices' «chain|key» (the key is after the bar); d: the show's date, for `days`
+function discAfter(rules, today, aed, chain, hall, hk, cin, c, d) {
   var r = discRule(rules, chain, c), st = discState(r, today);
   if (hk && hk.indexOf("|") >= 0) hk = hk.slice(hk.indexOf("|") + 1);
   if (st !== "ok") return { a: null, st: st, r: r };
-  if (!discCovers(r, hall, hk, cin)) return { a: null, st: "excluded", r: r };
+  if (!discCovers(r, hall, hk, cin, d)) return { a: null, st: "excluded", r: r };
   return { a: discPrice(r, aed), st: "ok", r: r };
 }
 // what a paid price needs said next to it: BOGO is per person and only with 2 tickets

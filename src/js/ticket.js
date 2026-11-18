@@ -51,7 +51,7 @@ function renderBook(chain) {
   var a = tk && q("[data-tk-book]", tk); if (!a) return;
   if (!a.hasAttribute("data-bk")) a.setAttribute("data-bk", a.getAttribute("href") || "");
   var cin = tk.getAttribute("data-cin") || "", r = card && D ? rule(chain, card) : null;
-  var box = !!(r && r.box_office_only && after(100, chain, tk.getAttribute("data-hc"), card, tk.getAttribute("data-hkey"), cin).a != null);
+  var box = !!(r && r.box_office_only && after(100, chain, tk.getAttribute("data-hc"), card, tk.getAttribute("data-hkey"), cin, tk.getAttribute("data-d")).a != null);
   var was = a.hasAttribute("data-box");
   a.toggleAttribute("data-box", box);
   if (box) {

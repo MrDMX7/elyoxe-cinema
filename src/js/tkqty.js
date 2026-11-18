@@ -17,7 +17,7 @@ function base(tk) {
 function total(tk, q) {
   var el = base(tk); if (!el) return null;
   var aed = +el.getAttribute("data-aed"), card = K.card();
-  var x = card ? K.after(aed, el.getAttribute("data-chain"), el.getAttribute("data-hall"), card, el.getAttribute("data-hk"), el.getAttribute("data-cin")) : { a: null };
+  var x = card ? K.after(aed, el.getAttribute("data-chain"), el.getAttribute("data-hall"), card, el.getAttribute("data-hk"), el.getAttribute("data-cin"), tk.getAttribute("data-d")) : { a: null };
   if (x.a == null) return { v: aed * q };
   var max = x.r && x.r.max_tickets;
   if (max && q > max) return { v: max * x.a + (q - max) * aed, note: K.sub(W.part, { card: (K.C.cards || {})[card] || card, n: max }) };

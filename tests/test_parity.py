@@ -35,8 +35,11 @@ SYNTH = {
         "gone": {"type": "bogo", "valid_until": "2026-05-23"},
         "none": {"status": "none_found", "type": "percent", "value": 20},
         "odd_type": {"type": "cashback", "value": 10},
+        "fri": {"type": "bogo", "days": ["fri"], "included_halls": ["Standard"]},   # Reel's Jaywan (2026-11-18)
     }
 }
+# the show's own date, for `days`: a Friday, a Saturday, a Thursday and none (a page that knows no show)
+SHOW_DATES = ["2026-11-20", "2026-11-21", "2027-12-30", None]
 PRICES = [42, 52.5, 46, 33.33, 19.99, 0.05, 195, 1.005, 10.125]
 HALLS = [("Standard", "Standard"), ("VIP", "SKY"), ("VIP", "7STAR"), ("IMAX", "IMAX"), ("THEATRE", "THEATRE"),
          ("SUITES", "PLATINUM"), ("OTHER", "t|DOLBY"), ("KIDS", None), (None, None)]
@@ -55,7 +58,9 @@ def _cases(rules):
     out = []
     for (chain, card), (hall, hk), cin, day in itertools.product(real, HALLS, CINEMAS, DATES):
         for price in (PRICES if chain == "t" else PRICES[:3]):
-            out.append({"price": price, "chain": chain, "hall": hall, "hk": hk, "cin": cin, "card": card, "day": day})
+            show = SHOW_DATES[len(out) % len(SHOW_DATES)]
+            out.append({"price": price, "chain": chain, "hall": hall, "hk": hk, "cin": cin, "card": card, "day": day,
+                        "show": show})
     return out
 
 
@@ -70,7 +75,7 @@ def _run_js(rules, cases, tmp_path):
     harness = _js_block() + r"""
 var input = JSON.parse(require("fs").readFileSync(process.argv[2], "utf8"));
 var out = input.cases.map(function (k) {
-  var x = discAfter(input.rules, k.day, k.price, k.chain, k.hall, k.hk, k.cin, k.card);
+  var x = discAfter(input.rules, k.day, k.price, k.chain, k.hall, k.hk, k.cin, k.card, k.show);
   return { a: x.a, st: x.st, per: discPayNote(x.a != null ? x.r : null, { per_person: "PP" }) };
 });
 process.stdout.write(JSON.stringify(out));
@@ -84,7 +89,8 @@ process.stdout.write(JSON.stringify(out));
 
 def _py(rules, k):
     hk = k["hk"].split("|", 1)[1] if k["hk"] and "|" in k["hk"] else k["hk"]
-    a, st, r = discounts.compute(k["price"], k["chain"], k["hall"], k["card"], rules, hall_key=hk, cinema=k["cin"], today=k["day"])
+    a, st, r = discounts.compute(k["price"], k["chain"], k["hall"], k["card"], rules, hall_key=hk, cinema=k["cin"], today=k["day"],
+                                 date=k["show"])
     return {"a": a, "st": st, "per": "PP" if a is not None and r.get("type") == "bogo" else ""}
 
 
@@ -118,6 +124,13 @@ def test_branches_give_the_expected_answers():
     assert a(40, "none") == (None, "none_found") and a(40, "odd_type") == (None, "none_found")
     assert a(40, "missing") == (None, "unchecked")
     assert a(1.005, "pct") == (0.8, "ok") and a(10.125, "bogo") == (5.06, "ok")      # half-up, as JS rounds
+
+    def f(show, hall="Standard"):
+        return discounts.compute(40, "t", hall, "fri", rules, today="2026-09-26", date=show)[:2]
+    assert f("2026-11-20") == (20.0, "ok")                                            # a Friday show
+    assert f("2026-11-21") == (None, "excluded") and f(None) == (None, "excluded")    # Saturday; no show date
+    assert f("2026-11-20", "IMAX") == (None, "excluded")                              # days and halls both hold
+    assert [discounts.weekday(d) for d in ("2026-11-20", "2026-11-16T00:30", None, "x")] == ["fri", "mon", None, None]
 
 
 def test_the_four_reviewed_rows():

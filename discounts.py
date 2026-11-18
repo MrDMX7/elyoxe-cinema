@@ -10,7 +10,9 @@ requires identical answers. Change one, change the other.
   state order: unchecked (no rule) -> none_found -> expired (valid_until < today) -> excluded -> ok
   excluded:    a hall is out when excluded_halls (alias halls_excluded) names its hall CODE or its
                hall KEY (halls.yaml key, e.g. Novo «SKY», whose code is VIP), or included_halls is set
-               and names neither; a cinema is out when included_cinemas is set and does not name it
+               and names neither; a cinema is out when included_cinemas is set and does not name it; a show
+               is out when `days` is set (mon…sun) and its date is another weekday — or has no date at all
+               (Reel's Jaywan offer, Fridays only, owner 2026-11-18)
   types:       percent -> price×(1-value/100) · bogo -> price/2 (per person, with 2 tickets)
                fixed   -> the offer's own ticket price `value` (never above the real price)
   rounding:    half-up to 2 decimals (JS Math.round semantics), identical on both sides
@@ -44,7 +46,7 @@ def load(path: str | Path | None = None) -> dict:
 
 
 def cards() -> list[dict]:
-    """[{id, name_ar, name_en, kind: gov|bank}, ...] from discounts.yaml."""
+    """[{id, name_ar, name_en, kind: gov|bank|group}, ...] from discounts.yaml (group: students & staff, 2026-11-18)."""
     return load().get("cards", [])
 
 
@@ -72,8 +74,20 @@ def state(entry: dict | None, today: str) -> str:
     return "ok" if entry.get("type") in TYPES else "none_found"
 
 
-def covers(entry: dict, hall: str | None, hall_key: str | None = None, cinema: str | None = None) -> bool:
-    """Does the rule cover this hall (by code or halls.yaml key) and this cinema?"""
+DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+
+
+def weekday(date: str | None) -> str | None:
+    """"2026-11-20" -> "fri" (the show's own date, as the readers give it); None when there is no date."""
+    try:
+        return DAYS[datetime.strptime(str(date)[:10], "%Y-%m-%d").weekday()] if date else None
+    except ValueError:
+        return None
+
+
+def covers(entry: dict, hall: str | None, hall_key: str | None = None, cinema: str | None = None,
+           date: str | None = None) -> bool:
+    """Does the rule cover this hall (by code or halls.yaml key), this cinema and this show's weekday?"""
     names = {h for h in (hall, hall_key) if h}
     excluded = entry.get("excluded_halls") or entry.get("halls_excluded") or []
     included = entry.get("included_halls")
@@ -83,6 +97,9 @@ def covers(entry: dict, hall: str | None, hall_key: str | None = None, cinema: s
         return False
     cinemas = entry.get("included_cinemas")
     if cinemas is not None and cinema not in cinemas:
+        return False
+    days = entry.get("days")
+    if days and weekday(date) not in days:
         return False
     return True
 
@@ -97,16 +114,17 @@ def price_after(entry: dict, price: float) -> float:
 
 
 def compute(price: float, chain: str, hall: str | None, card: str, rules: dict | None = None, *,
-            hall_key: str | None = None, cinema: str | None = None, today: str | None = None
-            ) -> tuple[float | None, str, dict | None]:
-    """(price after the card or None, state, rule). state: unchecked|none_found|expired|excluded|ok."""
+            hall_key: str | None = None, cinema: str | None = None, today: str | None = None,
+            date: str | None = None) -> tuple[float | None, str, dict | None]:
+    """(price after the card or None, state, rule). state: unchecked|none_found|expired|excluded|ok.
+    `date`: the show's own date, for a rule with `days`."""
     if rules is None:
         rules = load().get("rules", {})
     entry = rule(rules, chain, card)
     st = state(entry, today or _today())
     if st != "ok":
         return None, st, entry
-    if not covers(entry, hall, hall_key, cinema):
+    if not covers(entry, hall, hall_key, cinema, date):
         return None, "excluded", entry
     return price_after(entry, price), "ok", entry
 
@@ -137,6 +155,7 @@ def apply(
     hall_key: str | None = None,
     cinema: str | None = None,
     today: str | None = None,
+    date: str | None = None,
 ) -> tuple[float | None, str]:
     """Price after `card`'s discount at `chain` for a ticket in `hall`, and an Arabic note.
 
@@ -152,7 +171,7 @@ def apply(
         return None, NO_CHAIN_AR
     if not is_official(rule(rules, chain, card)):
         return None, NO_CARD_AR  # third-party / unconfirmed rules are never applied (phase 1)
-    new, st, entry = compute(price, chain, hall, card, rules, hall_key=hall_key, cinema=cinema, today=today)
+    new, st, entry = compute(price, chain, hall, card, rules, hall_key=hall_key, cinema=cinema, today=today, date=date)
     if st == "unchecked":
         return None, NO_CARD_AR
     if st == "none_found":

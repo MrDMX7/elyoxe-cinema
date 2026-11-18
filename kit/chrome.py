@@ -55,7 +55,8 @@ class ChromeKit:
         """The card sheet's choices (UI redesign Task 2): «بدون بطاقة» first as a full-width row (W2-P5), then the
         confirmed cards grouped government / banks, each with its best number in gold (a toggle button main.js drives:
         pickCard reprices and persists)."""
-        gov = [c for c in self.cards if c.get("kind") == "gov"]; bank = [c for c in self.cards if c.get("kind") != "gov"]
+        gov = [c for c in self.cards if c.get("kind") == "gov"]; group = [c for c in self.cards if c.get("kind") == "group"]
+        bank = [c for c in self.cards if c.get("kind") not in ("gov", "group")]   # students & staff: their own row (2026-11-18)
         nm = lambda c: c["name_ar"] if lang == "ar" else c["name_en"]
 
         def b(cid, label, on=False, cls="opt"):
@@ -67,7 +68,7 @@ class ChromeKit:
             return (f'<button type="button" class="{cls}" data-card="{esc(cid)}" aria-pressed="{"true" if on else "false"}">'
                     f'{esc(label)}{n}</button>')
         out = f'<div class="sec">{b("", L(T["nocard"], lang), True, "opt wide")}</div>'
-        for key, cs in (("gov", gov), ("bank", bank)):
+        for key, cs in (("gov", gov), ("bank", bank), ("group", group)):
             if cs:
                 out += (f'<div class="sec"><h3 class="l" id="sc-{key}">{esc(L(CHROME_T[key], lang))}</h3>'
                         f'<div class="opts" role="group" aria-labelledby="sc-{key}">{"".join(b(c["id"], nm(c)) for c in cs)}</div></div>')

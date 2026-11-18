@@ -77,9 +77,13 @@ class SeoCity:
         back = (f'<p class="pp-src"><a href="{film_href}">{"كل مواعيد الفيلم" if ar else "All showtimes for this film"}</a></p>'
                 f'<p class="pp-src"><a href="{city_href}">{"السينمات في " + esc(cname) if ar else "Cinemas in " + esc(cname)}</a></p>')
         body = f'<section class="head wrap pp">{head}</section><section class="wrap lay fsched">{blocks}{back}</section>'
-        title = f"{t} في {cname}: الأوقات والأسعار" if ar else f"{t} in {cname}: showtimes and prices"
+        # English as people search it (Search Console 2026-11-18: «hanuman ansh movie in abu dhabi», «baththa movie near
+        # me», «dhoomakethu malayalam movie near me»): «movie», and the film's language when it is not English
+        lang_name = (s.films[fid].get("lang") or "").strip()
+        lang_part = f" ({lang_name})" if lang_name and lang_name.lower() != "english" else ""
+        title = f"{t} في {cname}: الأوقات والأسعار" if ar else f"{t}{lang_part} movie in {cname}: showtimes and ticket prices"
         desc = (f"مواعيد عرض {t} في سينمات {cname} اليوم وبكرة، وسعر التذكرة لكل قاعة." if ar
-                else f"Showtimes for {t} in {cname} cinemas today and tomorrow, with the ticket price for each hall.")
+                else f"{t} movie showtimes near you in {cname}: every cinema showing it today and tomorrow, with the ticket price for each hall.")
         graph = ([s.movie_ld(fid, lang)] + [s.screening_ld(sh, lang) for sh in shows[:30]]
                   + [s.breadcrumb_ld(lang, (t, film_href), (cname, P(lang, "film", fid, city)))])
         return {"title": title, "desc": desc, "body": body, "kind": "film", "graph": graph, "nav": "films",

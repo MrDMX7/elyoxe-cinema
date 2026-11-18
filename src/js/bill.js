@@ -56,7 +56,7 @@ function billDoor() {
   if (name) {
     var sl = billSlides()[BILL.i], c = sl && q(".bill-go .p[data-aed]", sl), x = null;
     if (c && !D) return;   /* the card's rules are not in yet: the door keeps its words until they are */
-    if (c) x = after(+c.getAttribute("data-aed"), c.getAttribute("data-chain"), c.getAttribute("data-hall"), card, c.getAttribute("data-hk"), c.getAttribute("data-cin"));
+    if (c) x = after(+c.getAttribute("data-aed"), c.getAttribute("data-chain"), c.getAttribute("data-hall"), card, c.getAttribute("data-hk"), c.getAttribute("data-cin"), dayOf(c));
     s = !x || x.a != null ? sub(d.getAttribute("data-yes"), { card: name })
       : sub(d.getAttribute("data-not"), { card: name, chain: chainName(c.getAttribute("data-chain")) });
   }

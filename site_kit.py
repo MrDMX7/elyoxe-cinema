@@ -102,7 +102,7 @@ UI = {
 # the chrome's own words (not in the template's {{…}} table)
 CHROME_T = {"city": ("المدينة", "City"), "card": ("البطاقة", "Card"), "mycard": ("بطاقتي", "My card"),
             "close": ("سكّر", "Close"), "near": ("قريب مني", "Near me"), "gov": ("حكومية", "Government"),
-            "bank": ("بنوك", "Banks"), "pick_city": ("وين أنت؟", "Where are you?"), "pick_card": ("شو عندك من بطاقة؟", "Which card do you have?"),
+            "bank": ("بنوك", "Banks"), "group": ("طلاب وموظفين", "Students & staff"), "pick_city": ("وين أنت؟", "Where are you?"), "pick_card": ("شو عندك من بطاقة؟", "Which card do you have?"),
             "all_cards": ("خصم كل بطاقة في كل سينما", "Every card’s discount at every cinema"),
             "all_cities": ("كل السينمات حسب المدينة", "Every cinema by city")}
 # the home page's words (UI redesign Task 3; r3-home 2026-09-30: the billboard alone carries «الأكثر عرضاً الليلة»
@@ -413,10 +413,10 @@ def weak(r):
     return bool(r) and r.get("confidence") in ("third-party", "unconfirmed")
 
 
-def after(price, chain, hall, card, rules, today, hall_key=None, cinema=None):
+def after(price, chain, hall, card, rules, today, hall_key=None, cinema=None, date=None):
     """(price after `card` at `chain` in `hall` (a hall code; `hall_key` its halls.yaml key) at `cinema`
-    on `today`, state) — discounts.compute(), the one semantics cinema.js mirrors."""
-    a, st, _ = _disc.compute(price, chain, hall, card, rules, hall_key=hall_key, cinema=cinema, today=today)
+    on `today` for a show on `date`, state) — discounts.compute(), the one semantics cinema.js mirrors."""
+    a, st, _ = _disc.compute(price, chain, hall, card, rules, hall_key=hall_key, cinema=cinema, today=today, date=date)
     return a, st
 
 

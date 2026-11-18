@@ -9,12 +9,14 @@ from site_kit import *  # noqa: F401,F403  (the names these pages were written a
 class MoneyPages:
     def cards_strip(self, lang):
         gov = [c for c in self.cards if c.get("kind") == "gov"]
-        bank = [c for c in self.cards if c.get("kind") != "gov"]
+        group = [c for c in self.cards if c.get("kind") == "group"]
+        bank = [c for c in self.cards if c.get("kind") not in ("gov", "group")]
         a = lambda c: f'<a href="{P(lang, "cards", c["id"])}">{esc(c["name_ar"] if lang == "ar" else c["name_en"])}</a>'
         return (f'<section class="wrap cardsx"><h2>{"خصم بطاقتك في السينما" if lang == "ar" else "Your card at the cinema"}</h2>'
                 f'<p class="lead">{"وين تنفع كل بطاقة، كم تخصم، وشروطها، ومتى تحققنا منها. نعرض بس الخصومات اللي أعلنتها السينما أو البطاقة نفسها." if lang == "ar" else "Where each card works, how much it takes off, the conditions and when we checked. Only discounts the cinema or the card issuer states themselves."}</p>'
                 + (f'<p class="links"><span>{"حكومية" if lang == "ar" else "Government"}</span> {" ".join(a(c) for c in gov)}</p>' if gov else "")
                 + (f'<p class="links"><span>{"بنوك" if lang == "ar" else "Banks"}</span> {" ".join(a(c) for c in bank)}</p>' if bank else "")
+                + (f'<p class="links"><span>{"طلاب وموظفين" if lang == "ar" else "Students & staff"}</span> {" ".join(a(c) for c in group)}</p>' if group else "")
                 + f'<p class="links more"><a href="{P(lang, "cards")}">{"كل البطاقات في جدول واحد" if lang == "ar" else "All cards in one table"}</a> <a href="{P(lang, "halls")}">{"القاعات المميزة، شو فيها؟" if lang == "ar" else "Premium halls, explained"}</a></p></section>')
 
     def sources(self, lang):
@@ -49,7 +51,7 @@ class MoneyPages:
         for s in self.shows:
             if self.cinemas[s["cinema"]]["chain"] != chain: continue
             for p in s.get("prices") or []:
-                a, _ = after(p["aed"], chain, s.get("hall") or "OTHER", card, self.rules, self.today, self.hkey(s), s["cinema"])
+                a, _ = after(p["aed"], chain, s.get("hall") or "OTHER", card, self.rules, self.today, self.hkey(s), s["cinema"], s.get("date"))
                 if a is not None and (best is None or (s.get("hall") == "Standard", -p["aed"]) > (best[2].get("hall") == "Standard", -best[0])):
                     best = (p["aed"], a, s, p["seat"])
         if not best: return ""

@@ -3,7 +3,10 @@
    first and the struck list price after it, with a space between (never «33.6042»: MASTER-PLAN §5.2 W1-P2). */
 function rule(chain, c) { return discRule(D && D.rules, chain, c); }
 function state(r) { return discState(r, TODAY); }
-function after(aed, chain, hall, c, hk, cin) { return discAfter(D && D.rules, TODAY, aed, chain, hall, hk, cin, c); }
+function after(aed, chain, hall, c, hk, cin, d) { return discAfter(D && D.rules, TODAY, aed, chain, hall, hk, cin, c, d); }
+/* the show's date, for a rule with `days` (Reel's Jaywan offer is Fridays only): the nearest [data-d] — the schedule
+   row a price cell sits in, or the ticket; null elsewhere, and such a rule then covers nothing (discounts.covers) */
+function dayOf(el) { var x = el && el.closest ? el.closest("[data-d]") : null; return x ? x.getAttribute("data-d") : null; }
 function ppNote(r) { var n = discPayNote(r, C); return n ? '<small class="per">' + esc(n) + "</small>" : ""; }
 /* a price from the fallback table (prices.yaml) carries the date it was seen, never the live «updated X ago» */
 function asofNote(d) { return d ? '<small class="asof">' + sub(esc(C.asof), { date: '<bdi class="num">' + esc(d) + "</bdi>" }) + "</small>" : ""; }
@@ -29,7 +32,7 @@ function terms(r) {
 
 function priceHTML(el, go) {
   var aed = +el.getAttribute("data-aed"), asof = asofNote(el.getAttribute("data-asof"));
-  var x = card && D && !el.hasAttribute("data-nd") ? after(aed, el.getAttribute("data-chain"), el.getAttribute("data-hall"), card, el.getAttribute("data-hk"), el.getAttribute("data-cin")) : { a: null };
+  var x = card && D && !el.hasAttribute("data-nd") ? after(aed, el.getAttribute("data-chain"), el.getAttribute("data-hall"), card, el.getAttribute("data-hk"), el.getAttribute("data-cin"), dayOf(el)) : { a: null };
   var pay = fmt(x.a != null ? x.a : aed), was = el.getAttribute("data-shown");
   el.setAttribute("data-shown", pay);
   var d = flipDigits(pay, go && was != null && was !== pay);
@@ -61,7 +64,7 @@ function best(shows) {
   var b = null;
   shows.forEach(function (s) {
     (s.p || []).forEach(function (p) {
-      var x = card ? after(p[1], S.cinemas[s.c].chain, s.h, card, s.k, s.c) : { a: null };
+      var x = card ? after(p[1], S.cinemas[s.c].chain, s.h, card, s.k, s.c, s.d) : { a: null };
       var pay = x.a != null ? x.a : p[1];
       if (!b || pay < b.pay) b = { pay: pay, aed: p[1], off: x.a != null, r: x.a != null ? x.r : null, s: s };
     });
