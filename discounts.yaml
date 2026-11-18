@@ -64,12 +64,16 @@ rules:
       checked: "2026-09-25"
       confidence: official
     esaad:
+      # 2026-11-19: read in the Esaad app itself (Dubai Police; the owner's phone, at his request): «Star Cinemas — 20% OFF,
+      # valid till August 10th, 2027» at its branches (Al Ain, Junction Mall DIP…). Esaad offers are redeemed at the outlet.
       type: percent
       value: 20
-      note_ar: "بالبطاقة الفعلية فقط — ستار لا تذكر إسعاد في صفحتها الرسمية"
-      source: "https://www.manafethme.com/blog/esaad-card"
-      checked: "2026-11-18"
-      confidence: third-party
+      box_office_only: true
+      valid_until: "2027-08-10"
+      note_ar: "خصم 20% ببطاقة إسعاد، من الشباك بالبطاقة"
+      source: "https://esaad.dubaipolice.gov.ae/"
+      checked: "2026-11-19"
+      confidence: official
     homat:
       status: none_found
       note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
@@ -375,11 +379,17 @@ rules:
       checked: "2026-09-25"
       confidence: official
     esaad:
-      status: none_found
-      note_ar: "ما لقينا خصم"
-      source: "https://www.reelcinemas.com/en-ae/offers/"
-      checked: "2026-09-25"
-      confidence: unconfirmed
+      # 2026-11-19: Emaar Entertainment (Reel's owner) lists it on its own page, and the Esaad app shows «Reel Cinemas —
+      # 25% OFF, valid till December 31th, 2026»
+      type: percent
+      value: 25
+      box_office_only: true
+      max_tickets: 6
+      valid_until: "2026-12-31"
+      note_ar: "خصم 25% على التذاكر ببطاقة إسعاد، من الشباك بس، لين 6 أشخاص مع حامل البطاقة، ومب في العطل الرسمية"
+      source: "https://entertainment.emaar.com/whats-hot/emaar-entertainment-x-esaad-exclusive-offers"
+      checked: "2026-11-19"
+      confidence: official
     homat:
       status: none_found
       note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
@@ -502,11 +512,16 @@ rules:
       checked: "2026-09-25"
       confidence: unconfirmed
     esaad:
-      status: none_found
-      note_ar: "ما لقينا خصم"
-      source: "https://www.theroxycinemas.com/en/promotions/bank-deals"
-      checked: "2026-11-18"
-      confidence: unconfirmed
+      # 2026-11-19: read in the Esaad app itself (the owner's phone, at his request): «Roxy Cinemas — 20% OFF, valid till
+      # January 31th, 2027» at its Dubai branches. Esaad offers are redeemed at the outlet.
+      type: percent
+      value: 20
+      box_office_only: true
+      valid_until: "2027-01-31"
+      note_ar: "خصم 20% ببطاقة إسعاد، من الشباك بالبطاقة"
+      source: "https://esaad.dubaipolice.gov.ae/"
+      checked: "2026-11-19"
+      confidence: official
     homat:
       status: none_found
       note_ar: "ما لقينا خصم لحماة الوطن في صفحة عروض السينما (آخر فحص 2026-11-18)"
