@@ -154,6 +154,27 @@ def ct_keys(b):
     return set(json.loads(m.group(1))) if m else set()
 
 
+def _gone(d):
+    """The chains chains.yaml marks withdrawn that have no show in `d` (site_kit.Kit.gone's rule)."""
+    import yaml
+    cfg = (yaml.safe_load(open(os.path.join(ROOT, "chains.yaml"), encoding="utf-8")) or {}).get("chains") or {}
+    live = {(d["cinemas"].get(s["cinema"]) or {}).get("chain") for s in d["shows"]}
+    return {ch for ch, c in cfg.items() if (c or {}).get("withdrawn") and ch not in live}
+
+
+def live_disc(disc, data, tmp):
+    """`disc` without a withdrawn chain's rules when live_input dropped its cinemas (both builds read this copy)."""
+    import yaml
+    gone = _gone(json.load(open(data, encoding="utf-8")))
+    if not gone:
+        return disc
+    y = yaml.safe_load(open(disc, encoding="utf-8"))
+    y["rules"] = {ch: r for ch, r in (y.get("rules") or {}).items() if ch not in gone}
+    p = os.path.join(str(tmp), "live_discounts.yaml")
+    yaml.safe_dump(y, open(p, "w", encoding="utf-8"), allow_unicode=True, sort_keys=False)
+    return p
+
+
 def live_input(data, tmp):
     """`data` without the shows already started at its `generated` time (both builds read this copy)."""
     from site_kit import parse_iso
@@ -161,6 +182,10 @@ def live_input(data, tmp):
     now = parse_iso(d["generated"])
     cut = (now.date().isoformat(), now.strftime("%H:%M"))
     d["shows"] = [s for s in d["shows"] if (s["date"], s["time"]) >= cut]
+    # a chain chains.yaml marks withdrawn, with no show left: today's Kit drops its cinemas (Novo, 2026-11-19) and phase 1
+    # has no such rule — both builds get the copy without them, as they share HALLS, discounts and cinemas.yaml
+    gone = _gone(d)
+    d["cinemas"] = {cid: c for cid, c in d["cinemas"].items() if c.get("chain") not in gone}
     p = os.path.join(str(tmp), "live_input.json")
     json.dump(d, open(p, "w", encoding="utf-8"), ensure_ascii=False)
     return p
@@ -222,7 +247,13 @@ def files(out):
                 if rel == "manifest.webmanifest":
                     m = json.loads(t); m.pop("shortcuts", None); t = json.dumps(m, ensure_ascii=False, sort_keys=True)
                 if rel == "data/discounts.json":   # the same content; phase 1 ordered the chains by set iteration
-                    t = json.dumps(json.loads(t), ensure_ascii=False, sort_keys=True)
+                    j = json.loads(t)
+                    # 2026-11-18: a rule's `days` reaches the client (pages.core.CLIENT_RULE_KEYS; Reel's Friday-only Jaywan),
+                    # which phase 1's field list never carried — undone on both sides
+                    for cards in (j.get("rules") or {}).values():
+                        for r in (cards or {}).values():
+                            if isinstance(r, dict): r.pop("days", None)
+                    t = json.dumps(j, ensure_ascii=False, sort_keys=True)
                 b = t.encode("utf-8")
             for rx, to in HASHES: rel = rx.sub(to, rel)
             got[rel] = b
@@ -233,6 +264,7 @@ def files(out):
 def test_core_build_is_byte_identical_to_phase1(phase1, tmp_path, name, data, disc):
     if not os.path.exists(data): pytest.skip(f"{os.path.relpath(data, ROOT)} not in this checkout")
     data = live_input(data, tmp_path)
+    disc = live_disc(disc, data, tmp_path)
     before = files(run_build(phase1, data, disc, str(tmp_path / "before")))
     after = files(run_build(ROOT, data, disc, str(tmp_path / "after"), "core"))
     assert sorted(before) == sorted(p for p in after if not REDESIGN_ADDED.match(p) and not SEAMS_ADDED.match(p) and not SYSTEM_ADDED.match(p) and p not in STATIC_PASSTHROUGH_ADDED)
