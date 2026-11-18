@@ -76,3 +76,11 @@ def test_the_real_steps_run_is_ok_on_the_sample(tmp_path):
     data = json.loads((ROOT / "fixtures" / "sample_latest.json").read_text(encoding="utf-8"))
     out = refresh.run_steps(data, {"offline": True, "now": data["generated"], "data_dir": str(tmp_path)})
     assert out["last_chance"]["ok"] is True and data["last_chance"] == {}
+
+
+def test_a_film_still_playing_wide_is_not_flagged_even_after_a_big_drop(tmp_path):
+    """Godzilla Minus Zero on the first live run: 329 shows at its peak, 76 a day now — a quarter, but still everywhere."""
+    _world(tmp_path, {"wide": 329, "leaving": 250})
+    data = _data({"wide": (76, 40), "leaving": (1, 1)})
+    _load().run(data, {"data_dir": str(tmp_path), "now": NOW})
+    assert set(data["last_chance_info"]) == {"leaving"}

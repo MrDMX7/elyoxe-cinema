@@ -9,7 +9,9 @@ spec allowed it back only on a real signal; this is the third one it names, a co
 A film qualifies when it
   - was first seen MIN_DAYS_SEEN (14) days ago or more (data/film_history.json),
   - had a PEAK of at least MIN_PEAK (20) shows on one day in the last PEAK_WINDOW_DAYS (28) days, and
-  - has COLLAPSE (a quarter) of that peak or fewer today and tomorrow (the larger of the two counts).
+  - has COLLAPSE (a quarter) of that peak or fewer today and tomorrow (the larger of the two counts), and no more
+    than MAX_NOW (25) shows a day across the UAE — the first live run flagged Godzilla Minus Zero at 76 a day
+    (329 at its peak): a film in decline, not one leaving this week.
 A weekday dip is far above a quarter of the weekend's count, and a film that never had 20 shows a day is not
 leaving: it never arrived big. The page says the numbers («من X عرض باليوم إلى Y»), not a guess.
 
@@ -26,6 +28,7 @@ MIN_DAYS_SEEN = 14
 MIN_PEAK = 20
 PEAK_WINDOW_DAYS = 28
 COLLAPSE = 0.25
+MAX_NOW = 25
 
 
 def _json(path: Path, default):
@@ -94,7 +97,7 @@ def collapse(data: dict, ctx: dict) -> tuple[dict, dict]:
         peak, peak_date = max(past)
         # today's full count is the history's own line for today when it has one (the run that saw the most shows)
         now_n = max(max((counts.get(d) or {}).get(fid, 0), days.get(d, 0)) for d in (today, tomorrow))
-        if peak >= MIN_PEAK and now_n <= peak * COLLAPSE:
+        if peak >= MIN_PEAK and now_n <= peak * COLLAPSE and now_n <= MAX_NOW:
             info[fid] = {"peak": peak, "peak_date": peak_date, "now": now_n}
             for city in cities.get(fid, ()):
                 out.setdefault(city, set()).add(fid)
