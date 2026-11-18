@@ -49,8 +49,10 @@ OPEN_GOOD = json.dumps({
     "consensus_ar": "النقاد يشوفونه ملحمة بصرية مؤثرة.",
 })
 
+# a slip verdicts.repair_json cannot fix for certain (a banned phrase whose value is an instruction), so the retry
+# still sees it; «وش» used to stand here, and repair_json now swaps it for «شو» before the check
 OPEN_BAD_DIALECT = json.dumps({
-    "reasons": [{"text": "وش رايك بهذا الفيلم؟ يستاهل وايد.", "pos": True},
+    "reasons": [{"text": "ما نقدر نحكم عليه من أول دقيقة، بس يستاهل وايد.", "pos": True},
                 {"text": "مدته طويلة على وايد ناس.", "pos": False}],
     "audience": [], "fun_fact": None, "consensus_ar": "النقاد يشوفونه ملحمة بصرية مؤثرة.",
 })

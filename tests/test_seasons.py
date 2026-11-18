@@ -122,7 +122,7 @@ class _FakeClient:
 
 def test_imax_line_rejected_draft_is_regenerated_then_written(tmp_path, monkeypatch):
     monkeypatch.setattr(verdicts, "VERDICTS_DIR", tmp_path)
-    bad = json.dumps({"ar": "هذا الفيلم وش رهيب فيه", "en": "Worth the big screen."})
+    bad = json.dumps({"ar": "ما نقدر نحكم على الشاشة الكبيرة", "en": "Worth the big screen."})   # a phrase: never auto-fixed
     good = json.dumps({"ar": "يستاهل تشوفه بصيغة IMAX، الحجم واضح والصورة أكبر.", "en": "Worth the IMAX screen — the scale is real."})
     fake = _FakeClient([bad, good])
     monkeypatch.setattr(verdicts, "_client", lambda: fake)

@@ -181,6 +181,39 @@ def _dialect_violation(ar_text: str) -> str | None:
     return None
 
 
+# Slips with exactly one right fix are fixed here, before _dialect_violation looks (owner 2026-11-18: about 10 films a
+# run ended with no verdict or intel after every attempt, most on these): tanwin is removed, a leading «فيلم» is
+# dropped, and a banned word whose lexicon value is itself a plain word (جديد←يديد، وش←شو) is swapped for it, whole
+# words only, as the check matches them. A phrase whose value is an instruction, a value offering a choice
+# («موتر / موترك»), the يجي/تجي inflections and any structural rule stay with the retry, which still sees whatever
+# this could not fix.
+_PLAIN_WORDS = re.compile(r"^[ء-يـً-ْٰ]+(?: [ء-يـً-ْٰ]+){0,2}$")
+_AR_WORD = re.compile(r"(?:[^\W\d_]|[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED])+")
+_SWAP = {bare: good for bare, (_bad, good) in _BANNED_WORDS_BARE.items() if _PLAIN_WORDS.match(good)}
+_FILM_OPENER_WORD = re.compile(r"^\s*فيلم\s+")
+_HAS_ARABIC = re.compile(r"[؀-ۿ]")
+
+
+def repair_dialect(text):
+    """`text` with the certain fixes applied (see above); anything that is not a string with Arabic in it, as is."""
+    if not isinstance(text, str) or not _HAS_ARABIC.search(text):
+        return text
+    t = TANWIN.sub("", text)
+    t = _FILM_OPENER_WORD.sub("", t, count=1)
+    return _AR_WORD.sub(lambda m: _SWAP.get(_strip_diacritics(m.group(0)), m.group(0)), t)
+
+
+def repair_json(obj):
+    """repair_dialect over every string of a parsed model answer (keys untouched)."""
+    if isinstance(obj, str):
+        return repair_dialect(obj)
+    if isinstance(obj, list):
+        return [repair_json(x) for x in obj]
+    if isinstance(obj, dict):
+        return {k: repair_json(v) for k, v in obj.items()}
+    return obj
+
+
 def _lexicon_prompt_block() -> str:
     """Renders the full merged banned-word/phrase table into the system prompt (not just a
     sample) so the model sees every entry the post-check will enforce, including whatever
@@ -496,7 +529,7 @@ def _generate_one(client, fid: str, film: dict, extra_notes: str | None) -> dict
         )
         text = "".join(b.text for b in resp.content if getattr(b, "type", None) == "text")
         try:
-            parsed = _extract_json(text)
+            parsed = repair_json(_extract_json(text))   # tanwin, a leading «فيلم», plain banned words
         except (ValueError, json.JSONDecodeError) as e:
             last_reason = f"invalid JSON ({e})"
             continue
@@ -1035,7 +1068,7 @@ def _generate_imax_one(client, film: dict, which: str, basis: str) -> dict:
                                        messages=[{"role": "user", "content": prompt}])
         text = "".join(b.text for b in resp.content if getattr(b, "type", None) == "text")
         try:
-            parsed = _extract_json(text)
+            parsed = repair_json(_extract_json(text))   # tanwin, a leading «فيلم», plain banned words
         except (ValueError, json.JSONDecodeError) as e:
             last_reason = f"invalid JSON ({e})"
             continue

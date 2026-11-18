@@ -379,7 +379,7 @@ def _call_json(client, prompt: str, sys_extra: str, validate_fn, *validate_args)
                                        messages=[{"role": "user", "content": prompt}])
         text = "".join(b.text for b in resp.content if getattr(b, "type", None) == "text")
         try:
-            parsed = vd._extract_json(text)
+            parsed = vd.repair_json(vd._extract_json(text))   # tanwin, a leading «فيلم», plain banned words
         except (ValueError, json.JSONDecodeError) as e:
             last_reason = f"invalid JSON ({e})"
             continue
