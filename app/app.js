@@ -228,6 +228,13 @@
       none.textContent = tx("ما في فيلم يبدأ خلال ساعتين في") + " " + (CITY_AR[city] || city) + ".";
       none.hidden = n > 0;
     };
+    /* the hall chips (owner 2026-11-18): data-h = «city:imax,vip;city:…» from today's shows; the visitor's city, else any */
+    var hallOn = function (t, hall, city) {
+      return (t.dataset.h || "").split(";").some(function (part) {
+        var i = part.indexOf(":"); if (i < 0) return false;
+        return (!city || part.slice(0, i) === city) && part.slice(i + 1).split(",").indexOf(hall) >= 0;
+      });
+    };
     var soon2hOn = function () { var c = q('[data-chip="soon2h"]'); return !!(c && c.classList.contains("on")); };
     qa("[data-chip]").forEach(function (c) {
       c.addEventListener("click", function () {
@@ -237,9 +244,13 @@
           qa("[data-chip]").forEach(function (x) { x.classList.toggle("on", x === c); });
           if (k === "soon2h") { paintSoon2h(); return; }
           qa(".tm .eta", grid).forEach(function (e) { e.remove(); });
-          var n = 0;
-          qa(".tile", grid).forEach(function (t) { var on = k === "all" || (" " + t.dataset.g + " ").indexOf(" " + k + " ") >= 0; t.hidden = !on; if (on) n++; });
-          none.textContent = tx("ما في أفلام بهالتصنيف اليوم") + ".";
+          var n = 0, hall = k.indexOf("h-") === 0 ? k.slice(2) : null, city = store.get("city");
+          qa(".tile", grid).forEach(function (t) {
+            var on = k === "all" || (hall ? hallOn(t, hall, city) : (" " + t.dataset.g + " ").indexOf(" " + k + " ") >= 0);
+            t.hidden = !on; if (on) n++;
+          });
+          none.textContent = hall ? tx("ما في أفلام بهالقاعة اليوم في") + " " + (CITY_AR[city] || city || "") + "."
+                                  : tx("ما في أفلام بهالتصنيف اليوم") + ".";
           none.hidden = n > 0;
           if (sortMenu) sortTiles(store.get("sort") || "n");   /* the chip's own order back, in the same transition */
         });
@@ -247,6 +258,10 @@
       });
     });
     setInterval(function () { if (soon2hOn()) paintSoon2h(); }, 60e3);
+    var apple = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+    if (!apple) qa("a.crem[data-gcal]").forEach(function (a) {
+      a.href = a.dataset.gcal; a.removeAttribute("download"); a.target = "_blank"; a.rel = "noopener";
+    });
 
     /* السينمات: the cities first; a city (or «أقرب سينما») opens its cinemas, and the phone's back returns */
     var clist = q("[data-clist]"), msg = q("[data-geo-msg]"), cities = q("[data-cities]"), cv = q("[data-cv]"), cvT = q("[data-cv-title]");

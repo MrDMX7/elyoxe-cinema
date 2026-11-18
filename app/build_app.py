@@ -56,9 +56,19 @@ AGES = {"G": "للكل", "PG": "للكل، مع إرشاد الأهل", "PG13": 
 TABS = [("cinemas", "السينمات", "seat"), ("films", "الأفلام", "film"), ("coming", "قريباً", "cal")]
 DAYS_AR = ["الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت", "الأحد"]
 MONTHS_AR = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
-CHIPS = [("all", "الكل"), ("action", "أكشن"), ("comedy", "كوميديا"), ("horror", "رعب"), ("thriller", "إثارة"),
+CHIPS = [("all", "الكل"), ("last", "آخر فرصة"), ("action", "أكشن"), ("comedy", "كوميديا"), ("horror", "رعب"), ("thriller", "إثارة"),
          ("drama", "دراما"), ("adventure", "مغامرة"), ("family", "عائلي"), ("scifi", "خيال"), ("romance", "رومانسي"),
          ("arabic", "عربي"), ("indian", "هندي"), ("english", "إنجليزي")]
+# the hall filter (owner 2026-11-18): the halls a visitor asks for by name, from the readers' codes and halls.yaml keys;
+# a tile passes when its film plays that hall today in the visitor's city (data-h, app.js)
+HALL_CHIPS = [("imax", "IMAX", {"IMAX"}), ("4dx", "4DX", {"4DX", "MX4D"}),
+              ("vip", "VIP", {"GOLD", "VIP", "SUITES", "PLATINUM", "THEATRE"}), ("dolby", "Dolby", {"DOLBY"}),
+              ("screenx", "ScreenX", {"SCREENX"})]
+
+
+def hall_cat(code, key):
+    names = {code, key}
+    return next((c for c, _, ns in HALL_CHIPS if names & ns), None)
 GENRE_AR = {"action": "أكشن", "comedy": "كوميديا", "horror": "رعب", "thriller": "إثارة", "drama": "دراما",
             "adventure": "مغامرة", "family": "عائلي", "animation": "أنيميشن", "scifi": "خيال علمي", "fantasy": "فانتازيا",
             "romance": "رومانسي", "crime": "جريمة", "music": "موسيقى", "mystery": "غموض", "war": "حرب",
@@ -136,12 +146,17 @@ EN = {
     "لحظة…": "One moment…", "وصلنا حد الأسئلة لليوم، جرّب بكرة": "We've hit today's question limit — try tomorrow.",
     "ما قدرنا نجاوب الحين، جرّب مرة ثانية": "Couldn't answer right now — try again.", "من قصة الفيلم": "From the film's story",
     "من معلومات الفيلم": "From the film's facts", "يحرق — اضغط إذا تبا تعرف": "Spoiler — tap if you want to know",
+    "آخر فرصة": "Last chance", "عروضه نزلت من": "its shows fell from", "عرض باليوم لين": "a day to", "تدري؟": "Did you know?",
+    "المصدر": "Source", "ذكّرني يوم ينزل": "Remind me on the day", "ينزل في السينما": "opens in cinemas",
+    "مواعيده وأسعاره في كل سينمات الإمارات": "Showtimes and prices in every UAE cinema",
+    "ما في أفلام بهالقاعة اليوم في": "No film in this hall today in",
 }
 JS_KEYS = ["بالليل", "الصبح", "الظهر", "مساء", "درهم", "انحفظ الرابط", "انشالت من سينماتي", "انضافت لسينماتي", "أقل من كيلو", "كم", "الأفلام",
            "السينمات", "ما لقينا شي بهالاسم", "يبدأ الحين", "بعد", "د", "ما في فيلم يبدأ خلال ساعتين في", "ما في أفلام بهالتصنيف اليوم",
            "أقرب سينما لك", "لحظة، نحدد مكانك…", "ما قدرنا نعرف مكانك — اختار مدينتك", "الإعلان", "سكّر", "في", "أقل", "المزيد", "اليوم", "بكرة",
            "يخلص تقريباً", "إنجليزي", "عربي", "هندي", "تاميل", "مالايالام", "تيلوغو", "السعر في الشباك", "نفس الفيلم أرخص بـ", "لحظة…",
-           "وصلنا حد الأسئلة لليوم، جرّب بكرة", "ما قدرنا نجاوب الحين، جرّب مرة ثانية", "من قصة الفيلم", "من معلومات الفيلم", "يحرق — اضغط إذا تبا تعرف"]
+           "وصلنا حد الأسئلة لليوم، جرّب بكرة", "ما قدرنا نجاوب الحين، جرّب مرة ثانية", "من قصة الفيلم", "من معلومات الفيلم", "يحرق — اضغط إذا تبا تعرف",
+           "ما في أفلام بهالقاعة اليوم في"]
 
 
 def tr(ar):
@@ -206,6 +221,8 @@ def tags(f):
         out.add("indian")
     if f.get("lang") == "English":
         out.add("english")
+    if f.get("_last"):
+        out.add("last")
     return out
 
 
@@ -278,8 +295,14 @@ class App:
                 rec = filmintel.read(fid) or {}
                 if not f.get("synopsis_ar") and rec.get("by") in ("claude", "hand") and isinstance(rec.get("synopsis_ar"), str):
                     f["synopsis_ar"] = rec["synopsis_ar"].strip()
+                ff = rec.get("fun_fact") if rec.get("by") in ("claude", "hand") else None
+                if isinstance(ff, dict) and str(ff.get("text") or "").strip():   # «تدري؟» (2026-11-18)
+                    f["_fun_fact"] = {"text": str(ff["text"]).strip(), "source": str(ff.get("source") or "").strip()}
         except Exception as e:  # noqa: BLE001 - no synopsis is a page without one, never a failed build
             print("app: synopses not attached:", e)
+        self.lastc = {fid: v for fid, v in (data.get("last_chance_info") or {}).items() if fid in (data.get("films") or {})}
+        for fid in self.lastc:
+            data["films"][fid]["_last"] = True
         self.k = Kit(data, disc, halls, out)
         self.d, self.out, self.base = data, out, base.rstrip("/") + "/"
         self.pfx = "/en" if (live and LANG == "en") else ""   # the live English site's URL prefix
@@ -448,10 +471,67 @@ class App:
         imdb, rt = f.get("imdb_score"), (f.get("rt") or {}).get("critics")
         scn = float(imdb) * 10 if imdb else (float(rt) if rt is not None else 0)
         top = f'<i class="top">{tr("ممتاز")}</i>' if scn >= 75 else ""
+        lastb = f'<i class="lastb">{tr("آخر فرصة")}</i>' if f.get("_last") else ""
+        dh = ";".join(f"{c}:{','.join(sorted(v))}" for c, v in sorted((self.film_halls().get(fid) or {}).items()))
         return (f'<a class="tile" href="{self.u("f", fid)}" data-fid="{E(fid)}" data-g="{E(" ".join(sorted(tags(f))))}" data-n="{self.count.get(fid, 0)}" '
-                f'data-sc="{scn:g}" data-rel="{E(f.get("released") or "")}">'
-                f'<span class="tp">{self.poster(fid)}{age}{top}</span>'
+                f'data-sc="{scn:g}" data-rel="{E(f.get("released") or "")}" data-h="{E(dh)}">'
+                f'<span class="tp">{self.poster(fid)}{age}{top}{lastb}</span>'
                 f'<span class="tt">{E(title(k, fid))}</span><span class="tm">{"".join(meta)}</span></a>')
+
+    def film_halls(self):
+        """{fid: {city: {hall chip key}}} from today's shows — what the hall chips filter by."""
+        if getattr(self, "_fh", None) is None:
+            out = {}
+            for s in self.shows:
+                cat, city = hall_cat(s.get("hall") or "OTHER", self.k.hkey(s)), self.k.cinemas[s["cinema"]].get("city")
+                if cat and city:
+                    out.setdefault(s["film"], {}).setdefault(city, set()).add(cat)
+            self._fh = out
+        return self._fh
+
+    def lastc_line(self, fid):
+        v = self.lastc.get(fid)
+        if not v:
+            return ""
+        return (f'<p class="lastc"><b>{tr("آخر فرصة")}</b> {tr("عروضه نزلت من")} <bdi class="num">{int(v["peak"])}</bdi> '
+                f'{tr("عرض باليوم لين")} <bdi class="num">{int(v["now"])}</bdi></p>')
+
+    def fun_fact(self, f):
+        ff = f.get("_fun_fact") if LANG == "ar" else None   # the intel's facts are written in Arabic
+        if not ff:
+            return ""
+        src = f'<small>{tr("المصدر")}: {E(ff["source"])}</small>' if ff.get("source") else ""
+        return f'<aside class="ff"><b>{tr("تدري؟")}</b><p>{E(ff["text"])}</p>{src}</aside>'
+
+    def reminder(self, fid, c, name):
+        """«ذكّرني يوم ينزل» (owner 2026-11-18): the release day in the phone's calendar with a 10:00 alert — an .ics
+        (iPhone opens it in Calendar) and Google Calendar's own add-event link (Android: app.js picks it by the UA)."""
+        import datetime as _dt
+        from urllib.parse import quote
+        from pages.coming import _ics_esc, _ics_fold
+        day = _dt.date.fromisoformat(c["release_date"])
+        d0, d1 = day.strftime("%Y%m%d"), (day + _dt.timedelta(days=1)).strftime("%Y%m%d")
+        what = f"{name} {tr('ينزل في السينما')}"
+        link = SITE + (self.pfx if self.live else "") + "/"
+        info = f"{tr('مواعيده وأسعاره في كل سينمات الإمارات')}: {link}"
+        try:
+            stamp = _dt.datetime.fromisoformat(str(self.d.get("generated"))).astimezone(_dt.timezone.utc).strftime("%Y%m%dT%H%M%S")
+        except (TypeError, ValueError):
+            stamp = d0 + "T000000"
+        lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Elyoxe//Cinema//AR", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+                 "BEGIN:VEVENT", f"UID:{fid}-{d0}@cinema.elyoxe.com", f"DTSTAMP:{stamp}Z",
+                 f"DTSTART;VALUE=DATE:{d0}", f"DTEND;VALUE=DATE:{d1}", f"SUMMARY:{_ics_esc(what)}",
+                 f"DESCRIPTION:{_ics_esc(info)}", f"URL:{link}",
+                 "BEGIN:VALARM", "ACTION:DISPLAY", f"DESCRIPTION:{_ics_esc(what)}", "TRIGGER:PT10H", "END:VALARM",
+                 "END:VEVENT", "END:VCALENDAR"]
+        d = os.path.join(self.out, "cal", "f")
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, f"{fid}.ics"), "w", encoding="utf-8", newline="") as fh:
+            fh.write("\r\n".join(_ics_fold(x) for x in lines) + "\r\n")
+        href = (self.pfx if self.live else self.base.rstrip("/")) + f"/cal/f/{fid}.ics"
+        gcal = ("https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + quote(what)
+                + f"&dates={d0}/{d1}&details=" + quote(info))
+        return f'<a class="crem" href="{E(href)}" data-gcal="{E(gcal)}" download>{svg("cal")}{tr("ذكّرني يوم ينزل")}</a>'
 
     def ccard(self, cid):
         c = self.k.cinemas[cid]
@@ -531,10 +611,11 @@ class App:
             img = '<span class="pst"><img src="%s" width="342" height="513" alt="" loading="lazy" decoding="async"></span>' % E(c["poster"])
             play = '<i class="cplay">%s</i>' % svg("play") if c.get("trailer") else ""
             inner = '<span class="tp">%s%s</span><span class="tt">%s</span><span class="tm">%s</span>' % (img, play, E(name), E(sep().join(g)))
+            rem = self.reminder(fid, c, name)
             if c.get("trailer"):
-                out.append('<button type="button" class="tile ct" data-trailer="%s">%s</button>' % (E(c["trailer"]), inner))
+                out.append('<div class="ctw"><button type="button" class="tile ct" data-trailer="%s">%s</button>%s</div>' % (E(c["trailer"]), inner, rem))
             else:
-                out.append('<div class="tile ct">%s</div>' % inner)
+                out.append('<div class="ctw"><div class="tile ct">%s</div>%s</div>' % (inner, rem))
         if day is not None:
             out.append("</div>")
         return "".join(out) or f'<p class="empty">{tr("ما في أفلام معلنة للأسابيع الياية")}.</p>'
@@ -547,6 +628,8 @@ class App:
                 chips.append(f'<button type="button" class="chip{" on" if key == "all" else ""}" data-chip="{key}">{tr(label)}</button>')
             if key == "all":
                 chips.append(f'<button type="button" class="chip soon2h" data-chip="soon2h">{svg("clock")}{tr("يبدأ خلال ساعتين")}</button>')
+        have = {c for per in self.film_halls().values() for cats in per.values() for c in cats}
+        chips += [f'<button type="button" class="chip hall" data-chip="h-{c}">{label}</button>' for c, label, _ in HALL_CHIPS if c in have]
         grid = "".join(self.tile(f) for f in self.films)
         # السينمات (owner 2026-10-19): «أقرب سينما», then the cities; a city opens its cinemas
         per_city = {}
@@ -704,7 +787,7 @@ class App:
 <div class="fh-t"><h2 class="ft">{E(t)}</h2>{f'<p class="fte" lang="en" dir="ltr">{E(f["title"])}{" · " + str(f["year"]) if f.get("year") else ""}</p>' if f.get("title") and f.get("title") != t else ""}
 <div class="fchips">{"".join(chips)}</div>{f'<p class="fg">{genres}</p>' if genres else ""}</div></div></section>
 <div class="acts">{trailer}{ask}</div>
-{about}<section class="nearest" data-nearest hidden><h2>{tr('أقرب عرض لك')}</h2><div data-nearest-row></div></section>
+{about}{self.lastc_line(fid)}{self.fun_fact(f)}<section class="nearest" data-nearest hidden><h2>{tr('أقرب عرض لك')}</h2><div data-nearest-row></div></section>
 {verdict}{self.family(f)}{where}{crew}
 <section class="sec ask" data-ask data-fid="{E(fid)}" data-lang="{LANG}"><h2>{tr('اسأل الفيلم')}</h2><p class="lead">{tr('اسأل أي شي عن الفيلم، ونجاوبك من قصته ومعلوماته بس. اللي يحرق نخفيه لين تضغط')}.</p>
 <form class="ask-f" data-ask-form><input name="q" maxlength="240" autocomplete="off" enterkeyhint="send" placeholder="{tr('مثلاً: يناسب العيال؟')}" aria-label="{tr('سؤالك')}"><button class="btn velvet" type="submit">{tr('اسأل')}</button></form>

@@ -225,3 +225,65 @@ def test_the_english_site_is_the_same_pages_under_en(tmp_path):
 def test_deploy_builds_the_english_site_under_en():
     sh = open(os.path.join(ROOT, "deploy.sh"), encoding="utf-8").read()
     assert "--out out/en --live --lang en" in sh and sh.index("--lang en") > sh.index('app/build_app.py --data data/latest.json --out out --live')
+
+
+@pytest.fixture(scope="module")
+def extras(tmp_path_factory):
+    """A live build with a film flagged «آخر فرصة», a fun fact, and a coming film (owner 2026-11-18)."""
+    import filmintel
+    out = str(tmp_path_factory.mktemp("app_x") / "out")
+    os.makedirs(out)
+    data = json.load(open(DATA, encoding="utf-8"))
+    fid = next(iter(data["films"]))
+    data["last_chance_info"] = {fid: {"peak": 120, "peak_date": "2026-09-10", "now": 12}}
+    data["coming"] = {"new-one": {"title": "New One", "title_ar": "الجديد", "release_date": "2026-10-02",
+                                  "poster": "/posters/new-one.webp", "genres": ["Action"]}}
+    real = filmintel.read
+    filmintel.read = lambda f: {"by": "claude", "fun_fact": {"text": "صوّروه في صحراء ليوا.", "source": "ويكيبيديا"}} if f == fid else real(f)
+    try:
+        app = build_app.App(data, load_discounts(DISC), Halls(os.path.join(ROOT, "halls.yaml")), out, "/", live=True)
+        app.run()
+    finally:
+        filmintel.read = real
+    return out, app, fid
+
+
+def test_last_chance_is_a_badge_a_chip_and_a_line_with_its_numbers(extras):
+    out, app, fid = extras
+    home = read(out, "index.html")
+    assert 'data-chip="last"' in home and 'class="lastb"' in home
+    tile = re.search(r'<a class="tile" href="/film/%s/"[^>]*>' % re.escape(fid), home).group(0)
+    assert re.search(r'data-g="[^"]*\blast\b', tile)
+    page = read(out, "film", fid, "index.html")
+    assert re.search(r'class="lastc"><b>آخر فرصة</b> عروضه نزلت من <bdi class="num">120</bdi> عرض باليوم لين <bdi class="num">12</bdi>', page)
+
+
+def test_the_hall_chips_and_each_tiles_halls_per_city(extras):
+    out, app, fid = extras
+    home = read(out, "index.html")
+    chips = set(re.findall(r'data-chip="h-([a-z0-9]+)"', home))
+    assert {"imax", "4dx", "vip"} <= chips                       # the sample has IMAX, 4DX and GOLD/VIP/SUITES halls
+    hs = re.findall(r'data-h="([^"]*)"', home)
+    assert hs and all(re.fullmatch(r"([a-z-]+:[a-z0-9,]+)(;[a-z-]+:[a-z0-9,]+)*|", h) for h in hs)
+    assert any("imax" in h for h in hs)
+    js = read(ROOT, "app", "app.js")
+    assert "hallOn(t, hall, city)" in js and 'store.get("city")' in js
+
+
+def test_did_you_know_shows_the_fact_and_its_source(extras):
+    out, app, fid = extras
+    page = read(out, "film", fid, "index.html")
+    assert '<aside class="ff"><b>تدري؟</b><p>صوّروه في صحراء ليوا.</p><small>المصدر: ويكيبيديا</small></aside>' in page
+
+
+def test_remind_me_writes_an_ics_and_a_google_calendar_link(extras):
+    out, app, fid = extras
+    home = read(out, "index.html")
+    a = re.search(r'<a class="crem" href="/cal/f/new-one\.ics" data-gcal="([^"]+)" download>', home)
+    assert a and "dates=20261002/20261003" in a.group(1) and a.group(1).startswith("https://calendar.google.com/")
+    ics = open(os.path.join(out, "cal", "f", "new-one.ics"), encoding="utf-8", newline="").read()
+    assert ics.startswith("BEGIN:VCALENDAR\r\n") and ics.endswith("END:VCALENDAR\r\n")
+    assert "DTSTART;VALUE=DATE:20261002" in ics and "TRIGGER:PT10H" in ics and "SUMMARY:الجديد ينزل في السينما" in ics
+    assert "DTSTAMP:20260925T140000Z" in ics                     # the data's own time, in UTC: the same build twice is identical
+    js = read(ROOT, "app", "app.js")
+    assert "a.href = a.dataset.gcal" in js
