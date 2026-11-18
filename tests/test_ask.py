@@ -66,6 +66,14 @@ def test_the_csp_lets_the_page_reach_the_backend():
 def _handler(monkeypatch):
     monkeypatch.setenv("TABLE", "test-table")
     monkeypatch.setenv("AWS_DEFAULT_REGION", "ap-south-1")
+    # handler.py builds its DynamoDB resource at import, and botocore resolves the account id for DynamoDB's
+    # endpoint from the credentials there: on a runner without AWS credentials (test.yml) that walked the chain to
+    # the instance metadata address and the network guard refused it. Fake keys stop the walk; nothing is called.
+    for k in ("AWS_PROFILE", "AWS_SESSION_TOKEN"):
+        monkeypatch.delenv(k, raising=False)
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "testing")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "testing")
+    monkeypatch.setenv("AWS_EC2_METADATA_DISABLED", "true")
     src = os.path.join(ROOT, "infra", "ask", "src")
     if not os.path.exists(os.path.join(src, "lexicon.json")):
         pytest.skip("infra/ask/src/lexicon.json is written by make_system.py")
