@@ -50,8 +50,9 @@ SHELL_HTML = [(re.compile(r'(?:<link rel="preload" href="[^"]+" as="script">\n)?
                r'<script src="\1" defer></script>')]
 SHELL_FILES = re.compile(r"^assets/icons/sc-[a-z]+\.png$")
 # W1-D2 (MASTER-PLAN §5.2): on `/` a film shown by its Arabic title keeps its Latin one in <title> and the description,
-# «فيلم قلب الوحش (Heart of the Beast) في سينما الإمارات …» (tests/test_w1_d2.py covers it); undone before comparing
-W1D2_LATIN = re.compile(r" \([A-Za-z0-9][^()<>\"]*\)(?= في سينما الإمارات| — انتهى عرضه|: )")
+# «فيلم قلب الوحش (Heart of the Beast) في سينما الإمارات …» (tests/test_w1_d2.py covers it); undone before comparing.
+# A Latin title may hold its own brackets — «Rocky (1976) - 50th Anniversary Special» (2026-11-18) — one level deep.
+W1D2_LATIN = re.compile(r" \([A-Za-z0-9](?:[^()<>\"]|\([^()<>\"]*\))*\)(?= في سينما الإمارات| — انتهى عرضه|: )")
 # UI redesign: the new core pages, and what the redesign rewrites (compared by their own tests, not to phase 1)
 REDESIGN_ADDED = re.compile(r"^(en/)?(cinemas|sources)/index\.html$")
 # W1-P1 (MASTER-PLAN §5.2): core declares Wave 2's lazy stub (drag.js) and page-scoped sheets (page-<kind>.css) — assets
