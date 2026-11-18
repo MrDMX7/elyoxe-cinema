@@ -134,6 +134,7 @@ def test_the_price_share_counts_cached_keys_too():
     assert refresh.price_share(0, 49, 50) == (98.0, False)
     assert refresh.price_share(20, 2, 0) == (10.0, True)          # live reads failing, nothing cached: degraded
     assert refresh.price_share(0, 0, 0) == (0.0, False)           # nothing to price: not degraded
+    assert refresh.price_share(0, 0, 9) == (0.0, False)           # only cached misses, nothing read live (Reel, 23:00)
 
 
 def test_a_chain_wide_note_replaces_the_failed_refresh_line():

@@ -337,7 +337,9 @@ def price_share(attempted: int, priced: int, cached: int) -> tuple[float, bool]:
     if not looked:
         return 100.0 if priced else 0.0, False
     share = min(1.0, (priced or 0) / looked)
-    return share * 100, share < PRICES_DEGRADED_THRESHOLD
+    # degraded only when this run read prices live: keys only reused from the cache (Reel at 23:00, its sessions under
+    # an hour away skipped, 9 cached misses) say nothing new about the chain — the first cut alerted on that (2026-11-18)
+    return share * 100, bool(attempted) and share < PRICES_DEGRADED_THRESHOLD
 
 
 def yaml_health(merged: dict, meta: dict) -> dict:
