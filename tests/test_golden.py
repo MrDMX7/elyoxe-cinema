@@ -180,6 +180,9 @@ def phase1(tmp_path_factory):
     z = subprocess.run([GIT, "-C", ROOT, "archive", "--format=zip", GOLDEN_REF], capture_output=True, check=True).stdout
     d = tmp_path_factory.mktemp("phase1")
     zipfile.ZipFile(io.BytesIO(z)).extractall(d)
+    # the cinema table is data, like HALLS and discounts: both builds read today's. Phase 1's own copy left a cinema
+    # a chain opened later (VOX Moonlight, 2026-11-12) on its raw reader name there, and every Dubai day differed.
+    shutil.copyfile(os.path.join(ROOT, "cinemas.yaml"), os.path.join(str(d), "cinemas.yaml"))
     return str(d)
 
 
