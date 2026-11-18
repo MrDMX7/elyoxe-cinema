@@ -763,6 +763,9 @@ class Kit(MediaKit, TileKit, SchedKit, TicketKit, ChromeKit, FiltersKit):
 
     def fresh(self, chain, lang, always=False):
         ch = self.d.get("chains", {}).get(chain) or {}
+        note = ch.get("note_ar" if lang == "ar" else "note_en")
+        if note:   # chains.yaml's chain-wide fact (Novo: no online sales in the UAE) says why, not «ما قدرنا نحدّث»
+            return f'<span class="age stale"><span class="stale">{esc(note)}</span></span>'
         if not ch.get("at") or (ch.get("ok", True) and not always): return ""
         at = parse_iso(ch["at"])
         cls = "age stale" if not ch.get("ok", True) else "age"

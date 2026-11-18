@@ -12,7 +12,10 @@ chains:
   vox:        {ad_offset_min: 15}
   star:       {ad_offset_min: 15}
   reel:       {ad_offset_min: 15}
-  novo:       {ad_offset_min: 15}
+  # note_ar/note_en: a chain-wide fact the pages say instead of «ما قدرنا نحدّث» (site_kit.fresh). Novo, read
+  # 2026-11-18: uae.novocinemas.com and novocinemas.com forward to qa.novocinemas.com, its UAE sessions API is empty
+  # since 2026-10-09, and ShowSouk shows 0 films at its 6 UAE branches too. Remove the note when Novo sells again.
+  novo:       {ad_offset_min: 15, note_ar: "نوفو وقّفت البيع أونلاين في الإمارات من أكتوبر 2026، وموقعها يحوّل لقطر — المواعيد والحجز من الشباك أو بالاتصال بالسينما", note_en: "Novo has not sold tickets online in the UAE since October 2026 and its website now goes to Qatar — times and tickets at the box office or by phone"}
   roxy:       {ad_offset_min: 15}
   cineroyal:  {ad_offset_min: 15}
   cinemacity: {ad_offset_min: 15}

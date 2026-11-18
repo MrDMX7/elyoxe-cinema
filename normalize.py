@@ -675,6 +675,12 @@ def finalize(data: dict, chains_cfg: dict | None = None, cinema_meta: dict | Non
 
     for chain, info in (data.get("chains") or {}).items():
         info["ad_offset_min"] = ad_offset(chains_cfg, chain)
+        own = ((chains_cfg or {}).get("chains") or {}).get(chain) or {}
+        for k in ("note_ar", "note_en"):   # a chain-wide fact for the pages (Novo stopped selling online, 2026-11)
+            if own.get(k):
+                info[k] = own[k]
+            else:
+                info.pop(k, None)
 
     films = data.get("films") or {}
     for f in films.values():

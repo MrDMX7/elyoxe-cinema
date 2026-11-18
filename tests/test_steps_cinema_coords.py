@@ -134,3 +134,19 @@ def test_the_price_share_counts_cached_keys_too():
     assert refresh.price_share(0, 49, 50) == (98.0, False)
     assert refresh.price_share(20, 2, 0) == (10.0, True)          # live reads failing, nothing cached: degraded
     assert refresh.price_share(0, 0, 0) == (0.0, False)           # nothing to price: not degraded
+
+
+def test_a_chain_wide_note_replaces_the_failed_refresh_line():
+    """Novo (2026-11-18): its UAE site forwards to Qatar and sells nothing online; its pages said «ما قدرنا نحدّث»,
+    as if the fault were ours and passing. chains.yaml's note reaches latest.json's chains and the page says it."""
+    import normalize
+    from site_kit import Kit
+    cfg = normalize.load_chains()
+    data = {"chains": {"novo": {"ok": False, "at": "2026-10-09T10:00:00+04:00"}, "vox": {"ok": True, "at": NOW}},
+            "films": {}, "cinemas": {}, "shows": []}
+    normalize.finalize(data, chains_cfg=cfg, cinema_meta={})
+    assert "قطر" in data["chains"]["novo"]["note_ar"] and "Qatar" in data["chains"]["novo"]["note_en"]
+    assert "note_ar" not in data["chains"]["vox"]
+    k = Kit.__new__(Kit)
+    k.d, k.now = data, None
+    assert "قطر" in k.fresh("novo", "ar") and "ما قدرنا" not in k.fresh("novo", "ar")
