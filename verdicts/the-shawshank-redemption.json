@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "الخلاص من شاوشانك فيلم دراما وجريمة من 142 دقيقة، وتقييم النقاد عليه 89% والجمهور 98%. يستاهل تشوفه لو تبغي قصة إنسانية قوية بإخراج Frank Darabont.",
+  "basis": "RT 89% (147 نقد) · الجمهور 98%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 89,
+    "rt_count": 147
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "The Shawshank Redemption is a 142-minute drama and crime film with a 89% critic score and 98% audience score on Rotten Tomatoes. Worth watching for a powerful human story directed by Frank Darabont.",
   "fid": "the-shawshank-redemption",
-  "verdict": "unknown",
-  "written": "2026-11-04"
+  "verdict": "yes",
+  "written": "2026-11-20"
 }

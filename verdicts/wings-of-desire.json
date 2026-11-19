@@ -1,0 +1,14 @@
+{
+  "ar": "وينجز أوف ديزاير فيلم فانتازيا حلو وحزين عن ملايكة يسمعون أفكار الناس في برلين. النقاد عطوه 95% على Rotten Tomatoes، وهذا رقم ما يتقال كل يوم.",
+  "basis": "RT 95% (64 نقد) · الجمهور 93%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 95,
+    "rt_count": 64
+  },
+  "by": "claude",
+  "en": "Wings of Desire is a bittersweet fantasy about angels listening to the thoughts of Berlin's people. Critics give it 95% on Rotten Tomatoes.",
+  "fid": "wings-of-desire",
+  "verdict": "yes",
+  "written": "2026-11-20"
+}
