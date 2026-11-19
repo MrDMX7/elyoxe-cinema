@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "الفيلم حاصل على 70% من 115 نقد على Rotten Tomatoes، يعني تقييم متوسط يميل للإيجابي. يحكي قصة مباريات الجوع قبل أحداث الفيلم الأول، ويقدّم فيه إيلي فانينغ ورالف فاينس ضمن طاقم مميز.",
+  "basis": "RT 70% (115 نقد)",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 70,
+    "rt_count": 115
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "The film holds a 70% score from 115 critics on Rotten Tomatoes, a mixed-to-positive reception. It is a prequel to the original Hunger Games and features an ensemble cast including Elle Fanning and Ralph Fiennes.",
   "fid": "the-hunger-games-sunrise-on-the-reaping",
-  "verdict": "unknown",
-  "written": "2026-11-18"
+  "verdict": "mixed",
+  "written": "2026-11-19"
 }

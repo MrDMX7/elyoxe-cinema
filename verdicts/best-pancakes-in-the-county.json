@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "الفيلم مب مشهور للحين، وتقييم النقاد على Rotten Tomatoes 33% من 9 نقد، يعني الآراء متفرقة. إذا تحب أكشن وجريمة وتبغي تجرّبه، فيه ممثلين معروفين مثل نيكولاس كيج.",
+  "basis": "RT 33% (9 نقد)",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 33,
+    "rt_count": 9
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "The film isn't widely known yet, and critics give it 33% on Rotten Tomatoes from 9 reviews, so opinions are mixed. If you like action and crime and want to try it, it stars Nicolas Cage.",
   "fid": "best-pancakes-in-the-county",
-  "verdict": "unknown",
-  "written": "2026-11-11"
+  "verdict": "mixed",
+  "written": "2026-11-19"
 }

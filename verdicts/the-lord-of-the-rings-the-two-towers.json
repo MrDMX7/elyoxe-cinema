@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "سيد الخواتم: البرجان مرتفع الجودة، والنقاد والجمهور متفقين عليه تقريبا. الفيلم يوازن بين الأكشن والقصة العاطفية بشكل راقي، ومدته 180 دقيقة.",
+  "basis": "RT 95% (289 نقد) · الجمهور 95%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 95,
+    "rt_count": 289
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "The Two Towers balances spectacular action with emotional storytelling, and both critics and audiences rate it highly. The film runs 180 minutes.",
   "fid": "the-lord-of-the-rings-the-two-towers",
-  "verdict": "unknown",
-  "written": "2026-11-05"
+  "verdict": "yes",
+  "written": "2026-11-19"
 }

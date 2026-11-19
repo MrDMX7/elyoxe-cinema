@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "الفيلم حلو وممتع، والنقاد حبّوه بقوة بنسبة 94% على RT، والجمهور كذلك بنفس النسبة. فيلم ملوّن ومليان خيال عن الصداقة وفلكلور الفلبين.",
+  "basis": "RT 94% (135 نقد) · الجمهور 94%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 94,
+    "rt_count": 135
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "A charming, colorful animated adventure about friendship and Filipino folklore, loved by critics and audiences alike with 94% on Rotten Tomatoes.",
   "fid": "forgotten-island",
-  "verdict": "unknown",
-  "written": "2026-11-18"
+  "verdict": "yes",
+  "written": "2026-11-19"
 }

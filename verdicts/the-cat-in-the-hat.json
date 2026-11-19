@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "القط ذو القبعة (فلم 2026) ما عجب النقاد، بس الجمهور أعطاه 87%. الإجماع يقول إن فيه سحر بس الإيقاع سريع وايد وكان ينفعه يكون أهدى.",
+  "basis": "RT 47% (70 نقد) · الجمهور 87%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 47,
+    "rt_count": 70
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "The Cat in the Hat (2026) splits critics and audiences: 47% from critics but 87% from viewers. Reviewers find some charm, but the frantic pace and high stakes weigh it down.",
   "fid": "the-cat-in-the-hat",
-  "verdict": "unknown",
-  "written": "2026-11-04"
+  "verdict": "mixed",
+  "written": "2026-11-19"
 }

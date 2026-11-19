@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "الفيلم فيه أفكار كثيرة وحركة سريعة بس النقاد ما اقتنعوا فيه، RT 38% من 112 نقد، بس الجمهور أعطاه 81%.",
+  "basis": "RT 38% (112 نقد) · الجمهور 81%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 38,
+    "rt_count": 112
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "The film is fast and packed with ideas, but critics were unconvinced: 38% on Rotten Tomatoes from 112 reviews, while audiences rate it 81%.",
   "fid": "how-to-rob-a-bank",
-  "verdict": "unknown",
-  "written": "2026-11-11"
+  "verdict": "mixed",
+  "written": "2026-11-19"
 }

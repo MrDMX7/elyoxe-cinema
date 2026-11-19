@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "Scene فيلم أكشن كوميدي تاميلي جاي، وتقييم النقاد عليه 100% من 8 نقد، والجمهور معطيه 92%. العدد صغير للحين، فالتقييم يتحدّث.",
+  "basis": "RT 100% (8 نقد) · الجمهور 92%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 100,
+    "rt_count": 8
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "Scene is an upcoming Tamil action comedy with 100% from 8 critics and 92% audience score on Rotten Tomatoes. The sample is still small, so the verdict is provisional.",
   "fid": "scene",
-  "verdict": "unknown",
-  "written": "2026-11-04"
+  "verdict": "mixed",
+  "written": "2026-11-19"
 }

@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "The Mongoose فيلم أكشن ومغامرة بالإنجليزي، ورايه 33 نقد بس، 36% بس منهم إيجابية، وجمهور RT عطاه 78%. الأفضل تشوفه إذا تحب الأكشن حتى لو النقاد ما كانوا متحمسين له.",
+  "basis": "RT 36% (33 نقد) · الجمهور 78%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 36,
+    "rt_count": 33
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "The Mongoose is an English-language action-adventure with 33 critic reviews, only 36% positive on Rotten Tomatoes, while audiences gave it 78%. Worth watching if you like action even though critics were lukewarm.",
   "fid": "the-mongoose",
-  "verdict": "unknown",
-  "written": "2026-10-28"
+  "verdict": "mixed",
+  "written": "2026-11-19"
 }

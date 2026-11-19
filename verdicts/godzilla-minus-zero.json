@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "غودزيلا ناقص صفر حصل 90% عند النقاد على Rotten Tomatoes من 217 نقد، والجمهور عطاه 96%. الفيلم يقدّم أكشن ضخم مع اهتمام حقيقي بالشخصيات، وهذا اللي يخلّيه يتميّز.",
+  "basis": "RT 90% (217 نقد) · الجمهور 96%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 90,
+    "rt_count": 217
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "Godzilla Minus Zero holds a 90% critics score on Rotten Tomatoes from 217 reviews, with audiences at 96%. It keeps its epic action grounded in human characters, which sets it apart.",
   "fid": "godzilla-minus-zero",
-  "verdict": "unknown",
-  "written": "2026-11-04"
+  "verdict": "yes",
+  "written": "2026-11-19"
 }

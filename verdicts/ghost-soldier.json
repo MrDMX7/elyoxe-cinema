@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "الجندي الشبح فيلم أكشن بمخرجه William Eubank وبطولة Jim Caviezel، وتقييم النقاد عليه ضعيف (RT 38% من 21 نقد)، بس الجمهور عطاه 90%. يعني الحكم بين الاثنين، والتقييم ما يحسمه لصالحه ولا ضده.",
+  "basis": "RT 38% (21 نقد) · الجمهور 90%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 38,
+    "rt_count": 21
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "Ghost Soldier is an action thriller directed by William Eubank and starring Jim Caviezel. Critics rate it weakly at 38% on Rotten Tomatoes, while audiences score it 90%.",
   "fid": "ghost-soldier",
-  "verdict": "unknown",
-  "written": "2026-11-18"
+  "verdict": "mixed",
+  "written": "2026-11-19"
 }

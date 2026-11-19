@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "إبنزر فيلم رعب فانتازي كوميدي مع جوني ديب بدور سكروج، والنقاد مب متفقين عليه، بس الجمهور أعطاه 89%. الإنتاج والديكور حلوين، بس يلعب آمن زياده ومب قادر يطلع عن بقية نسخ القصة.",
+  "basis": "RT 54% (148 نقد) · الجمهور 89%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 54,
+    "rt_count": 148
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "Ebenezer is a gothic dark fantasy comedy with Johnny Depp as Scrooge; critics are split but audiences rate it highly. Its production design shines, though it plays too safe to stand out among the many remakes of the story.",
   "fid": "ebenezer",
-  "verdict": "unknown",
-  "written": "2026-11-11"
+  "verdict": "mixed",
+  "written": "2026-11-19"
 }

@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "روكي فيلم قديم لكنه وايد قوي — ستالون كاتب وبطل الفيلم، وأداؤه مصدّي من أول لين آخر. النقاد عطوه 95% والجمهور 69%، فالنتيجة إنه يستاهل المشاهدة.",
+  "basis": "RT 95% (144 نقد) · الجمهور 69%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 95,
+    "rt_count": 144
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "Rocky is a classic that still holds up well: Stallone wrote and starred in it, and his performance carries the film. Critics gave it 95% and audiences 69%, so it's worth watching.",
   "fid": "rocky-1976-50th-anniversary-special",
-  "verdict": "unknown",
-  "written": "2026-11-05"
+  "verdict": "yes",
+  "written": "2026-11-19"
 }

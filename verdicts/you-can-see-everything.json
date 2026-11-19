@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "الفيلم حصل على 97% من النقاد و95% من الجمهور على Rotten Tomatoes، وإجماع النقاد يصفه بأنه اختبار رورشاخ مؤثر عن نفسية إليزابيث هولمز. لو تبغي فيلم وثائقي يخليك تفكر لحد الحين، هذا من اللي تفوّته ما تبغي.",
+  "basis": "RT 97% (235 نقد) · الجمهور 95%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 97,
+    "rt_count": 235
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "The film scores 97% with critics and 95% with audiences on Rotten Tomatoes, and critics describe it as a haunting Rorschach test of Elizabeth Holmes' psyche. If you want a documentary that stays with you, this one is worth your time.",
   "fid": "you-can-see-everything",
-  "verdict": "unknown",
-  "written": "2026-11-18"
+  "verdict": "yes",
+  "written": "2026-11-19"
 }

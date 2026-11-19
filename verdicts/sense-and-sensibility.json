@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "«العقل والعاطفة» بـ135 دقيقة، والنقاد يعطونه 78% والجمهور 88%، فحكمه إيجابي. العلاقة بين الأختين صارت محور الفيلم، وهذا يميّزه عن النسخ السابقة.",
+  "basis": "RT 78% (143 نقد) · الجمهور 88%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 78,
+    "rt_count": 143
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "Sense and Sensibility runs 135 minutes, with critics at 78% and audiences at 88% on Rotten Tomatoes. Its focus on the Dashwood sisters' bond sets it apart from earlier adaptations.",
   "fid": "sense-and-sensibility",
-  "verdict": "unknown",
-  "written": "2026-11-06"
+  "verdict": "yes",
+  "written": "2026-11-19"
 }

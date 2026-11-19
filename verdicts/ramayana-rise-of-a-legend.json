@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "الفيلم حصل 77% من 61 نقد على Rotten Tomatoes، والجمهور أعطاه 93%، يعني النقاد مب كلهم متحمسين بس الناس العادية حبته وايد. هالفيلم الهندي بلغة الهندي وأنواعه أكشن ومغامرة وفانتازيا، ويستاهل تشوفه لو تحب الملاحم.",
+  "basis": "RT 77% (61 نقد) · الجمهور 93%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 77,
+    "rt_count": 61
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "The film scored 77% from 61 critics on Rotten Tomatoes while audiences gave it 93%, so critics are mixed but viewers loved it. It's a Hindi-language action, adventure and fantasy epic, worth a watch if you enjoy mythological epics.",
   "fid": "ramayana-rise-of-a-legend",
-  "verdict": "unknown",
-  "written": "2026-11-03"
+  "verdict": "mixed",
+  "written": "2026-11-19"
 }

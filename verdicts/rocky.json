@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "الفيلم يستاهل وقتك، ومتوسط الجمهور 98% على Rotten Tomatoes. النقاد أعطوه 88% من 161 نقد، وإجماعهم يقول إن أنتوني إيبوليتو يجسد سلاي ستالون بشكل مقنع.",
+  "basis": "RT 88% (161 نقد) · الجمهور 98%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 88,
+    "rt_count": 161
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "A worthwhile watch: the audience gives it 98% on Rotten Tomatoes, and critics give it 88% from 161 reviews, with praise for Anthony Ippolito's convincing take on Sylvester Stallone.",
   "fid": "rocky",
-  "verdict": "unknown",
+  "verdict": "yes",
   "written": "2026-11-19"
 }

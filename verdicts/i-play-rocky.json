@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "الفيلم حبّه النقاد بنسبة 88% من 161 نقد، والجمهور بنسبة 98%، وهذا مؤشر قوي على عمل حلو ومريح. الأداء الحلو لـ Anthony Ippolito في دور Stallone يرفع الفيلم.",
+  "basis": "RT 88% (161 نقد) · الجمهور 98%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 88,
+    "rt_count": 161
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "Critics gave I Play Rocky an 88% score from 161 reviews, and audiences gave it 98%, a strong sign of a warm and enjoyable film. Anthony Ippolito's standout performance as Stallone lifts the movie.",
   "fid": "i-play-rocky",
-  "verdict": "unknown",
-  "written": "2026-11-18"
+  "verdict": "yes",
+  "written": "2026-11-19"
 }
