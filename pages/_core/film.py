@@ -238,6 +238,11 @@ class FilmPages:
                     # full, else compact: both keep today AND tomorrow (a page built late at night still has the next
                     # day's times when the visitor's «اليوم» has moved on)
                     sched, mode = self.fit(lambda m: self.film_schedule(shows, cities, lang, m, self.sid(nxt) if nxt else None), ("full", "compact"), left)
+                    if mode == "compact":
+                        # a page this busy (Hunger Games' opening day, 2026-11-20: 152.9 KB, which stopped every publish):
+                        # the JSON-LD lists the first 10 of today's screenings, not 30 (~17 KB); the schedule stays whole
+                        graph = ([self.movie_ld(fid, lang)] + [self.screening_ld(s, lang) for s in shows if s["date"] == self.today][:10]
+                                 + [self.breadcrumb_ld(lang, (t, P(lang, "film", fid)))])
                     if mode not in ("full", "compact") and nxt and nxt["date"] != self.today: nxt = self.first_city_show([s for s in shows if s["date"] == self.today], cities) or nxt
                     # every hall's times have started and the next day isn't listed (a film's last night, after its
                     # last start): the page says so, as for a film with no shows, and holds no ticket for a started show
