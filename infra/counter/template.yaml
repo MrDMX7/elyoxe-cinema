@@ -65,6 +65,21 @@ Resources:
       KeySchema:
         - { AttributeName: endpoint, KeyType: HASH }
 
+  VotesTable:
+    # «صوّتوا مع الربع» (2026-11-20, lambdas/vote.py): id + "poll" (the resolved shows), id + "v#<p>" (one voter, p =
+    # sha256 of a secret on their phone), "_day#<date>" + "n" (the day's new polls). Gone the day after a poll's last show.
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: elyoxe-cinema-votes
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: id, AttributeType: S }
+        - { AttributeName: k, AttributeType: S }
+      KeySchema:
+        - { AttributeName: id, KeyType: HASH }
+        - { AttributeName: k, KeyType: RANGE }
+      TimeToLiveSpecification: { AttributeName: ttl, Enabled: true }
+
   # ---- Web Push code (bundles cryptography + py-vapid + pywebpush; layer built by deploy.sh
   # via `pip download --platform manylinux2014_x86_64`, not committed — infra/counter/layer/.gitignore) ----
   WebPushLayer:
@@ -217,6 +232,58 @@ Resources:
           # Thursday 12:00 Asia/Dubai (UTC+4, no DST) = Thursday 08:00 UTC.
           Type: Schedule
           Properties: { Schedule: "cron(0 8 ? * THU *)", Name: elyoxe-cinema-push-weekly, Description: "weekly new-releases push, Thursday noon Dubai" }
+
+  VoteRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement: [{ Effect: Allow, Principal: { Service: lambda.amazonaws.com }, Action: sts:AssumeRole }]
+      ManagedPolicyArns: [arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole]
+      Policies:
+        - PolicyName: votes-rw
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - { Effect: Allow, Action: [dynamodb:Query, dynamodb:PutItem, dynamodb:UpdateItem], Resource: !GetAtt VotesTable.Arn }
+              - { Effect: Allow, Action: ssm:GetParameter, Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/elyoxe/cinema/counter/vote-off" }
+
+  VoteFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: elyoxe-cinema-vote
+      CodeUri: lambdas/
+      Handler: vote.handler
+      Role: !GetAtt VoteRole.Arn
+      Timeout: 15
+      MemorySize: 256
+      Environment:
+        Variables:
+          VOTES_TABLE: !Ref VotesTable
+          ALLOWED_ORIGINS: !Join [",", !Ref AllowedOrigins]
+          SITE: "https://cinema.elyoxe.com"
+          OFF_PARAM: /elyoxe/cinema/counter/vote-off
+          DAY_CAP: "300"
+          VOTERS: "40"
+      Events:
+        Create:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /vote, Method: POST }
+        CreateOptions:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: /vote, Method: OPTIONS }
+        Read:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: "/vote/{id}", Method: GET }
+        Cast:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: "/vote/{id}", Method: POST }
+        CastOptions:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: "/vote/{id}", Method: OPTIONS }
+        Calendar:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Path: "/vote/{id}/ics", Method: GET }
 
   # ---- API ------------------------------------------------------------------------------------
   Api:

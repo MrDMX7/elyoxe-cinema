@@ -425,6 +425,51 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .fnote{padding:22px var(--gut) 0;color:var(--stone);font-size:13px}
 .freerow{inline-size:100%;margin-block-end:6px}
 
+/* ── «صوّتوا مع الربع» (2026-11-20): the ticket's button, the tray bar above the tab bar, and the poll page /v/ ── */
+.tk-vote{margin-block-start:8px}
+.tk-vote.on{border-color:var(--door);color:var(--door);font-weight:700}
+.vbar{position:fixed;inset-inline:12px;inset-block-end:calc(var(--tb) + env(safe-area-inset-bottom) + 10px);z-index:29;display:flex;flex-wrap:wrap;
+  align-items:center;gap:8px;padding:10px 12px;background:var(--wood);color:var(--night);border-radius:var(--r);box-shadow:0 8px 24px var(--shadow)}
+.vb-t{flex:1 1 140px;font-size:14px;font-weight:500}
+.vb-name{flex:1 1 100%;order:3;min-block-size:44px;padding-inline:12px;border:0;border-radius:10px;font:inherit;background:var(--night);color:var(--wood)}
+.vb-go{min-block-size:40px;padding-inline:14px}
+.vb-go:disabled{opacity:.5}
+.vb-x{inline-size:44px;block-size:44px;border:0;border-radius:22px;background:none;color:var(--night);font-size:22px;line-height:1;cursor:pointer}
+.vote .v-by{font-size:18px;font-weight:700}
+.vote .lede{margin-block:4px 14px;color:var(--sand);font-size:14px}
+.v-who{display:grid;gap:6px;margin-block-end:14px}
+.v-who label{font-weight:700}
+.v-row{display:flex;gap:8px}
+.v-row input,.v-note input{flex:1;min-block-size:46px;padding-inline:12px;border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--wood);font:inherit}
+.v-me{margin-block-end:12px;color:var(--sand);font-size:14px}
+.v-link{border:0;background:none;color:var(--door);font:inherit;font-weight:700;cursor:pointer;min-block-size:44px}
+.v-opts{display:grid;gap:10px}
+.vopt{display:grid;grid-template-columns:64px 1fr;gap:12px;padding:14px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r)}
+.vopt.lead{border-color:var(--door);box-shadow:0 0 0 1px var(--door)}
+.vo-when{display:grid;align-content:start;justify-items:center;gap:2px;text-align:center}
+.vo-when b{font:500 18px/1.1 var(--mono)}
+.vo-when small{color:var(--stone);font-size:12px}
+.vo-b{display:grid;gap:6px;min-inline-size:0}
+.vo-b h3{font-size:16px;font-weight:700;line-height:1.35}
+.vo-c,.vo-pr{font-size:13px;color:var(--sand)}
+.vo-pr .aed{inline-size:13px;block-size:13px}
+.vo-n{display:flex;flex-wrap:wrap;gap:6px}
+.vchip{padding:2px 10px;border-radius:12px;background:var(--well);font-size:13px}
+.vchip.me{background:var(--door);color:var(--on)}
+.vo-0{color:var(--stone);font-size:13px}
+.vo-pick{justify-self:start;min-block-size:44px;padding-inline:16px;border:1px solid var(--line);border-radius:22px;background:none;color:var(--wood);font:inherit;font-weight:700;cursor:pointer}
+.vo-pick.on{background:var(--door);border-color:var(--door);color:var(--on)}
+.vo-go{display:flex;flex-wrap:wrap;gap:8px;margin-block-start:4px}
+.vo-go .btn{flex:1 1 120px}
+.v-no{margin-block-start:12px}
+.v-no.on{border-color:var(--red);color:var(--red)}
+.v-note{display:grid;gap:6px;margin-block-start:14px;font-size:14px;color:var(--sand)}
+.v-h{margin:22px 0 8px;font-size:17px}
+.v-list{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.v-list li{display:grid;gap:2px;padding-block-end:8px;border-block-end:1px solid var(--line);font-size:14px}
+.v-list li span{color:var(--sand)}
+.v-list li q{color:var(--stone);font-size:13px}
+
 /* ── dark (owner 2026-10-22): follows the phone; the Meylis wood as the ground, the same saffron and teal lifted ── */
 @media (prefers-color-scheme:dark){
   :root{--night:#17120F;--paper:#231C18;--line:#3A302A;--wood:#F3EEE6;--stone:#A89A8C;--sand:#D9CFC2;--saff:#E0B15A;--door:#5FB8C2;

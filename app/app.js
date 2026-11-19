@@ -552,6 +552,27 @@
 
     /* the ticket */
     var sheet = q("[data-sheet]"), scrim = q("[data-scrim]"), openBtn = null, tkRow = null;
+    /* «صوّتوا مع الربع» (2026-11-20): the open show joins the tray (cinema.vote, at most 4) or leaves it */
+    var voteCur = null, voteBtn = q("[data-tk-vote]", sheet || d);
+    var sameShow = function (a, b2) { return a.k.fid === b2.k.fid && a.k.cin === b2.k.cin && a.k.date === b2.k.date && a.k.time === b2.k.time; };
+    var paintVoteBtn = function () {
+      if (!voteBtn) return;
+      voteBtn.hidden = !voteCur || !A.vote;
+      if (!voteCur) return;
+      var inIt = vtray().some(function (x) { return sameShow(x, voteCur); });
+      voteBtn.textContent = inIt ? tx("✓ في التصويت") : tx("+ للتصويت مع الربع");
+      voteBtn.classList.toggle("on", inIt);
+    };
+    if (voteBtn) voteBtn.addEventListener("click", function () {
+      if (!voteCur) return;
+      buzz();
+      var v = vtray(), at = -1;
+      v.forEach(function (x, i) { if (sameShow(x, voteCur)) at = i; });
+      if (at >= 0) { v.splice(at, 1); toast(tx("انشال من التصويت")); }
+      else if (v.length >= 4) { toast(tx("التصويت فيه 4 عروض")); return; }
+      else { v.push(voteCur); toast(tx("انضاف للتصويت")); }
+      vsave(v); paintVoteBtn();
+    });
     /* what the ticket says about money, redrawn when the card changes or the rules arrive: each seat after the card (the
        list price struck after it), a line on the card (its terms, or why it does not apply here) with the cards that lower
        this show's price as chips, and «نفس الفيلم أرخص» measured after the card too */
@@ -639,6 +660,10 @@
       q("[data-tk-day]", sheet).textContent = (s.d === A.today ? tx("اليوم") : s.d === A.tomorrow ? tx("بكرة") : s.d) + " · " + tt[1];
       q("[data-tk-book]", sheet).href = s.b || "#";
       tkRow = r; fillTicket();
+      var fidEl = b.closest("[data-fid]") || q(".pg.film[data-fid]"), cinRow = T.c[r[7]] || [];
+      voteCur = fidEl && cinRow[1] ? { k: { city: cinRow[1], date: r[0], cin: r[7], fid: fidEl.dataset.fid, time: r[1], hall: r[3] || "" },
+        t: q("[data-tk-film]", sheet).textContent, c: q("[data-tk-cin]", sheet).textContent, d: r[0], tm: r[1] } : null;
+      paintVoteBtn();
       if (!DISC) loadDisc().then(function () { if (tkRow === r) fillTicket(); paintPrices(); paintNearest(); });
       sheet.hidden = false; scrim.hidden = false;
       history.pushState({ sheet: 1 }, "");
@@ -736,5 +761,158 @@
     });
     var mine = store.get("city");
     if (mine && q('.chip[data-c="' + mine + '"]', fcity)) paintFree(mine);
+  }
+
+  // «صوّتوا مع الربع» (2026-11-20): the tray bar (the shows collected from tickets) and the poll page /v/?p=<id>,
+  // both on the counter API (infra/counter/lambdas/vote.py). The poll holds the shows as the site publishes them.
+  var VAPI = A.vote || "";
+  var vbar = q("[data-vbar]");
+  function vtray() { try { var v = JSON.parse(store.get("vote") || "[]"); return Array.isArray(v) ? v.slice(0, 4) : []; } catch (e) { return []; } }
+  function vsave(v) { store.set("vote", v.length ? JSON.stringify(v.slice(0, 4)) : ""); paintVbar(); }
+  function paintVbar() {
+    if (!vbar) return;
+    var v = vtray();
+    vbar.hidden = !v.length || !VAPI;
+    if (!v.length) return;
+    q("[data-vbar-t]", vbar).textContent = v.length === 1 ? tx("عرض واحد للتصويت، ضيف عرض ثاني") : v.length + " " + tx("عروض للتصويت");
+    q("[data-vbar-send]", vbar).disabled = v.length < 2;
+  }
+  if (vbar) {
+    paintVbar();
+    var vname = q("[data-vbar-name]", vbar);
+    q("[data-vbar-clear]", vbar).addEventListener("click", function () { buzz(); vsave([]); vname.hidden = true; toast(tx("انشال التصويت")); });
+    q("[data-vbar-send]", vbar).addEventListener("click", function () {
+      var v = vtray(), btn = this;
+      if (v.length < 2) return;
+      var name = store.get("vname") || "";
+      if (!name) {
+        if (vname.hidden) { vname.hidden = false; vname.focus(); return; }
+        name = (vname.value || "").trim().slice(0, 24);
+        if (!name) { vname.focus(); return; }
+        store.set("vname", name);
+      }
+      buzz(); btn.disabled = true;
+      fetch(VAPI + "vote", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ options: v.map(function (x) { return x.k; }), by: name, lang: A.lang }) })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (res) {
+          btn.disabled = false;
+          if (!res.ok || !res.j.id) {
+            toast(res.j && res.j.error === "show" ? tx("عرض من العروض خلص أو تغيّر، شيله وجرّب") : tx("ما قدرنا ننشئ التصويت، جرّب بعد شوي"));
+            return;
+          }
+          var url = location.origin + (A.lang === "en" ? "/en" : "") + "/v/?p=" + res.j.id;
+          vsave([]); vname.hidden = true;
+          var go = function () { location.href = url; }, text = name + " " + tx("يبا يعرف شو يناسبكم، صوّتوا هني:");
+          if (navigator.share) navigator.share({ title: tx("وين نروح؟"), text: text, url: url }).then(go, go);
+          else { share(tx("وين نروح؟"), text, url); setTimeout(go, 1500); }
+        }, function () { btn.disabled = false; toast(tx("ما قدرنا ننشئ التصويت، جرّب بعد شوي")); });
+    });
+  }
+
+  var poll = q("[data-poll]");
+  if (poll) {
+    var pid = (new URLSearchParams(location.search).get("p") || "").replace(/[^A-Za-z0-9]/g, "").slice(0, 10);
+    var mineKey = "v." + pid, me = null;
+    try { me = JSON.parse(store.get(mineKey) || "null"); } catch (e) {}
+    if (!me || !me.vk) {
+      var rnd = new Uint8Array(18);
+      (window.crypto || window.msCrypto).getRandomValues(rnd);
+      me = { vk: btoa(String.fromCharCode.apply(null, rnd)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""), p: "" };
+    }
+    var vstate = null, myPicks = null, busy = false, myName = store.get("vname") || "";
+    var errEl = q("[data-v-err]", poll), optsEl = q("[data-v-opts]", poll), listEl = q("[data-v-list]", poll);
+    var who = q("[data-v-who]", poll), nameIn = q("[data-v-name]", poll), noteIn = q("[data-v-note]", poll);
+    var isApple = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && "ontouchend" in d);
+    var timer = 0;
+    var fail = function (msg) { errEl.textContent = msg; errEl.hidden = false; optsEl.innerHTML = ""; clearInterval(timer); };
+    var dayWord = function (dd) { return dd === A.today ? tx("اليوم") : dd === A.tomorrow ? tx("بكرة") : dd.slice(8, 10) + "/" + dd.slice(5, 7); };
+    var pick = function (o, ar, en) { return A.lang === "en" ? o[en] || o[ar] : o[ar] || o[en]; };
+    var calHref = function (o) {
+      if (isApple) return VAPI + "vote/" + pid + "/ics";
+      var p2 = function (n) { return (n < 10 ? "0" : "") + n; };
+      var t0 = new Date(o.date + "T" + o.time + ":00+04:00"), t1 = new Date(t0.getTime() + 150 * 60000);
+      var z = function (t) { return t.getUTCFullYear() + p2(t.getUTCMonth() + 1) + p2(t.getUTCDate()) + "T" + p2(t.getUTCHours()) + p2(t.getUTCMinutes()) + "00Z"; };
+      return "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent(pick(o, "title_ar", "title_en") + " — " + pick(o, "cin_ar", "cin_en")) +
+        "&dates=" + z(t0) + "/" + z(t1) + "&details=" + encodeURIComponent(location.href);
+    };
+    var render = function () {
+      var st = vstate;
+      if (!st) return;
+      q("[data-v-by]", poll).textContent = st.by ? st.by + " " + tx("يبا يعرف شو يناسبكم") : tx("اختاروا العرض اللي يناسبكم");
+      var mine = st.votes.filter(function (v) { return me.p && v.p === me.p; })[0];
+      if (myPicks === null) myPicks = mine ? mine.picks.slice() : [];
+      var per = st.opts.map(function (_, i) { return st.votes.filter(function (v) { return v.picks.indexOf(i) >= 0; }); });
+      var best = -1, bestN = 0;
+      per.forEach(function (vs, i) { if (vs.length > bestN) { best = i; bestN = vs.length; } });
+      optsEl.innerHTML = st.opts.map(function (o, i) {
+        var t = t12(o.time), on = myPicks.indexOf(i) >= 0, lead = i === best, hall = pick(o, "hall_ar", "hall_en");
+        return '<article class="vopt' + (lead ? " lead" : "") + '"><div class="vo-when"><b>' + t[0] + "</b><small>" + t[1] + " · " + dayWord(o.date) + "</small></div>" +
+          '<div class="vo-b"><h3 dir="auto">' + esc(pick(o, "title_ar", "title_en")) + '</h3><p class="vo-c">' + esc(pick(o, "cin_ar", "cin_en")) +
+          (hall && hall !== "Standard" && hall !== "عادية" ? " · " + esc(hall) : "") + "</p>" +
+          (o.price ? '<p class="vo-pr">' + tx("من") + " <b>" + fmt(o.price) + "</b>" + AED + "</p>" : "") +
+          '<p class="vo-n">' + (per[i].length ? per[i].map(function (v) { return '<span class="vchip' + (me.p && v.p === me.p ? " me" : "") + '">' + esc(v.name) + "</span>"; }).join("")
+            : '<span class="vo-0">' + tx("محد اختاره للحين") + "</span>") + "</p>" +
+          '<button type="button" class="vo-pick' + (on ? " on" : "") + '" data-pick="' + i + '" aria-pressed="' + on + '">' + (on ? "✓ " : "") + tx("أنا معكم") + "</button>" +
+          (lead ? '<div class="vo-go">' + (o.book ? '<a class="btn velvet" href="' + esc(o.book) + '" target="_blank" rel="noopener nofollow" data-book>' + tx("احجز") + "</a>" : "") +
+            '<a class="btn ghost" href="' + esc(calHref(o)) + '"' + (isApple ? "" : ' target="_blank" rel="noopener"') + ">" + tx("أضف للتقويم") + "</a></div>" : "") +
+          "</div></article>";
+      }).join("");
+      listEl.innerHTML = st.votes.length ? st.votes.map(function (v) {
+        var what = v.no ? tx("ما يقدر هالمرة") : v.picks.map(function (i) { var o = st.opts[i]; return o ? t12(o.time)[0] + " " + pick(o, "title_ar", "title_en") : ""; }).join("، ");
+        return "<li><b>" + esc(v.name) + "</b><span>" + esc(what) + "</span>" + (v.note ? "<q>" + esc(v.note) + "</q>" : "") + "</li>";
+      }).join("") : '<li class="vo-0">' + tx("محد صوّت للحين، كن أول واحد") + "</li>";
+      q("[data-v-no]", poll).classList.toggle("on", !!(mine && mine.no));
+      who.hidden = !!myName;
+      q("[data-v-me]", poll).hidden = !myName;
+      q("[data-v-myname]", poll).textContent = myName;
+      if (mine && d.activeElement !== noteIn) noteIn.value = mine.note || "";
+    };
+    var load = function () {
+      if (!pid || !VAPI || d.hidden || busy) return;
+      fetch(VAPI + "vote/" + pid, { cache: "no-store" })
+        .then(function (r) { if (r.status === 404) { fail(tx("هالتصويت خلص أو الرابط غلط.")); return null; } return r.ok ? r.json() : null; })
+        .then(function (j) { if (j && j.opts && !busy) { vstate = j; errEl.hidden = true; render(); } }, function () {});
+    };
+    var send = function (no) {
+      if (!myName) { who.hidden = false; nameIn.focus(); toast(tx("اكتب اسمك أول")); return; }
+      busy = true;
+      fetch(VAPI + "vote/" + pid, { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vk: me.vk, name: myName, picks: no ? [] : myPicks, no: !!no, note: (noteIn.value || "").slice(0, 60) }) })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (res) {
+          busy = false;
+          if (!res.ok) { toast(tx("ما انحفظ صوتك، جرّب مرة ثانية")); return; }
+          me.p = res.j.me; store.set(mineKey, JSON.stringify(me)); vstate = res.j; render();
+        }, function () { busy = false; toast(tx("ما انحفظ صوتك، جرّب مرة ثانية")); });
+    };
+    if (!pid || !VAPI) fail(tx("الرابط ناقص. اطلب من اللي أرسله رابط جديد."));
+    else {
+      load();
+      timer = setInterval(load, 10000);
+      d.addEventListener("visibilitychange", function () { if (!d.hidden) load(); });
+    }
+    optsEl.addEventListener("click", function (e) {
+      var b = e.target.closest && e.target.closest("[data-pick]");
+      if (!b || myPicks === null) return;
+      buzz();
+      var i = +b.dataset.pick, k = myPicks.indexOf(i);
+      if (k >= 0) myPicks.splice(k, 1); else myPicks.push(i);
+      render(); send(false);
+    });
+    q("[data-v-no]", poll).addEventListener("click", function () { buzz(); myPicks = []; render(); send(true); });
+    who.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = (nameIn.value || "").trim().slice(0, 24);
+      if (!v) return;
+      myName = v; store.set("vname", v); render();
+      if (myPicks && myPicks.length) send(false);
+    });
+    q("[data-v-rename]", poll).addEventListener("click", function () { myName = ""; store.set("vname", ""); nameIn.value = ""; render(); nameIn.focus(); });
+    noteIn.addEventListener("change", function () {
+      var mine = vstate && vstate.votes.filter(function (v) { return me.p && v.p === me.p; })[0];
+      if (myName && mine) send(!!mine.no);
+    });
+    q("[data-v-share]", poll).addEventListener("click", function () { buzz(); share(tx("وين نروح؟"), tx("صوّتوا هني:"), location.href); });
   }
 })();

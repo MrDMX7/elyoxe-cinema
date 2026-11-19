@@ -50,6 +50,8 @@ def counter_api():
         return ""
 
 
+VOTE_API = counter_api()   # «صوّتوا مع الربع» lives on the counter's API (infra/counter, lambdas/vote.py)
+
 CITIES = [("dubai", "دبي"), ("abu-dhabi", "أبوظبي"), ("sharjah", "الشارقة"), ("al-ain", "العين"), ("ajman", "عجمان"),
           ("ras-al-khaimah", "رأس الخيمة"), ("fujairah", "الفجيرة"), ("umm-al-quwain", "أم القيوين")]
 CITY = dict(CITIES)
@@ -98,6 +100,44 @@ ASK_QS = ["شو نوع الفيلم؟", "يناسب العيال؟", "عن شو 
 # build by main() (one language per process; tests set it and reset it).
 LANG = "ar"
 EN = {
+    # «صوّتوا مع الربع» (2026-11-20)
+    "+ للتصويت مع الربع": "+ Add to a group vote",
+    "✓ في التصويت": "✓ In the vote",
+    "انضاف للتصويت": "Added to the vote",
+    "انشال من التصويت": "Removed from the vote",
+    "التصويت فيه 4 عروض": "The vote already has 4 shows",
+    "عرض واحد للتصويت، ضيف عرض ثاني": "One show to vote on, add another",
+    "عروض للتصويت": "shows to vote on",
+    "انشال التصويت": "Vote cleared",
+    "عرض من العروض خلص أو تغيّر، شيله وجرّب": "One of the shows has ended or changed; remove it and try again",
+    "ما قدرنا ننشئ التصويت، جرّب بعد شوي": "Couldn't create the vote, try again shortly",
+    "وين نروح؟": "Where shall we go?",
+    "يبا يعرف شو يناسبكم، صوّتوا هني:": "wants to know what suits you, vote here:",
+    "الرابط ناقص. اطلب من اللي أرسله رابط جديد.": "This link is incomplete. Ask whoever sent it for a new one.",
+    "يبا يعرف شو يناسبكم": "wants to know what suits you",
+    "اختاروا العرض اللي يناسبكم": "Pick the show that suits you",
+    "محد اختاره للحين": "No one yet",
+    "أنا معكم": "I'm in",
+    "هالتصويت خلص أو الرابط غلط.": "This vote has ended or the link is wrong.",
+    "اكتب اسمك أول": "Write your name first",
+    "ما انحفظ صوتك، جرّب مرة ثانية": "Your vote wasn't saved, try again",
+    "ما يقدر هالمرة": "can't make it this time",
+    "محد صوّت للحين، كن أول واحد": "No votes yet, be the first",
+    "صوّتوا هني:": "Vote here:",
+    "أضف للتقويم": "Add to calendar",
+    "أرسل للربع": "Send to friends",
+    "اسمك (يطلع لربعك)": "Your name (your friends see it)",
+    "شيل التصويت": "Clear the vote",
+    "اسمك؟": "Your name?",
+    "تمام": "OK",
+    "تصوّت باسم": "Voting as",
+    "ما أقدر هالمرة": "Can't make it this time",
+    "كلمة للربع (اختياري)": "A word to the group (optional)",
+    "الربع": "The group",
+    "أرسلها للربع مرة ثانية": "Send it to the group again",
+    "اختار كل العروض اللي تناسبك، واللي ياخذ أكثر أصوات يطلع له زر الحجز.": "Tick every show that suits you; the one with the most votes gets the booking button.",
+    "تصويت الربع": "Group vote",
+    "صوّتوا على الفيلم والوقت اللي يناسبكم، وشوفوا النتيجة على طول.": "Vote on the film and time that suit you, and see the result as it happens.",
     # «عروض مجانية» (2026-11-19)
     "ببلاش": "Free", "الدخول في الرابط": "Entry on their page", "بالتسجيل": "Register", "من": "From",
     "الوقت في الرابط": "Time on their page", "التفاصيل من المنظّم": "Details from the organiser", "كل الإمارات": "All emirates",
@@ -188,7 +228,8 @@ EN = {
     "أي وقت": "Any time", "من 3 العصر": "From 3 pm", "من 5 العصر": "From 5 pm", "من 7 بالليل": "From 7 pm", "من 9 بالليل": "From 9 pm",
     "من الساعة": "From what time", "ما في عروض": "No shows", "ما في أفلام": "No films",
 }
-JS_KEYS = ["بالليل", "الصبح", "الظهر", "مساء", "درهم", "انحفظ الرابط", "انشالت من سينماتي", "انضافت لسينماتي", "أقل من كيلو", "كم", "الأفلام",
+JS_KEYS = ["+ للتصويت مع الربع", "✓ في التصويت", "انضاف للتصويت", "انشال من التصويت", "التصويت فيه 4 عروض", "عرض واحد للتصويت، ضيف عرض ثاني", "عروض للتصويت", "انشال التصويت", "عرض من العروض خلص أو تغيّر، شيله وجرّب", "ما قدرنا ننشئ التصويت، جرّب بعد شوي", "وين نروح؟", "يبا يعرف شو يناسبكم، صوّتوا هني:", "الرابط ناقص. اطلب من اللي أرسله رابط جديد.", "يبا يعرف شو يناسبكم", "اختاروا العرض اللي يناسبكم", "محد اختاره للحين", "أنا معكم", "هالتصويت خلص أو الرابط غلط.", "اكتب اسمك أول", "ما انحفظ صوتك، جرّب مرة ثانية", "ما يقدر هالمرة", "محد صوّت للحين، كن أول واحد", "صوّتوا هني:", "أضف للتقويم", "من", "احجز",
+           "بالليل", "الصبح", "الظهر", "مساء", "درهم", "انحفظ الرابط", "انشالت من سينماتي", "انضافت لسينماتي", "أقل من كيلو", "كم", "الأفلام",
            "السينمات", "ما لقينا شي بهالاسم", "يبدأ الحين", "بعد", "د", "ما في فيلم يبدأ خلال ساعتين في", "ما في أفلام بهالتصنيف اليوم",
            "أقرب سينما لك", "لحظة، نحدد مكانك…", "ما قدرنا نعرف مكانك — اختار مدينتك", "الإعلان", "سكّر", "في", "أقل", "المزيد", "اليوم", "بكرة",
            "يخلص تقريباً", "إنجليزي", "عربي", "هندي", "تاميل", "مالايالام", "تيلوغو", "السعر في الشباك", "نفس الفيلم أرخص بـ", "لحظة…",
@@ -458,6 +499,33 @@ class App:
         return ('<footer class="foot">' + "".join(f'<a href="{h}">{t}</a>' for h, t in links) + self.langlink(path)
                 + f'<small>{tr("سينما من Elyoxe")}</small></footer>')
 
+    def vbar(self):
+        """«صوّتوا مع الربع» (2026-11-20): the shows a visitor collected from tickets (app.js keeps them as cinema.vote),
+        above the tab bar until they are sent or cleared."""
+        return (f'<div class="vbar" data-vbar hidden><p class="vb-t" data-vbar-t></p>'
+                f'<input class="vb-name" data-vbar-name maxlength="24" autocomplete="nickname" placeholder="{tr("اسمك (يطلع لربعك)")}" hidden>'
+                f'<button type="button" class="btn velvet vb-go" data-vbar-send>{tr("أرسل للربع")}</button>'
+                f'<button type="button" class="vb-x" data-vbar-clear aria-label="{tr("شيل التصويت")}">×</button></div>')
+
+    def votepage(self):
+        """/v/?p=<id> (2026-11-20): the poll's own page. A shell — the poll is read from the counter API by app.js, so a
+        link opens it at once, no build. noindex, never in the sitemap; it replaces the old backend-less /v/ (2026-09)."""
+        body = (f'<div class="pg vote">{self.bar(tr("وين نروح؟"))}<section class="sec" data-poll>'
+                f'<p class="v-by" data-v-by></p><p class="lede">{tr("اختار كل العروض اللي تناسبك، واللي ياخذ أكثر أصوات يطلع له زر الحجز.")}</p>'
+                f'<form class="v-who" data-v-who hidden><label for="vn">{tr("اسمك؟")}</label><div class="v-row">'
+                f'<input id="vn" data-v-name maxlength="24" autocomplete="nickname" required><button class="btn velvet">{tr("تمام")}</button></div></form>'
+                f'<p class="v-me" data-v-me hidden>{tr("تصوّت باسم")} <b data-v-myname></b> <button type="button" class="v-link" data-v-rename>{tr("غيّر")}</button></p>'
+                f'<div class="v-opts" data-v-opts></div>'
+                f'<button type="button" class="btn ghost wide v-no" data-v-no>{tr("ما أقدر هالمرة")}</button>'
+                f'<label class="v-note">{tr("كلمة للربع (اختياري)")}<input data-v-note maxlength="60"></label>'
+                f'<h2 class="v-h">{tr("الربع")}</h2><ul class="v-list" data-v-list></ul>'
+                f'<p class="empty" data-v-err hidden></p>'
+                f'<div class="acts"><button type="button" class="btn ghost" data-v-share>{svg("share")}{tr("أرسلها للربع مرة ثانية")}</button></div>'
+                f'</section></div>')
+        self.page(self.base + "v/", f'{tr("تصويت الربع")} — {tr("سينما الإمارات")}',
+                  tr("صوّتوا على الفيلم والوقت اللي يناسبكم، وشوفوا النتيجة على طول."), body, "vote",
+                  head_extra='<meta name="robots" content="noindex">')
+
     def hourpick(self):
         """«أي وقت ▾» (owner 2026-11-19): the phone's own picker; app.js hides what starts before the hour and keeps it for the day."""
         opts = f'<option value="">{tr("أي وقت")}</option>' + "".join(f'<option value="{h}">{tr(lab)}</option>' for h, lab in HOURS)
@@ -466,7 +534,9 @@ class App:
     # -------- page frame
     def page(self, path, ttl, desc, body, kind, head_extra="", canon=None):
         canon = SITE + path if self.live else (canon or (SITE + path))
-        if kind != "home":
+        if kind != "vote":
+            body += self.vbar()
+        if kind not in ("home", "vote"):
             body += self.tabbar({"film": "films", "cinema": "cinemas"}.get(kind))
         body = body + (self.footer(path) if self.live else "")
         doc = f"""<!doctype html>
@@ -487,7 +557,7 @@ class App:
 <script>(function(){{addEventListener("pagereveal",function(e){{var t=e.viewTransition,a=window.navigation&&navigation.activation;if(t&&a&&a.from&&a.entry&&a.navigationType==="traverse"&&a.entry.index<a.from.index)document.documentElement.dataset.nav="pop";else if(t)document.documentElement.dataset.nav="push";if(t)t.finished.finally(function(){{delete document.documentElement.dataset.nav}})}});addEventListener("pageswap",function(e){{var t=e.viewTransition,a=e.activation;if(t&&a&&a.navigationType==="traverse"&&a.entry&&a.from&&a.entry.index<a.from.index)document.documentElement.dataset.nav="pop";else if(t)document.documentElement.dataset.nav="push"}})}})()</script>
 </head><body>{SPRITE}{body}{self.table()}
 <div class="scrim" data-scrim hidden></div><div class="toast" data-toast role="status" hidden></div>
-<script>window.APP={{base:"{self.base}",film:"{self.u('f', '')[:-1]}",lang:"{LANG}",ask:"{ASK_API}",today:"{self.k.today}",tomorrow:"{self.k.tomorrow}",logos:{json.dumps(self.logos)},cities:{json.dumps({c: cityname(c) for c, _ in CITIES}, ensure_ascii=False)},t:{json.dumps({k: EN[k] for k in JS_KEYS} if LANG == "en" else {}, ensure_ascii=False)}}}</script>
+<script>window.APP={{vote:"{VOTE_API}",base:"{self.base}",film:"{self.u('f', '')[:-1]}",lang:"{LANG}",ask:"{ASK_API}",today:"{self.k.today}",tomorrow:"{self.k.tomorrow}",logos:{json.dumps(self.logos)},cities:{json.dumps({c: cityname(c) for c, _ in CITIES}, ensure_ascii=False)},t:{json.dumps({k: EN[k] for k in JS_KEYS} if LANG == "en" else {}, ensure_ascii=False)}}}</script>
 <script src="{self.base}assets/{self.js_name}" defer></script>
 </body></html>"""
         if LANG == "en":
@@ -853,7 +923,7 @@ class App:
         ctabs = "".join(f'<button type="button" class="chip" data-ctab="{c}">{cityname(c)}</button>' for c in cities)
         where = (f'<section class="sec where"><h2>{tr("وين يعرض")}</h2>{self.dayswitch()}<div class="chips" data-ctabs>{ctabs}</div>{sched}'
                  f'<p class="empty" data-past hidden>{tr("خلصت عروض اليوم هني، شوف بكرة")}.</p></section>') if shows else ""
-        body = f"""<div class="pg film">{self.bar(t, right=self.share_btn(t + " — " + tr("سينما الإمارات")))}
+        body = f"""<div class="pg film" data-fid="{E(fid)}">{self.bar(t, right=self.share_btn(t + " — " + tr("سينما الإمارات")))}
 <section class="fhero" style="--pc:{E(f.get('poster_color') or '#3a302a')}">{hero_bg}<div class="fh-in">{self.poster(fid, cls="pst big vt", eager=True)}
 <div class="fh-t"><h2 class="ft">{E(t)}</h2>{f'<p class="fte" lang="en" dir="ltr">{E(f["title"])}{" · " + str(f["year"]) if f.get("year") else ""}</p>' if f.get("title") and f.get("title") != t else ""}
 <div class="fchips">{"".join(chips)}</div>{f'<p class="fg">{genres}</p>' if genres else ""}</div></div></section>
@@ -1034,6 +1104,7 @@ class App:
 <div class="tk-time"><small data-tk-day></small><b data-tk-time></b></div></div>
 <table class="tk-seats"><tbody data-tk-seats></tbody></table><div class="tk-card" data-tk-card hidden></div>
 <a class="btn velvet wide" data-tk-book data-book target="_blank" rel="noopener nofollow">{tr('احجز')}</a>
+<button type="button" class="btn ghost wide tk-vote" data-tk-vote hidden>{tr('+ للتصويت مع الربع')}</button>
 <div class="tk-row"><button type="button" class="btn ghost" data-tk-share>{svg("share")}{tr('شارك')}</button><button type="button" class="btn ghost" data-tk-close>{tr('سكّر')}</button></div></div></section>"""
 
     # -------- assets
@@ -1080,7 +1151,8 @@ class App:
             self.cinema(cid)
         if self.live:
             self.free()
-        return 1 + len(self.films) + len(self.cins) + (1 if self.live else 0)
+            self.votepage()
+        return 1 + len(self.films) + len(self.cins) + (2 if self.live else 0)
 
 
 def main():
