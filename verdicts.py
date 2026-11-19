@@ -393,6 +393,11 @@ class _UsageLogged:
         self.messages = self
 
     def create(self, **kw):
+        # Haiku 5.5 thinks by default on the API (the CLI road runs with MAX_THINKING_TOKENS=0). With the callers'
+        # small max_tokens (700 for a verdict) the thinking ate every token: stop_reason max_tokens, a thinking block
+        # and no text, so every verdict on the GitHub runner failed «invalid JSON» from 10-28 on (found 2026-11-19).
+        # Off unless a caller asks; Haiku 5.5 accepts «disabled» at its default effort.
+        kw.setdefault("thinking", {"type": "disabled"})
         resp = self._client.messages.create(**kw)
         try:
             import sys
