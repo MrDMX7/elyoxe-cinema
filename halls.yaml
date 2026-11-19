@@ -280,6 +280,27 @@ chains:
         source: https://www.alshaabcinema.com/
         confidence: low
 
+  cinemax:
+    name: Cinemax
+    name_ar: سينماكس
+    short: Cinemax
+    halls: []
+
+  cinepolis:
+    name: Cinépolis
+    name_ar: سينيبوليس
+    short: Cinépolis
+    halls:
+      - key: JUNIOR
+        codes: [KIDS]
+        match: junior
+        name: Junior
+        name_ar: جونيور
+        what_ar: قاعة العائلات في الواحة مول؛ فيها زحليقة كبيرة وحوض كرات وألعاب يلعب فيها الياهل قبل الفيلم مع أهله، وتختار بين كرسي عادي أو لاونجر بالصف الأول أو بين باغ دبل.
+        what_en: The family hall at Oasis Mall, with a big slide, a ball pit and a jungle gym for children before the film, under their parents' eye; seats are standard chairs, front-row loungers or double bean bags.
+        source: https://api.cinepolisgulf.com/api/generic/experiences?country_id=2
+        confidence: high
+
   cineroyal:
     name: Cine Royal
     name_ar: سيني رويال
@@ -412,6 +433,8 @@ labels:
     BOUTIQUE: [ذا بوتيك, The Boutique]
   alshaab:
     PEARL: [بيرل سويت, Pearl Suite]
+  cinepolis:
+    JUNIOR: [جونيور, Junior]
   cineroyal:
     VIP: [رويال سويتس, Royal Suites]
     ROYALPLUS: [رويال بلس, Royal Plus]

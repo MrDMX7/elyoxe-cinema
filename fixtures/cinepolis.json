@@ -1,0 +1,1994 @@
+{
+  "cinemas": [
+    {
+      "id": "cinepolis-oasis-mall-sharjah",
+      "chain": "cinepolis",
+      "name": "Cinepolis Oasis Mall - Sharjah",
+      "name_ar": "الواحة مول - الشارقة",
+      "city": "sharjah",
+      "mall": "Oasis Mall",
+      "address": "Level 2, Oasis Mall, Al Wahda street, Sharjah, United Arab Emirates",
+      "maps": null,
+      "lat": null,
+      "lng": null
+    }
+  ],
+  "shows": [
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Hindi) (3D)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "14:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 48.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 58.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 78.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011586",
+      "lang": "hi"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "15:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011589",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "15:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bouma (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "15:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011623",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Scene (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-26",
+      "time": "15:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011598",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Hindi)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "16:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011586",
+      "lang": "hi"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "16:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "I, Object",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 92,
+      "date": "2026-09-26",
+      "time": "16:25",
+      "hall": "KIDS",
+      "hall_label": "Junior",
+      "prices": [
+        {
+          "seat": "Junior Lounger",
+          "aed": 48.0
+        },
+        {
+          "seat": "Junior Standard",
+          "aed": 51.0
+        },
+        {
+          "seat": "Junior Double Bean Bag",
+          "aed": 93.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011648",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011589",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "17:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "18:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bouma (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "18:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011623",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Hindi) (3D)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "18:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 48.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 58.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 78.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011586",
+      "lang": "hi"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Scene (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-26",
+      "time": "18:25",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011598",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "18:35",
+      "hall": "KIDS",
+      "hall_label": "Junior",
+      "prices": [
+        {
+          "seat": "Junior Lounger",
+          "aed": 48.0
+        },
+        {
+          "seat": "Junior Standard",
+          "aed": 51.0
+        },
+        {
+          "seat": "Junior Double Bean Bag",
+          "aed": 93.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011496",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "19:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "19:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011589",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bouma (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "19:50",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011623",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "20:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bouma (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "20:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011623",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "20:40",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "20:50",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011589",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-26",
+      "time": "21:00",
+      "hall": "KIDS",
+      "hall_label": "Junior",
+      "prices": [
+        {
+          "seat": "Junior Lounger",
+          "aed": 48.0
+        },
+        {
+          "seat": "Junior Standard",
+          "aed": 51.0
+        },
+        {
+          "seat": "Junior Double Bean Bag",
+          "aed": 93.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011656",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Scene (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-26",
+      "time": "21:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011598",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "21:40",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Hindi) (3D)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "22:10",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 48.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 58.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 78.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011586",
+      "lang": "hi"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bouma (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "22:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011623",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "22:40",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "22:50",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011589",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bouma (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "23:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011623",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "23:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "12:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "OM-Chapter 1: Udhiram (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "12:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011674",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-27",
+      "time": "12:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011589",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Scene (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-27",
+      "time": "12:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011598",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ene Repeat (Telugu)",
+      "film_lang": "Telugu",
+      "film_rating": "18TC",
+      "runtime": 167,
+      "date": "2026-09-27",
+      "time": "12:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011665",
+      "lang": "te"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "OM-Chapter 1: Udhiram (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011674",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Sathyavan Savithri (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011653",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Aakasamlo Oka Tara (Telugu)",
+      "film_lang": "Telugu",
+      "film_rating": "PG13",
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "13:10",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011671",
+      "lang": "te"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "13:40",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Three Wishes For Cinderella",
+      "film_lang": "English",
+      "film_rating": "G",
+      "runtime": 85,
+      "date": "2026-09-27",
+      "time": "14:00",
+      "hall": "KIDS",
+      "hall_label": "Junior",
+      "prices": [
+        {
+          "seat": "Junior Lounger",
+          "aed": 48.0
+        },
+        {
+          "seat": "Junior Standard",
+          "aed": 51.0
+        },
+        {
+          "seat": "Junior Double Bean Bag",
+          "aed": 93.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011645",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "14:40",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Appa Kutty (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "18TC",
+      "runtime": 170,
+      "date": "2026-09-27",
+      "time": "14:55",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011662",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "OM-Chapter 1: Udhiram (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "15:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011674",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Hindi) (3D)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-27",
+      "time": "15:35",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 48.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 58.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 78.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011586",
+      "lang": "hi"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "15:50",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "I, Object",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 92,
+      "date": "2026-09-27",
+      "time": "16:00",
+      "hall": "KIDS",
+      "hall_label": "Junior",
+      "prices": [
+        {
+          "seat": "Junior Lounger",
+          "aed": 48.0
+        },
+        {
+          "seat": "Junior Standard",
+          "aed": 51.0
+        },
+        {
+          "seat": "Junior Double Bean Bag",
+          "aed": 93.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011648",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-27",
+      "time": "16:10",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011589",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Aakasamlo Oka Tara (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "16:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011668",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "16:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bouma (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "16:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011623",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "17:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-27",
+      "time": "18:10",
+      "hall": "KIDS",
+      "hall_label": "Junior",
+      "prices": [
+        {
+          "seat": "Junior Lounger",
+          "aed": 48.0
+        },
+        {
+          "seat": "Junior Standard",
+          "aed": 51.0
+        },
+        {
+          "seat": "Junior Double Bean Bag",
+          "aed": 93.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011496",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "OM-Chapter 1: Udhiram (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "18:10",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011674",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-27",
+      "time": "18:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011589",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "19:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "OM-Chapter 1: Udhiram (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "19:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011674",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Scene (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-27",
+      "time": "19:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011598",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bouma (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "19:25",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011623",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Aakasamlo Oka Tara (Telugu)",
+      "film_lang": "Telugu",
+      "film_rating": "PG13",
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "19:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011671",
+      "lang": "te"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "20:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "OM-Chapter 1: Udhiram (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "20:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011674",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-27",
+      "time": "20:35",
+      "hall": "KIDS",
+      "hall_label": "Junior",
+      "prices": [
+        {
+          "seat": "Junior Lounger",
+          "aed": 48.0
+        },
+        {
+          "seat": "Junior Standard",
+          "aed": 51.0
+        },
+        {
+          "seat": "Junior Double Bean Bag",
+          "aed": 93.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011656",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "21:40",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "OM-Chapter 1: Udhiram (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "21:40",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011674",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bouma (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "21:55",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011623",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Hindi) (3D)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-27",
+      "time": "21:55",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 48.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 58.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 78.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011586",
+      "lang": "hi"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Ramayana: Rise of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-27",
+      "time": "22:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011589",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "OM-Chapter 1: Udhiram (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "22:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011674",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Aakasamlo Oka Tara (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "22:40",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011668",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "22:40",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "OM-Chapter 1: Udhiram (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "23:10",
+      "hall": "KIDS",
+      "hall_label": "Junior",
+      "prices": [
+        {
+          "seat": "Junior Lounger",
+          "aed": 48.0
+        },
+        {
+          "seat": "Junior Standard",
+          "aed": 51.0
+        },
+        {
+          "seat": "Junior Double Bean Bag",
+          "aed": 93.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011674",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinepolis-oasis-mall-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "23:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 40.0
+        },
+        {
+          "seat": "Deluxe",
+          "aed": 50.0
+        },
+        {
+          "seat": "Recliner",
+          "aed": 70.0
+        }
+      ],
+      "book": "https://uae.cinepolisgulf.com/movies/HO00011659",
+      "lang": "ml"
+    }
+  ],
+  "price_health": {
+    "attempted": 6,
+    "priced": 6,
+    "error": null
+  }
+}

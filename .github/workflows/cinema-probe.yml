@@ -8,7 +8,7 @@ on:
     inputs:
       chains:
         description: comma-separated chains
-        default: vox,star,cineroyal,novo,reel,roxy,cinemacity,alshaab
+        default: vox,star,cineroyal,novo,reel,roxy,cinemacity,alshaab,cinemax,cinepolis
       trailer:
         description: a YouTube trailer id for the yt-dlp check (empty = skip)
         default: teyF15t-8lQ

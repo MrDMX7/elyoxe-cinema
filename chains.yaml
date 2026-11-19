@@ -22,3 +22,5 @@ chains:
   cineroyal:  {ad_offset_min: 15}
   cinemacity: {ad_offset_min: 15}
   alshaab:    {ad_offset_min: 15}
+  cinemax:    {ad_offset_min: 15}
+  cinepolis:  {ad_offset_min: 15}

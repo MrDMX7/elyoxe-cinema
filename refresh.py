@@ -50,7 +50,7 @@ import normalize
 import price_table
 import verdicts as verdicts_mod
 from statefile import load_state_json, write_json_atomic, write_state_json
-from readers import alshaab, cinemacity, cineroyal, novo, reel, roxy, star, vox
+from readers import alshaab, cinemacity, cinemax, cinepolis, cineroyal, novo, reel, roxy, star, vox
 from readers import relay
 
 ROOT = Path(__file__).resolve().parent
@@ -75,11 +75,13 @@ CHAIN_READERS = {
     "roxy": roxy.fetch,
     "cinemacity": cinemacity.fetch,
     "alshaab": alshaab.fetch,   # one site, Al Shaab Village, Sharjah (owner 2026-11-19)
+    "cinemax": cinemax.fetch,   # one site, Al Naeem Mall, RAK — Al Shaab's platform
+    "cinepolis": cinepolis.fetch,   # one site, Oasis Mall, Sharjah
 }
 ALL_CHAINS = list(CHAIN_READERS)
 # chains whose reader accepts a `cache=` kwarg (readers/common.py cache_get/cache_set) to reuse a
 # same-day seat-map/price sample across runs instead of re-requesting it every hour.
-PRICE_CACHE_CHAINS = {"vox", "star", "cineroyal", "novo", "cinemacity", "reel", "roxy", "alshaab"}
+PRICE_CACHE_CHAINS = {"vox", "star", "cineroyal", "novo", "cinemacity", "reel", "roxy", "alshaab", "cinemax", "cinepolis"}
 # owner's ruling (final review, 2026-09-27): archive only after the film has been confirmed absent from
 # every chain that listed it for >= 5 days of successful runs -- time, not run counts (hourly runs).
 ARCHIVE_AFTER_ABSENT = timedelta(days=5)

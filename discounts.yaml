@@ -646,3 +646,24 @@ rules:
       source: "https://play.google.com/store/apps/details?id=com.dhaen.homatalwatan"
       checked: "2026-11-19"
       confidence: official
+
+  cinemax:
+    fazaa:
+      # 2026-11-19: the Fazaa app itself (the owner's phone, at his request) lists «Cinemax Cinemas — Discount 20% on All
+      # days». Its terms page was not opened before the phone locked, so no box-office or ticket-count limit is claimed.
+      type: percent
+      value: 20
+      note_ar: "خصم 20% كل أيام الأسبوع ببطاقة فزعة"
+      source: "https://fazaa.ae/"
+      checked: "2026-11-19"
+      confidence: official
+
+  cinepolis:
+    fazaa:
+      # 2026-11-19: the Fazaa app lists Cinépolis as «Package for 71 AED» — a voucher bundle bought in the app, no
+      # discount at the counter (its contents were not opened). Bundles fit no rule type, so it is a note.
+      status: none_found
+      note_ar: "ما في خصم فزعة عند الشباك — في تطبيق فزعة حزمة بـ71 درهم"
+      source: "https://fazaa.ae/"
+      checked: "2026-11-19"
+      confidence: official

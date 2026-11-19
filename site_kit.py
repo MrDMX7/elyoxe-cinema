@@ -212,7 +212,8 @@ FONTS = {"ar": ("plex-ar-400.woff2", "plex-ar-700.woff2"), "en": ("plex-la-400.w
 # a show with no booking URL still books somewhere: the chain's own site
 CHAIN_SITE = {"vox": "https://uae.voxcinemas.com/", "star": "https://www.starcinemas.ae/", "novo": "https://uae.novocinemas.com/",
               "reel": "https://www.reelcinemas.ae/", "roxy": "https://www.theroxycinemas.com/", "cineroyal": "https://cineroyal.ae/",
-              "cinemacity": "https://www.cinemacity.ae/", "alshaab": "https://www.alshaabcinema.com/"}
+              "cinemacity": "https://www.cinemacity.ae/", "alshaab": "https://www.alshaabcinema.com/",
+              "cinemax": "https://www.rakcinemax.com/", "cinepolis": "https://uae.cinepolisgulf.com/"}
 
 
 def rel(u):

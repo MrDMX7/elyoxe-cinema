@@ -37,6 +37,8 @@ KNOWN = {
     "al shaab village - sharjah": ("Al Shaab Village", "Al Shaab Village, Al Riqa Suburb, Sharjah, United Arab Emirates"),
 }
 SEATS = {"NORMAL": "Standard", "VIP": "VIP", "PEARL SUIT": "Pearl Suite", "PEARL SUITE": "Pearl Suite"}
+# the site this module reads; readers/cinemax.py hands in its own (the same MITE Solutions platform, rakcinemax.com)
+SITE = {"chain": CHAIN, "base": BASE, "brand": "Al Shaab Cinema", "known": KNOWN}
 
 _BLOCK = re.compile(r'<div class="col-md-3 col-sm-4 single-movie">(.*?)(?=<div class="col-md-3 col-sm-4 single-movie">|</div>\s*</div>\s*</div>\s*</div>\s*</div>|$)', re.S)
 _HREF = re.compile(r'href="(/movies/[^"/#]+/(\d+))')
@@ -58,7 +60,7 @@ def nice_title(t: str) -> str:
     return _WORD.sub(lambda m: m.group(0).capitalize(), t) if t.isupper() else t
 
 
-def films_from_home(page: str) -> list[dict]:
+def films_from_home(page: str, base: str = BASE) -> list[dict]:
     """Every `.single-movie` block on the home page -> {id, path, title, genres, lang, rating, poster}, once per id."""
     out, seen = [], set()
     for blk in _BLOCK.findall(page):
@@ -79,7 +81,7 @@ def films_from_home(page: str) -> list[dict]:
             "genres": [g.strip() for g in _text(genre.group(1)).split("|") if g.strip()] if genre else [],
             "lang": _text(lang.group(1)) if lang else None,
             "rating": re.sub(r"\s+", "", _text(cert.group(1))) if cert else None,
-            "poster": (BASE + img.group(1)) if img and img.group(1).startswith("/") else (img.group(1) if img else None),
+            "poster": (base + img.group(1)) if img and img.group(1).startswith("/") else (img.group(1) if img else None),
         })
     return out
 
@@ -104,7 +106,7 @@ def _hhmm(h: str, m: str, ap: str) -> int:
     return h24 * 60 + int(m)
 
 
-def shows_from_day(body: str, day: str) -> list[dict]:
+def shows_from_day(body: str, day: str, base: str = BASE) -> list[dict]:
     """A ShowsByMalls answer (its JSON string already decoded) -> [{theatre, screen, date, time, book}]."""
     out = []
     for theatre, rest in _THEATRE.findall(body or ""):
@@ -115,7 +117,7 @@ def shows_from_day(body: str, day: str) -> list[dict]:
                 mins = _hhmm(h, m, ap)
                 d = Date.fromisoformat(day) + timedelta(days=1 if mins < 3 * 60 else 0)
                 out.append({"theatre": _text(theatre), "screen": screen, "date": d.isoformat(),
-                            "time": f"{mins // 60:02d}:{mins % 60:02d}", "book": BASE + htmllib.unescape(link)})
+                            "time": f"{mins // 60:02d}:{mins % 60:02d}", "book": base + htmllib.unescape(link)})
     return out
 
 
@@ -124,10 +126,14 @@ def hall_of(screen: str) -> tuple[str, str]:
 
 
 def prices_from_seats(payload: dict) -> list[dict] | None:
-    """/Seat/Seats -> [{"seat", "aed"}] per seat class, cheapest first; None when there is no seat list."""
+    """/Seat/Seats -> [{"seat", "aed"}] per seat category, cheapest first; None when there is no seat list.
+
+    Keyed on seat_category_id, not seat_name: Cinemax's screen P1 sells two «NORMAL» categories at 36.75 and 42.00
+    (2026-11-19). A name two categories share keeps its plain label on the cheaper one; the dearer one is named by its
+    rows («Standard (A–B)»)."""
     if not isinstance(payload, dict) or payload.get("isAvail") != 1:
         return None
-    best: dict[str, float] = {}
+    cats: dict[str, dict] = {}
     for s in payload.get("result") or []:
         if s.get("isBlank") or not s.get("seat_name"):
             continue
@@ -135,9 +141,20 @@ def prices_from_seats(payload: dict) -> list[dict] | None:
         if aed <= 0:
             continue
         name = str(s["seat_name"]).strip().upper()
-        label = SEATS.get(name, name.title())
-        best[label] = min(aed, best.get(label, aed))
-    return [{"seat": k, "aed": v} for k, v in sorted(best.items(), key=lambda kv: kv[1])] or None
+        c = cats.setdefault(str(s.get("seat_category_id") or s.get("seat_category") or name),
+                            {"label": SEATS.get(name, name.title()), "aed": aed, "rows": set()})
+        c["aed"] = min(c["aed"], aed)
+        if s.get("seat_row"):
+            c["rows"].add(str(s["seat_row"]))
+    out, seen = [], set()
+    for c in sorted(cats.values(), key=lambda c: c["aed"]):
+        label = c["label"]
+        if label in seen:
+            rows = sorted(c["rows"])
+            label = f"{label} ({rows[0]}–{rows[-1]})" if len(rows) > 1 else f"{label} ({rows[0]})" if rows else f"{label} {c['aed']:g}"
+        seen.add(c["label"])
+        out.append({"seat": label, "aed": c["aed"]})
+    return out or None
 
 
 def _decode(r) -> str:
@@ -148,37 +165,39 @@ def _decode(r) -> str:
     return v if isinstance(v, str) else ""
 
 
-def _sample(sess: Polite, book: str) -> list[dict] | None:
+def _sample(sess: Polite, book: str, base: str = BASE) -> list[dict] | None:
     try:
         page = sess.get(book).text
         v = dict(_VARS.findall(page))
         if not v.get("currtime") or not v.get("screen_id"):
             return None
-        r = sess.get(f"{BASE}/Seat/Seats", params={"date": v.get("currdate"), "time": v["currtime"], "movie": v.get("movieId"),
+        r = sess.get(f"{base}/Seat/Seats", params={"date": v.get("currdate"), "time": v["currtime"], "movie": v.get("movieId"),
                                                    "screen": v["screen_id"], "reservation": v.get("reservation") or "0"})
         return prices_from_seats(r.json()) if r.status_code == 200 else None
     except Exception:  # noqa: BLE001 - an unpriced hall, never a failed chain
         return None
 
 
-def _cinema(theatre: str) -> dict:
-    mall, address = KNOWN.get(theatre.lower(), (re.sub(r"\s*-\s*[^-]+$", "", theatre) or theatre, theatre))
-    city = city_of(address, theatre)
+def _cinema(theatre: str, site: dict = SITE) -> dict:
+    chain = site["chain"]
+    mall, address = site["known"].get(theatre.lower(), (re.sub(r"\s*-\s*[^-]+$", "", theatre) or theatre, theatre))
+    city = city_of(theatre.split(" - ")[-1]) or city_of(address, theatre)
     if city not in CITIES:
-        raise ValueError(f"alshaab: no city for theatre {theatre!r}")
-    return {"id": f"{CHAIN}-{slug(theatre)}", "chain": CHAIN, "name": f"Al Shaab Cinema {mall}", "name_ar": None,
+        raise ValueError(f"{chain}: no city for theatre {theatre!r}")
+    return {"id": f"{chain}-{slug(theatre)}", "chain": chain, "name": f"{site['brand']} {mall}", "name_ar": None,
             "city": city, "mall": mall, "address": address, "maps": None, "lat": None, "lng": None}
 
 
-def fetch(days: int = 2, cache: dict | None = None) -> dict:
+def fetch(days: int = 2, cache: dict | None = None, site: dict = SITE) -> dict:
+    chain, base = site["chain"], site["base"]
     sess = Polite(gap=0.7, headers={"X-Requested-With": "XMLHttpRequest"})
     today = datetime.now(DUBAI_TZ).date()
     window = {(today + timedelta(days=i)).isoformat() for i in range(days)}
-    r = sess.get(BASE + "/")
+    r = sess.get(base + "/")
     r.raise_for_status()
-    films = films_from_home(r.text)
+    films = films_from_home(r.text, base)
     if not films:
-        raise RuntimeError("alshaab: the home page lists no films (markup changed?)")
+        raise RuntimeError(f"{chain}: the home page lists no films (markup changed?)")
 
     cinemas: dict[str, dict] = {}
     shows: list[dict] = []
@@ -188,7 +207,7 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
     # the business day before today still owns the after-midnight shows of today (00:00–02:59)
     ask_days = sorted(window | {(today - timedelta(days=1)).isoformat()})
     for f in films:
-        fr = sess.get(BASE + f["path"])
+        fr = sess.get(base + f["path"])
         if fr.status_code != 200:
             continue
         fp = film_page(fr.text)
@@ -199,15 +218,17 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
             title = f"{title} (3D)"
         lang = lang_key(f["lang"]) if f["lang"] else None
         for day in (d for d in ask_days if d in fp["dates"]):
-            sr = sess.get(f"{BASE}/Movie/ShowsByMalls", params={"date": day, "movieId": f["id"]})
+            sr = sess.get(f"{base}/Movie/ShowsByMalls", params={"date": day, "movieId": f["id"]})
             if sr.status_code != 200:
                 continue
-            for s in shows_from_day(_decode(sr), day):
+            for s in shows_from_day(_decode(sr), day, base):
                 if s["date"] not in window:
                     continue
-                cin = cinemas.get(s["theatre"]) or cinemas.setdefault(s["theatre"], _cinema(s["theatre"]))
+                cin = cinemas.get(s["theatre"]) or cinemas.setdefault(s["theatre"], _cinema(s["theatre"], site))
                 hall, label = hall_of(s["screen"])
-                key = (cin["id"], label, s["date"], _fmt3d(title))
+                # one sample per physical screen, not per hall label: Cinemax's «SCREEN P1»…«P4» and its plain screens are
+                # all «Standard» halls, and P1 sells a 42.00 «NORMAL» row the plain screens may not (2026-11-19)
+                key = (cin["id"], s["screen"] or label, s["date"], _fmt3d(title))
                 if key not in price:
                     hit = cache_get(cache, key)
                     if hit is not CACHE_MISS:
@@ -215,7 +236,7 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
                         health["cached"] = health.get("cached", 0) + 1
                 if price.get(key) is None and tries.get(key, 0) < 2:
                     tries[key] = tries.get(key, 0) + 1
-                    price[key] = _sample(sess, s["book"])
+                    price[key] = _sample(sess, s["book"], base)
                     health["attempted"] += 1
                     cache_set(cache, key, price[key])
                 show = {"cinema": cin["id"], "film_title": title, "film_lang": f["lang"], "film_rating": f["rating"],
@@ -233,7 +254,7 @@ def fetch(days: int = 2, cache: dict | None = None) -> dict:
     for sh in shows:
         sh["prices"] = price.get(sh["prices"])
     if not shows:
-        raise RuntimeError("alshaab: zero shows in the window — the schedule endpoint changed or is blocked")
+        raise RuntimeError(f"{chain}: zero shows in the window — the schedule endpoint changed or is blocked")
     health["priced"] = sum(1 for v in price.values() if v)
     if health["attempted"] and not health["priced"]:
         health["error"] = f"0/{health['attempted']} seat-map samples priced"

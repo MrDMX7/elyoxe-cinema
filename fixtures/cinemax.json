@@ -1,0 +1,1095 @@
+{
+  "cinemas": [
+    {
+      "id": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "chain": "cinemax",
+      "name": "Cinemax Al Naeem Mall",
+      "name_ar": null,
+      "city": "ras-al-khaimah",
+      "mall": "Al Naeem Mall",
+      "address": "Al Naeem Mall, 100 Bin Daher St, Al Nakheel, Ras Al Khaimah, United Arab Emirates",
+      "maps": null,
+      "lat": null,
+      "lng": null
+    }
+  ],
+  "shows": [
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Forgotten Island(Eng)",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Premium",
+          "aed": 36.75
+        },
+        {
+          "seat": "Premium (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10060&movieId=393&screenId=18",
+      "_screen": "SCREEN 2",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "11:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10126&movieId=376&screenId=24",
+      "_screen": "SCREEN P3",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping(Eng)",
+      "film_lang": "English",
+      "film_rating": "TBA",
+      "runtime": 150,
+      "date": "2026-09-26",
+      "time": "12:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10144&movieId=391&screenId=25",
+      "_screen": "SCREEN P4",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–C)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10115&movieId=376&screenId=22",
+      "_screen": "SCREEN P1",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "I Play Rocky (English)",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-26",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Premium",
+          "aed": 36.75
+        },
+        {
+          "seat": "Premium (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10110&movieId=394&screenId=18",
+      "_screen": "SCREEN 2",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Scene (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-26",
+      "time": "15:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10140&movieId=356&screenId=25",
+      "_screen": "SCREEN P4",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping(Eng)",
+      "film_lang": "English",
+      "film_rating": "TBA",
+      "runtime": 150,
+      "date": "2026-09-26",
+      "time": "15:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10113&movieId=391&screenId=23",
+      "_screen": "SCREEN P2",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "15:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–C)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10116&movieId=376&screenId=22",
+      "_screen": "SCREEN P1",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Bouma(Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 117,
+      "date": "2026-09-26",
+      "time": "15:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Standard (C–E)",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10143&movieId=380&screenId=19",
+      "_screen": "SCREEN 3",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping(Eng)",
+      "film_lang": "English",
+      "film_rating": "TBA",
+      "runtime": 150,
+      "date": "2026-09-26",
+      "time": "17:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10114&movieId=391&screenId=25",
+      "_screen": "SCREEN P4",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "18:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–C)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10117&movieId=376&screenId=22",
+      "_screen": "SCREEN P1",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Forgotten Island(Eng)",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "18:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Premium",
+          "aed": 36.75
+        },
+        {
+          "seat": "Premium (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10061&movieId=393&screenId=18",
+      "_screen": "SCREEN 2",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Ramayana(Hindi)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 195,
+      "date": "2026-09-26",
+      "time": "18:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Standard (C–E)",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10142&movieId=369&screenId=19",
+      "_screen": "SCREEN 3",
+      "lang": "hi"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "20:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–C)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10118&movieId=376&screenId=22",
+      "_screen": "SCREEN P1",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "I Play Rocky (English)",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-26",
+      "time": "20:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Standard (C–E)",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10112&movieId=394&screenId=20",
+      "_screen": "SCREEN 4",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "I Play Rocky (English)",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-26",
+      "time": "22:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Premium",
+          "aed": 36.75
+        },
+        {
+          "seat": "Premium (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10111&movieId=394&screenId=18",
+      "_screen": "SCREEN 2",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Ramayana(Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 195,
+      "date": "2026-09-26",
+      "time": "22:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Standard (C–E)",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10141&movieId=373&screenId=19",
+      "_screen": "SCREEN 3",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Bouma(Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 117,
+      "date": "2026-09-26",
+      "time": "22:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Standard (C–E)",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10130&movieId=380&screenId=20",
+      "_screen": "SCREEN 4",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "23:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–C)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-26&timeId=10119&movieId=376&screenId=22",
+      "_screen": "SCREEN P1",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Om: Chapter 1(Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "10:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10070&movieId=390&screenId=25",
+      "_screen": "SCREEN P4",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Ramayana(Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 195,
+      "date": "2026-09-27",
+      "time": "10:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Premium",
+          "aed": 36.75
+        },
+        {
+          "seat": "Premium (A–C)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10149&movieId=373&screenId=21",
+      "_screen": "SCREEN 1",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Forgotten Island(Eng)",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-27",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Premium",
+          "aed": 36.75
+        },
+        {
+          "seat": "Premium (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10062&movieId=393&screenId=18",
+      "_screen": "SCREEN 2",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Sathyavan Savithri(Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "TBA",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "12:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Standard (C–E)",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10085&movieId=395&screenId=19",
+      "_screen": "SCREEN 3",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "I Play Rocky (English)",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-27",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Premium",
+          "aed": 36.75
+        },
+        {
+          "seat": "Premium (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10081&movieId=394&screenId=18",
+      "_screen": "SCREEN 2",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Kaali Kheti(Hindi)",
+      "film_lang": "Hindi",
+      "film_rating": "TBA",
+      "runtime": 110,
+      "date": "2026-09-27",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Standard (C–E)",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10090&movieId=397&screenId=20",
+      "_screen": "SCREEN 4",
+      "lang": "hi"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "13:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–C)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10146&movieId=376&screenId=22",
+      "_screen": "SCREEN P1",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Aakasamlo Oka Tara(Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "14:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Standard (C–E)",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10086&movieId=392&screenId=19",
+      "_screen": "SCREEN 3",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Sathyavan Savithri(Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "TBA",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "15:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Standard (C–E)",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10091&movieId=395&screenId=20",
+      "_screen": "SCREEN 4",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping(Eng)",
+      "film_lang": "English",
+      "film_rating": "TBA",
+      "runtime": 150,
+      "date": "2026-09-27",
+      "time": "15:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10083&movieId=391&screenId=23",
+      "_screen": "SCREEN P2",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Om: Chapter 1(Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "16:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–C)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10145&movieId=390&screenId=22",
+      "_screen": "SCREEN P1",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "17:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10087&movieId=376&screenId=24",
+      "_screen": "SCREEN P3",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping(Eng)",
+      "film_lang": "English",
+      "film_rating": "TBA",
+      "runtime": 150,
+      "date": "2026-09-27",
+      "time": "17:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10092&movieId=391&screenId=25",
+      "_screen": "SCREEN P4",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Forgotten Island(Eng)",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-27",
+      "time": "18:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Premium",
+          "aed": 36.75
+        },
+        {
+          "seat": "Premium (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10063&movieId=393&screenId=18",
+      "_screen": "SCREEN 2",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Om: Chapter 1(Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "19:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–C)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10072&movieId=390&screenId=22",
+      "_screen": "SCREEN P1",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Aakasamlo Oka Tara(Telugu)",
+      "film_lang": "Telugu",
+      "film_rating": "PG13",
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "20:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Standard (C–E)",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10089&movieId=396&screenId=19",
+      "_screen": "SCREEN 3",
+      "lang": "te"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Hadoota(Arabic)",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 117,
+      "date": "2026-09-27",
+      "time": "20:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Premium",
+          "aed": 36.75
+        },
+        {
+          "seat": "Premium (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10084&movieId=379&screenId=18",
+      "_screen": "SCREEN 2",
+      "lang": "ar"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "I Play Rocky (English)",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-27",
+      "time": "20:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Standard (C–E)",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10093&movieId=394&screenId=20",
+      "_screen": "SCREEN 4",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "I Play Rocky (English)",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-27",
+      "time": "22:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Premium",
+          "aed": 36.75
+        },
+        {
+          "seat": "Premium (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10082&movieId=394&screenId=18",
+      "_screen": "SCREEN 2",
+      "lang": "en"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Aakasamlo Oka Tara(Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "22:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 26.25
+        },
+        {
+          "seat": "Standard (C–E)",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10094&movieId=392&screenId=20",
+      "_screen": "SCREEN 4",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Om: Chapter 1(Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "22:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–C)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10073&movieId=390&screenId=22",
+      "_screen": "SCREEN P1",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemax-al-naeem-mall-ras-al-khaimah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "23:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Standard (A–B)",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.rakcinemax.com/booking/setsession?mallId=1&showDate=2026-09-27&timeId=10088&movieId=376&screenId=24",
+      "_screen": "SCREEN P3",
+      "lang": "ml"
+    }
+  ],
+  "price_health": {
+    "attempted": 15,
+    "priced": 15,
+    "error": null
+  }
+}

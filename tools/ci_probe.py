@@ -45,6 +45,8 @@ PREFLIGHT = {
     "cineroyal": ("requests", "https://cineroyal.ae/home/nowShowing"),
     "cinemacity": ("requests", "https://www.cinemacity.ae/our-locations/"),
     "alshaab": ("requests", "https://www.alshaabcinema.com/"),
+    "cinemax": ("requests", "https://www.rakcinemax.com/"),
+    "cinepolis": ("requests", "https://api.cinepolisgulf.com/api/cinemas/cinemas/?event_country_id=&country_id=2"),
 }
 
 

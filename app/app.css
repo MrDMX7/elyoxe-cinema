@@ -102,7 +102,7 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .cc-logo.sm{inline-size:38px;block-size:38px;font-size:10px;border-radius:10px}
 .cc-logo.lg{inline-size:64px;block-size:64px;font-size:14px}
 .ch-vox{background:#C8102E}.ch-reel{background:#1A1A1A}.ch-novo{background:#5B2C83}.ch-star{background:#D4A017;color:#241a00}
-.ch-cineroyal{background:#8C1C2E}.ch-roxy{background:#0E5B5B}.ch-cinemacity{background:#E05A1E}.ch-alshaab{background:#B3121B}
+.ch-cineroyal{background:#8C1C2E}.ch-roxy{background:#0E5B5B}.ch-cinemacity{background:#E05A1E}.ch-alshaab{background:#B3121B}.ch-cinemax{background:#5B2A86}.ch-cinepolis{background:#0B3D91}
 .geo-msg{font-size:13px;color:var(--stone);padding-block-end:8px}
 
 /* ── pages that slide in: a back bar, sticky ── */
@@ -311,7 +311,7 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .sr-b small{display:flex;align-items:center;gap:6px}
 .chm{flex:none;font-style:normal;font-size:10px;font-weight:700;line-height:1;color:#fff;padding:3px 6px;border-radius:5px;background:#5a4c40}
 .chm.ch-vox{background:#C8102E}.chm.ch-reel{background:#1A1A1A}.chm.ch-novo{background:#5B2C83}.chm.ch-star{background:#D4A017;color:#241a00}
-.chm.ch-cineroyal{background:#8C1C2E}.chm.ch-roxy{background:#0E5B5B}.chm.ch-cinemacity{background:#E05A1E}.chm.ch-alshaab{background:#B3121B}
+.chm.ch-cineroyal{background:#8C1C2E}.chm.ch-roxy{background:#0E5B5B}.chm.ch-cinemacity{background:#E05A1E}.chm.ch-alshaab{background:#B3121B}.chm.ch-cinemax{background:#5B2A86}.chm.ch-cinepolis{background:#0B3D91}
 /* the chains' own app icons (owner 2026-10-19): the square is the icon; the tag is the fallback */
 .cc-logo.img{padding:0;overflow:hidden;background:none}.cc-logo.img img{display:block;inline-size:100%;block-size:100%;object-fit:cover}
 .chl{display:inline-block;flex:none;inline-size:20px;block-size:20px;border-radius:5px;vertical-align:-5px}
