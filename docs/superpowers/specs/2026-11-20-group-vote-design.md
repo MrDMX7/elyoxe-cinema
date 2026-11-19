@@ -40,3 +40,16 @@ The backend sits on the counter stack's API (`elyoxe-cinema-counter`, `infra/cou
   - name ≤ 24 characters, note ≤ 60, plain text only.
 - **Origin and kill switch:** only https://cinema.elyoxe.com may write. The SSM parameter `/elyoxe/cinema/counter/vote-off`, set to any value, stops new polls and votes.
 - **Privacy:** like the rest of the stack, no IP is read or stored.
+
+## Votes on films (owner 2026-11-20, the same day)
+
+The owner tried it and asked for two things. First: «احس هالطريقة صعبة، لو نبرزها فصفحة الأفلام الرئيسية». Second, the poll page should show each film's poster, synopsis, trailer, «اسأل الفيلم» and genre.
+
+- **The films tab** opens with «صوّتوا مع الربع: اختاروا الفيلم سوا». It turns the posters into checkboxes (pick mode), and the bar sends 2–4 films.
+- **A film page** has «+ للتصويت» beside «الإعلان» and «اسأل الفيلم». A tray item is now a film `{kind: "film", k: {fid}}` or a show.
+- **The server** takes `{fid}` (no time) as a whole film, checked against `/data/film/<fid>.json`. A film has no calendar entry; its poll lives at least five days.
+- **The Arabic build writes `/data/film/<fid>.json`** for every film on the site:
+  - title, poster, genres, runtime, age rating and score;
+  - verdict, synopsis and trailer;
+  - the film's page in both languages.
+- **The poll page** draws each option from those files: the poster (a link to the film), meta, the synopsis (3 lines, tap for all), «الإعلان» (plays in place) and «اسأل الفيلم» (the film page at `#ask`). The leading film gets «شوف المواعيد واحجز».

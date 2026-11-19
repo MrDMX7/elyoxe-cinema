@@ -444,7 +444,7 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .v-me{margin-block-end:12px;color:var(--sand);font-size:14px}
 .v-link{border:0;background:none;color:var(--door);font:inherit;font-weight:700;cursor:pointer;min-block-size:44px}
 .v-opts{display:grid;gap:10px}
-.vopt{display:grid;grid-template-columns:64px 1fr;gap:12px;padding:14px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r)}
+.vopt{display:grid;gap:10px;padding:14px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r)}
 .vopt.lead{border-color:var(--door);box-shadow:0 0 0 1px var(--door)}
 .vo-when{display:grid;align-content:start;justify-items:center;gap:2px;text-align:center}
 .vo-when b{font:500 18px/1.1 var(--mono)}
@@ -469,6 +469,30 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .v-list li{display:grid;gap:2px;padding-block-end:8px;border-block-end:1px solid var(--line);font-size:14px}
 .v-list li span{color:var(--sand)}
 .v-list li q{color:var(--stone);font-size:13px}
+
+/* ── film votes (2026-11-20): the films tab's row and pick mode, the film page's button, the poll's film card ── */
+.vstart{inline-size:100%;margin-block:6px 4px;border:1px solid var(--door);border-radius:var(--r);padding-inline:14px;background:var(--paper)}
+.vstart b{color:var(--door)}
+.vstart.on{background:var(--door)}
+.vstart.on b,.vstart.on small,.vstart.on svg{color:var(--on)}
+.vpick [data-key="films"] .tile .tp::after{content:"";position:absolute;inset-block-end:8px;inset-inline-start:8px;inline-size:30px;block-size:30px;
+  border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.35);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.vpick [data-key="films"] .tile.vp .tp::after{content:"✓";display:grid;place-items:center;background:var(--door);border-color:var(--door);color:#fff;font-weight:700;font-size:17px}
+.vpick [data-key="films"] .tile:not(.vp) .tp img{opacity:.75}
+.vfilm.on{border-color:var(--door);color:var(--door);font-weight:700}
+.vo-top{display:grid;grid-template-columns:84px 1fr;gap:12px}
+.vo-pst{display:block;inline-size:84px;aspect-ratio:2/3;block-size:auto;object-fit:cover;border-radius:10px;background:var(--pc,var(--well))}
+.vo-pl{display:block}
+.vo-meta{font-size:13px;color:var(--sand)}
+.vo-v{display:inline-block;margin-inline-start:4px;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:700;background:var(--well)}
+.vo-v.v-y{color:var(--door)}.vo-v.v-m{color:var(--saff)}.vo-v.v-s{color:var(--red)}
+.vo-when2{font-size:13px;color:var(--sand)}
+.vo-when2 b{color:var(--wood);font-family:var(--mono);font-weight:500}
+.vo-when2 .aed{inline-size:12px;block-size:12px}
+.vo-syn{font-size:13px;color:var(--sand);line-height:1.65;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;cursor:pointer}
+.vo-syn.open{-webkit-line-clamp:unset;display:block}
+.vo-acts{display:flex;flex-wrap:wrap;gap:8px}
+.btn.sm{min-block-size:44px;padding-inline:12px;font-size:13px}
 
 /* ── dark (owner 2026-10-22): follows the phone; the Meylis wood as the ground, the same saffron and teal lifted ── */
 @media (prefers-color-scheme:dark){

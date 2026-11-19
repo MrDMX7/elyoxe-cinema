@@ -146,3 +146,26 @@ def test_the_leader_and_its_calendar_file(env):
 def test_unknown_polls_are_404(env):
     assert call("GET", "/vote/abcdefghij", pid="abcdefghij")[0] == 404
     assert call("GET", "/vote/../etc", pid="../etc")[0] == 404
+
+
+FILMS = {"i-play-rocky": {"fid": "i-play-rocky", "title_ar": "أنا من سيؤدي دور روكي", "title_en": "I Play Rocky"},
+         "wildwood": {"fid": "wildwood", "title_ar": "وايلدوود", "title_en": "Wildwood"}}
+
+
+def test_a_poll_on_whole_films(env, monkeypatch):
+    """Owner 2026-11-20: picked on the films tab, a vote can be on the film itself (no time, no cinema)."""
+    def fetch_film(fid):
+        if fid not in FILMS:
+            raise OSError("404")
+        return FILMS[fid]
+    monkeypatch.setattr(vote, "fetch_film", fetch_film)
+    st, out = call("POST", "/vote", {"options": [{"fid": "i-play-rocky"}, {"fid": "wildwood"}, {"fid": "wildwood"}]})
+    assert st == 201
+    pid = out["id"]
+    st, p = call("GET", f"/vote/{pid}", pid=pid)
+    assert [(o["kind"], o["fid"], o["title_en"]) for o in p["opts"]] == [("film", "i-play-rocky", "I Play Rocky"), ("film", "wildwood", "Wildwood")]
+    assert call("POST", "/vote", {"options": [{"fid": "i-play-rocky"}, {"fid": "not-showing"}]})[0] == 422
+    call("POST", f"/vote/{pid}", {"vk": "a" * 30, "name": "a", "picks": [1]}, pid=pid)
+    assert call("GET", f"/vote/{pid}/ics", pid=pid)[0] == 404                   # a film has no time for a calendar
+    st, out = call("POST", "/vote", {"options": [{"fid": "i-play-rocky"}, KEYS[1]]})   # a film and a show may mix
+    assert st == 201

@@ -1,6 +1,7 @@
 """«صوّتوا مع الربع» — the group vote (owner 2026-11-20; docs/superpowers/specs/2026-11-20-group-vote-design.md).
 
-  POST /vote             {"options": [{city, date, cin, fid, time, hall?}, …2-4], "by": "<name>", "lang": "ar"|"en"}
+  POST /vote             {"options": [{city, date, cin, fid, time, hall?} | {fid}, …2-4], "by": "<name>", "lang": "ar"|"en"}
+                         (a show, or a whole film — 2026-11-20: picked on the films tab; checked against /data/film/<fid>.json)
                          -> {"id"}; each show is resolved against the site's own /data/<city>-<date>.json, never taken
                          from the request, so a poll can only hold real shows with the chains' own booking links
   GET  /vote/{id}        -> {"id", "by", "lang", "opts": [...], "votes": [{"p", "name", "picks", "no", "note", "at"}]}
@@ -110,6 +111,36 @@ def fetch_day(city, day):
     return j
 
 
+def fetch_film(fid):
+    """The site's /data/film/<fid>.json (the poll page's film card), cached 5 minutes per container."""
+    hit = _days.get(("film", fid))
+    if hit and time.time() - hit[0] < 300:
+        return hit[1]
+    req = urllib.request.Request(f"{SITE}/data/film/{fid}.json",
+                                 headers={"Accept-Encoding": "gzip", "User-Agent": "elyoxe-cinema-vote/1.0"})
+    with urllib.request.urlopen(req, timeout=8) as r:
+        raw = r.read()
+        if r.headers.get("Content-Encoding") == "gzip" or raw[:2] == b"\x1f\x8b":
+            raw = gzip.decompress(raw)
+    j = json.loads(raw.decode("utf-8"))
+    _days[("film", fid)] = (time.time(), j)
+    return j
+
+
+def resolve_film(key):
+    """A whole film, as the site shows it now (a film page and its card), or None."""
+    fid = str(key.get("fid") or "")
+    if not FID.match(fid):
+        return None
+    try:
+        j = fetch_film(fid)
+    except Exception:  # noqa: BLE001 - not a film the site shows now
+        return None
+    if j.get("fid") != fid:
+        return None
+    return {"kind": "film", "fid": fid, "title_ar": str(j.get("title_ar") or "")[:200], "title_en": str(j.get("title_en") or "")[:200]}
+
+
 def resolve(key, today):
     """One show key -> the show as the site publishes it, or None. S rows: [cinema, film, time, hall, prices, book, …]."""
     city, day, cin, fid, hm = (str(key.get(x) or "") for x in ("city", "date", "cin", "fid", "time"))
@@ -142,7 +173,7 @@ def resolve(key, today):
     # the day file splits a booking link into a shared base (B) and the show's own tail (s[6]), as home.js reads it
     tail = str(s[6]) if len(s) > 6 and s[6] else ""
     book = (B[s[5]] + tail) if isinstance(s[5], int) and 0 <= s[5] < len(B) else tail
-    return {"city": city, "date": day, "time": hm, "fid": fid, "cin": cin,
+    return {"kind": "show", "city": city, "date": day, "time": hm, "fid": fid, "cin": cin,
             "title_ar": f[1], "title_en": f[2], "cin_ar": c[2], "cin_en": c[3], "hall_ar": h[2], "hall_en": h[3],
             "price": min(prices) if prices else None, "book": book if str(book).startswith("https://") else ""}
 
@@ -232,6 +263,8 @@ def handler(event, _ctx):
         if is_ics:
             i = leader(v["opts"], v["votes"])
             opt = v["opts"][0 if i is None else i]
+            if not opt.get("time"):
+                return reply(404, origin, {"error": "a film has no time to put in a calendar"})
             link = f"{SITE}{'/en' if v['lang'] == 'en' else ''}/v/?p={pid}"
             return {"statusCode": 200, "body": ics(opt, link),
                     "headers": {"Content-Type": "text/calendar; charset=utf-8", "Cache-Control": "no-store",
@@ -258,10 +291,11 @@ def handler(event, _ctx):
             return reply(400, origin, {"error": "options"})
         opts, seen = [], set()
         for k in keys:
-            o = resolve(k if isinstance(k, dict) else {}, today)
+            k = k if isinstance(k, dict) else {}
+            o = resolve(k, today) if k.get("time") else resolve_film(k)
             if not o:
                 return reply(422, origin, {"error": "show", "key": k})
-            sig = (o["fid"], o["cin"], o["date"], o["time"])
+            sig = ("film", o["fid"]) if o["kind"] == "film" else (o["fid"], o["cin"], o["date"], o["time"])
             if sig not in seen:
                 seen.add(sig)
                 opts.append(o)
@@ -269,7 +303,8 @@ def handler(event, _ctx):
             return reply(400, origin, {"error": "options"})
         if count_today(today.isoformat()) > DAY_CAP:
             return reply(429, origin, {"error": "cap"})
-        last = max(date.fromisoformat(o["date"]) for o in opts)
+        days = [date.fromisoformat(o["date"]) for o in opts if o.get("date")]
+        last = max(days + [today + timedelta(days=5)]) if any(o["kind"] == "film" for o in opts) else max(days)
         ttl = int(datetime.combine(last + timedelta(days=2), datetime.min.time(), DUBAI).timestamp())
         for _ in range(3):
             item = {"id": new_id(), "k": "poll", "opts": json.dumps(opts, ensure_ascii=False), "by": clean(data.get("by"), 24),

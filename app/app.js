@@ -554,12 +554,11 @@
     var sheet = q("[data-sheet]"), scrim = q("[data-scrim]"), openBtn = null, tkRow = null;
     /* «صوّتوا مع الربع» (2026-11-20): the open show joins the tray (cinema.vote, at most 4) or leaves it */
     var voteCur = null, voteBtn = q("[data-tk-vote]", sheet || d);
-    var sameShow = function (a, b2) { return a.k.fid === b2.k.fid && a.k.cin === b2.k.cin && a.k.date === b2.k.date && a.k.time === b2.k.time; };
     var paintVoteBtn = function () {
       if (!voteBtn) return;
       voteBtn.hidden = !voteCur || !A.vote;
       if (!voteCur) return;
-      var inIt = vtray().some(function (x) { return sameShow(x, voteCur); });
+      var inIt = vtray().some(function (x) { return sameItem(x, voteCur); });
       voteBtn.textContent = inIt ? tx("✓ في التصويت") : tx("+ للتصويت مع الربع");
       voteBtn.classList.toggle("on", inIt);
     };
@@ -567,7 +566,7 @@
       if (!voteCur) return;
       buzz();
       var v = vtray(), at = -1;
-      v.forEach(function (x, i) { if (sameShow(x, voteCur)) at = i; });
+      v.forEach(function (x, i) { if (sameItem(x, voteCur)) at = i; });
       if (at >= 0) { v.splice(at, 1); toast(tx("انشال من التصويت")); }
       else if (v.length >= 4) { toast(tx("التصويت فيه 4 عروض")); return; }
       else { v.push(voteCur); toast(tx("انضاف للتصويت")); }
@@ -661,7 +660,7 @@
       q("[data-tk-book]", sheet).href = s.b || "#";
       tkRow = r; fillTicket();
       var fidEl = b.closest("[data-fid]") || q(".pg.film[data-fid]"), cinRow = T.c[r[7]] || [];
-      voteCur = fidEl && cinRow[1] ? { k: { city: cinRow[1], date: r[0], cin: r[7], fid: fidEl.dataset.fid, time: r[1], hall: r[3] || "" },
+      voteCur = fidEl && cinRow[1] ? { kind: "show", k: { city: cinRow[1], date: r[0], cin: r[7], fid: fidEl.dataset.fid, time: r[1], hall: r[3] || "" },
         t: q("[data-tk-film]", sheet).textContent, c: q("[data-tk-cin]", sheet).textContent, d: r[0], tm: r[1] } : null;
       paintVoteBtn();
       if (!DISC) loadDisc().then(function () { if (tkRow === r) fillTicket(); paintPrices(); paintNearest(); });
@@ -702,6 +701,11 @@
     /* «اسأل الفيلم» */
     var ask = q("[data-ask]");
     var ao = q("[data-ask-open]");
+    /* the poll page's «اسأل الفيلم» opens a film at #ask: straight to the box once the page has settled (a smooth scroll
+       started during the load is cut short) */
+    if (ask && location.hash === "#ask") addEventListener("load", function () {
+      setTimeout(function () { ask.scrollIntoView({ block: "start" }); setTimeout(function () { q("input", ask).focus({ preventScroll: true }); }, 150); }, 300);
+    });
     if (ao && ask) ao.addEventListener("click", function () { ask.scrollIntoView({ behavior: "smooth", block: "start" }); setTimeout(function () { q("input", ask).focus({ preventScroll: true }); }, 400); });
     if (ask && A.ask) {
       var form = q("[data-ask-form]", ask), input = q("input", form), outBox = q("[data-ask-out]", ask), busy = false;
@@ -767,20 +771,29 @@
   // both on the counter API (infra/counter/lambdas/vote.py). The poll holds the shows as the site publishes them.
   var VAPI = A.vote || "";
   var vbar = q("[data-vbar]");
+  function sameItem(a, b2) {
+    var fa = a.kind === "film", fb = b2.kind === "film";
+    if (fa || fb) return fa && fb && a.k.fid === b2.k.fid;
+    return a.k.fid === b2.k.fid && a.k.cin === b2.k.cin && a.k.date === b2.k.date && a.k.time === b2.k.time;
+  }
   function vtray() { try { var v = JSON.parse(store.get("vote") || "[]"); return Array.isArray(v) ? v.slice(0, 4) : []; } catch (e) { return []; } }
   function vsave(v) { store.set("vote", v.length ? JSON.stringify(v.slice(0, 4)) : ""); paintVbar(); }
   function paintVbar() {
     if (!vbar) return;
-    var v = vtray();
-    vbar.hidden = !v.length || !VAPI;
-    if (!v.length) return;
-    q("[data-vbar-t]", vbar).textContent = v.length === 1 ? tx("عرض واحد للتصويت، ضيف عرض ثاني") : v.length + " " + tx("عروض للتصويت");
+    var v = vtray(), picking = d.body.classList.contains("vpick");
+    vbar.hidden = (!v.length && !picking) || !VAPI;
+    if (vbar.hidden) return;
+    var allFilms = v.length && v.every(function (x) { return x.kind === "film"; });
+    q("[data-vbar-t]", vbar).textContent = v.length >= 2 ? v.length + " " + tx("للتصويت")
+      : picking || allFilms ? tx("اختار من 2 لين 4 أفلام") : tx("عرض واحد للتصويت، ضيف عرض ثاني");
     q("[data-vbar-send]", vbar).disabled = v.length < 2;
   }
   if (vbar) {
     paintVbar();
     var vname = q("[data-vbar-name]", vbar);
-    q("[data-vbar-clear]", vbar).addEventListener("click", function () { buzz(); vsave([]); vname.hidden = true; toast(tx("انشال التصويت")); });
+    q("[data-vbar-clear]", vbar).addEventListener("click", function () {
+      buzz(); vpick = false; d.body.classList.remove("vpick"); vsave([]); vname.hidden = true; paintPick(); toast(tx("انشال التصويت"));
+    });
     q("[data-vbar-send]", vbar).addEventListener("click", function () {
       var v = vtray(), btn = this;
       if (v.length < 2) return;
@@ -810,6 +823,48 @@
     });
   }
 
+  // the films tab: «صوّتوا مع الربع» turns the posters into checkboxes (owner 2026-11-20: «نبرزها فصفحة الأفلام»)
+  var vpick = false, vstartBtn = q("[data-vstart]");
+  function paintPick() {
+    d.body.classList.toggle("vpick", vpick);
+    var v = vtray();
+    qa('[data-key="films"] .tile[data-fid]').forEach(function (t) {
+      t.classList.toggle("vp", vpick && v.some(function (x) { return x.kind === "film" && x.k.fid === t.dataset.fid; }));
+    });
+    if (vstartBtn) vstartBtn.classList.toggle("on", vpick);
+    paintVbar();
+  }
+  function toggleFilm(fid, title) {
+    var v = vtray(), at = -1, it = { kind: "film", k: { fid: fid }, t: title };
+    v.forEach(function (x, i) { if (sameItem(x, it)) at = i; });
+    buzz();
+    if (at >= 0) { v.splice(at, 1); toast(tx("انشال من التصويت")); }
+    else if (v.length >= 4) { toast(tx("التصويت فيه 4 عروض")); return; }
+    else { v.push(it); toast(tx("انضاف للتصويت")); }
+    vsave(v);
+  }
+  if (vstartBtn && VAPI) {
+    vstartBtn.addEventListener("click", function () { buzz(); vpick = !vpick; paintPick(); if (vpick) toast(tx("اختار من 2 لين 4 أفلام")); });
+    d.addEventListener("click", function (e) {
+      if (!vpick) return;
+      var t = e.target.closest && e.target.closest('[data-key="films"] .tile[data-fid]');
+      if (!t) return;
+      e.preventDefault(); e.stopPropagation();
+      toggleFilm(t.dataset.fid, (q(".tt", t) || {}).textContent || "");
+      paintPick();
+    }, true);
+  } else if (vstartBtn) vstartBtn.hidden = true;
+  var vfilm = q("[data-vfilm]");
+  if (vfilm && VAPI) {
+    var paintVfilm = function () {
+      var inIt = vtray().some(function (x) { return x.kind === "film" && x.k.fid === vfilm.dataset.vfilm; });
+      vfilm.textContent = inIt ? tx("✓ في التصويت") : tx("+ للتصويت");
+      vfilm.classList.toggle("on", inIt);
+    };
+    vfilm.hidden = false; paintVfilm();
+    vfilm.addEventListener("click", function () { toggleFilm(vfilm.dataset.vfilm, vfilm.dataset.vt || ""); paintVfilm(); });
+  }
+
   var poll = q("[data-poll]");
   if (poll) {
     var pid = (new URLSearchParams(location.search).get("p") || "").replace(/[^A-Za-z0-9]/g, "").slice(0, 10);
@@ -820,7 +875,7 @@
       (window.crypto || window.msCrypto).getRandomValues(rnd);
       me = { vk: btoa(String.fromCharCode.apply(null, rnd)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""), p: "" };
     }
-    var vstate = null, myPicks = null, busy = false, myName = store.get("vname") || "";
+    var vstate = null, myPicks = null, busy = false, myName = store.get("vname") || "", films = {}, lastJ = "", openSyn = {};
     var errEl = q("[data-v-err]", poll), optsEl = q("[data-v-opts]", poll), listEl = q("[data-v-list]", poll);
     var who = q("[data-v-who]", poll), nameIn = q("[data-v-name]", poll), noteIn = q("[data-v-note]", poll);
     var isApple = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && "ontouchend" in d);
@@ -840,26 +895,45 @@
       var st = vstate;
       if (!st) return;
       q("[data-v-by]", poll).textContent = st.by ? st.by + " " + tx("يبا يعرف شو يناسبكم") : tx("اختاروا العرض اللي يناسبكم");
+      d.title = (st.opts.length ? tx("وين نروح؟") + " · " : "") + d.title.replace(/^.*? · /, "");
       var mine = st.votes.filter(function (v) { return me.p && v.p === me.p; })[0];
       if (myPicks === null) myPicks = mine ? mine.picks.slice() : [];
       var per = st.opts.map(function (_, i) { return st.votes.filter(function (v) { return v.picks.indexOf(i) >= 0; }); });
       var best = -1, bestN = 0;
       per.forEach(function (vs, i) { if (vs.length > bestN) { best = i; bestN = vs.length; } });
       optsEl.innerHTML = st.opts.map(function (o, i) {
-        var t = t12(o.time), on = myPicks.indexOf(i) >= 0, lead = i === best, hall = pick(o, "hall_ar", "hall_en");
-        return '<article class="vopt' + (lead ? " lead" : "") + '"><div class="vo-when"><b>' + t[0] + "</b><small>" + t[1] + " · " + dayWord(o.date) + "</small></div>" +
-          '<div class="vo-b"><h3 dir="auto">' + esc(pick(o, "title_ar", "title_en")) + '</h3><p class="vo-c">' + esc(pick(o, "cin_ar", "cin_en")) +
-          (hall && hall !== "Standard" && hall !== "عادية" ? " · " + esc(hall) : "") + "</p>" +
-          (o.price ? '<p class="vo-pr">' + tx("من") + " <b>" + fmt(o.price) + "</b>" + AED + "</p>" : "") +
+        var fm = films[o.fid] || {}, on = myPicks.indexOf(i) >= 0, lead = i === best, isFilm = o.kind === "film" || !o.time;
+        var name = pick(o, "title_ar", "title_en") || pick(fm, "title_ar", "title_en") || o.fid;
+        var url = A.lang === "en" ? fm.url_en : fm.url_ar;
+        var pst = fm.poster ? '<img class="vo-pst" src="' + esc(fm.poster) + '" alt="" width="342" height="513" decoding="async">'
+          : '<span class="vo-pst np" style="--pc:' + esc(fm.color || "#3a302a") + '"></span>';
+        var meta = [], g = A.lang === "en" ? fm.genres_en : fm.genres_ar;
+        if (g && g.length) meta.push(esc(g.slice(0, 2).join(A.lang === "en" ? ", " : "، ")));
+        if (fm.runtime) meta.push(esc(fm.runtime + " " + tx("دقيقة")));
+        if (fm.rating) meta.push('<bdi dir="ltr">' + esc(fm.rating) + "</bdi>");
+        /* a number with its % or IMDb in its own direction: «النقاد 70%», never «%70» in Arabic */
+        if (fm.score) meta.push(fm.score.kind === "imdb" ? '★ <bdi dir="ltr">' + esc(fm.score.v) + "</bdi> IMDb" : tx("النقاد") + ' <bdi dir="ltr">' + esc(fm.score.v) + "</bdi>");
+        var verdict = fm.verdict ? ' <span class="vo-v v-' + esc(fm.verdict.cls) + '">' + esc(A.lang === "en" ? fm.verdict.en : fm.verdict.ar) + "</span>" : "";
+        var syn = A.lang === "en" ? fm.synopsis_en : (fm.synopsis_ar || fm.synopsis_en), synEn = A.lang !== "en" && !fm.synopsis_ar;
+        var hall = pick(o, "hall_ar", "hall_en");
+        var when = isFilm ? "" : '<p class="vo-when2"><b>' + t12(o.time).join(" ") + "</b> · " + dayWord(o.date) + " · " + esc(pick(o, "cin_ar", "cin_en")) +
+          (hall && hall !== "Standard" && hall !== "عادية" ? " · " + esc(hall) : "") + (o.price ? " · " + tx("من") + " " + fmt(o.price) + AED : "") + "</p>";
+        var acts = (fm.trailer ? '<button type="button" class="btn ghost sm" data-trailer="' + esc(fm.trailer) + '">' + tx("الإعلان") + "</button>" : "") +
+          (url ? '<a class="btn ghost sm" href="' + esc(url) + '#ask">' + tx("اسأل الفيلم") + "</a>" : "");
+        var go = !lead ? "" : isFilm ? (url ? '<div class="vo-go"><a class="btn velvet" href="' + esc(url) + '">' + tx("شوف المواعيد واحجز") + "</a></div>" : "")
+          : '<div class="vo-go">' + (o.book ? '<a class="btn velvet" href="' + esc(o.book) + '" target="_blank" rel="noopener nofollow" data-book>' + tx("احجز") + "</a>" : "") +
+            '<a class="btn ghost" href="' + esc(calHref(o)) + '"' + (isApple ? "" : ' target="_blank" rel="noopener"') + ">" + tx("أضف للتقويم") + "</a></div>";
+        return '<article class="vopt' + (lead ? " lead" : "") + '"><div class="vo-top">' + (url ? '<a class="vo-pl" href="' + esc(url) + '">' + pst + "</a>" : pst) +
+          '<div class="vo-b"><h3 dir="auto">' + esc(name) + "</h3>" + (meta.length || verdict ? '<p class="vo-meta">' + meta.join(" · ") + verdict + "</p>" : "") + when +
+          (syn ? '<p class="vo-syn' + (openSyn[i] ? " open" : "") + '" data-vsyn="' + i + '"' + (synEn ? ' lang="en" dir="ltr"' : "") + ">" + esc(syn) + "</p>" : "") +
+          (acts ? '<div class="vo-acts">' + acts + "</div>" : "") + "</div></div>" +
           '<p class="vo-n">' + (per[i].length ? per[i].map(function (v) { return '<span class="vchip' + (me.p && v.p === me.p ? " me" : "") + '">' + esc(v.name) + "</span>"; }).join("")
             : '<span class="vo-0">' + tx("محد اختاره للحين") + "</span>") + "</p>" +
-          '<button type="button" class="vo-pick' + (on ? " on" : "") + '" data-pick="' + i + '" aria-pressed="' + on + '">' + (on ? "✓ " : "") + tx("أنا معكم") + "</button>" +
-          (lead ? '<div class="vo-go">' + (o.book ? '<a class="btn velvet" href="' + esc(o.book) + '" target="_blank" rel="noopener nofollow" data-book>' + tx("احجز") + "</a>" : "") +
-            '<a class="btn ghost" href="' + esc(calHref(o)) + '"' + (isApple ? "" : ' target="_blank" rel="noopener"') + ">" + tx("أضف للتقويم") + "</a></div>" : "") +
-          "</div></article>";
+          '<button type="button" class="vo-pick' + (on ? " on" : "") + '" data-pick="' + i + '" aria-pressed="' + on + '">' + (on ? "✓ " : "") + tx("أنا معكم") + "</button>" + go +
+          "</article>";
       }).join("");
       listEl.innerHTML = st.votes.length ? st.votes.map(function (v) {
-        var what = v.no ? tx("ما يقدر هالمرة") : v.picks.map(function (i) { var o = st.opts[i]; return o ? t12(o.time)[0] + " " + pick(o, "title_ar", "title_en") : ""; }).join("، ");
+        var what = v.no ? tx("ما يقدر هالمرة") : v.picks.map(function (i) { var o = st.opts[i]; return o ? (o.time ? t12(o.time)[0] + " " : "") + pick(o, "title_ar", "title_en") : ""; }).join("، ");
         return "<li><b>" + esc(v.name) + "</b><span>" + esc(what) + "</span>" + (v.note ? "<q>" + esc(v.note) + "</q>" : "") + "</li>";
       }).join("") : '<li class="vo-0">' + tx("محد صوّت للحين، كن أول واحد") + "</li>";
       q("[data-v-no]", poll).classList.toggle("on", !!(mine && mine.no));
@@ -872,7 +946,17 @@
       if (!pid || !VAPI || d.hidden || busy) return;
       fetch(VAPI + "vote/" + pid, { cache: "no-store" })
         .then(function (r) { if (r.status === 404) { fail(tx("هالتصويت خلص أو الرابط غلط.")); return null; } return r.ok ? r.json() : null; })
-        .then(function (j) { if (j && j.opts && !busy) { vstate = j; errEl.hidden = true; render(); } }, function () {});
+        .then(function (j) {
+          if (!j || !j.opts || busy) return;
+          var key = JSON.stringify(j);
+          if (key === lastJ) return;
+          lastJ = key; vstate = j; errEl.hidden = true; render();
+          var need = j.opts.map(function (o) { return o.fid; }).filter(function (f, k, a) { return f && !films[f] && a.indexOf(f) === k; });
+          if (need.length) Promise.all(need.map(function (f) {
+            return fetch("/data/film/" + encodeURIComponent(f) + ".json").then(function (r) { return r.ok ? r.json() : null; }, function () { return null; })
+              .then(function (x) { films[f] = x || { none: 1 }; });
+          })).then(render);
+        }, function () {});
     };
     var send = function (no) {
       if (!myName) { who.hidden = false; nameIn.focus(); toast(tx("اكتب اسمك أول")); return; }
@@ -883,7 +967,7 @@
         .then(function (res) {
           busy = false;
           if (!res.ok) { toast(tx("ما انحفظ صوتك، جرّب مرة ثانية")); return; }
-          me.p = res.j.me; store.set(mineKey, JSON.stringify(me)); vstate = res.j; render();
+          me.p = res.j.me; store.set(mineKey, JSON.stringify(me)); vstate = res.j; lastJ = ""; render();
         }, function () { busy = false; toast(tx("ما انحفظ صوتك، جرّب مرة ثانية")); });
     };
     if (!pid || !VAPI) fail(tx("الرابط ناقص. اطلب من اللي أرسله رابط جديد."));
@@ -893,6 +977,8 @@
       d.addEventListener("visibilitychange", function () { if (!d.hidden) load(); });
     }
     optsEl.addEventListener("click", function (e) {
+      var sy = e.target.closest && e.target.closest("[data-vsyn]");
+      if (sy) { openSyn[sy.dataset.vsyn] = !openSyn[sy.dataset.vsyn]; sy.classList.toggle("open"); return; }
       var b = e.target.closest && e.target.closest("[data-pick]");
       if (!b || myPicks === null) return;
       buzz();

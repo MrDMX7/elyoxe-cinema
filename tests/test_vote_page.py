@@ -76,3 +76,26 @@ def test_the_script_speaks_to_the_api_and_parses():
     for k in re.findall(r'tx\("([^"]+)"\)', js[js.index("صوّتوا مع الربع"):]):
         assert k in build_app.JS_KEYS, k                                     # every phrase the vote script says has its English
     assert subprocess.run(["node", "--check", os.path.join(ROOT, "app", "app.js")]).returncode == 0
+    for s in ('"/data/film/"', "[data-vstart]", "[data-vfilm]", 'classList.toggle("vpick"', 'kind: "film"', 'location.hash === "#ask"'):
+        assert s in js, s
+
+
+def test_films_can_be_voted_on_from_the_films_tab_and_their_pages(tmp_path):
+    """Owner 2026-11-20: «نبرزها فصفحة الأفلام الرئيسية» and the poll page shows each film's poster, genres, synopsis,
+    trailer and «اسأل الفيلم»: the films tab opens with the vote's row, a film page has «+ للتصويت», and the Arabic
+    build writes /data/film/<fid>.json for every film on the site."""
+    out, app = _build(tmp_path, "ar")
+    home = read(out, "index.html")
+    films = home[home.index('data-key="films"'):]
+    assert films.index("data-vstart") < films.index("data-chips")          # the first thing on the films tab
+    assert "صوّتوا مع الربع" in films and "اختاروا الفيلم سوا" in films
+    fid = app.films[0]
+    page = read(out, "film", fid, "index.html")
+    assert re.search(r'<div class="acts">.*?data-vfilm="' + re.escape(fid) + '"', page, re.S)
+    for f in app.films:
+        j = json.loads(read(out, "data", "film", f + ".json"))
+        assert j["fid"] == f and j["url_ar"] == f"/film/{f}/" and j["url_en"] == f"/en/film/{f}/"
+        assert set(j) >= {"title_ar", "title_en", "poster", "genres_ar", "genres_en", "runtime", "rating", "score", "verdict",
+                          "synopsis_ar", "synopsis_en", "trailer"}
+    out_en, _ = _build(tmp_path, "en")
+    assert not os.path.exists(os.path.join(out_en, "data", "film"))      # written once, by the Arabic build

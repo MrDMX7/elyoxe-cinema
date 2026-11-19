@@ -100,6 +100,15 @@ ASK_QS = ["شو نوع الفيلم؟", "يناسب العيال؟", "عن شو 
 # build by main() (one language per process; tests set it and reset it).
 LANG = "ar"
 EN = {
+    # «صوّتوا مع الربع» on films (2026-11-20)
+    "صوّتوا مع الربع": "Vote with friends",
+    "اختاروا الفيلم سوا": "Pick the film together",
+    "+ للتصويت": "+ Add to vote",
+    "اختار من 2 لين 4 أفلام": "Pick 2 to 4 films",
+    "إلغاء": "Cancel",
+    "للتصويت": "to vote on",
+    "شوف المواعيد واحجز": "See times and book",
+    "دقيقة": "min",
     # «صوّتوا مع الربع» (2026-11-20)
     "+ للتصويت مع الربع": "+ Add to a group vote",
     "✓ في التصويت": "✓ In the vote",
@@ -135,7 +144,7 @@ EN = {
     "كلمة للربع (اختياري)": "A word to the group (optional)",
     "الربع": "The group",
     "أرسلها للربع مرة ثانية": "Send it to the group again",
-    "اختار كل العروض اللي تناسبك، واللي ياخذ أكثر أصوات يطلع له زر الحجز.": "Tick every show that suits you; the one with the most votes gets the booking button.",
+    "اختار كل اللي يناسبك، واللي ياخذ أكثر أصوات يطلع له زر الحجز.": "Tick everything that suits you; the one with the most votes gets the booking button.",
     "تصويت الربع": "Group vote",
     "صوّتوا على الفيلم والوقت اللي يناسبكم، وشوفوا النتيجة على طول.": "Vote on the film and time that suit you, and see the result as it happens.",
     # «عروض مجانية» (2026-11-19)
@@ -228,7 +237,7 @@ EN = {
     "أي وقت": "Any time", "من 3 العصر": "From 3 pm", "من 5 العصر": "From 5 pm", "من 7 بالليل": "From 7 pm", "من 9 بالليل": "From 9 pm",
     "من الساعة": "From what time", "ما في عروض": "No shows", "ما في أفلام": "No films",
 }
-JS_KEYS = ["+ للتصويت مع الربع", "✓ في التصويت", "انضاف للتصويت", "انشال من التصويت", "التصويت فيه 4 عروض", "عرض واحد للتصويت، ضيف عرض ثاني", "عروض للتصويت", "انشال التصويت", "عرض من العروض خلص أو تغيّر، شيله وجرّب", "ما قدرنا ننشئ التصويت، جرّب بعد شوي", "وين نروح؟", "يبا يعرف شو يناسبكم، صوّتوا هني:", "الرابط ناقص. اطلب من اللي أرسله رابط جديد.", "يبا يعرف شو يناسبكم", "اختاروا العرض اللي يناسبكم", "محد اختاره للحين", "أنا معكم", "هالتصويت خلص أو الرابط غلط.", "اكتب اسمك أول", "ما انحفظ صوتك، جرّب مرة ثانية", "ما يقدر هالمرة", "محد صوّت للحين، كن أول واحد", "صوّتوا هني:", "أضف للتقويم", "من", "احجز",
+JS_KEYS = ["النقاد", "اختار من 2 لين 4 أفلام", "إلغاء", "للتصويت", "شوف المواعيد واحجز", "+ للتصويت", "دقيقة", "اسأل الفيلم", "الإعلان", "المزيد", "+ للتصويت مع الربع", "✓ في التصويت", "انضاف للتصويت", "انشال من التصويت", "التصويت فيه 4 عروض", "عرض واحد للتصويت، ضيف عرض ثاني", "عروض للتصويت", "انشال التصويت", "عرض من العروض خلص أو تغيّر، شيله وجرّب", "ما قدرنا ننشئ التصويت، جرّب بعد شوي", "وين نروح؟", "يبا يعرف شو يناسبكم، صوّتوا هني:", "الرابط ناقص. اطلب من اللي أرسله رابط جديد.", "يبا يعرف شو يناسبكم", "اختاروا العرض اللي يناسبكم", "محد اختاره للحين", "أنا معكم", "هالتصويت خلص أو الرابط غلط.", "اكتب اسمك أول", "ما انحفظ صوتك، جرّب مرة ثانية", "ما يقدر هالمرة", "محد صوّت للحين، كن أول واحد", "صوّتوا هني:", "أضف للتقويم", "من", "احجز",
            "بالليل", "الصبح", "الظهر", "مساء", "درهم", "انحفظ الرابط", "انشالت من سينماتي", "انضافت لسينماتي", "أقل من كيلو", "كم", "الأفلام",
            "السينمات", "ما لقينا شي بهالاسم", "يبدأ الحين", "بعد", "د", "ما في فيلم يبدأ خلال ساعتين في", "ما في أفلام بهالتصنيف اليوم",
            "أقرب سينما لك", "لحظة، نحدد مكانك…", "ما قدرنا نعرف مكانك — اختار مدينتك", "الإعلان", "سكّر", "في", "أقل", "المزيد", "اليوم", "بكرة",
@@ -507,11 +516,42 @@ class App:
                 f'<button type="button" class="btn velvet vb-go" data-vbar-send>{tr("أرسل للربع")}</button>'
                 f'<button type="button" class="vb-x" data-vbar-clear aria-label="{tr("شيل التصويت")}">×</button></div>')
 
+    def vstart(self):
+        """The films tab's first row: starts picking films for a group vote (app.js «vpick» mode)."""
+        if not VOTE_API:
+            return ""
+        return (f'<button type="button" class="crow vstart" data-vstart><b>{tr("صوّتوا مع الربع")}</b>'
+                f'<small>{tr("اختاروا الفيلم سوا")}</small>{svg("fwd")}</button>')
+
+    def film_json(self, fid):
+        """/data/film/<fid>.json — what the poll page /v/ shows of a film: poster, genres, runtime, age rating, score,
+        verdict, synopsis, trailer and the film's pages, both languages (written once, with the Arabic build)."""
+        f = self.k.films[fid]
+        sc, kind = score(f)
+        vd = f.get("verdict") or {}
+        vw = VERDICT.get(vd.get("verdict"))
+        g = [GENRE_AR[x] for x in (f.get("genres") or []) if x in GENRE_AR]
+        return {"fid": fid, "title_ar": title(self.k, fid), "title_en": f.get("title") or title(self.k, fid),
+                "poster": f.get("poster") or "", "poster_2x": f.get("poster_2x") or "", "color": f.get("poster_color") or "",
+                "genres_ar": g, "genres_en": [EN.get(x, x) for x in g], "runtime": f.get("runtime") or None,
+                "rating": f.get("rating") or "", "lang_ar": LANG_AR.get(f.get("lang") or "", f.get("lang") or ""),
+                "lang_en": f.get("lang") or "", "score": {"v": sc, "kind": kind} if sc else None,
+                "verdict": {"cls": vw[1], "ar": vw[0], "en": EN.get(vw[0], vw[0])} if vw else None,
+                "synopsis_ar": f.get("synopsis_ar") or "", "synopsis_en": f.get("synopsis_en") or "",
+                "trailer": f.get("trailer") or "", "url_ar": f"/film/{fid}/", "url_en": f"/en/film/{fid}/"}
+
+    def film_jsons(self):
+        d = os.path.join(self.out, "data", "film")
+        os.makedirs(d, exist_ok=True)
+        for fid in self.films:
+            with open(os.path.join(d, f"{fid}.json"), "w", encoding="utf-8") as fh:
+                json.dump(self.film_json(fid), fh, ensure_ascii=False, separators=(",", ":"))
+
     def votepage(self):
         """/v/?p=<id> (2026-11-20): the poll's own page. A shell — the poll is read from the counter API by app.js, so a
         link opens it at once, no build. noindex, never in the sitemap; it replaces the old backend-less /v/ (2026-09)."""
         body = (f'<div class="pg vote">{self.bar(tr("وين نروح؟"))}<section class="sec" data-poll>'
-                f'<p class="v-by" data-v-by></p><p class="lede">{tr("اختار كل العروض اللي تناسبك، واللي ياخذ أكثر أصوات يطلع له زر الحجز.")}</p>'
+                f'<p class="v-by" data-v-by></p><p class="lede">{tr("اختار كل اللي يناسبك، واللي ياخذ أكثر أصوات يطلع له زر الحجز.")}</p>'
                 f'<form class="v-who" data-v-who hidden><label for="vn">{tr("اسمك؟")}</label><div class="v-row">'
                 f'<input id="vn" data-v-name maxlength="24" autocomplete="nickname" required><button class="btn velvet">{tr("تمام")}</button></div></form>'
                 f'<p class="v-me" data-v-me hidden>{tr("تصوّت باسم")} <b data-v-myname></b> <button type="button" class="v-link" data-v-rename>{tr("غيّر")}</button></p>'
@@ -800,7 +840,7 @@ class App:
 <div class="cities" data-cities>{rows}</div>
 <div class="cv" data-cv hidden><button type="button" class="cv-back" data-cv-back>{svg("back")}{tr('كل المدن')}</button><h2 data-cv-title></h2></div>
 <div class="clist" data-clist hidden>{cards}</div></section>
-<section class="pane" data-key="films" aria-label="{tr('الأفلام')}">{(self.billboard() + self.soon_board()) if merged else ""}<div class="chips" data-chips>{sort}{"".join(chips)}</div>{sort_menu}
+<section class="pane" data-key="films" aria-label="{tr('الأفلام')}">{self.vstart()}{(self.billboard() + self.soon_board()) if merged else ""}<div class="chips" data-chips>{sort}{"".join(chips)}</div>{sort_menu}
 <div class="grid" data-grid>{grid}</div><p class="empty" data-none hidden>{tr('ما في أفلام بهالتصنيف اليوم')}.</p></section>
 <section class="pane" data-key="coming" aria-label="{tr('قريباً')}">{self.freerow()}{self.coming()}</section>
 </main>{self.tabbar("cinemas", home=True)}</div>"""
@@ -927,7 +967,7 @@ class App:
 <section class="fhero" style="--pc:{E(f.get('poster_color') or '#3a302a')}">{hero_bg}<div class="fh-in">{self.poster(fid, cls="pst big vt", eager=True)}
 <div class="fh-t"><h2 class="ft">{E(t)}</h2>{f'<p class="fte" lang="en" dir="ltr">{E(f["title"])}{" · " + str(f["year"]) if f.get("year") else ""}</p>' if f.get("title") and f.get("title") != t else ""}
 <div class="fchips">{"".join(chips)}</div>{f'<p class="fg">{genres}</p>' if genres else ""}</div></div></section>
-<div class="acts">{trailer}{ask}</div>
+<div class="acts">{trailer}{ask}<button type="button" class="btn ghost vfilm" data-vfilm="{E(fid)}" data-vt="{E(t)}" hidden>{tr("+ للتصويت")}</button></div>
 {about}{self.lastc_line(fid)}{self.fun_fact(f)}<section class="nearest" data-nearest hidden><h2>{tr('أقرب عرض لك')}</h2><div data-nearest-row></div></section>
 {verdict}{self.family(f)}{where}{crew}
 <section class="sec ask" data-ask data-fid="{E(fid)}" data-lang="{LANG}"><h2>{tr('اسأل الفيلم')}</h2><p class="lead">{tr('اسأل أي شي عن الفيلم، ونجاوبك من قصته ومعلوماته بس. اللي يحرق نخفيه لين تضغط')}.</p>
@@ -1152,6 +1192,8 @@ class App:
         if self.live:
             self.free()
             self.votepage()
+            if LANG == "ar":
+                self.film_jsons()
         return 1 + len(self.films) + len(self.cins) + (2 if self.live else 0)
 
 
