@@ -87,8 +87,8 @@ def test_films_can_be_voted_on_from_the_films_tab_and_their_pages(tmp_path):
     out, app = _build(tmp_path, "ar")
     home = read(out, "index.html")
     films = home[home.index('data-key="films"'):]
-    assert films.index("data-vstart") < films.index("data-chips")          # the first thing on the films tab
-    assert "صوّتوا مع الربع" in films and "اختاروا الفيلم سوا" in films
+    assert films.index("data-chips") < films.index("data-vstart") < films.index("data-grid")   # under the filters (owner)
+    assert "صوّتوا مع الربع" in films and "إختارو الفلم" in films
     fid = app.films[0]
     page = read(out, "film", fid, "index.html")
     assert re.search(r'<div class="acts">.*?data-vfilm="' + re.escape(fid) + '"', page, re.S)

@@ -102,7 +102,7 @@ LANG = "ar"
 EN = {
     # «صوّتوا مع الربع» on films (2026-11-20)
     "صوّتوا مع الربع": "Vote with friends",
-    "اختاروا الفيلم سوا": "Pick the film together",
+    "إختارو الفلم": "Pick the film",
     "+ للتصويت": "+ Add to vote",
     "اختار من 2 لين 4 أفلام": "Pick 2 to 4 films",
     "إلغاء": "Cancel",
@@ -517,11 +517,11 @@ class App:
                 f'<button type="button" class="vb-x" data-vbar-clear aria-label="{tr("شيل التصويت")}">×</button></div>')
 
     def vstart(self):
-        """The films tab's first row: starts picking films for a group vote (app.js «vpick» mode)."""
+        """The films tab's row under the filters (owner 2026-11-20): starts picking films for a group vote (app.js «vpick» mode)."""
         if not VOTE_API:
             return ""
         return (f'<button type="button" class="crow vstart" data-vstart><b>{tr("صوّتوا مع الربع")}</b>'
-                f'<small>{tr("اختاروا الفيلم سوا")}</small>{svg("fwd")}</button>')
+                f'<small>{tr("إختارو الفلم")}</small>{svg("fwd")}</button>')
 
     def film_json(self, fid):
         """/data/film/<fid>.json — what the poll page /v/ shows of a film: poster, genres, runtime, age rating, score,
@@ -840,8 +840,8 @@ class App:
 <div class="cities" data-cities>{rows}</div>
 <div class="cv" data-cv hidden><button type="button" class="cv-back" data-cv-back>{svg("back")}{tr('كل المدن')}</button><h2 data-cv-title></h2></div>
 <div class="clist" data-clist hidden>{cards}</div></section>
-<section class="pane" data-key="films" aria-label="{tr('الأفلام')}">{self.vstart()}{(self.billboard() + self.soon_board()) if merged else ""}<div class="chips" data-chips>{sort}{"".join(chips)}</div>{sort_menu}
-<div class="grid" data-grid>{grid}</div><p class="empty" data-none hidden>{tr('ما في أفلام بهالتصنيف اليوم')}.</p></section>
+<section class="pane" data-key="films" aria-label="{tr('الأفلام')}">{(self.billboard() + self.soon_board()) if merged else ""}<div class="chips" data-chips>{sort}{"".join(chips)}</div>{sort_menu}
+{self.vstart()}<div class="grid" data-grid>{grid}</div><p class="empty" data-none hidden>{tr('ما في أفلام بهالتصنيف اليوم')}.</p></section>
 <section class="pane" data-key="coming" aria-label="{tr('قريباً')}">{self.freerow()}{self.coming()}</section>
 </main>{self.tabbar("cinemas", home=True)}</div>"""
         import datetime as _dt

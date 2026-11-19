@@ -471,7 +471,7 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .v-list li q{color:var(--stone);font-size:13px}
 
 /* ── film votes (2026-11-20): the films tab's row and pick mode, the film page's button, the poll's film card ── */
-.vstart{inline-size:100%;margin-block:6px 4px;border:1px solid var(--door);border-radius:var(--r);padding-inline:14px;background:var(--paper)}
+.vstart{inline-size:100%;margin-block:2px 14px;border:1px solid var(--door);border-radius:var(--r);padding-inline:14px;background:var(--paper)}
 .vstart b{color:var(--door)}
 .vstart.on{background:var(--door)}
 .vstart.on b,.vstart.on small,.vstart.on svg{color:var(--on)}
