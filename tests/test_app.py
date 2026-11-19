@@ -348,3 +348,23 @@ def test_from_what_hour_on_the_film_cinema_and_home_pages(live):
         assert k in build_app.EN
     for k in ("ما في عروض", "ما في أفلام"):
         assert k in build_app.JS_KEYS
+
+
+def test_the_new_pages_count_their_visits(live):
+    """Owner 2026-11-19 («كم واحد يا من كل منصة»): since the redesign (10-19) home, film and cinema pages never loaded
+    beacon.js, so a landing from a reel, a bio or an X link counted nowhere. The app script now carries the counter,
+    filled with counter.yaml's endpoint, each page names its kind for it, and the ticket's book link counts its tap."""
+    import yaml
+    out, app = live
+    api = yaml.safe_load(open(os.path.join(ROOT, "counter.yaml"), encoding="utf-8"))["api"]
+    js = read(out, "assets", app.js_name)
+    assert api and api in js and "__COUNTER_API__" not in js
+    assert 'navigator.sendBeacon(API + "events"' in js and "function source()" in js
+    fid, cid = app.films[0], app.cins[0]
+    for kind, h in (("home", read(out, "index.html")), ("film", read(out, "film", fid, "index.html")),
+                    ("cinema", read(out, app.k.cinemas[cid]["city"], cid, "index.html"))):
+        assert f'data-kind="{kind}"' in h
+    assert re.search(r'<a [^>]*data-tk-book data-book', read(out, "film", fid, "index.html"))
+    beacon = read(ROOT, "src", "js", "beacon.js")
+    assert 'getAttribute("data-kind")' in beacon        # the app's pages name their kind on <html>
+    assert "navigator.webdriver" in beacon              # our own Playwright/Lighthouse runs never count

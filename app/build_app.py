@@ -38,6 +38,18 @@ E = lambda s: html.escape(str(s if s is not None else ""), quote=True)  # noqa: 
 SITE = "https://cinema.elyoxe.com"
 ASK_API = "https://fndms9v719.execute-api.ap-south-1.amazonaws.com/"
 
+
+def counter_api():
+    """counter.yaml's «api» (infra/counter): where beacon.js sends; "" when the file or key is missing, and the
+    beacon then does nothing."""
+    import yaml
+    try:
+        with open(os.path.join(ROOT, "counter.yaml"), encoding="utf-8") as f:
+            return str((yaml.safe_load(f) or {}).get("api") or "")
+    except OSError:
+        return ""
+
+
 CITIES = [("dubai", "دبي"), ("abu-dhabi", "أبوظبي"), ("sharjah", "الشارقة"), ("al-ain", "العين"), ("ajman", "عجمان"),
           ("ras-al-khaimah", "رأس الخيمة"), ("fujairah", "الفجيرة"), ("umm-al-quwain", "أم القيوين")]
 CITY = dict(CITIES)
@@ -908,7 +920,7 @@ class App:
 <div class="grab" data-grab></div><div class="tk"><div class="tk-top"><div><p class="tk-cin" data-tk-cin></p><h3 id="tk-film" data-tk-film></h3><p class="tk-when" data-tk-when></p></div>
 <div class="tk-time"><small data-tk-day></small><b data-tk-time></b></div></div>
 <table class="tk-seats"><tbody data-tk-seats></tbody></table><div class="tk-card" data-tk-card hidden></div>
-<a class="btn velvet wide" data-tk-book target="_blank" rel="noopener nofollow">{tr('احجز')}</a>
+<a class="btn velvet wide" data-tk-book data-book target="_blank" rel="noopener nofollow">{tr('احجز')}</a>
 <div class="tk-row"><button type="button" class="btn ghost" data-tk-share>{svg("share")}{tr('شارك')}</button><button type="button" class="btn ghost" data-tk-close>{tr('سكّر')}</button></div></div></section>"""
 
     # -------- assets
@@ -925,6 +937,9 @@ class App:
                          open(os.path.join(os.path.dirname(HERE), "src", "js", "disc.js"), encoding="utf-8").read(), re.S)
         assert disc and "/* disc:inline */" in js, "app.js lost its /* disc:inline */ slot or src/js/disc.js its disc block"
         js = js.replace("/* disc:inline */", disc.group(1).strip(), 1)
+        # the visit counter (owner 2026-11-19: «كم واحد يا من كل منصة»): src/js/beacon.js, the old pages' own client,
+        # filled with counter.yaml's endpoint the way build.fill_counter does; it reads the kind from <html data-kind>
+        js += "\n" + open(os.path.join(ROOT, "src", "js", "beacon.js"), encoding="utf-8").read().replace("__COUNTER_API__", counter_api())
         self.css_name = f"app.{hashlib.sha1(css.encode()).hexdigest()[:10]}.css"
         self.js_name = f"app.{hashlib.sha1(js.encode()).hexdigest()[:10]}.js"
         open(os.path.join(a, self.css_name), "w", encoding="utf-8").write(css)

@@ -6,12 +6,15 @@
      view        once per page, on pagehide / the tab going hidden (never `unload`: it blocks bfcache), with its source category
      return      once a day, how many days since the visitor's last day here (bucketed on-device)
      book_click  a tap on a chain's own booking link («احجز من موقع …»), with how long after landing (bucketed)
-   A lazy chunk (build.chunk_js): this file's own scope receives the page's helpers as K. Target ≤ 0.6 KB gz. */
+   A lazy chunk (build.chunk_js): this file's own scope receives the page's helpers as K. Target ≤ 0.6 KB gz.
+   The app's pages (home, film, cinema since the 10-19 redesign) carry it at the end of app.js (build_app.assets). */
 (function () {
   var API = "__COUNTER_API__"; // replaced at bundle time (build.fill_counter) with the real HTTP API endpoint
-  if (!API || API.indexOf("__") === 0 || !navigator.sendBeacon) return;
+  // navigator.webdriver: our own Playwright / Lighthouse runs are not visitors (the same rule as Cards and Tools)
+  if (!API || API.indexOf("__") === 0 || !navigator.sendBeacon || navigator.webdriver) return;
   var PAGES = { home: 1, film: 1, cinema: 1, city: 1, coming: 1 };
-  var kind = (document.body && document.body.getAttribute("data-page")) || "_";
+  // the old pages name their kind on <body data-page>, the app's pages (app/build_app.py) on <html data-kind>
+  var kind = (document.body && document.body.getAttribute("data-page")) || document.documentElement.getAttribute("data-kind") || "_";
   if (!PAGES[kind]) kind = "_";
   var t0 = Date.now(), once = {};
 
