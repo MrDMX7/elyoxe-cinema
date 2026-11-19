@@ -1,7 +1,23 @@
 {
-  "by": "failed",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "it-feeds",
-  "next_check": "2026-11-15",
-  "reason": "could not produce compliant output after 4 attempts (last: opens with \"فيلم <title>\" — a repeated, dull template; vary the opening)",
-  "written": "2026-11-12"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-22",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "الفيلم من نوع الرعب الخارق، وصُوّر في كندا بإخراج تشاد آرتشيبالد وكتابته."
+    },
+    {
+      "pos": false,
+      "text": "ما توفّر لنا رقم تقييم نقدي رسمي (Rotten Tomatoes أو Metacritic) لهالفيلم للحين، فالحكم غير واضح."
+    }
+  ],
+  "synopsis_ar": "رعب خارق من كندا عام 2025، من كتابة وإخراج تشاد آرتشيبالد، وبطولة Ashley Greene وShawn Ashmore وEllie O'Brien وJuno Rinaldi.",
+  "written": "2026-11-19"
 }
