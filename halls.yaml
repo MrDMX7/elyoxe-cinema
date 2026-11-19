@@ -265,6 +265,21 @@ chains:
         source: https://reelcinemas.com/en-ae/
         confidence: low
 
+  alshaab:
+    name: Al Shaab Cinema
+    name_ar: سينما الشعب
+    short: Al Shaab
+    halls:
+      - key: PEARL
+        codes: [SUITES]
+        match: pearl
+        name: Pearl Suite
+        name_ar: بيرل سويت
+        what_ar: القاعة المميزة في سينما الشعب، تذكرتها حوالي ثلاث مرات العادية؛ ما لقينا وصف رسمي لمحتواها.
+        what_en: Al Shaab Cinema's premium hall, at about three times the standard ticket; no official description of it found.
+        source: https://www.alshaabcinema.com/
+        confidence: low
+
   cineroyal:
     name: Cine Royal
     name_ar: سيني رويال
@@ -395,6 +410,8 @@ labels:
     DOLBY: [دولبي سينما, Dolby Cinema]
     KIDS: [ريل جونيور, Reel Junior]
     BOUTIQUE: [ذا بوتيك, The Boutique]
+  alshaab:
+    PEARL: [بيرل سويت, Pearl Suite]
   cineroyal:
     VIP: [رويال سويتس, Royal Suites]
     ROYALPLUS: [رويال بلس, Royal Plus]

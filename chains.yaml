@@ -21,3 +21,4 @@ chains:
   roxy:       {ad_offset_min: 15}
   cineroyal:  {ad_offset_min: 15}
   cinemacity: {ad_offset_min: 15}
+  alshaab:    {ad_offset_min: 15}

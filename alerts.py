@@ -28,7 +28,7 @@ from pathlib import Path
 from statefile import load_state_json, write_state_json
 
 ROOT = Path(__file__).resolve().parent
-CHAINS = ("vox", "star", "cineroyal", "novo", "reel", "roxy", "cinemacity")
+CHAINS = ("vox", "star", "cineroyal", "novo", "reel", "roxy", "cinemacity", "alshaab")
 
 
 def _dir() -> Path:

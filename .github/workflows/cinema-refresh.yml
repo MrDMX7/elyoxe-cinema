@@ -37,7 +37,7 @@ env:
   TZ: Asia/Dubai
   PYTHONIOENCODING: utf-8
   PYTHONUNBUFFERED: "1"
-  CHAINS: vox,star,reel,cinemacity,roxy,cineroyal,novo   # the relayed chains last: the laptop has the first minutes
+  CHAINS: vox,star,reel,cinemacity,alshaab,roxy,cineroyal,novo   # the relayed chains last: the laptop has the first minutes
   CINEMA_RELAY_CHAINS: roxy,cineroyal,novo
   CINEMA_RELAY_WAIT_S: ${{ inputs.relay_wait || '900' }}
   CINEMA_BACKDROPS_MAX: "0"          # yt-dlp is refused here; tools/relay.py backdrops makes them on the laptop

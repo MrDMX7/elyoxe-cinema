@@ -1,0 +1,1007 @@
+{
+  "cinemas": [
+    {
+      "id": "alshaab-al-shaab-village-sharjah",
+      "chain": "alshaab",
+      "name": "Al Shaab Cinema Al Shaab Village",
+      "name_ar": null,
+      "city": "sharjah",
+      "mall": "Al Shaab Village",
+      "address": "Al Shaab Village, Al Riqa Suburb, Sharjah, United Arab Emirates",
+      "maps": null,
+      "lat": null,
+      "lng": null
+    }
+  ],
+  "shows": [
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63187&movieId=1333&screenId=11",
+      "_screen": "CINEMA 4",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Ramayana: Rise Of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63348&movieId=1319&screenId=12",
+      "_screen": "CINEMA 5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 150,
+      "date": "2026-09-26",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63183&movieId=1278&screenId=9",
+      "_screen": "CINEMA 1",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63188&movieId=1333&screenId=11",
+      "_screen": "CINEMA 4",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 150,
+      "date": "2026-09-26",
+      "time": "13:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63184&movieId=1278&screenId=9",
+      "_screen": "CINEMA 1",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 125,
+      "date": "2026-09-26",
+      "time": "14:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63344&movieId=1317&screenId=12",
+      "_screen": "CINEMA 5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "15:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63189&movieId=1333&screenId=11",
+      "_screen": "CINEMA 4",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 150,
+      "date": "2026-09-26",
+      "time": "16:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63185&movieId=1278&screenId=9",
+      "_screen": "CINEMA 1",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 125,
+      "date": "2026-09-26",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63345&movieId=1317&screenId=12",
+      "_screen": "CINEMA 5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63190&movieId=1333&screenId=11",
+      "_screen": "CINEMA 4",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Hadoota (Arabic)",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "19:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63350&movieId=1301&screenId=11",
+      "_screen": "CINEMA 4",
+      "lang": "ar"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 150,
+      "date": "2026-09-26",
+      "time": "19:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63186&movieId=1278&screenId=9",
+      "_screen": "CINEMA 1",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 125,
+      "date": "2026-09-26",
+      "time": "19:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63346&movieId=1317&screenId=12",
+      "_screen": "CINEMA 5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Hadoota (Arabic)",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "21:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63351&movieId=1301&screenId=11",
+      "_screen": "CINEMA 4",
+      "lang": "ar"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 125,
+      "date": "2026-09-26",
+      "time": "22:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63347&movieId=1317&screenId=12",
+      "_screen": "CINEMA 5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Bouma (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "22:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63349&movieId=1313&screenId=9",
+      "_screen": "CINEMA 1",
+      "lang": "ml"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Hadoota (Arabic)",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "23:59",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-26&timeId=63352&movieId=1301&screenId=11",
+      "_screen": "CINEMA 4",
+      "lang": "ar"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 125,
+      "date": "2026-09-27",
+      "time": "00:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-11-19&timeId=63353&movieId=1317&screenId=12",
+      "_screen": "CINEMA 5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Bouma (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "00:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-11-19&timeId=63354&movieId=1313&screenId=9",
+      "_screen": "CINEMA 1",
+      "lang": "ml"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 150,
+      "date": "2026-09-27",
+      "time": "00:15",
+      "hall": "SUITES",
+      "hall_label": "Pearl Suite",
+      "prices": [
+        {
+          "seat": "Pearl Suite",
+          "aed": 105.0
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-11-19&timeId=63213&movieId=1278&screenId=13",
+      "_screen": "PEARL SUITE",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Om -Chapter 1: Udhiram-The Blood Wood (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "06:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63220&movieId=1318&screenId=12",
+      "_screen": "CINEMA 5",
+      "lang": "ta"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-27",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63202&movieId=1333&screenId=11",
+      "_screen": "CINEMA 4",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Om -Chapter 1: Udhiram-The Blood Wood (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63215&movieId=1318&screenId=12",
+      "_screen": "CINEMA 5",
+      "lang": "ta"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 150,
+      "date": "2026-09-27",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63196&movieId=1278&screenId=9",
+      "_screen": "CINEMA 1",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Hadoota (Arabic)",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "11:30",
+      "hall": "SUITES",
+      "hall_label": "Pearl Suite",
+      "prices": [
+        {
+          "seat": "Pearl Suite",
+          "aed": 105.0
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63209&movieId=1301&screenId=13",
+      "_screen": "PEARL SUITE",
+      "lang": "ar"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-27",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63203&movieId=1333&screenId=11",
+      "_screen": "CINEMA 4",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 150,
+      "date": "2026-09-27",
+      "time": "13:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63197&movieId=1278&screenId=9",
+      "_screen": "CINEMA 1",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Om -Chapter 1: Udhiram-The Blood Wood (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "14:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63216&movieId=1318&screenId=12",
+      "_screen": "CINEMA 5",
+      "lang": "ta"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Kaali Kheti (Hindi)",
+      "film_lang": "Hindi",
+      "film_rating": "15+",
+      "runtime": 110,
+      "date": "2026-09-27",
+      "time": "14:45",
+      "hall": "SUITES",
+      "hall_label": "Pearl Suite",
+      "prices": [
+        {
+          "seat": "Pearl Suite",
+          "aed": 105.0
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63210&movieId=1329&screenId=13",
+      "_screen": "PEARL SUITE",
+      "lang": "hi"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-27",
+      "time": "15:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63204&movieId=1333&screenId=11",
+      "_screen": "CINEMA 4",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 150,
+      "date": "2026-09-27",
+      "time": "16:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63198&movieId=1278&screenId=9",
+      "_screen": "CINEMA 1",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-27",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63205&movieId=1333&screenId=11",
+      "_screen": "CINEMA 4",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-27",
+      "time": "17:00",
+      "hall": "SUITES",
+      "hall_label": "Pearl Suite",
+      "prices": [
+        {
+          "seat": "Pearl Suite",
+          "aed": 105.0
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63212&movieId=1332&screenId=13",
+      "_screen": "PEARL SUITE",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Om -Chapter 1: Udhiram-The Blood Wood (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "17:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63217&movieId=1318&screenId=12",
+      "_screen": "CINEMA 5",
+      "lang": "ta"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Aakasamlo Oka Tara (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "19:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63206&movieId=1303&screenId=11",
+      "_screen": "CINEMA 4",
+      "lang": "ml"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 150,
+      "date": "2026-09-27",
+      "time": "19:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63199&movieId=1278&screenId=9",
+      "_screen": "CINEMA 1",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "The Hunger Games: Sunrise On The Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 150,
+      "date": "2026-09-27",
+      "time": "19:30",
+      "hall": "SUITES",
+      "hall_label": "Pearl Suite",
+      "prices": [
+        {
+          "seat": "Pearl Suite",
+          "aed": 105.0
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63214&movieId=1278&screenId=13",
+      "_screen": "PEARL SUITE",
+      "lang": "en"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Om -Chapter 1: Udhiram-The Blood Wood (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "20:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63218&movieId=1318&screenId=12",
+      "_screen": "CINEMA 5",
+      "lang": "ta"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Bachelor Party D’Eux (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 125,
+      "date": "2026-09-27",
+      "time": "22:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63201&movieId=1317&screenId=9",
+      "_screen": "CINEMA 1",
+      "lang": "ml"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Bouma (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "22:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63207&movieId=1313&screenId=11",
+      "_screen": "CINEMA 4",
+      "lang": "ml"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Kaali Kheti (Hindi)",
+      "film_lang": "Hindi",
+      "film_rating": "15+",
+      "runtime": 110,
+      "date": "2026-09-27",
+      "time": "22:15",
+      "hall": "SUITES",
+      "hall_label": "Pearl Suite",
+      "prices": [
+        {
+          "seat": "Pearl Suite",
+          "aed": 105.0
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63211&movieId=1329&screenId=13",
+      "_screen": "PEARL SUITE",
+      "lang": "hi"
+    },
+    {
+      "cinema": "alshaab-al-shaab-village-sharjah",
+      "film_title": "Om -Chapter 1: Udhiram-The Blood Wood (Tamil)",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "23:59",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "VIP",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.alshaabcinema.com/Booking/SetSession?mallId=1&showDate=2026-09-27&timeId=63219&movieId=1318&screenId=12",
+      "_screen": "CINEMA 5",
+      "lang": "ta"
+    }
+  ],
+  "price_health": {
+    "attempted": 3,
+    "priced": 3,
+    "error": null
+  }
+}

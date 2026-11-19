@@ -44,6 +44,7 @@ PREFLIGHT = {
     "novo": ("requests", "https://uae-api.novocinemas.com/api/home"),
     "cineroyal": ("requests", "https://cineroyal.ae/home/nowShowing"),
     "cinemacity": ("requests", "https://www.cinemacity.ae/our-locations/"),
+    "alshaab": ("requests", "https://www.alshaabcinema.com/"),
 }
 
 

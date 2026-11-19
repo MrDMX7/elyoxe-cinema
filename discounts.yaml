@@ -629,3 +629,20 @@ rules:
       source: "https://www.cinemacity.ae/offers-and-promotions/"
       checked: "2026-11-18"
       confidence: official
+
+  alshaab:
+    homat:
+      # 2026-11-19: read in the Homat Al Watan app itself (the owner's phone, at his request). Store «سينما الشعب», up to
+      # 50%: 50% on the VIP ticket, 25% on the regular ticket, a popcorn/nachos + soft drink combo for AED 30; a valid
+      # card, not with other Homat offers, at most 8 tickets per card. No end date shown. One rule per chain x card, so
+      # it carries the 25% every regular seat gets, on the Standard halls; the VIP seats' 50% is in the note, and
+      # whether «VIP» also covers the Pearl Suite is not said, so the suite is left out.
+      type: percent
+      value: 25
+      included_halls: ["Standard"]
+      box_office_only: true
+      max_tickets: 8
+      note_ar: "خصم 25% على التذكرة العادية و50% على تذكرة VIP، وكومبو فشار ومشروب بـ30 درهم، لين 8 تذاكر بالبطاقة"
+      source: "https://play.google.com/store/apps/details?id=com.dhaen.homatalwatan"
+      checked: "2026-11-19"
+      confidence: official
