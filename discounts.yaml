@@ -650,10 +650,14 @@ rules:
   cinemax:
     fazaa:
       # 2026-11-19: the Fazaa app itself (the owner's phone, at his request) lists «Cinemax Cinemas — Discount 20% on All
-      # days». Its terms page was not opened before the phone locked, so no box-office or ticket-count limit is claimed.
+      # days». Terms read the same night: show a valid Fazaa card, the member plus 4 people, not with any other deal,
+      # «available until 16/06/2027»; branches Al Naeem Mall (Ras Al Khaimah) and Makani Zakhir Mall (Al Ain).
       type: percent
       value: 20
-      note_ar: "خصم 20% كل أيام الأسبوع ببطاقة فزعة"
+      box_office_only: true
+      max_tickets: 5
+      valid_until: "2027-06-16"
+      note_ar: "خصم 20% كل أيام الأسبوع ببطاقة فزعة، لك ولـ4 وياك، وما ينضاف على عرض ثاني"
       source: "https://fazaa.ae/"
       checked: "2026-11-19"
       confidence: official
@@ -670,11 +674,31 @@ rules:
 
   safeer:
     fazaa:
-      # 2026-11-19: the Fazaa app itself (the owner's phone, at his request) lists «Safeer Cinema — 15% Discount». Its
-      # terms page was not opened before the phone locked, so no box-office or ticket-count limit is claimed.
+      # 2026-11-19: the Fazaa app itself (the owner's phone, at his request) lists «Safeer Cinema — 15% Discount». Terms
+      # read the same night: 15% on tickets, 4 tickets per film, a free cola/popcorn upsize, the card shown in the Fazaa
+      # app (not a screenshot) or the physical card at the box office, not with other offers, «available until 16/01/2027».
       type: percent
       value: 15
-      note_ar: "خصم 15% ببطاقة فزعة"
+      box_office_only: true
+      max_tickets: 4
+      valid_until: "2027-01-16"
+      note_ar: "خصم 15% ببطاقة فزعة من الشباك، 4 تذاكر للفيلم، وترقية مجانية للفشار والمشروب"
+      source: "https://fazaa.ae/"
+      checked: "2026-11-19"
+      confidence: official
+
+  cinemas369:
+    fazaa:
+      # 2026-11-19: read in the Fazaa app itself (the owner's phone, at his request): «369 Cinemas — Discount up to 20%».
+      # The text: a premium Fazaa card (Platinum, Gold, Silver, Medeem) 20% on movie tickets, the basic Fazaa Discount card
+      # 15%, a free soft-drink/popcorn upsize, at most 4 tickets per day/transaction, «available until 16/06/2027». The card
+      # badges above that text say 20%/25% instead; the text is the stated term, so the rule carries it.
+      type: percent
+      value: 20
+      box_office_only: true
+      max_tickets: 4
+      valid_until: "2027-06-16"
+      note_ar: "خصم 20% للبطاقات البلاتينية والذهبية والفضية ومديم، و15% لبطاقة فزعة للخصومات، 4 تذاكر باليوم، وترقية مجانية للفشار والمشروب"
       source: "https://fazaa.ae/"
       checked: "2026-11-19"
       confidence: official
