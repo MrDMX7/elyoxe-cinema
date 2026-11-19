@@ -733,15 +733,28 @@ def _rt_ratings(rt_id, expected_year=None):
         except (TypeError, ValueError):
             return None
 
+    def _score(s):
+        """RT's number: "score": "88" until late 2026, then "scorePercent": "88%" (found 2026-11-19, when every
+        film had read as no score beside a full review count); with neither, liked / (liked + not liked)."""
+        v = _int(s.get("score"))
+        if v is None:
+            m = re.match(r"\s*(\d{1,3})\s*%?\s*$", str(s.get("scorePercent") or ""))
+            v = int(m.group(1)) if m else None
+        if v is None:
+            liked, notliked = _int(s.get("likedCount")), _int(s.get("notLikedCount"))
+            if liked is not None and notliked is not None and liked + notliked > 0:
+                v = round(100 * liked / (liked + notliked))
+        return v
+
     consensus = None
     cm = re.search(r'id="critics-consensus"[^>]*>.*?<p>(.*?)</p>', html, re.S)
     if cm:
         consensus = re.sub(r"<[^>]+>", "", cm.group(1)).strip()
 
     return {
-        "critics": _int(critics.get("score")),
+        "critics": _score(critics),
         "critics_count": _int(critics.get("reviewCount")),
-        "audience": _int(audience.get("score")),
+        "audience": _score(audience),
         "consensus": consensus,
         "url": f"https://www.rottentomatoes.com/m/{rt_id}",
     }
@@ -919,7 +932,9 @@ def enrich(data: dict, cache_path: str = "data/films_cache.json", offline: bool 
         rt_id = ids.get("rt_id")
         ratings = entry.get("ratings")
         ratings_at = entry.get("ratings_at")
-        need_ratings = rt_id and not offline and (ratings is None or not _fresh(ratings_at, RATINGS_TTL))
+        # reviews but no score = read under RT's old field name (see _rt_ratings): read again now, not in 3 days
+        missed = bool(ratings) and ratings.get("critics") is None and (ratings.get("critics_count") or 0) > 0
+        need_ratings = rt_id and not offline and (ratings is None or missed or not _fresh(ratings_at, RATINGS_TTL))
         if need_ratings:
             # Guard against a stale/wrong Wikidata rt_id: the RT page's own release year must
             # match the year Wikidata recorded for this same qid, or the rating is dropped.
