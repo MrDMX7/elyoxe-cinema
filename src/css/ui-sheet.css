@@ -5,9 +5,9 @@
 html.sheet-open{overflow:hidden}
 .sh-scrim{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.6);animation:sheet-in .28s var(--ease-sheet)}
 .sheet{position:fixed;z-index:41;inset-inline:0;inset-block-end:0;max-block-size:86vh;overflow-y:auto;overscroll-behavior:contain;
-  background:#17100F;border-block-start:1px solid var(--line-2);padding:0 var(--gut) calc(var(--dt,0px) + 20px + env(safe-area-inset-bottom));animation:sheet-up .28s var(--ease-sheet)}
+  background:var(--vnight);border-block-start:1px solid var(--line-2);padding:0 var(--gut) calc(var(--dt,0px) + 20px + env(safe-area-inset-bottom));animation:sheet-up .28s var(--ease-sheet)}
 @keyframes sheet-up{from{transform:translateY(100%)}}
-.sheet-t{position:sticky;inset-block-start:0;z-index:1;background:#17100F;touch-action:none}
+.sheet-t{position:sticky;inset-block-start:0;z-index:1;background:var(--vnight);touch-action:none}
 .grab{block-size:44px;margin-block-end:-20px;background:linear-gradient(var(--line-2),var(--line-2)) 50% 12px/40px 4px no-repeat}
 .sheet-h{display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative}
 .sheet-h h2{font-size:var(--fs-h2)}

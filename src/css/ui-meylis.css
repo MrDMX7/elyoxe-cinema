@@ -24,6 +24,12 @@
     --live:#5CC9A4; --tile:#231C18; --vnight:#231C18; --line:#3A302A; --line-2:#4A3F37; --tint:rgba(255,255,255,.05); --bar:rgba(23,18,15,.92);
     color-scheme:dark}
 }
+/* the sheets (city, card, filters) were a hard-coded night slab over the paper (owner 2026-11-19, seen in the nazel-01
+   reel): they take --vnight now, paper light and wood dark like the app's ticket; on the phone the app's rounded top and
+   soft shadow, and its lighter scrim */
+.sh-scrim{background:rgba(28,22,19,.45)}
+@media (prefers-color-scheme:dark){.sh-scrim{background:rgba(0,0,0,.6)}}
+@media (max-width:1023px){.sheet{border-radius:18px 18px 0 0;border-block-start:0;box-shadow:0 -8px 30px rgba(28,22,19,.18)}}
 /* no velvet glow at the top of a page: the paper is plain */
 body::before{display:none!important}
 body{line-height:1.55}

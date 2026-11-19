@@ -41,7 +41,7 @@
 .kids-late .lnk{min-block-size:44px}
 /* the filter sheet: chips per section, the prayer switch, then «مسح» and «اعرض N فيلم» held at its foot */
 .sheet .go{position:sticky;inset-block-end:calc(-20px - env(safe-area-inset-bottom));display:flex;gap:12px;margin-block-start:12px;
-  padding-block:12px calc(20px + env(safe-area-inset-bottom));margin-block-end:calc(-20px - env(safe-area-inset-bottom));background:#17100F}
+  padding-block:12px calc(20px + env(safe-area-inset-bottom));margin-block-end:calc(-20px - env(safe-area-inset-bottom));background:var(--vnight)}
 .sheet .go .btn{flex:1 1 0;justify-content:center;min-block-size:48px;padding-inline:12px}
 /* nothing left to show: the button says why, and does nothing (§1.7). Both spans are in the markup; CSS swaps them by
    the button's [disabled], so no script has to (filters.js only sets/clears .disabled) */
