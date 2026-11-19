@@ -40,6 +40,27 @@
   /* 12-hour times (owner 2026-10-18): «16:25» → «4:25» and «مساء»; the dirham sign from the page's <template id="aed"> */
   function t12(t) { var h = +t.slice(0, 2), m = t.slice(3, 5); return [(h % 12 || 12) + ":" + m, h < 4 ? tx("بالليل") : h < 12 ? tx("الصبح") : h === 12 ? tx("الظهر") : tx("مساء")]; }
   var AED = (q("#aed") || {}).innerHTML || " " + tx("درهم");
+  /* «من الساعة» (owner 2026-11-19): only what starts at the picked hour or later. Kept for the day it was picked
+     («cinema.hour» = «17|2026-11-19»), so tomorrow opens on every time again. The film and cinema pages hide the times
+     before it; the home hides the films with no show in the visitor's city from it. */
+  var hourEl = q("[data-hour]"), onHour = null;
+  var hour = (function () { var v = (store.get("hour") || "").split("|"); return v[1] === A.today && +v[0] ? +v[0] : 0; })();
+  /* a show of day at time t passes when it starts at the hour or after (00:45 is that night's, so it passes «من 9») */
+  var hourOk = function (day, t) { return !hour || startOf(day, t) >= startOf(day, hour + ":00"); };
+  /* «من 5 العصر» for the empty lines; «from 5 pm» inside an English sentence */
+  var hourSays = function (s) { return A.lang === "en" ? s.toLowerCase() : s; };
+  var hourLabel = function () { return hourEl && hourEl.selectedIndex > 0 ? hourSays(hourEl.options[hourEl.selectedIndex].text) : ""; };
+  if (hourEl) {
+    hourEl.value = hour ? String(hour) : "";
+    hourEl.parentNode.classList.toggle("on", !!hour);
+    hourEl.addEventListener("change", function () {
+      hour = +hourEl.value || 0;
+      store.set("hour", hour ? hour + "|" + A.today : "");
+      hourEl.parentNode.classList.toggle("on", !!hour);
+      buzz();
+      if (onHour) onHour();
+    });
+  }
   /* a chain's mark beside a cinema's name: its own app icon (window.APP.logos), else the coloured name tag */
   function chm(ch, name) {
     var src = A.logos && A.logos[ch];
@@ -223,6 +244,22 @@
        «يبدأ خلال ساعتين» (owner 2026-10-23): the films with a show in the visitor's city starting within two hours,
        earliest first, each tile saying when and where — from the same board as «يبدأ قريب منك» (#soon). */
     var S2 = null; try { S2 = JSON.parse((q("#soon") || {}).textContent || "null"); } catch (e) {}
+    /* the hour on the home: after any chip, the tiles left are the films with a show still to start in the visitor's
+       city at the hour or after (#soon carries all of today's) */
+    var gateTiles = function () {
+      if (!hour || !S2) return;
+      var city = store.get("city") || "dubai", now = nowUAE(), ok = {}, n = 0, cut = 0;
+      S2.r.forEach(function (r) {
+        if (S2.c[r[0]][2] !== city || startOf(S2.d, r[2]) < now - 10 * 60e3 || !hourOk(S2.d, r[2])) return;
+        ok[S2.f[r[1]][0]] = 1;
+      });
+      qa(".tile", grid).forEach(function (t) {
+        if (!t.hidden && !ok[t.dataset.fid]) { t.hidden = true; cut++; }
+        if (!t.hidden) n++;
+      });
+      if (!n && cut) none.textContent = tx("ما في أفلام") + " " + hourLabel() + " " + tx("في") + " " + (CITY_AR[city] || city) + ".";
+      none.hidden = n > 0;
+    };
     var paintSoon2h = function () {
       var city = store.get("city") || "dubai", now = nowUAE(), best = {};
       if (S2) S2.r.forEach(function (r) {
@@ -243,6 +280,7 @@
       tiles.filter(function (t) { return !t.hidden; }).sort(function (x, y) { return best[x.dataset.fid].st - best[y.dataset.fid].st; }).forEach(function (t) { grid.appendChild(t); });
       none.textContent = tx("ما في فيلم يبدأ خلال ساعتين في") + " " + (CITY_AR[city] || city) + ".";
       none.hidden = n > 0;
+      gateTiles();
     };
     /* the hall chips (owner 2026-11-18): data-h = «city:imax,vip;city:…» from today's shows; the visitor's city, else any */
     var hallOn = function (t, hall, city) {
@@ -252,27 +290,33 @@
       });
     };
     var soon2hOn = function () { var c = q('[data-chip="soon2h"]'); return !!(c && c.classList.contains("on")); };
+    var paintChip = function (k) {
+      if (k === "soon2h") { paintSoon2h(); return; }
+      qa(".tm .eta", grid).forEach(function (e) { e.remove(); });
+      var n = 0, hall = k.indexOf("h-") === 0 ? k.slice(2) : null, city = store.get("city");
+      qa(".tile", grid).forEach(function (t) {
+        var on = k === "all" || (hall ? hallOn(t, hall, city) : (" " + t.dataset.g + " ").indexOf(" " + k + " ") >= 0);
+        t.hidden = !on; if (on) n++;
+      });
+      none.textContent = hall ? tx("ما في أفلام بهالقاعة اليوم في") + " " + (CITY_AR[city] || city || "") + "."
+                              : tx("ما في أفلام بهالتصنيف اليوم") + ".";
+      none.hidden = n > 0;
+      gateTiles();
+      if (sortMenu) sortTiles(store.get("sort") || "n");   /* the chip's own order back, in the same transition */
+    };
+    var chipNow = function () { var c = q("[data-chip].on"); return c ? c.dataset.chip : "all"; };
     qa("[data-chip]").forEach(function (c) {
       c.addEventListener("click", function () {
-        var k = c.dataset.chip;
         buzz();
         vt(function () {
           qa("[data-chip]").forEach(function (x) { x.classList.toggle("on", x === c); });
-          if (k === "soon2h") { paintSoon2h(); return; }
-          qa(".tm .eta", grid).forEach(function (e) { e.remove(); });
-          var n = 0, hall = k.indexOf("h-") === 0 ? k.slice(2) : null, city = store.get("city");
-          qa(".tile", grid).forEach(function (t) {
-            var on = k === "all" || (hall ? hallOn(t, hall, city) : (" " + t.dataset.g + " ").indexOf(" " + k + " ") >= 0);
-            t.hidden = !on; if (on) n++;
-          });
-          none.textContent = hall ? tx("ما في أفلام بهالقاعة اليوم في") + " " + (CITY_AR[city] || city || "") + "."
-                                  : tx("ما في أفلام بهالتصنيف اليوم") + ".";
-          none.hidden = n > 0;
-          if (sortMenu) sortTiles(store.get("sort") || "n");   /* the chip's own order back, in the same transition */
+          paintChip(c.dataset.chip);
         });
         c.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
       });
     });
+    onHour = function () { vt(function () { paintChip(chipNow()); }); };
+    if (hour) paintChip(chipNow());
     setInterval(function () { if (soon2hOn()) paintSoon2h(); }, 60e3);
     var apple = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
     if (!apple) qa("a.crem[data-gcal]").forEach(function (a) {
@@ -443,7 +487,7 @@
       qa(".city[data-city]").forEach(function (c) { c.hidden = c.dataset.city !== city; });
       qa(".tbtn").forEach(function (b) {
         var st = startOf(b.dataset.d, b.dataset.t), past = st < now - 10 * 60e3;
-        b.hidden = b.dataset.d !== day;
+        b.hidden = b.dataset.d !== day || !hourOk(b.dataset.d, b.dataset.t);
         b.classList.toggle("past", past);
         b.disabled = past;
         b.classList.toggle("soon", !past && st < soon);
@@ -453,7 +497,16 @@
       qa(".cblock, .frow").forEach(function (r) { r.hidden = !qa(".tbtn", r).some(function (b) { return !b.hidden; }); });
       qa(".cblock, .frow").forEach(function (r) { if (!r.hidden) r.hidden = !qa(".tbtn", r).some(function (b) { return !b.hidden && !b.classList.contains("past"); }); });
       var visibleLeft = qa(".tbtn").some(function (b) { return !b.hidden && !b.classList.contains("past") && !b.closest("[hidden]"); });
-      var pastMsg = q("[data-past]"); if (pastMsg) pastMsg.hidden = visibleLeft;
+      var pastMsg = q("[data-past]");
+      if (pastMsg) {
+        /* nothing left only because of the hour: say the hour, not «خلصت عروض اليوم» */
+        if (pastMsg._t == null) pastMsg._t = pastMsg.textContent;
+        var byHour = !visibleLeft && hour && qa(".tbtn").some(function (b) {
+          return b.dataset.d === day && !b.classList.contains("past") && !b.closest(".city[hidden]");
+        });
+        pastMsg.textContent = byHour ? tx("ما في عروض") + " " + hourLabel() + " " + hourSays(day === A.today ? tx("اليوم") : tx("بكرة")) + "." : pastMsg._t;
+        pastMsg.hidden = visibleLeft;
+      }
       /* nearest first, with the distance, once we know where the visitor is */
       if (here) qa(".city").forEach(function (c) {
         var bs = qa(".cblock", c);
@@ -467,7 +520,7 @@
       var now = nowUAE(), best = null;
       T.r.forEach(function (r, i) {
         var c = T.c[r[7]]; if (!c || c[1] !== city) return;
-        var st = startOf(r[0], r[1]); if (st < now + 5 * 60e3) return;
+        var st = startOf(r[0], r[1]); if (st < now + 5 * 60e3 || !hourOk(r[0], r[1])) return;
         if (!best || st < best.st) best = { st: st, r: r, i: i, c: c };
       });
       if (!best) { nearest.hidden = true; return; }
@@ -492,6 +545,7 @@
     };
     days.forEach(function (b) { b.addEventListener("click", function () { day = b.dataset.day; vt(paint); }); });
     ctabs.forEach(function (b) { b.addEventListener("click", function () { city = b.dataset.ctab; store.set("city", city); vt(function () { paint(); paintNearest(); }); }); });
+    onHour = function () { vt(function () { paint(); paintNearest(); }); };
     paint(); paintNearest();
     setInterval(function () { paint(); paintNearest(); }, 60e3);
     if (card && T) loadDisc().then(function () { paintPrices(); paintNearest(); });
@@ -538,7 +592,7 @@
       if (pg.classList.contains("film") && r[7]) {
         var me = minOf(r), myCity = c[1], now2 = nowUAE(), cheap = null;
         T.r.forEach(function (x, i) {
-          if (x[0] !== r[0] || (T.c[x[7]] || [])[1] !== myCity || startOf(x[0], x[1]) < now2 + 5 * 60e3) return;
+          if (x[0] !== r[0] || (T.c[x[7]] || [])[1] !== myCity || startOf(x[0], x[1]) < now2 + 5 * 60e3 || !hourOk(x[0], x[1])) return;
           var p = minOf(x); if (p && (!cheap || p < cheap.p)) cheap = { p: p, x: x, i: i };
         });
         if (me && cheap && me - cheap.p >= 5) {

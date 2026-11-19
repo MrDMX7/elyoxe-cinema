@@ -66,7 +66,7 @@ def test_live_pages_are_indexable_with_their_canonical_and_film_json_ld(live):
     movie = next(x for x in ld["@graph"] if x["@type"] == "Movie")
     assert movie["url"].endswith(f"/film/{fid}/")
     assert '<script type="application/json" id="shows">' in h          # the ticket's table
-    assert '<footer class="foot">' in h and 'href="/en/"' in h and 'href="/cards/"' in h
+    assert '<footer class="foot">' in h and f'href="/en/film/{fid}/"' in h and 'href="/cards/"' in h
     # every link inside points at a live URL
     assert not re.search(r'href="/(f|c)/', h)
 
@@ -218,6 +218,10 @@ def test_the_english_site_is_the_same_pages_under_en(tmp_path):
         assert "Where it's showing" in film and "Ask the film" in film and ">Films<" in film
         assert re.search(r"<title>[^<]*showtimes", film) and '"inLanguage": "en"' in film
         assert ',t:{"' in home and "Link copied" in home          # the script's phrases in English
+        # the language switch (owner 2026-11-19): «العربية» at the top of the home, and the footer's goes to this page's twin
+        assert '<a class="th-lang" href="/" hreflang="ar" lang="ar">العربية</a>' in home
+        assert f'<a href="/film/{fid}/" hreflang="ar" lang="ar">العربية</a>' in film
+        assert ">From 5 pm</option>" in film and ">Any time</option>" in cin
     finally:
         build_app.LANG = "ar"
 
@@ -309,3 +313,38 @@ def test_the_ticket_prices_after_the_visitors_card(live):
     # every phrase the card line says has its English
     for k in ("عندك بطاقة خصم؟", "السعر بعد", "بدون بطاقة", "غيّر", "من الشباك بس، مب في الحجز أونلاين", "ما تشمل هالقاعة"):
         assert k in build_app.JS_KEYS and k in build_app.EN
+
+
+def test_the_language_switch_sits_on_top_and_goes_to_the_same_page(live):
+    """Owner 2026-11-19: English was a link at the very end of the page. The home's top bar has «EN» beside search, and
+    the footer's language link opens the same page in the other language, not the other home."""
+    out, app = live
+    fid, cid = app.films[0], app.cins[0]
+    home = read(out, "index.html")
+    film = read(out, "film", fid, "index.html")
+    cin = read(out, app.k.cinemas[cid]["city"], cid, "index.html")
+    top = re.search(r'<header class="tophead">(.*?)</header>', home, re.S).group(1)
+    assert '<a class="th-lang" href="/en/" hreflang="en" lang="en">EN</a>' in top and "data-search-open" in top
+    assert f'<a href="/en/film/{fid}/" hreflang="en" lang="en">English</a>' in film
+    assert f'<a href="/en/{app.k.cinemas[cid]["city"]}/{cid}/" hreflang="en" lang="en">English</a>' in cin
+
+
+def test_from_what_hour_on_the_film_cinema_and_home_pages(live):
+    """Owner 2026-11-19: «يطلع الأفلام اللي تبدأ بعد الساعة 5 العصر». One «أي وقت ▾» pick beside «اليوم | بكرة» on the
+    film and cinema pages and in the home's chips; app.js hides the times before it (and a cinema or film left with
+    none), keeps the pick for the day, and says so when nothing is left."""
+    out, app = live
+    fid, cid = app.films[0], app.cins[0]
+    pages = [read(out, "index.html"), read(out, "film", fid, "index.html"), read(out, app.k.cinemas[cid]["city"], cid, "index.html")]
+    for h in pages:
+        sel = re.search(r'<select data-hour[^>]*>(.*?)</select>', h, re.S)
+        assert sel, "no hour pick"
+        assert re.findall(r'<option value="(\d*)"', sel.group(1)) == ["", "15", "17", "19", "21"]
+        assert ">من 5 العصر</option>" in sel.group(1)
+    assert re.search(r'<div class="when">\s*<div class="segs" data-days>.*?</div><label class="hr">', pages[1], re.S)
+    js = read(ROOT, "app", "app.js")
+    assert "[data-hour]" in js and 'store.set("hour"' in js
+    for k in ("ما في عروض", "ما في أفلام", "أي وقت", "من 5 العصر"):
+        assert k in build_app.EN
+    for k in ("ما في عروض", "ما في أفلام"):
+        assert k in build_app.JS_KEYS

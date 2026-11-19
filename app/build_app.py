@@ -59,6 +59,8 @@ MONTHS_AR = ["يناير", "فبراير", "مارس", "أبريل", "مايو",
 CHIPS = [("all", "الكل"), ("last", "آخر فرصة"), ("action", "أكشن"), ("comedy", "كوميديا"), ("horror", "رعب"), ("thriller", "إثارة"),
          ("drama", "دراما"), ("adventure", "مغامرة"), ("family", "عائلي"), ("scifi", "خيال"), ("romance", "رومانسي"),
          ("arabic", "عربي"), ("indian", "هندي"), ("english", "إنجليزي")]
+# «من الساعة» (owner 2026-11-19: «يطلع الأفلام اللي تبدأ بعد الساعة 5 العصر»): the hour a time must start at or after
+HOURS = [(15, "من 3 العصر"), (17, "من 5 العصر"), (19, "من 7 بالليل"), (21, "من 9 بالليل")]
 # the hall filter (owner 2026-11-18): the halls a visitor asks for by name, from the readers' codes and halls.yaml keys;
 # a tile passes when its film plays that hall today in the visitor's city (data-h, app.js)
 HALL_CHIPS = [("imax", "IMAX", {"IMAX"}), ("4dx", "4DX", {"4DX", "MX4D"}),
@@ -155,6 +157,9 @@ EN = {
     "من الشباك بس، مب في الحجز أونلاين": "box office only, not with online booking", "لين": "up to", "تذاكر": "tickets",
     "للشخص، مع تذكرتين": "per person, with two tickets", "ما تشمل هالقاعة": "doesn't cover this hall",
     "ما لقينا لها خصم في": "has no discount we know of at", "الأسعار الحين بعد": "Prices now after",
+    # «من الساعة» (owner 2026-11-19)
+    "أي وقت": "Any time", "من 3 العصر": "From 3 pm", "من 5 العصر": "From 5 pm", "من 7 بالليل": "From 7 pm", "من 9 بالليل": "From 9 pm",
+    "من الساعة": "From what time", "ما في عروض": "No shows", "ما في أفلام": "No films",
 }
 JS_KEYS = ["بالليل", "الصبح", "الظهر", "مساء", "درهم", "انحفظ الرابط", "انشالت من سينماتي", "انضافت لسينماتي", "أقل من كيلو", "كم", "الأفلام",
            "السينمات", "ما لقينا شي بهالاسم", "يبدأ الحين", "بعد", "د", "ما في فيلم يبدأ خلال ساعتين في", "ما في أفلام بهالتصنيف اليوم",
@@ -162,7 +167,8 @@ JS_KEYS = ["بالليل", "الصبح", "الظهر", "مساء", "درهم", "
            "يخلص تقريباً", "إنجليزي", "عربي", "هندي", "تاميل", "مالايالام", "تيلوغو", "السعر في الشباك", "نفس الفيلم أرخص بـ", "لحظة…",
            "وصلنا حد الأسئلة لليوم، جرّب بكرة", "ما قدرنا نجاوب الحين، جرّب مرة ثانية", "من قصة الفيلم", "من معلومات الفيلم", "يحرق — اضغط إذا تبا تعرف",
            "ما في أفلام بهالقاعة اليوم في", "عندك بطاقة خصم؟", "السعر بعد", "بدون بطاقة", "غيّر", "من الشباك بس، مب في الحجز أونلاين",
-           "لين", "تذاكر", "للشخص، مع تذكرتين", "ما تشمل هالقاعة", "ما لقينا لها خصم في", "الأسعار الحين بعد"]
+           "لين", "تذاكر", "للشخص، مع تذكرتين", "ما تشمل هالقاعة", "ما لقينا لها خصم في", "الأسعار الحين بعد",
+           "ما في عروض", "ما في أفلام"]
 
 
 def tr(ar):
@@ -401,18 +407,36 @@ class App:
             pats = [f"{self.base}f/*", f"{self.base}c/*", self.base]
         return json.dumps({"prerender": [{"where": {"href_matches": pats}, "eagerness": "moderate"}]})
 
-    def footer(self):
-        """The rest of the site, one quiet line at the end: nothing lost, nothing in the way."""
-        links = ([("/cards/", tr("البطاقات والخصومات")), ("/prices/", tr("أسعار التذاكر")), ("/coming/", tr("قريباً")), ("/q/", tr("أسئلة")), ("/en/", "English")]
-                 if LANG == "ar" else [("/en/cards/", tr("البطاقات والخصومات")), ("/en/prices/", tr("أسعار التذاكر")), ("/en/coming/", tr("قريباً")), ("/en/q/", tr("أسئلة")), ("/", "العربية")])
-        return '<footer class="foot">' + "".join(f'<a href="{h}">{t}</a>' for h, t in links) + f'<small>{tr("سينما من Elyoxe")}</small></footer>'
+    def twin(self, path):
+        """This page in the other language (owner 2026-11-19): /film/x/ ↔ /en/film/x/, as alt()'s hreflang pair."""
+        bare = path[3:] if path.startswith("/en/") else path
+        return bare if LANG == "en" else "/en" + bare
+
+    def langlink(self, path, cls=""):
+        """The language switch: «EN» at the top of the Arabic home, «English» in a footer; «العربية» on the English site."""
+        other, label = ("ar", "العربية") if LANG == "en" else ("en", "EN" if cls else "English")
+        attr = f' class="{cls}"' if cls else ""
+        return f'<a{attr} href="{E(self.twin(path))}" hreflang="{other}" lang="{other}">{label}</a>'
+
+    def footer(self, path):
+        """The rest of the site, one quiet line at the end: nothing lost, nothing in the way. Its language link opens this
+        same page in the other language, not the other home."""
+        links = ([("/cards/", tr("البطاقات والخصومات")), ("/prices/", tr("أسعار التذاكر")), ("/coming/", tr("قريباً")), ("/q/", tr("أسئلة"))]
+                 if LANG == "ar" else [("/en/cards/", tr("البطاقات والخصومات")), ("/en/prices/", tr("أسعار التذاكر")), ("/en/coming/", tr("قريباً")), ("/en/q/", tr("أسئلة"))])
+        return ('<footer class="foot">' + "".join(f'<a href="{h}">{t}</a>' for h, t in links) + self.langlink(path)
+                + f'<small>{tr("سينما من Elyoxe")}</small></footer>')
+
+    def hourpick(self):
+        """«أي وقت ▾» (owner 2026-11-19): the phone's own picker; app.js hides what starts before the hour and keeps it for the day."""
+        opts = f'<option value="">{tr("أي وقت")}</option>' + "".join(f'<option value="{h}">{tr(lab)}</option>' for h, lab in HOURS)
+        return f'<label class="hr">{svg("clock")}<select data-hour aria-label="{tr("من الساعة")}">{opts}</select></label>'
 
     # -------- page frame
     def page(self, path, ttl, desc, body, kind, head_extra="", canon=None):
         canon = SITE + path if self.live else (canon or (SITE + path))
         if kind != "home":
             body += self.tabbar({"film": "films", "cinema": "cinemas"}.get(kind))
-        body = body + (self.footer() if self.live else "")
+        body = body + (self.footer(path) if self.live else "")
         doc = f"""<!doctype html>
 <html lang="{LANG}" dir="{"ltr" if LANG == "en" else "rtl"}" data-kind="{kind}"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -636,6 +660,7 @@ class App:
                 chips.append(f'<button type="button" class="chip{" on" if key == "all" else ""}" data-chip="{key}">{tr(label)}</button>')
             if key == "all":
                 chips.append(f'<button type="button" class="chip soon2h" data-chip="soon2h">{svg("clock")}{tr("يبدأ خلال ساعتين")}</button>')
+                chips.append(self.hourpick())
         have = {c for per in self.film_halls().values() for cats in per.values() for c in cats}
         chips += [f'<button type="button" class="chip hall" data-chip="h-{c}">{label}</button>' for c, label, _ in HALL_CHIPS if c in have]
         grid = "".join(self.tile(f) for f in self.films)
@@ -664,7 +689,7 @@ class App:
                     f'<button type="button" data-sort="{key}"{" class=\"on\"" if key == "n" else ""}>{label}</button>'
                     for key, label in (("n", f"{tr('الأكثر عرضاً')}"), ("sc", f"{tr('الأعلى تقييماً')}"), ("rel", f"{tr('الأحدث')}"))) + "</div>")
         body = f"""<div class="app">
-<header class="tophead"><a class="brand" href="{self.base}">{tr('سينما')}</a><p class="th-t" data-tab-title>{tr('السينمات')}</p>{search}</header>
+<header class="tophead"><a class="brand" href="{self.base}">{tr('سينما')}</a><p class="th-t" data-tab-title>{tr('السينمات')}</p><div class="th-end">{self.langlink(path or self.base, "th-lang") if self.live else ""}{search}</div></header>
 <h1 class="sr-only">{tr('سينما الإمارات: مواعيد أفلام اليوم في كل السينمات وأسعار التذاكر')}</h1>
 <main class="pager" data-pager>
 <section class="pane" data-key="cinemas" aria-label="{tr('السينمات')}">
@@ -717,7 +742,8 @@ class App:
         k = self.k
         has = {s["date"] for s in self.shows}
         btn = lambda d, lab, on: f'<button type="button" class="seg{" on" if on else ""}" data-day="{d}">{lab}</button>' if d in has else ""
-        return f'<div class="segs" data-days>{btn(k.today, tr("اليوم"), True)}{btn(k.tomorrow, tr("بكرة"), k.today not in has)}</div>'
+        return (f'<div class="when"><div class="segs" data-days>{btn(k.today, tr("اليوم"), True)}{btn(k.tomorrow, tr("بكرة"), k.today not in has)}</div>'
+                f'{self.hourpick()}</div>')
 
     # -------- film page
     def family(self, f):

@@ -48,9 +48,13 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 
 /* ── the home frame: the brand, two tabs at the top, the two lists side by side ── */
 .app{display:flex;flex-direction:column;min-height:100dvh}
-.tophead{position:sticky;inset-block-start:0;z-index:20;display:grid;grid-template-columns:72px 1fr 72px;align-items:center;
+.tophead{position:sticky;inset-block-start:0;z-index:20;display:grid;grid-template-columns:96px 1fr 96px;align-items:center;
   block-size:calc(var(--head) + env(safe-area-inset-top));padding:env(safe-area-inset-top) 12px 0;background:var(--night)}
 .brand{font-weight:700;font-size:20px;color:var(--saff)}
+/* the language beside search (owner 2026-11-19): a quiet word, not a flag or a button shape */
+.th-end{display:flex;align-items:center;justify-content:flex-end}
+.th-end .th-btn{margin-inline-start:0}
+.th-lang{display:grid;place-items:center;min-inline-size:44px;block-size:44px;padding-inline:4px;font-size:14px;font-weight:700;color:var(--wood);text-decoration:none}
 .pager{flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
 .pager::-webkit-scrollbar,.chips::-webkit-scrollbar{display:none}
 .pane{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;overflow-y:auto;padding:0 var(--gut) 48px;max-block-size:calc(100dvh - var(--head) - env(safe-area-inset-top))}
@@ -161,6 +165,21 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 .segs{display:inline-flex;padding:4px;border-radius:12px;background:var(--well);margin-block-end:4px}
 .seg{border:0;background:none;padding:7px 22px;border-radius:9px;font-size:14px;color:var(--stone);cursor:pointer}
 .seg.on{background:var(--paper);color:var(--wood);font-weight:700;box-shadow:0 1px 3px rgba(42,36,32,.15)}
+/* «اليوم | بكرة» and «أي وقت ▾» on one row (owner 2026-11-19); the hour is the phone's own picker in a chip, door when set.
+   Its ▾ in physical borders: a logical inline-end would point it sideways in RTL */
+.when{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-block-end:4px}
+.when .segs{margin-block-end:0}
+.hr{position:relative;flex:none;display:inline-flex;align-items:center;gap:6px;min-block-size:38px;padding-inline:12px 30px;border:1px solid var(--line);
+  border-radius:20px;background:var(--paper);color:var(--wood);font-size:14px;cursor:pointer}
+.hr svg{inline-size:16px;block-size:16px;color:var(--door)}
+.hr select{appearance:none;-webkit-appearance:none;min-block-size:36px;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer}
+.hr select:focus{outline:none}
+.hr:focus-within{outline:2px solid var(--door);outline-offset:2px}
+.hr::after{content:"";position:absolute;inset-inline-end:14px;inset-block-start:50%;inline-size:6px;block-size:6px;border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor;transform:translateY(-70%) rotate(45deg);pointer-events:none}
+.hr.on{background:var(--door);border-color:var(--door);color:var(--on);font-weight:500}
+.hr.on svg{color:var(--on)}
+.hr option{color:var(--wood);background:var(--paper)}
 .cblock{padding:12px 0;border-block-end:1px solid var(--line)}
 .cb-h{display:flex;align-items:center;gap:10px;margin-block-end:10px}
 .cb-h b{font-size:15px}
