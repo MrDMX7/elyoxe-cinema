@@ -1,0 +1,130 @@
+{
+"films": {
+"Records": [
+{
+"movie_id": "1593",
+"original_movie_title": "Fjord",
+"rating": "TBA",
+"runtime": 146,
+"screens": [
+{
+"shows": [
+{
+"date": "2026-11-21",
+"shows": [
+{
+"ss_start_show_time": "18:00",
+"ss_is_active": "Y",
+"screen_name": "Screen 1",
+"cinema_name": "Cinema Akil in Alserkal Avenue",
+"cinema_address": "Warehouse 68",
+"movie_lang": "Norwegian",
+"schedulePricing": [
+{
+"sst_seat_type": "Standard",
+"rc_total_amount": 52.5
+}
+]
+}
+]
+}
+]
+}
+]
+},
+{
+"movie_id": "1581",
+"original_movie_title": "Taxi Driver",
+"rating": "R",
+"runtime": 114,
+"screens": [
+{
+"shows": [
+{
+"date": "2026-11-08",
+"shows": [
+{
+"ss_start_show_time": "20:00",
+"ss_is_active": "Y",
+"screen_name": "Screen01",
+"cinema_name": "CINEMA AKIL IN 25HOURS HOTEL",
+"cinema_address": "One Central - Trade Center St",
+"movie_lang": "English",
+"schedulePricing": [
+{
+"sst_seat_type": "Chairs",
+"rc_total_amount": 0
+}
+]
+}
+]
+}
+]
+}
+]
+},
+{
+"movie_id": "1583",
+"original_movie_title": "Police Story",
+"rating": "15+",
+"runtime": 100,
+"screens": [
+{
+"shows": [
+{
+"date": "2026-11-07",
+"shows": [
+{
+"ss_start_show_time": "19:00",
+"ss_is_active": "Y",
+"screen_name": "Screen 1",
+"cinema_name": "Outdoor Screening",
+"cinema_address": "Yard",
+"movie_lang": "Cantonese",
+"schedulePricing": [
+{
+"sst_seat_type": "Standard",
+"rc_total_amount": 0
+}
+]
+}
+]
+}
+]
+}
+]
+},
+{
+"movie_id": "1586",
+"original_movie_title": "The Dating Menu",
+"rating": "15+",
+"runtime": 100,
+"screens": [
+{
+"shows": [
+{
+"date": "2026-11-15",
+"shows": [
+{
+"ss_start_show_time": "12:45",
+"ss_is_active": "Y",
+"screen_name": "Screen 1",
+"cinema_name": "Cinema Akil in Alserkal Avenue",
+"cinema_address": "WAREHOUSE 68, ALSERKAL AVENUE AL QUOZ INDUSTRIAL DISTRICT DUBAI, UAE",
+"movie_lang": "Cantonese",
+"schedulePricing": [
+{
+"sst_seat_type": "Standard",
+"rc_total_amount": 0
+}
+]
+}
+]
+}
+]
+}
+]
+}
+]
+}
+}

@@ -98,6 +98,21 @@ ASK_QS = ["شو نوع الفيلم؟", "يناسب العيال؟", "عن شو 
 # build by main() (one language per process; tests set it and reset it).
 LANG = "ar"
 EN = {
+    # «عروض مجانية» (2026-11-19)
+    "ببلاش": "Free", "الدخول في الرابط": "Entry on their page", "بالتسجيل": "Register", "من": "From",
+    "الوقت في الرابط": "Time on their page", "التفاصيل من المنظّم": "Details from the organiser", "كل الإمارات": "All emirates",
+    "برامج على كم يوم": "Running for several days", "عروض مجانية": "Free screenings",
+    "عروض أفلام مجانية في الإمارات": "Free film screenings in the UAE",
+    "أفلام تنعرض ببلاش أو بسعر بسيط برا السينمات: سينما بالهوا، متاحف، جامعات ومهرجانات.":
+        "Films shown free or for a small price outside the cinemas: open-air screens, museums, universities and festivals.",
+    "ما في عروض مجانية معلنة للحين": "No free screenings announced yet",
+    "ما في عروض في هالإمارة للحين": "Nothing in this emirate yet",
+    "نجمعها من مواقع المنظّمين نفسهم، وتتحدّث كل كم ساعة. المواعيد ممكن تتغيّر، فشوف الرابط قبل لا تروح.":
+        "Gathered from the organisers' own sites and refreshed every few hours. Times can change, so check the link before you go.",
+    "عرض في الأسابيع الياية": "screenings in the coming weeks",
+    "سينما بالهوا الطلق وأفلام في المتاحف والجامعات والمهرجانات، ببلاش أو بسعر بسيط، في دبي وأبوظبي والشارقة وباقي الإمارات، بمواعيدها وروابط منظميها.":
+        "Open-air cinema and films at museums, universities and festivals, free or cheap, in Dubai, Abu Dhabi, Sharjah and the other emirates, with times and the organisers' links.",
+    "عرض بالهوا والمتاحف والمهرجانات": "open-air, museum and festival screenings",
     # time and units
     "بالليل": "am", "الصبح": "am", "الظهر": "pm", "مساء": "pm", "ص": "am", "م": "pm", "د": "min", "درهم": "AED",
     # the frame
@@ -252,6 +267,11 @@ def tags(f):
 
 def hm(t):
     return t[:5]
+
+
+def _date(s):
+    import datetime as _dt
+    return _dt.date.fromisoformat(str(s)[:10])
 
 
 DIRHAM_PATH = '<path d="M7.5 4v16h4.2c4.6 0 7.8-3.3 7.8-8s-3.2-8-7.8-8z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/><path d="M3 10h18M3 14h18" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>'
@@ -433,8 +453,8 @@ class App:
     def footer(self, path):
         """The rest of the site, one quiet line at the end: nothing lost, nothing in the way. Its language link opens this
         same page in the other language, not the other home."""
-        links = ([("/cards/", tr("البطاقات والخصومات")), ("/prices/", tr("أسعار التذاكر")), ("/coming/", tr("قريباً")), ("/q/", tr("أسئلة"))]
-                 if LANG == "ar" else [("/en/cards/", tr("البطاقات والخصومات")), ("/en/prices/", tr("أسعار التذاكر")), ("/en/coming/", tr("قريباً")), ("/en/q/", tr("أسئلة"))])
+        links = ([("/free/", tr("عروض مجانية")), ("/cards/", tr("البطاقات والخصومات")), ("/prices/", tr("أسعار التذاكر")), ("/coming/", tr("قريباً")), ("/q/", tr("أسئلة"))]
+                 if LANG == "ar" else [("/en/free/", tr("عروض مجانية")), ("/en/cards/", tr("البطاقات والخصومات")), ("/en/prices/", tr("أسعار التذاكر")), ("/en/coming/", tr("قريباً")), ("/en/q/", tr("أسئلة"))])
         return ('<footer class="foot">' + "".join(f'<a href="{h}">{t}</a>' for h, t in links) + self.langlink(path)
                 + f'<small>{tr("سينما من Elyoxe")}</small></footer>')
 
@@ -712,7 +732,7 @@ class App:
 <div class="clist" data-clist hidden>{cards}</div></section>
 <section class="pane" data-key="films" aria-label="{tr('الأفلام')}">{(self.billboard() + self.soon_board()) if merged else ""}<div class="chips" data-chips>{sort}{"".join(chips)}</div>{sort_menu}
 <div class="grid" data-grid>{grid}</div><p class="empty" data-none hidden>{tr('ما في أفلام بهالتصنيف اليوم')}.</p></section>
-<section class="pane" data-key="coming" aria-label="{tr('قريباً')}">{self.coming()}</section>
+<section class="pane" data-key="coming" aria-label="{tr('قريباً')}">{self.freerow()}{self.coming()}</section>
 </main>{self.tabbar("cinemas", home=True)}</div>"""
         import datetime as _dt
         dd = _dt.date.fromisoformat(k.today)
@@ -914,6 +934,99 @@ class App:
         self.page(self.u("c", cid), ttl, desc, body, "cinema", canon=f"{SITE}/{c.get('city')}/{cid}/")
         self._ld = []
 
+    # -------- «عروض مجانية» (owner 2026-11-19): free and community screenings outside the chains (steps/free_screenings.py)
+    def freerow(self):
+        """One row at the top of «قريباً» to the free page (live only, and only when it has something to show)."""
+        n = len(self.free_items()) if self.live else 0
+        if not n:
+            return ""
+        return (f'<a class="crow freerow" href="{self.base}free/"><b>{tr("عروض مجانية")}</b>'
+                f'<small>{n} {tr("عرض بالهوا والمتاحف والمهرجانات")}</small>{svg("fwd")}</a>')
+
+    def free_items(self):
+        today = self.k.today
+        return [i for i in self.d.get("free") or [] if (i.get("end_date") or i.get("date") or "") >= today]
+
+    def free_card(self, it, rng=False):
+        en = LANG == "en"
+        name = (it.get("title") if en else it.get("title_ar") or it.get("title")) or ""
+        venue = (it.get("venue") if en else it.get("venue_ar") or it.get("venue")) or ""
+        series = it.get("series") if en else it.get("series_ar") or it.get("series")
+        price = it.get("price")
+        tag = (f'<span class="ftag free">{tr("ببلاش")}</span>' if price == 0
+               else f'<span class="ftag"><bdi class="n">{int(price) if float(price).is_integer() else price}</bdi> {DIRHAM}</span>' if price
+               else f'<span class="ftag q">{tr("الدخول في الرابط")}</span>')
+        if it.get("rsvp"):
+            tag += f'<span class="ftag q">{tr("بالتسجيل")}</span>'
+        pnote = "" if en else it.get("price_note_ar") or ""
+        note = "" if en else it.get("note_ar") or ""
+        if rng:
+            d1, d2 = (_date(it["date"]), _date(it["end_date"]))
+            when = (f'<div class="fc-when rng"><small>{tr("من")}</small><b>{d1.day} {tr(MONTHS_AR[d1.month - 1])}</b>'
+                    f'<small>{tr("لين")}</small><b>{d2.day} {tr(MONTHS_AR[d2.month - 1])}</b></div>')
+        elif it.get("time"):
+            hh, word = t12(it["time"])
+            when = f'<div class="fc-when"><b>{hh}</b><small>{word}</small></div>'
+        else:
+            when = f'<div class="fc-when"><small>{tr("الوقت في الرابط")}</small></div>'
+        return (f'<article class="fcard" data-city="{E(it.get("city") or "")}">{when}<div class="fc-b">'
+                + (f'<p class="fc-s">{E(series)}</p>' if series else "")
+                + f'<h3 class="fc-t" dir="auto">{E(name)}</h3>'
+                + f'<p class="fc-v">{svg("pin")}<span dir="auto">{E(venue)}</span><span class="fc-c">{E(cityname(it.get("city")))}</span></p>'
+                + (f'<p class="fc-n">{E(note)}</p>' if note else "")
+                + f'<p class="fc-p">{tag}{f"<span>{E(pnote)}</span>" if pnote else ""}</p>'
+                + f'<a class="fc-go" href="{E(it.get("url") or "")}" target="_blank" rel="noopener">{tr("التفاصيل من المنظّم")}{svg("fwd")}</a>'
+                + '</div></article>')
+
+    def free(self):
+        import datetime as _dt
+        items = self.free_items()
+        today = _dt.date.fromisoformat(self.k.today)
+        ranges = [i for i in items if i.get("end_date") and i["end_date"] != i["date"]]
+        dated = [i for i in items if i not in ranges]
+        cities = [c for c, _ in CITIES if any(i.get("city") == c for i in items)]
+        chips = (f'<div class="chips fchips" data-free-city><button type="button" class="chip on" data-c="">{tr("كل الإمارات")}</button>'
+                 + "".join(f'<button type="button" class="chip" data-c="{c}">{cityname(c)}</button>' for c in cities) + "</div>") if len(cities) > 1 else ""
+        out = []
+        if ranges:
+            out.append(f'<h2 class="fh">{tr("برامج على كم يوم")}</h2><div class="fgrp">' + "".join(self.free_card(i, rng=True) for i in ranges) + "</div>")
+        day = None
+        for it in dated:
+            if it["date"] != day:
+                if day is not None:
+                    out.append("</div>")
+                day = it["date"]
+                dd = _date(day)
+                n = (dd - today).days
+                rel = tr("اليوم") if n == 0 else tr("بكرة") if n == 1 else ""
+                out.append(f'<h2 class="cday">{tr(DAYS_AR[dd.weekday()])} {dd.day} {tr(MONTHS_AR[dd.month - 1])}'
+                           + (f' <small>{rel}</small>' if rel else "") + '</h2><div class="fgrp">')
+            out.append(self.free_card(it))
+        if day is not None:
+            out.append("</div>")
+        body = (f'<div class="pg free">{self.bar(tr("عروض مجانية"), right=self.share_btn(tr("عروض أفلام مجانية في الإمارات")))}'
+                f'<p class="lede">{tr("أفلام تنعرض ببلاش أو بسعر بسيط برا السينمات: سينما بالهوا، متاحف، جامعات ومهرجانات.")}</p>{chips}'
+                + ("".join(out) or f'<p class="empty">{tr("ما في عروض مجانية معلنة للحين")}.</p>')
+                + f'<p class="empty" data-free-none hidden>{tr("ما في عروض في هالإمارة للحين")}.</p>'
+                f'<p class="fnote">{tr("نجمعها من مواقع المنظّمين نفسهم، وتتحدّث كل كم ساعة. المواعيد ممكن تتغيّر، فشوف الرابط قبل لا تروح.")}</p></div>')
+        def ev(it):
+            e = {"@type": "Event", "name": it.get("title"), "url": it.get("url"),
+                 "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+                 "location": {"@type": "Place", "name": it.get("venue"), "address": {"@type": "PostalAddress",
+                              "addressLocality": cityname(it.get("city")), "addressCountry": "AE"}},
+                 "startDate": f'{it["date"]}T{it["time"]}:00+04:00' if it.get("time") else it["date"]}
+            if it.get("end_date"):
+                e["endDate"] = it["end_date"]
+            if it.get("price") == 0:
+                e["isAccessibleForFree"] = True
+            return e
+        self._ld = [ev(i) for i in items[:30]]
+        n = len(items)
+        ttl = f"{tr('عروض أفلام مجانية في الإمارات')} — {n} {tr('عرض في الأسابيع الياية')}" if n else tr("عروض أفلام مجانية في الإمارات")
+        desc = tr("سينما بالهوا الطلق وأفلام في المتاحف والجامعات والمهرجانات، ببلاش أو بسعر بسيط، في دبي وأبوظبي والشارقة وباقي الإمارات، بمواعيدها وروابط منظميها.")
+        self.page(self.base + "free/", ttl, desc, body, "free")
+        self._ld = []
+
     # -------- the ticket sheet (one per page, filled by the script)
     def sheet(self):
         return f"""<template id="aed">{dirham()}</template><section class="sheet" data-sheet role="dialog" aria-modal="true" aria-labelledby="tk-film" hidden>
@@ -965,7 +1078,9 @@ class App:
             self.film(fid)
         for cid in self.cins:
             self.cinema(cid)
-        return 1 + len(self.films) + len(self.cins)
+        if self.live:
+            self.free()
+        return 1 + len(self.films) + len(self.cins) + (1 if self.live else 0)
 
 
 def main():

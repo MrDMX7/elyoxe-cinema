@@ -709,4 +709,32 @@
       qa("[data-ask-q]", ask).forEach(function (c) { c.addEventListener("click", function () { asks(c.dataset.askQ); }); });
     }
   }
+
+  // «عروض مجانية» (2026-11-19): the emirate chips filter the cards in place; a date or a section with nothing left hides,
+  // and the page says so when the emirate has none. It opens on the visitor's own city when that city has screenings.
+  var fcity = q("[data-free-city]");
+  if (fcity) {
+    var fnone = q("[data-free-none]");
+    var paintFree = function (c) {
+      qa(".chip", fcity).forEach(function (b) { b.classList.toggle("on", (b.dataset.c || "") === c); });
+      var shown = 0;
+      qa(".fgrp").forEach(function (g) {
+        var any = 0;
+        qa(".fcard", g).forEach(function (a) { var ok = !c || a.dataset.city === c; a.hidden = !ok; if (ok) any++; });
+        g.hidden = !any;
+        var h = g.previousElementSibling;
+        if (h && (h.classList.contains("cday") || h.classList.contains("fh"))) h.hidden = !any;
+        shown += any;
+      });
+      if (fnone) fnone.hidden = shown > 0;
+    };
+    fcity.addEventListener("click", function (e) {
+      var b = e.target.closest ? e.target.closest(".chip") : null;
+      if (!b) return;
+      buzz();
+      vt(function () { paintFree(b.dataset.c || ""); });
+    });
+    var mine = store.get("city");
+    if (mine && q('.chip[data-c="' + mine + '"]', fcity)) paintFree(mine);
+  }
 })();

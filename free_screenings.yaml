@@ -1,0 +1,131 @@
+# «عروض مجانية» — the free and community screenings no reader fetches (steps/free_screenings.py reads JLT, NYU Abu Dhabi,
+# Cinema Akil's free sessions and Alserkal on every run). Each entry here was read on its source's own page, by hand,
+# because the page blocks scripts (Louvre Abu Dhabi, Dubai Holding communities), is a yearly festival, or is on
+# Instagram only. An entry disappears from the site by itself after its last day; delete it then or leave it.
+#
+# id        unique, stays the same (a slug)                    date / end_date  YYYY-MM-DD (end_date = a run of days)
+# title     as the organiser writes it; title_ar if they give one   time  HH:MM (24h), "" when not stated
+# venue / venue_ar, city (dubai, abu-dhabi, sharjah, al-ain, ajman, ras-al-khaimah, fujairah, umm-al-quwain)
+# price     0 = free, a number = AED, null = not stated;  price_note_ar  a short line on what is free and what is not
+# rsvp      true when the organiser asks you to book or register;  url  the organiser's own page
+# kind      outdoor | museum | festival | university | arts | community;  note_ar  one line, light Emirati, optional
+# checked   the day the entry was read on its page
+items:
+  # Dubai Holding communities, «Movie Under the Stars», autumn 2026: crafts from 4 pm, then an open-air family film.
+  # https://www.dubaiholdingcommunities.ae/whats-happening/details/movie-under-the-stars-1 (read 2026-11-19 in a browser;
+  # the page blocks scripts). The page names no film; free per the community listings that cite it.
+  - id: dhc-jumeirah-park-2026-11-20
+    title: Movie Under the Stars
+    title_ar: فيلم تحت النجوم
+    venue: Park 1, District 1, Jumeirah Park
+    venue_ar: بارك 1، ديستركت 1، جميرا بارك
+    city: dubai
+    date: 2026-11-20
+    time: "16:00"
+    price: 0
+    price_note_ar: فعالية المجتمع، الدخول ببلاش
+    rsvp: false
+    url: https://www.dubaiholdingcommunities.ae/whats-happening/details/movie-under-the-stars-1
+    kind: community
+    note_ar: أركان رسم وأشغال للعيال من 4، والفيلم بالهوا الطلق لين 8
+    checked: 2026-11-19
+  - id: dhc-jvt-2026-11-21
+    title: Movie Under the Stars
+    title_ar: فيلم تحت النجوم
+    venue: District 05 Park, opposite Sunmarke School, Jumeirah Village Triangle
+    venue_ar: حديقة ديستركت 05، مقابل مدرسة صن مارك، قرية جميرا ترايانقل
+    city: dubai
+    date: 2026-11-21
+    time: "16:00"
+    price: 0
+    price_note_ar: فعالية المجتمع، الدخول ببلاش
+    rsvp: false
+    url: https://www.dubaiholdingcommunities.ae/whats-happening/details/movie-under-the-stars-1
+    kind: community
+    note_ar: أركان رسم وأشغال للعيال من 4، والفيلم بالهوا الطلق لين 8
+    checked: 2026-11-19
+  - id: dhc-jvc-2026-11-22
+    title: Movie Under the Stars
+    title_ar: فيلم تحت النجوم
+    venue: Castle Park, Jumeirah Village Circle
+    venue_ar: كاسل بارك، قرية جميرا سيركل
+    city: dubai
+    date: 2026-11-22
+    time: "16:00"
+    price: 0
+    price_note_ar: فعالية المجتمع، الدخول ببلاش
+    rsvp: false
+    url: https://www.dubaiholdingcommunities.ae/whats-happening/details/movie-under-the-stars-1
+    kind: community
+    note_ar: أركان رسم وأشغال للعيال من 4، والفيلم بالهوا الطلق لين 8
+    checked: 2026-11-19
+  - id: dhc-jumeirah-islands-2026-12-06
+    title: Movie Under the Stars
+    title_ar: فيلم تحت النجوم
+    venue: Community lawn, Cluster 24, Jumeirah Islands
+    venue_ar: عشب المجتمع، كلستر 24، جزر جميرا
+    city: dubai
+    date: 2026-12-06
+    time: "16:00"
+    price: 0
+    price_note_ar: فعالية المجتمع، الدخول ببلاش
+    rsvp: false
+    url: https://www.dubaiholdingcommunities.ae/whats-happening/details/movie-under-the-stars-1
+    kind: community
+    note_ar: أركان رسم وأشغال للعيال من 4، والفيلم بالهوا الطلق لين 8
+    checked: 2026-11-19
+
+  # Louvre Abu Dhabi, «Family Film Screenings» for the Dragon and Phoenix exhibition: «19 November, 26 November, and
+  # 10 December | Auditorium | Free - reservation recommended»; short films on a loop at 2 pm and 3 pm, then a feature
+  # (The Monkey King: Uproar in Heaven, Bilal: A New Breed of Hero, Raya and the Last Dragon — the page does not say
+  # which falls on which day). https://www.louvreabudhabi.ae/en/programmes/film-screenings (read 2026-11-19 in a browser)
+  - id: louvre-family-2026-11-26
+    title: "Family Film Screenings: Animated Tales of the World + a feature"
+    title_ar: "أفلام العائلة: حكايات من العالم + فيلم طويل"
+    venue: Auditorium, Louvre Abu Dhabi, Saadiyat
+    venue_ar: المسرح، متحف اللوفر أبوظبي، السعديات
+    city: abu-dhabi
+    date: 2026-11-26
+    time: "14:00"
+    price: 0
+    price_note_ar: ببلاش، ويفضّل تحجز
+    rsvp: true
+    url: https://www.louvreabudhabi.ae/en/programmes/film-screenings
+    kind: museum
+    note_ar: أفلام قصيرة على الساعة 2 و3، وبعدها فيلم طويل (The Monkey King أو Bilal أو Raya)
+    checked: 2026-11-19
+  - id: louvre-family-2026-12-10
+    title: "Family Film Screenings: Animated Tales of the World + a feature"
+    title_ar: "أفلام العائلة: حكايات من العالم + فيلم طويل"
+    venue: Auditorium, Louvre Abu Dhabi, Saadiyat
+    venue_ar: المسرح، متحف اللوفر أبوظبي، السعديات
+    city: abu-dhabi
+    date: 2026-12-10
+    time: "14:00"
+    price: 0
+    price_note_ar: ببلاش، ويفضّل تحجز
+    rsvp: true
+    url: https://www.louvreabudhabi.ae/en/programmes/film-screenings
+    kind: museum
+    note_ar: أفلام قصيرة على الساعة 2 و3، وبعدها فيلم طويل (The Monkey King أو Bilal أو Raya)
+    checked: 2026-11-19
+
+  # Cultural Foundation, Abu Dhabi: «Emirati Film Month … from 11 December 2026 till 14 January 2027», with ImageNation,
+  # Emirati features, shorts and documentaries; «Entry is for free», 6+. The calendar's own data (__NEXT_DATA__) gives the
+  # run, not the screening times. https://culturalfoundation.ae/en/event/emirati-film-month (read 2026-11-19)
+  - id: cf-emirati-film-month-2026
+    title: Emirati Film Month
+    title_ar: شهر الفيلم الإماراتي
+    venue: Cultural Foundation, Al Hosn, Abu Dhabi
+    venue_ar: المجمّع الثقافي، الحصن، أبوظبي
+    city: abu-dhabi
+    date: 2026-12-11
+    end_date: 2027-01-14
+    time: ""
+    price: 0
+    price_note_ar: الدخول ببلاش، من عمر 6 وفوق
+    rsvp: false
+    url: https://culturalfoundation.ae/en/event/emirati-film-month
+    kind: festival
+    note_ar: أفلام إماراتية طويلة وقصيرة ووثائقية، مع إيمج نيشن
+    checked: 2026-11-19

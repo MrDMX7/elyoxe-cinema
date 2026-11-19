@@ -1,0 +1,365 @@
+{
+"total": 15,
+"offset": 0,
+"limit": 10000,
+"result": [
+{
+"event_type": "Performance",
+"event_title": "Symposium O: Love Past Apocalypse",
+"image_url": "/en/the-arts-center/events/2026/november/symposium-o-love/_jcr_content/eventdetail/image",
+"image_alt": "Symposium O Love Past Apocalypse",
+"display_date": "Fri & Sat, Nov 20 & 21 @ 7:30pm; Sat & Sun, Nov 21 & 22 @ 2pm, 2026 ",
+"has_display_date_text": true,
+"start_date": "2026-11-20",
+"end_date": "2026-11-20",
+"prefix": null,
+"suffix": "Presented by the NYUAD Theater Program",
+"display_time": "",
+"url": "/en/the-arts-center/events/2026/november/symposium-o-love.html",
+"short_description": "A group of scholars, artists, students, and workers gather for Symposium O: Love Past Apocalypse.",
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+},
+"performances": [
+{
+"date": "2026-11-20",
+"date_time": "2026-11-20 19:30",
+"time": "7:30PM"
+},
+{
+"date": "2026-11-21",
+"date_time": "2026-11-21 19:30",
+"time": "7:30PM"
+},
+{
+"date": "2026-11-22",
+"date_time": "2026-11-22 14:00",
+"time": "2PM"
+},
+{
+"date": "2026-11-21",
+"date_time": "2026-11-21 14:00",
+"time": "2PM"
+}
+]
+},
+{
+"event_type": "Workshop",
+"event_title": "The Essence of Gesture with Nacera Belaza",
+"image_url": "/en/the-arts-center/events/2026/november/the-essence-of-gesture-with-nacera-belaza/_jcr_content/eventdetail/image",
+"image_alt": "The Essence of Gesture with Nacera Belaza",
+"display_date": "Nov 22 - 23, 2026; Jan 23 & Mar 20 - 21, 2027",
+"has_display_date_text": true,
+"start_date": "2026-11-23",
+"end_date": "2027-03-22",
+"prefix": "Movement Workshop",
+"suffix": "Presented by Dance Reflections by Van Cleef & Arpels",
+"display_time": "",
+"url": "/en/the-arts-center/events/2026/november/the-essence-of-gesture-with-nacera-belaza.html",
+"short_description": null,
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+},
+"performances": [
+{
+"date": "2026-11-22",
+"date_time": "2026-11-22 14:00",
+"time": "2PM"
+},
+{
+"date": "2026-11-23",
+"date_time": "2026-11-23 18:00",
+"time": "6PM"
+},
+{
+"date": "2027-01-23",
+"date_time": "2027-01-23 14:00",
+"time": "2PM"
+},
+{
+"date": "2027-03-20",
+"date_time": "2027-03-20 14:00",
+"time": "2PM"
+},
+{
+"date": "2027-03-21",
+"date_time": "2027-03-21 14:00",
+"time": "2PM"
+}
+]
+},
+{
+"event_type": "Talk",
+"event_title": "Building A Life As An Artist",
+"image_url": "/en/the-arts-center/events/2026/november/building-a-life-as-an-artist/_jcr_content/eventdetail/image",
+"image_alt": "Building a Life as an Artist",
+"display_date": "Tue, Nov 24 @ 6:30pm, 2026",
+"has_display_date_text": true,
+"start_date": "2026-11-24",
+"end_date": "2026-11-24",
+"prefix": "Arts Chat",
+"suffix": "Presented in partnership with NYUAD Art Gallery and NYUAD Career Development Center",
+"display_time": "",
+"url": "/en/the-arts-center/events/2026/november/building-a-life-as-an-artist.html",
+"short_description": null,
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+}
+},
+{
+"event_type": "Screening",
+"event_title": "Hekayah | The Story",
+"image_url": "/en/the-arts-center/events/2026/november/hekayah-the-story/_jcr_content/eventdetail/image",
+"image_alt": "Hekayah Collage",
+"display_date": "Wed, Nov 25 @ 7:30pm, 2026",
+"has_display_date_text": true,
+"start_date": "2026-11-25",
+"end_date": "2026-11-25",
+"prefix": "Eid al Etihad UAE National Day Celebration",
+"suffix": "Presented in Collaboration with Public Art Abu Dhabi",
+"display_time": "",
+"url": "/en/the-arts-center/events/2026/november/hekayah-the-story.html",
+"short_description": "Hekayah | The Story brings together poets, singers, dancers, and instrumentalists to showcase the beautiful diversity of the UAE.",
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+}
+},
+{
+"event_type": "Performance",
+"event_title": "Youssou N’Dour & Le Super Étoile de Dakar",
+"image_url": "/en/the-arts-center/events/2026/december/youssou-ndour/_jcr_content/eventdetail/image",
+"image_alt": "Youssou N'Dour 1",
+"display_date": "Mon, Dec 7 @ 7:30pm, 2026 ",
+"has_display_date_text": true,
+"start_date": "2026-12-07",
+"end_date": "2026-12-07",
+"prefix": "Opening act: Lewah Maritime Ensemble",
+"suffix": "Presented by Ideas Abu Dhabi and The Arts Center at NYUAD, in collaboration with the 2026 UN Water Conference and in partnership with Abu Dhabi Festival ",
+"display_time": "",
+"url": "/en/the-arts-center/events/2026/december/youssou-ndour.html",
+"short_description": "Few artists have carried the sound, identity, and spirit of Africa to the world with the reach, longevity, and authenticity of Grammy Award Winner and Senegalese singer, songwriter, and composer Youssou N’Dour. In association with the UN Water Conference, jointly hosted by Abu Dhabi and Senegal, he ",
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+}
+},
+{
+"event_type": "Performance",
+"event_title": "WINTER CONCERT",
+"image_url": "/en/the-arts-center/events/2026/december/winter-concert/_jcr_content/eventdetail/image",
+"image_alt": "UAENO in Concert (5)",
+"display_date": "Sat, Dec 12, 2026 8pm. Doors Open: 7:30 pm",
+"has_display_date_text": true,
+"start_date": "2026-12-12",
+"end_date": "2026-12-12",
+"prefix": "The UAE National Orchestra presents",
+"suffix": "A Festive Evening with the Orchestra ",
+"display_time": "",
+"url": "/en/the-arts-center/events/2026/december/winter-concert.html",
+"short_description": "Winter Concert brings festive traditions from around the world together in an evening that celebrates the season through music, memory and togetherness.",
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+}
+},
+{
+"event_type": "Other",
+"event_title": "I AM - Camille A. Brown & Dancers",
+"image_url": "/en/the-arts-center/events/2027/january/i-am-camille-brown-and-dancers1/_jcr_content/eventdetail/image",
+"image_alt": "I AM 1",
+"display_date": "POSTPONED",
+"has_display_date_text": true,
+"start_date": "2027-01-21",
+"end_date": "2027-01-21",
+"prefix": "School Matinee Performance",
+"suffix": "Presented with the support of Dance Reflections by Van Cleef & Arpels",
+"display_time": "",
+"url": "/en/the-arts-center/events/2027/january/i-am-camille-brown-and-dancers1.html",
+"short_description": "A love letter to Black joy, expressed through the body and written in the diasporic languages of West African Modern, Jazz, Tap, Social, Street, and Hip-Hop dance.",
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+}
+},
+{
+"event_type": "Performance",
+"event_title": "I AM - Camille A. Brown & Dancers",
+"image_url": "/en/the-arts-center/events/2027/january/i-am-camille-brown-and-dancers/_jcr_content/eventdetail/image",
+"image_alt": "I AM 1",
+"display_date": "POSTPONED",
+"has_display_date_text": true,
+"start_date": "2027-01-21",
+"end_date": "2027-01-21",
+"prefix": "UAE Premiere",
+"suffix": "Presented with the support of Dance Reflections by Van Cleef & Arpels",
+"display_time": "",
+"url": "/en/the-arts-center/events/2027/january/i-am-camille-brown-and-dancers.html",
+"short_description": "A love letter to Black joy, expressed through the body and written in the diasporic languages of West African Modern, Jazz, Tap, Social, Street, and Hip-Hop dance.",
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+}
+},
+{
+"event_type": "Performance",
+"event_title": "Tamaas Festival: Ibibio Sound Machine | Bombino | Sami Galbi",
+"image_url": "/en/the-arts-center/events/2027/january/tamaas-festival/_jcr_content/eventdetail/image",
+"image_alt": "TamaasFestival-web.jpg",
+"display_date": "Fri, Jan 29 @ 7pm, 2027",
+"has_display_date_text": true,
+"start_date": "2027-01-29",
+"end_date": "2027-01-29",
+"prefix": "Boundary shattering global sounds",
+"suffix": "1 Middle East Debut | 1 UAE Debut | 1 Abu Dhabi Debut",
+"display_time": "",
+"url": "/en/the-arts-center/events/2027/january/tamaas-festival.html",
+"short_description": "Three bands, two stages: Discover new global sounds as artists who bridge modern approaches with traditional roots come together.",
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+}
+},
+{
+"event_type": "Performance",
+"event_title": "Ramadaniyyat: The Handover - Aly Eissa, Ayman Asfour, and Jonas Cambien",
+"image_url": "/en/the-arts-center/events/2027/february/ramadaniyyat-the-handover/_jcr_content/eventdetail/image",
+"image_alt": "TheHandover-byLieveBoussauw-web.jpg",
+"display_date": "Wed, Feb 17 @ 9:30pm, 2027",
+"has_display_date_text": true,
+"start_date": "2027-02-17",
+"end_date": "2027-02-17",
+"prefix": "UAE Debut",
+"suffix": "Futuristic tarab improvisation",
+"display_time": "",
+"url": "/en/the-arts-center/events/2027/february/ramadaniyyat-the-handover.html",
+"short_description": "A visionary trio bridging deep Arabic folk roots and ritual music of rural Egypt with modern improvisation, krautrock, and psychedelic shaabi.\r\n\r\n",
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+}
+},
+{
+"event_type": "Performance",
+"event_title": "Tribute to Ziad Rahbani - Faraj Suleiman",
+"image_url": "/en/the-arts-center/events/2027/march/tribute-to-ziad-rahbani-faraj-suleiman/_jcr_content/eventdetail/image",
+"image_alt": "FarajSuleiman-web.jpg",
+"display_date": "Fri, Mar 26 @ 7:30pm, 2027",
+"has_display_date_text": true,
+"start_date": "2027-03-26",
+"end_date": "2027-03-26",
+"prefix": "UAE Debut",
+"suffix": "Co-commissioned by The Arts Center",
+"display_time": "",
+"url": "/en/the-arts-center/events/2027/march/tribute-to-ziad-rahbani-faraj-suleiman.html",
+"short_description": "Faraj Suleiman returns to The Arts Center to pay tribute to the legendary Lebanese composer Ziad Rahbani in an evening of boundary-pushing jazz and contemporary piano.\r\n",
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+}
+},
+{
+"event_type": "Performance",
+"event_title": "TREES - Sam Green x UAE National Orchestra",
+"image_url": "/en/the-arts-center/events/2027/april/trees/_jcr_content/eventdetail/image",
+"image_alt": "Trees 1",
+"display_date": "Thu, Apr 8 @ 7:30pm, 2027",
+"has_display_date_text": true,
+"start_date": "2027-04-08",
+"end_date": "2027-04-08",
+"prefix": "Middle East Premiere | Co-commissioned by The Arts Center ",
+"suffix": "Composed by Caroline Shaw. Co-written with Rebecca Solnit",
+"display_time": "",
+"url": "/en/the-arts-center/events/2027/april/trees.html",
+"short_description": "Oscar-nominated filmmaker Sam Green presents his latest energized live cinema experience, with live music composed by Pulitzer Prize-winner Caroline Shaw and performed by the UAE National Orchestra.",
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+}
+},
+{
+"event_type": "Performance",
+"event_title": "Knot - Afra Al Dhaheri & Dovydas Stramaitis | Just One Tile - Islam Elarabi",
+"image_url": "/en/the-arts-center/events/2027/may/knot-just-one-tile/_jcr_content/eventdetail/image",
+"image_alt": "Knot 1",
+"display_date": "Sat-Sun, May 22-23 @ 7:30pm, 2027",
+"has_display_date_text": true,
+"start_date": "2027-05-22",
+"end_date": "2027-05-23",
+"prefix": "Two Gulf premieres including an Arts Center co-commission",
+"suffix": "Contemporary dance meets visual art installation",
+"display_time": "",
+"url": "/en/the-arts-center/events/2027/may/knot-just-one-tile.html",
+"short_description": "Two solo dance works push the boundaries of contemporary dance, visual art installation, and street culture, exploring themes of entanglement and freedom.",
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+},
+"performances": [
+{
+"date": "2027-05-22",
+"date_time": "2027-05-22 19:30",
+"time": "7:30PM"
+},
+{
+"date": "2027-05-23",
+"date_time": "2027-05-23 14:00",
+"time": "2PM"
+}
+]
+},
+{
+"event_type": "Performance",
+"event_title": "Face Aux Murs - Cie Hors Surface",
+"image_url": "/en/the-arts-center/events/2027/june/face-aux-murs-cie-hors-surface/_jcr_content/eventdetail/image",
+"image_alt": "Face Aux Murs",
+"display_date": "Sat, Jun 12 @ 7:30pm & Sun, Jun 13 @ 3pm, 2027",
+"has_display_date_text": true,
+"start_date": "2027-06-12",
+"end_date": "2027-06-13",
+"prefix": "UAE Premiere",
+"suffix": "Presented with the support of Dance Reflections by Van Cleef and Arpels",
+"display_time": "",
+"url": "/en/the-arts-center/events/2027/june/face-aux-murs-cie-hors-surface.html",
+"short_description": "An exhilarating acrobatic trampoline performance exploring the dynamics of human relationships in a world of perpetual flux.",
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+},
+"performances": [
+{
+"date": "2027-06-12",
+"date_time": "2027-06-12 19:30",
+"time": "7:30PM"
+},
+{
+"date": "2027-06-13",
+"date_time": "2027-06-13 14:00",
+"time": "2PM"
+}
+]
+},
+{
+"event_type": "Other",
+"event_title": "Face Aux Murs - Cie Hors Surface",
+"image_url": "/en/the-arts-center/events/2027/june/face-aux-murs-cie-hors-surface-school-matinee/_jcr_content/eventdetail/image",
+"image_alt": "Face Aux Murs",
+"display_date": "Mon, Jun 14 @ 11am, 2027",
+"has_display_date_text": true,
+"start_date": "2027-06-14",
+"end_date": "2027-06-14",
+"prefix": "School Matinee Performance",
+"suffix": "Presented with the support of Dance Reflections by Van Cleef and Arpels",
+"display_time": "",
+"url": "/en/the-arts-center/events/2027/june/face-aux-murs-cie-hors-surface-school-matinee.html",
+"short_description": "An exhilarating acrobatic trampoline performance exploring the dynamics of human relationships in a world of perpetual flux.",
+"department": {
+"name": "the-arts-center",
+"title": "THE ARTS CENTER"
+}
+}
+]
+}
