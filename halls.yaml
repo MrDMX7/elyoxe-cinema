@@ -301,6 +301,57 @@ chains:
         source: https://api.cinepolisgulf.com/api/generic/experiences?country_id=2
         confidence: high
 
+  akil:
+    name: Cinema Akil
+    name_ar: سينما عقيل
+    short: Akil
+    halls: []
+
+  cinemas369:
+    name: 369 Cinemas
+    name_ar: سينما 369
+    short: '369'
+    halls:
+      - key: INFINITY
+        codes: [OTHER]
+        match: infinity
+        name: Infinity Vision
+        name_ar: إنفينيتي فيجن
+        what_ar: الشاشة الكبيرة في سينما 369؛ ما لقينا وصف رسمي لمحتواها.
+        what_en: 369 Cinemas' large-format screen; no official description of it found.
+        source: https://369cinemas.ae/
+        confidence: low
+
+  safeer:
+    name: Safeer Cinemas
+    name_ar: سفير سينما
+    short: Safeer
+    halls:
+      - key: ELITE
+        codes: [VIP]
+        match: elite
+        name: Safeer Elite
+        name_ar: سفير إيليت
+        what_ar: أغلى قاعة في سفير دبا (90 درهم)؛ ما لقينا وصف رسمي لمحتواها.
+        what_en: Safeer Dibba's top hall (AED 90); no official description of it found.
+        source: https://www.safeercinemas.com/
+        confidence: low
+      - key: PRIME
+        codes: [OTHER]
+        match: prime
+        name: Safeer Prime
+        name_ar: سفير برايم
+        what_ar: قاعة سفير المميزة الثانية (52.50 درهم)؛ ما لقينا وصف رسمي لمحتواها.
+        what_en: Safeer's second premium hall (AED 52.50); no official description of it found.
+        source: https://www.safeercinemas.com/
+        confidence: low
+
+  galaxy:
+    name: Galaxy Cinemas
+    name_ar: جالاكسي سينما
+    short: Galaxy
+    halls: []
+
   cineroyal:
     name: Cine Royal
     name_ar: سيني رويال
@@ -435,6 +486,11 @@ labels:
     PEARL: [بيرل سويت, Pearl Suite]
   cinepolis:
     JUNIOR: [جونيور, Junior]
+  cinemas369:
+    INFINITY: [إنفينيتي فيجن, Infinity Vision]
+  safeer:
+    ELITE: [سفير إيليت, Safeer Elite]
+    PRIME: [سفير برايم, Safeer Prime]
   cineroyal:
     VIP: [رويال سويتس, Royal Suites]
     ROYALPLUS: [رويال بلس, Royal Plus]

@@ -1,0 +1,2272 @@
+{
+  "cinemas": [
+    {
+      "id": "safeer-dibba",
+      "chain": "safeer",
+      "name": "Safeer Cinemas Safeer Market",
+      "name_ar": null,
+      "city": "fujairah",
+      "mall": "Safeer Market",
+      "address": "Safeer Market, 1st floor, Dibba, Fujairah, United Arab Emirates",
+      "maps": null,
+      "lat": null,
+      "lng": null
+    }
+  ],
+  "shows": [
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ebenezer",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "10:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MDE%3d-9Eu2k1TIH64%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg3Mg%3d%3d-%2fKiu5WW0POQ%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnM01nJTNkJTNkLSUyZktpdTVXVzBQT1ElM2Q%3d-4qhdMUTEl9Q%3d",
+      "_screen": "Screen-4",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-26",
+      "time": "10:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNTM%3d-vz%2bCbFBeGGc%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5Ng%3d%3d-FvW9cmG8tdE%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU5nJTNkJTNkLUZ2VzljbUc4dGRFJTNk-eu0Whrdn9to%3d",
+      "_screen": "Screen-5",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Hunger Games: Sunrise on the Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 158,
+      "date": "2026-09-26",
+      "time": "10:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzOTU%3d-2opJH8AoLUE%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg3NA%3d%3d-nXzdk23BWMY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnM05BJTNkJTNkLW5YemRrMjNCV01ZJTNk-xmFSOYhWo%2f4%3d",
+      "_screen": "Screen-3",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Cat In The Hat",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 114,
+      "date": "2026-09-26",
+      "time": "10:15",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MTc%3d-rbde8oMHR1I%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MjY2Nw%3d%3d-NaIhjdBWTNA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TWpZMk53JTNkJTNkLU5hSWhqZEJXVE5BJTNk-lf7sEK6tuUw%3d",
+      "_screen": "Safeer Prime",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNTc%3d-x46DLmCOv9o%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg1MA%3d%3d-%2fRNNyj%2bCWPk%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMU1BJTNkJTNkLSUyZlJOTnlqJTJiQ1dQayUzZA%3d%3d-VKgV7fWemzU%3d",
+      "_screen": "Screen-2",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "You Can See Everything",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 174,
+      "date": "2026-09-26",
+      "time": "11:00",
+      "hall": "VIP",
+      "hall_label": "Safeer Elite",
+      "prices": [
+        {
+          "seat": "Safeer Elite",
+          "aed": 90.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MTI%3d-on%2fUhJvgtA8%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=NDAxOA%3d%3d-jbGISF1GIhs%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TkRBeE9BJTNkJTNkLWpiR0lTRjFHSWhzJTNk-2kWqqJqfBhY%3d",
+      "_screen": "Safeer Elite",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ramayana (2D)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "11:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzOTE%3d-%2b9OnjN0KA58%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MzkxOA%3d%3d-9tRm2FMIuFo%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpreE9BJTNkJTNkLTl0Um0yRk1JdUZvJTNk-W3SrTHQlL2Y%3d",
+      "_screen": "Screen-1",
+      "lang": "hi",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Best Pancakes in the County",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 98,
+      "date": "2026-09-26",
+      "time": "12:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MDI%3d-za0%2fyXujpLs%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk4NA%3d%3d-U%2bRIN5dPL0o%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNE5BJTNkJTNkLVUlMmJSSU41ZFBMMG8lM2Q%3d-Kaq0aan5NpY%3d",
+      "_screen": "Screen-4",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Crypto",
+      "film_lang": "Arabic",
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-26",
+      "time": "12:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MDg%3d-Lob5V1C1kNw%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk4OA%3d%3d-1%2fUuCq%2fR8XQ%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNE9BJTNkJTNkLTElMmZVdUNxJTJmUjhYUSUzZA%3d%3d-pRAmXlwF4OY%3d",
+      "_screen": "Screen-5",
+      "lang": "ar",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Cat In The Hat",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 114,
+      "date": "2026-09-26",
+      "time": "12:30",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MTg%3d-AJfOOeBCzpY%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MjY2Nw%3d%3d-NaIhjdBWTNA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TWpZMk53JTNkJTNkLU5hSWhqZEJXVE5BJTNk-lf7sEK6tuUw%3d",
+      "_screen": "Safeer Prime",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNTg%3d-SaJYGXt3f68%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg1MA%3d%3d-%2fRNNyj%2bCWPk%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMU1BJTNkJTNkLSUyZlJOTnlqJTJiQ1dQayUzZA%3d%3d-VKgV7fWemzU%3d",
+      "_screen": "Screen-2",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ghost Soldier",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 100,
+      "date": "2026-09-26",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzOTY%3d-rCxv9inpAak%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5MA%3d%3d-M9NRIP%2b%2baAY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU1BJTNkJTNkLU05TlJJUCUyYiUyYmFBWSUzZA%3d%3d-aF6dLHtbQ2w%3d",
+      "_screen": "Screen-3",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ebenezer",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "14:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MDM%3d-5MQYwC9mzpQ%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg3Mg%3d%3d-%2fKiu5WW0POQ%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnM01nJTNkJTNkLSUyZktpdTVXVzBQT1ElM2Q%3d-4qhdMUTEl9Q%3d",
+      "_screen": "Screen-4",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Godzilla Minus Zero",
+      "film_lang": "JAPANESE",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "14:15",
+      "hall": "VIP",
+      "hall_label": "Safeer Elite",
+      "prices": [
+        {
+          "seat": "Safeer Elite",
+          "aed": 90.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MTM%3d-MCCuCpfcJW4%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg2NA%3d%3d-4VUlP7p3T%2bA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMk5BJTNkJTNkLTRWVWxQN3AzVCUyYkElM2Q%3d-6BgB7NHzWyM%3d",
+      "_screen": "Safeer Elite",
+      "lang": "ja",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-26",
+      "time": "14:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNTQ%3d-D%2bC%2fL8m9dRM%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5Ng%3d%3d-FvW9cmG8tdE%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU5nJTNkJTNkLUZ2VzljbUc4dGRFJTNk-eu0Whrdn9to%3d",
+      "_screen": "Screen-5",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Cat In The Hat",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 114,
+      "date": "2026-09-26",
+      "time": "14:45",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MTk%3d-4vj690lIGkM%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MjY2Nw%3d%3d-NaIhjdBWTNA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TWpZMk53JTNkJTNkLU5hSWhqZEJXVE5BJTNk-lf7sEK6tuUw%3d",
+      "_screen": "Safeer Prime",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "15:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNTk%3d-MVQOxUyNJlE%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg1MA%3d%3d-%2fRNNyj%2bCWPk%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMU1BJTNkJTNkLSUyZlJOTnlqJTJiQ1dQayUzZA%3d%3d-VKgV7fWemzU%3d",
+      "_screen": "Screen-2",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Hunger Games: Sunrise on the Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 158,
+      "date": "2026-09-26",
+      "time": "15:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzOTc%3d-3vO5RaRo6FE%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg3NA%3d%3d-nXzdk23BWMY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnM05BJTNkJTNkLW5YemRrMjNCV01ZJTNk-xmFSOYhWo%2f4%3d",
+      "_screen": "Screen-3",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ramayana (3D)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "15:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 47.25
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzOTI%3d-JUvVeAmJ8A8%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk3Mg%3d%3d-jNmjBbooCMc%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprM01nJTNkJTNkLWpObWpCYm9vQ01jJTNk-sA5iDBWnj1E%3d",
+      "_screen": "Screen-1",
+      "lang": "hi",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Best Pancakes in the County",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 98,
+      "date": "2026-09-26",
+      "time": "16:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MDQ%3d-cO08JH2u2p8%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk4NA%3d%3d-U%2bRIN5dPL0o%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNE5BJTNkJTNkLVUlMmJSSU41ZFBMMG8lM2Q%3d-Kaq0aan5NpY%3d",
+      "_screen": "Screen-4",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "You Can See Everything",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 174,
+      "date": "2026-09-26",
+      "time": "16:45",
+      "hall": "VIP",
+      "hall_label": "Safeer Elite",
+      "prices": [
+        {
+          "seat": "Safeer Elite",
+          "aed": 90.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MTQ%3d-kMXt1D24uU0%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=NDAxOA%3d%3d-jbGISF1GIhs%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TkRBeE9BJTNkJTNkLWpiR0lTRjFHSWhzJTNk-2kWqqJqfBhY%3d",
+      "_screen": "Safeer Elite",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Crypto",
+      "film_lang": "Arabic",
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-26",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MDk%3d-kGTTN0UL3%2bA%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk4OA%3d%3d-1%2fUuCq%2fR8XQ%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNE9BJTNkJTNkLTElMmZVdUNxJTJmUjhYUSUzZA%3d%3d-pRAmXlwF4OY%3d",
+      "_screen": "Screen-5",
+      "lang": "ar",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNjA%3d-jGgl2wmnRLY%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg1MA%3d%3d-%2fRNNyj%2bCWPk%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMU1BJTNkJTNkLSUyZlJOTnlqJTJiQ1dQayUzZA%3d%3d-VKgV7fWemzU%3d",
+      "_screen": "Screen-2",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Cat In The Hat",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 114,
+      "date": "2026-09-26",
+      "time": "17:00",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MjA%3d-wy6ik7gvJ0A%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MjY2Nw%3d%3d-NaIhjdBWTNA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TWpZMk53JTNkJTNkLU5hSWhqZEJXVE5BJTNk-lf7sEK6tuUw%3d",
+      "_screen": "Safeer Prime",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ghost Soldier",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 100,
+      "date": "2026-09-26",
+      "time": "18:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzOTg%3d-2y%2br00Hljzg%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5MA%3d%3d-M9NRIP%2b%2baAY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU1BJTNkJTNkLU05TlJJUCUyYiUyYmFBWSUzZA%3d%3d-aF6dLHtbQ2w%3d",
+      "_screen": "Screen-3",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ebenezer",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "18:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MDU%3d-pgE60AP6%2fck%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg3Mg%3d%3d-%2fKiu5WW0POQ%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnM01nJTNkJTNkLSUyZktpdTVXVzBQT1ElM2Q%3d-4qhdMUTEl9Q%3d",
+      "_screen": "Screen-4",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "19:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNjE%3d-dn%2fVFrKvbcU%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg1MA%3d%3d-%2fRNNyj%2bCWPk%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMU1BJTNkJTNkLSUyZlJOTnlqJTJiQ1dQayUzZA%3d%3d-VKgV7fWemzU%3d",
+      "_screen": "Screen-2",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Hadoota",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "19:15",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MjE%3d-zp56pNkkxIE%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MzkzNA%3d%3d-iraw7xWJ0BY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprek5BJTNkJTNkLWlyYXc3eFdKMEJZJTNk-uW2b0%2br42U4%3d",
+      "_screen": "Safeer Prime",
+      "lang": "ar",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-26",
+      "time": "19:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNTU%3d-OzxslRAgzj4%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5Ng%3d%3d-FvW9cmG8tdE%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU5nJTNkJTNkLUZ2VzljbUc4dGRFJTNk-eu0Whrdn9to%3d",
+      "_screen": "Screen-5",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ramayana (2D)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "19:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzOTM%3d-2GQ4zBRxjGA%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MzkxOA%3d%3d-9tRm2FMIuFo%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpreE9BJTNkJTNkLTl0Um0yRk1JdUZvJTNk-W3SrTHQlL2Y%3d",
+      "_screen": "Screen-1",
+      "lang": "hi",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Godzilla Minus Zero",
+      "film_lang": "JAPANESE",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "20:00",
+      "hall": "VIP",
+      "hall_label": "Safeer Elite",
+      "prices": [
+        {
+          "seat": "Safeer Elite",
+          "aed": 90.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MTU%3d-csxVba9fCgE%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg2NA%3d%3d-4VUlP7p3T%2bA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMk5BJTNkJTNkLTRWVWxQN3AzVCUyYkElM2Q%3d-6BgB7NHzWyM%3d",
+      "_screen": "Safeer Elite",
+      "lang": "ja",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Hunger Games: Sunrise on the Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 158,
+      "date": "2026-09-26",
+      "time": "20:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzOTk%3d-jEOrqK81rno%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg3NA%3d%3d-nXzdk23BWMY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnM05BJTNkJTNkLW5YemRrMjNCV01ZJTNk-xmFSOYhWo%2f4%3d",
+      "_screen": "Screen-3",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ghost Soldier",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 100,
+      "date": "2026-09-26",
+      "time": "20:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk1MjQ%3d-rUAELLEc3XA%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5MA%3d%3d-M9NRIP%2b%2baAY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU1BJTNkJTNkLU05TlJJUCUyYiUyYmFBWSUzZA%3d%3d-aF6dLHtbQ2w%3d",
+      "_screen": "Screen-4",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-26",
+      "time": "21:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNTI%3d-6WkdmgKfuaM%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5Ng%3d%3d-FvW9cmG8tdE%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU5nJTNkJTNkLUZ2VzljbUc4dGRFJTNk-eu0Whrdn9to%3d",
+      "_screen": "Screen-2",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Hadoota",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "21:30",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MjI%3d-GozkVG%2fnzj8%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MzkzNA%3d%3d-iraw7xWJ0BY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprek5BJTNkJTNkLWlyYXc3eFdKMEJZJTNk-uW2b0%2br42U4%3d",
+      "_screen": "Safeer Prime",
+      "lang": "ar",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Crypto",
+      "film_lang": "Arabic",
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-26",
+      "time": "21:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MTA%3d-W4VxG%2fpk7rA%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk4OA%3d%3d-1%2fUuCq%2fR8XQ%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNE9BJTNkJTNkLTElMmZVdUNxJTJmUjhYUSUzZA%3d%3d-pRAmXlwF4OY%3d",
+      "_screen": "Screen-5",
+      "lang": "ar",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "You Can See Everything",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 174,
+      "date": "2026-09-26",
+      "time": "22:30",
+      "hall": "VIP",
+      "hall_label": "Safeer Elite",
+      "prices": [
+        {
+          "seat": "Safeer Elite",
+          "aed": 90.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MTY%3d-LOvAaicNjKk%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=NDAxOA%3d%3d-jbGISF1GIhs%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TkRBeE9BJTNkJTNkLWpiR0lTRjFHSWhzJTNk-2kWqqJqfBhY%3d",
+      "_screen": "Safeer Elite",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Hunger Games: Sunrise on the Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 158,
+      "date": "2026-09-26",
+      "time": "22:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk1MjU%3d-ct3CIs6dL%2f4%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg3NA%3d%3d-nXzdk23BWMY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnM05BJTNkJTNkLW5YemRrMjNCV01ZJTNk-xmFSOYhWo%2f4%3d",
+      "_screen": "Screen-4",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ghost Soldier",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 100,
+      "date": "2026-09-26",
+      "time": "23:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MDA%3d-FayamSScqQQ%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5MA%3d%3d-M9NRIP%2b%2baAY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU1BJTNkJTNkLU05TlJJUCUyYiUyYmFBWSUzZA%3d%3d-aF6dLHtbQ2w%3d",
+      "_screen": "Screen-3",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ramayana (2D)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "23:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzOTQ%3d-4dRdxxYCxx8%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MzkxOA%3d%3d-9tRm2FMIuFo%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpreE9BJTNkJTNkLTl0Um0yRk1JdUZvJTNk-W3SrTHQlL2Y%3d",
+      "_screen": "Screen-1",
+      "lang": "hi",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-26",
+      "time": "23:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk1MjM%3d-hz4L8bZwppo%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5Ng%3d%3d-FvW9cmG8tdE%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU5nJTNkJTNkLUZ2VzljbUc4dGRFJTNk-eu0Whrdn9to%3d",
+      "_screen": "Screen-2",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Bachelor Party Deux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "23:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MTE%3d-KeZ%2fc7FuTYc%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5Mg%3d%3d-%2fnykDPZoaqI%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU1nJTNkJTNkLSUyZm55a0RQWm9hcUklM2Q%3d-Hrbf2Y%2bit4o%3d",
+      "_screen": "Screen-5",
+      "lang": "ml",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Hadoota",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "23:45",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MjM%3d-dn031oYmz0U%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MzkzNA%3d%3d-iraw7xWJ0BY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0xOQ%3d%3d-ldlXf%2fyJhvU%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprek5BJTNkJTNkLWlyYXc3eFdKMEJZJTNk-uW2b0%2br42U4%3d",
+      "_screen": "Safeer Prime",
+      "lang": "ar",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ebenezer",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "10:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MzQ%3d-d8W0m0N1CjE%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg3Mg%3d%3d-%2fKiu5WW0POQ%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnM01nJTNkJTNkLSUyZktpdTVXVzBQT1ElM2Q%3d-4qhdMUTEl9Q%3d",
+      "_screen": "Screen-4",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Godzilla Minus Zero",
+      "film_lang": "JAPANESE",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "10:00",
+      "hall": "VIP",
+      "hall_label": "Safeer Elite",
+      "prices": [
+        {
+          "seat": "Safeer Elite",
+          "aed": 90.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NDU%3d-tQBHjfNv0O4%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg2NA%3d%3d-4VUlP7p3T%2bA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMk5BJTNkJTNkLTRWVWxQN3AzVCUyYkElM2Q%3d-6BgB7NHzWyM%3d",
+      "_screen": "Safeer Elite",
+      "lang": "ja",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-27",
+      "time": "10:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNjg%3d-rx4qDgQ6n0g%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5Ng%3d%3d-FvW9cmG8tdE%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU5nJTNkJTNkLUZ2VzljbUc4dGRFJTNk-eu0Whrdn9to%3d",
+      "_screen": "Screen-5",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Hunger Games: Sunrise on the Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 158,
+      "date": "2026-09-27",
+      "time": "10:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk1NDE%3d-fDoXQYwUjeM%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg3NA%3d%3d-nXzdk23BWMY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnM05BJTNkJTNkLW5YemRrMjNCV01ZJTNk-xmFSOYhWo%2f4%3d",
+      "_screen": "Screen-3",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Cat In The Hat",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 114,
+      "date": "2026-09-27",
+      "time": "10:15",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NTA%3d-aIYsvv6xWsg%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MjY2Nw%3d%3d-NaIhjdBWTNA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TWpZMk53JTNkJTNkLU5hSWhqZEJXVE5BJTNk-lf7sEK6tuUw%3d",
+      "_screen": "Safeer Prime",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-27",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNjI%3d-WpBaHTw%2flLI%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg1MA%3d%3d-%2fRNNyj%2bCWPk%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMU1BJTNkJTNkLSUyZlJOTnlqJTJiQ1dQayUzZA%3d%3d-VKgV7fWemzU%3d",
+      "_screen": "Screen-2",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ramayana (2D)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-27",
+      "time": "11:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MjQ%3d-cnVk2AyHBxQ%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MzkxOA%3d%3d-9tRm2FMIuFo%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpreE9BJTNkJTNkLTl0Um0yRk1JdUZvJTNk-W3SrTHQlL2Y%3d",
+      "_screen": "Screen-1",
+      "lang": "hi",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Best Pancakes in the County",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 98,
+      "date": "2026-09-27",
+      "time": "12:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MzU%3d-Ic8Fu7yJWvc%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk4NA%3d%3d-U%2bRIN5dPL0o%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNE5BJTNkJTNkLVUlMmJSSU41ZFBMMG8lM2Q%3d-Kaq0aan5NpY%3d",
+      "_screen": "Screen-4",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Crypto",
+      "film_lang": "Arabic",
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "12:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NDE%3d-kzVLTveXe6E%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk4OA%3d%3d-1%2fUuCq%2fR8XQ%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNE9BJTNkJTNkLTElMmZVdUNxJTJmUjhYUSUzZA%3d%3d-pRAmXlwF4OY%3d",
+      "_screen": "Screen-5",
+      "lang": "ar",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Cat In The Hat",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 114,
+      "date": "2026-09-27",
+      "time": "12:30",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NTE%3d-7reO3QjCB8k%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MjY2Nw%3d%3d-NaIhjdBWTNA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TWpZMk53JTNkJTNkLU5hSWhqZEJXVE5BJTNk-lf7sEK6tuUw%3d",
+      "_screen": "Safeer Prime",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "You Can See Everything",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 174,
+      "date": "2026-09-27",
+      "time": "12:30",
+      "hall": "VIP",
+      "hall_label": "Safeer Elite",
+      "prices": [
+        {
+          "seat": "Safeer Elite",
+          "aed": 90.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NDY%3d-%2bizZvAIE3YY%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=NDAxOA%3d%3d-jbGISF1GIhs%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TkRBeE9BJTNkJTNkLWpiR0lTRjFHSWhzJTNk-2kWqqJqfBhY%3d",
+      "_screen": "Safeer Elite",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-27",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNjM%3d-se2UMTv8a0g%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg1MA%3d%3d-%2fRNNyj%2bCWPk%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMU1BJTNkJTNkLSUyZlJOTnlqJTJiQ1dQayUzZA%3d%3d-VKgV7fWemzU%3d",
+      "_screen": "Screen-2",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ghost Soldier",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk1NDI%3d-XnZ0o4pvxB0%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5MA%3d%3d-M9NRIP%2b%2baAY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU1BJTNkJTNkLU05TlJJUCUyYiUyYmFBWSUzZA%3d%3d-aF6dLHtbQ2w%3d",
+      "_screen": "Screen-3",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ebenezer",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "14:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MzY%3d-syZ2oAb8u7M%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg3Mg%3d%3d-%2fKiu5WW0POQ%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnM01nJTNkJTNkLSUyZktpdTVXVzBQT1ElM2Q%3d-4qhdMUTEl9Q%3d",
+      "_screen": "Screen-4",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-27",
+      "time": "14:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNjk%3d-fk%2frzXU5ndg%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5Ng%3d%3d-FvW9cmG8tdE%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU5nJTNkJTNkLUZ2VzljbUc4dGRFJTNk-eu0Whrdn9to%3d",
+      "_screen": "Screen-5",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Cat In The Hat",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 114,
+      "date": "2026-09-27",
+      "time": "14:45",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NTI%3d-QfBLs2o2Cz4%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MjY2Nw%3d%3d-NaIhjdBWTNA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TWpZMk53JTNkJTNkLU5hSWhqZEJXVE5BJTNk-lf7sEK6tuUw%3d",
+      "_screen": "Safeer Prime",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-27",
+      "time": "15:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNjQ%3d-gJJcA2kCk18%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg1MA%3d%3d-%2fRNNyj%2bCWPk%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMU1BJTNkJTNkLSUyZlJOTnlqJTJiQ1dQayUzZA%3d%3d-VKgV7fWemzU%3d",
+      "_screen": "Screen-2",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Hunger Games: Sunrise on the Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 158,
+      "date": "2026-09-27",
+      "time": "15:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk1NDM%3d-wZJybZYic%2b4%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg3NA%3d%3d-nXzdk23BWMY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnM05BJTNkJTNkLW5YemRrMjNCV01ZJTNk-xmFSOYhWo%2f4%3d",
+      "_screen": "Screen-3",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ramayana (3D)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-27",
+      "time": "15:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 47.25
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MjU%3d-cQtwxyoGcyM%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk3Mg%3d%3d-jNmjBbooCMc%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprM01nJTNkJTNkLWpObWpCYm9vQ01jJTNk-sA5iDBWnj1E%3d",
+      "_screen": "Screen-1",
+      "lang": "hi",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Godzilla Minus Zero",
+      "film_lang": "JAPANESE",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "15:45",
+      "hall": "VIP",
+      "hall_label": "Safeer Elite",
+      "prices": [
+        {
+          "seat": "Safeer Elite",
+          "aed": 90.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NDc%3d-BZ%2fstWKl260%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg2NA%3d%3d-4VUlP7p3T%2bA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMk5BJTNkJTNkLTRWVWxQN3AzVCUyYkElM2Q%3d-6BgB7NHzWyM%3d",
+      "_screen": "Safeer Elite",
+      "lang": "ja",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Best Pancakes in the County",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 98,
+      "date": "2026-09-27",
+      "time": "16:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0Mzc%3d-xpq2zOtNaDI%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk4NA%3d%3d-U%2bRIN5dPL0o%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNE5BJTNkJTNkLVUlMmJSSU41ZFBMMG8lM2Q%3d-Kaq0aan5NpY%3d",
+      "_screen": "Screen-4",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Crypto",
+      "film_lang": "Arabic",
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NDI%3d-l8CLElAtPLY%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk4OA%3d%3d-1%2fUuCq%2fR8XQ%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNE9BJTNkJTNkLTElMmZVdUNxJTJmUjhYUSUzZA%3d%3d-pRAmXlwF4OY%3d",
+      "_screen": "Screen-5",
+      "lang": "ar",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-27",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNjU%3d-2vtGQt1xJ7w%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg1MA%3d%3d-%2fRNNyj%2bCWPk%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMU1BJTNkJTNkLSUyZlJOTnlqJTJiQ1dQayUzZA%3d%3d-VKgV7fWemzU%3d",
+      "_screen": "Screen-2",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Cat In The Hat",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 114,
+      "date": "2026-09-27",
+      "time": "17:00",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NTM%3d-O%2bmxP9LGk34%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MjY2Nw%3d%3d-NaIhjdBWTNA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TWpZMk53JTNkJTNkLU5hSWhqZEJXVE5BJTNk-lf7sEK6tuUw%3d",
+      "_screen": "Safeer Prime",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ghost Soldier",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "18:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk1NDQ%3d-ouWseWROUS0%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5MA%3d%3d-M9NRIP%2b%2baAY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU1BJTNkJTNkLU05TlJJUCUyYiUyYmFBWSUzZA%3d%3d-aF6dLHtbQ2w%3d",
+      "_screen": "Screen-3",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "You Can See Everything",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 174,
+      "date": "2026-09-27",
+      "time": "18:15",
+      "hall": "VIP",
+      "hall_label": "Safeer Elite",
+      "prices": [
+        {
+          "seat": "Safeer Elite",
+          "aed": 90.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NDg%3d-Rv1lSyTXRfg%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=NDAxOA%3d%3d-jbGISF1GIhs%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TkRBeE9BJTNkJTNkLWpiR0lTRjFHSWhzJTNk-2kWqqJqfBhY%3d",
+      "_screen": "Safeer Elite",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ebenezer",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "18:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0Mzg%3d-f4E%2bSkWbi9o%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg3Mg%3d%3d-%2fKiu5WW0POQ%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnM01nJTNkJTNkLSUyZktpdTVXVzBQT1ElM2Q%3d-4qhdMUTEl9Q%3d",
+      "_screen": "Screen-4",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-27",
+      "time": "19:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNjY%3d-%2fn1uqSCGTfI%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg1MA%3d%3d-%2fRNNyj%2bCWPk%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnMU1BJTNkJTNkLSUyZlJOTnlqJTJiQ1dQayUzZA%3d%3d-VKgV7fWemzU%3d",
+      "_screen": "Screen-2",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Hadoota",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "19:15",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NTQ%3d-S%2fxPdGfTcjg%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MzkzNA%3d%3d-iraw7xWJ0BY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprek5BJTNkJTNkLWlyYXc3eFdKMEJZJTNk-uW2b0%2br42U4%3d",
+      "_screen": "Safeer Prime",
+      "lang": "ar",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-27",
+      "time": "19:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNzA%3d-8rO3NQn9IH4%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5Ng%3d%3d-FvW9cmG8tdE%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU5nJTNkJTNkLUZ2VzljbUc4dGRFJTNk-eu0Whrdn9to%3d",
+      "_screen": "Screen-5",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ramayana (2D)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-27",
+      "time": "19:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0MjY%3d-xWdXHPBC20E%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MzkxOA%3d%3d-9tRm2FMIuFo%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpreE9BJTNkJTNkLTl0Um0yRk1JdUZvJTNk-W3SrTHQlL2Y%3d",
+      "_screen": "Screen-1",
+      "lang": "hi",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "The Hunger Games: Sunrise on the Reaping",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 158,
+      "date": "2026-09-27",
+      "time": "20:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk1NDU%3d-OU1a3AHg3%2fk%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzg3NA%3d%3d-nXzdk23BWMY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpnM05BJTNkJTNkLW5YemRrMjNCV01ZJTNk-xmFSOYhWo%2f4%3d",
+      "_screen": "Screen-3",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Kaali Kheti",
+      "film_lang": "Hindi",
+      "film_rating": "15+",
+      "runtime": 110,
+      "date": "2026-09-27",
+      "time": "20:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0Mzk%3d-S1T0j%2fv7AX0%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=NDAyMg%3d%3d-cr19gkacUZA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TkRBeU1nJTNkJTNkLWNyMTlna2FjVVpBJTNk-fS2zDHoX1ds%3d",
+      "_screen": "Screen-4",
+      "lang": "hi",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 128,
+      "date": "2026-09-27",
+      "time": "21:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNjc%3d-wl5irOciWO0%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5Ng%3d%3d-FvW9cmG8tdE%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU5nJTNkJTNkLUZ2VzljbUc4dGRFJTNk-eu0Whrdn9to%3d",
+      "_screen": "Screen-2",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ghost Soldier",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "21:30",
+      "hall": "VIP",
+      "hall_label": "Safeer Elite",
+      "prices": [
+        {
+          "seat": "Safeer Elite",
+          "aed": 90.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk1NDc%3d-Y%2fVetRDoZf0%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5MA%3d%3d-M9NRIP%2b%2baAY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU1BJTNkJTNkLU05TlJJUCUyYiUyYmFBWSUzZA%3d%3d-aF6dLHtbQ2w%3d",
+      "_screen": "Safeer Elite",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Hadoota",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "21:30",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NTU%3d-xkwWebgne5c%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MzkzNA%3d%3d-iraw7xWJ0BY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprek5BJTNkJTNkLWlyYXc3eFdKMEJZJTNk-uW2b0%2br42U4%3d",
+      "_screen": "Safeer Prime",
+      "lang": "ar",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Crypto",
+      "film_lang": "Arabic",
+      "film_rating": "PG15",
+      "runtime": 100,
+      "date": "2026-09-27",
+      "time": "21:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NDM%3d-vDMPg%2fMHYSY%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk4OA%3d%3d-1%2fUuCq%2fR8XQ%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNE9BJTNkJTNkLTElMmZVdUNxJTJmUjhYUSUzZA%3d%3d-pRAmXlwF4OY%3d",
+      "_screen": "Screen-5",
+      "lang": "ar",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Aakasamlo Oka Tara",
+      "film_lang": "Malayalam",
+      "film_rating": "PG13",
+      "runtime": 156,
+      "date": "2026-09-27",
+      "time": "23:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk1NDY%3d-Z%2fzz7XfZ24I%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=NDAzMA%3d%3d-QCk6QfkVA4s%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TkRBek1BJTNkJTNkLVFDazZRZmtWQTRzJTNk-wV0YJqlTeRM%3d",
+      "_screen": "Screen-3",
+      "lang": "ml",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Kaali Kheti",
+      "film_lang": "Hindi",
+      "film_rating": "15+",
+      "runtime": 110,
+      "date": "2026-09-27",
+      "time": "23:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NDA%3d-v7ViANF%2fE8I%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=NDAyMg%3d%3d-cr19gkacUZA%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TkRBeU1nJTNkJTNkLWNyMTlna2FjVVpBJTNk-fS2zDHoX1ds%3d",
+      "_screen": "Screen-4",
+      "lang": "hi",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Ramayana (2D)",
+      "film_lang": "Hindi",
+      "film_rating": "PG13",
+      "runtime": 199,
+      "date": "2026-09-27",
+      "time": "23:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0Mjc%3d-iP1NEo9eL8Q%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MzkxOA%3d%3d-9tRm2FMIuFo%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXpreE9BJTNkJTNkLTl0Um0yRk1JdUZvJTNk-W3SrTHQlL2Y%3d",
+      "_screen": "Screen-1",
+      "lang": "hi",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "OM - Chapter 1 Udhiram-The Blood Wood",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 179,
+      "date": "2026-09-27",
+      "time": "23:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTkzNTY%3d-hGHtSUD7XoE%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5NA%3d%3d-P1ELkLb4p5c%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU5BJTNkJTNkLVAxRUxrTGI0cDVjJTNk-qg37%2fqdype8%3d",
+      "_screen": "Screen-2",
+      "lang": "ml",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "You Can See Everything",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 174,
+      "date": "2026-09-27",
+      "time": "23:30",
+      "hall": "VIP",
+      "hall_label": "Safeer Elite",
+      "prices": [
+        {
+          "seat": "Safeer Elite",
+          "aed": 90.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NDk%3d-IILXZeHJl9c%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=NDAxOA%3d%3d-jbGISF1GIhs%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TkRBeE9BJTNkJTNkLWpiR0lTRjFHSWhzJTNk-2kWqqJqfBhY%3d",
+      "_screen": "Safeer Elite",
+      "lang": "en",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Bachelor Party Deux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-27",
+      "time": "23:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Rows A–B",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NDQ%3d-dfXIloUzyCk%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=Mzk5Mg%3d%3d-%2fnykDPZoaqI%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprNU1nJTNkJTNkLSUyZm55a0RQWm9hcUklM2Q%3d-Hrbf2Y%2bit4o%3d",
+      "_screen": "Screen-5",
+      "lang": "ml",
+      "subs": [
+        "ar"
+      ]
+    },
+    {
+      "cinema": "safeer-dibba",
+      "film_title": "Hadoota",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "23:45",
+      "hall": "OTHER",
+      "hall_label": "Safeer Prime",
+      "prices": [
+        {
+          "seat": "Safeer Prime",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.safeercinemas.com/SelectSeats.aspx?EventID=NTk0NTY%3d-80Ycqyqq5ns%3d&venueid=MTA4NTc%3d-%2bzPueB3dZ%2b4%3d&MovieId=MzkzNA%3d%3d-iraw7xWJ0BY%3d&LevelID=MA%3d%3d-110A7HeCwRM%3d&ReqDate=MjAyNi0xMS0yMA%3d%3d-UpNje71vOd8%3d&ReqSeats=MTA%3d-zISu%2bSIzx8g%3d&CancelURL=TW92aWVTaG93VGltZS5hc3B4P21vdmllaWQ9TXprek5BJTNkJTNkLWlyYXc3eFdKMEJZJTNk-uW2b0%2br42U4%3d",
+      "_screen": "Safeer Prime",
+      "lang": "ar",
+      "subs": [
+        "ar"
+      ]
+    }
+  ],
+  "price_health": {
+    "attempted": 16,
+    "priced": 16,
+    "error": null
+  }
+}

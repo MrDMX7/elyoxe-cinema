@@ -47,17 +47,19 @@ def test_two_seat_categories_under_one_name_both_keep_their_price():
                                                   {"seat": "VIP", "aed": 52.5}]
 
 
-@pytest.mark.parametrize("chain", ["alshaab", "cinemax", "cinepolis"])
+@pytest.mark.parametrize("chain", ["alshaab", "cinemax", "cinepolis", "akil", "cinemas369", "safeer", "galaxy"])
 def test_the_new_chains_are_registered_everywhere_a_chain_is_listed(chain):
     import alerts
     import refresh
     import site_kit
     import yaml
-    assert chain in refresh.CHAIN_READERS and chain in refresh.PRICE_CACHE_CHAINS and chain in alerts.CHAINS
+    assert chain in refresh.CHAIN_READERS and chain in alerts.CHAINS
+    assert chain in refresh.PRICE_CACHE_CHAINS or chain == "akil"   # Akil's prices come with its schedule, nothing sampled
     assert chain in site_kit.CHAIN_SITE
     assert chain in yaml.safe_load((ROOT / "chains.yaml").read_text(encoding="utf-8"))["chains"]
     assert yaml.safe_load((ROOT / "halls.yaml").read_text(encoding="utf-8"))["chains"][chain]["name_ar"]
-    assert chain in (ROOT / ".github/workflows/cinema-refresh.yml").read_text(encoding="utf-8").split("CHAINS:", 1)[1].split("\n", 1)[0].split(",")
+    line = (ROOT / ".github/workflows/cinema-refresh.yml").read_text(encoding="utf-8").split("CHAINS:", 1)[1].split("\n", 1)[0]
+    assert chain in [c.strip() for c in line.split("#", 1)[0].split(",")]   # the line ends in a comment
     assert f".ch-{chain}{{" in (ROOT / "app/app.css").read_text(encoding="utf-8")
     cins = yaml.safe_load((ROOT / "cinemas.yaml").read_text(encoding="utf-8"))["cinemas"]
     fx = json.loads((ROOT / "fixtures" / f"{chain}.json").read_text(encoding="utf-8"))

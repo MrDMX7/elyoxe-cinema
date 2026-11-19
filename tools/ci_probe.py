@@ -47,6 +47,10 @@ PREFLIGHT = {
     "alshaab": ("requests", "https://www.alshaabcinema.com/"),
     "cinemax": ("requests", "https://www.rakcinemax.com/"),
     "cinepolis": ("requests", "https://api.cinepolisgulf.com/api/cinemas/cinemas/?event_country_id=&country_id=2"),
+    "akil": ("requests", "https://www.cinemaakil.com/api/films?startDate=2026-11-19&endDate=2026-11-20"),
+    "cinemas369": ("requests", "https://369cinemas.ae/"),
+    "safeer": ("requests", "https://www.safeercinemas.com/"),
+    "galaxy": ("requests", "https://www.galaxycinemas.ae/"),
 }
 
 

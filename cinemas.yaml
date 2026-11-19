@@ -1,7 +1,7 @@
 # cinemas.yaml — the display name of every cinema, «chain — mall» in both languages (build.py).
 #
 # Readers give raw names ("Al Foah -Al Ain", "VOX Cinemas Kempinski- Mall of Emirates"); pages use
-# these. Chain names follow halls.yaml (فوكس، ستار، ريل، سينما سيتي، سيني رويال، روكسي، نوفو، سينما الشعب، سينماكس، سينيبوليس); mall
+# these. Chain names follow halls.yaml (فوكس، ستار، ريل، سينما سيتي، سيني رويال، روكسي، نوفو، سينما الشعب، سينماكس، سينيبوليس، سينما عقيل، سينما 369، سفير، جالاكسي); mall
 # names are the Arabic the malls themselves use on their signs, sites and Google Maps labels. A cinema
 # id missing here falls back to a cleaned reader name, and tests/test_build.py fails for any cinema in
 # the real fixtures that has no entry — add it here when a chain opens one.
@@ -22,6 +22,12 @@ cinemas:
   # --- Cinemax (one site, rakcinemax.com) and Cinépolis (one UAE site; its Circle Mall closed 2025-11-12) — Google Maps, 2026-11-19
   cinemax-al-naeem-mall-ras-al-khaimah: {ar: "سينماكس — النعيم مول", en: "Cinemax — Al Naeem Mall", address_ar: "النعيم مول، شارع بن ظاهر، النخيل، رأس الخيمة", lat: 25.79169, lng: 55.96713, coord_source: "Google Maps"}
   cinepolis-oasis-mall-sharjah:      {ar: "سينيبوليس — الواحة مول",           en: "Cinépolis — Oasis Mall", address_ar: "الواحة مول، شارع الوحدة، الشارقة", lat: 25.34918, lng: 55.40923, coord_source: "Google Maps"}
+  # --- Cinema Akil, 369 Cinemas, Safeer, Galaxy (one reader each, owner 2026-11-19) — Google Maps, 369 from its own schema.org
+  akil-alserkal-avenue:              {ar: "سينما عقيل — السركال أفنيو",            en: "Cinema Akil — Alserkal Avenue", address_ar: "مستودع 68، السركال أفنيو، القوز الصناعية 1، دبي", lat: 25.14217, lng: 55.22417, coord_source: "Google Maps"}
+  akil-25hours-hotel:                {ar: "سينما عقيل — فندق 25 آورز",             en: "Cinema Akil — 25hours Hotel", address_ar: "فندق 25 آورز، ون سنترال، شارع المركز التجاري، دبي", lat: 25.21949, lng: 55.28448, coord_source: "Google Maps"}
+  cinemas369-al-mariah-mall:         {ar: "سينما 369 — مارية مول",                 en: "369 Cinemas — Al Mariah Mall", address_ar: "مارية مول، الطابق الأول، الدانة، أبوظبي", lat: 24.4943, lng: 54.36761, coord_source: "369cinemas.ae (schema.org geo)"}
+  safeer-dibba:                      {ar: "سفير سينما — دبا",                      en: "Safeer Cinemas — Dibba", address_ar: "سفير ماركت، الطابق الأول، دبا، الفجيرة", lat: 25.60084, lng: 56.27007, coord_source: "Google Maps"}
+  galaxy-fujairah-mall:              {ar: "جالاكسي سينما — الفجيرة مول",           en: "Galaxy Cinemas — Fujairah Mall", address_ar: "الفجيرة مول، الفجيرة", lat: 25.12351, lng: 56.31546, coord_source: "Google Maps"}
   # --- Cinemacity
   cinemacity-alqana:                 {ar: "سينما سيتي — القناة",                 en: "Cinemacity — Al Qana", address_ar: "القناة، ربدان، أبوظبي", lat: 24.402682121, lng: 54.4990316, coord_source: "cinemacity location page (schema.org geo)"}
   cinemacity-arabian-centre:         {ar: "سينما سيتي — المركز العربي",          en: "Cinemacity — Arabian Centre", address_ar: "المركز العربي، الخوانيج، دبي", lat: 25.2346289, lng: 55.436369, coord_source: "cinemacity location page (schema.org geo)"}

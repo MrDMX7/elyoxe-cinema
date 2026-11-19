@@ -24,3 +24,7 @@ chains:
   alshaab:    {ad_offset_min: 15}
   cinemax:    {ad_offset_min: 15}
   cinepolis:  {ad_offset_min: 15}
+  akil:       {ad_offset_min: 15}
+  cinemas369: {ad_offset_min: 15}
+  safeer:     {ad_offset_min: 15}
+  galaxy:     {ad_offset_min: 15}

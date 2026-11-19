@@ -34,6 +34,8 @@ aliases:
   # 2026-11-19: Cinemax (rakcinemax.com) lists them short, «Ramayana(Hindi)» and «Om: Chapter 1(Tamil)»
   ramayana: ramayana-rise-of-a-legend
   om-chapter-1: om-chapter-1-udhiram-the-blood
+  # Safeer (safeercinemas.com) spells it without the apostrophe
+  bachelor-party-deux: bachelor-party-d-eux
 
 titles:
   the-vvaan-force-of-the-forest: "The Vvaan: Force of the Forest"

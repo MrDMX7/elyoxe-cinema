@@ -127,7 +127,7 @@ class MoneyPages:
             gov = [c for c in self.cards if c.get("kind") == "gov"]
             progs_ar = " و".join(c["name_ar"] for c in gov) or "البطاقات"
             progs_en = ", ".join(c["name_en"] for c in gov) or "cards"
-            order = ["vox", "star", "reel", "roxy", "cineroyal", "cinemacity", "alshaab", "cinemax", "cinepolis", "novo"]
+            order = ["vox", "star", "reel", "roxy", "cineroyal", "cinemacity", "alshaab", "cinemax", "cinepolis", "cinemas369", "akil", "safeer", "galaxy", "novo"]
             shown = sorted(set(self.rules) | {c["chain"] for c in self.cinemas.values()}, key=lambda ch: (order.index(ch) if ch in order else 99, ch))
             chains_ar = " و".join(self.h.chain_name(ch, "ar") for ch in shown)
             chains_en = ", ".join(self.h.chain_name(ch, "en") for ch in shown)

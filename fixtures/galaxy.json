@@ -1,0 +1,726 @@
+{
+  "cinemas": [
+    {
+      "id": "galaxy-fujairah-mall",
+      "chain": "galaxy",
+      "name": "Galaxy Cinemas Fujairah Mall",
+      "name_ar": null,
+      "city": "fujairah",
+      "mall": "Fujairah Mall",
+      "address": "Fujairah Mall, Hamad Bin Abdullah Rd, Fujairah, United Arab Emirates",
+      "maps": null,
+      "lat": null,
+      "lng": null
+    }
+  ],
+  "shows": [
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "The Cat In The Hat",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 115,
+      "date": "2026-09-26",
+      "time": "12:10",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzA1-zCa6fBswf6E%3d&pid=Mjk2MQ==-xAB/VhJIBB4=&date=1795026600000&time=1795070400000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NamsyTVE9PS14QUIvVmhKSUJCND0mbW9kZT1Ob3dTaG93aW5n-BGL54oHASBU%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Godzilla Minus Zero",
+      "film_lang": "Japanese",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "12:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4Njg2-ziUFgQVboDo%3d&pid=MzQxNw==-nBcOjVCsDb0=&date=1795026600000&time=1795070700000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF4Tnc9PS1uQmNPalZDc0RiMD0mbW9kZT1Ob3dTaG93aW5n-SBeMFpGf%2bL0%3d",
+      "lang": "ja"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Three Wishes For Cinderella",
+      "film_lang": "English",
+      "film_rating": "G",
+      "runtime": 90,
+      "date": "2026-09-26",
+      "time": "12:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4Njk4-YWORLQb9aWA%3d&pid=MzQyMw==-i20F9YZwipk=&date=1795026600000&time=1795071000000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF5TXc9PS1pMjBGOVlad2lwaz0mbW9kZT1Ob3dTaG93aW5n-uCsI6aWUCWg%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "How To Rob A Bank",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "12:25",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4Njky-GB0712OuBSQ%3d&pid=MzM5Nw==-+PGtLRxJ0Bc=&date=1795026600000&time=1795071300000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek01Tnc9PS0rUEd0TFJ4SjBCYz0mbW9kZT1Ob3dTaG93aW5n-JQwbKpZHTvA%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "12:35",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzEy-jApJi71aEXI%3d&pid=MzM5MQ==-qhAC+MP7IHc=&date=1795026600000&time=1795071900000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek01TVE9PS1xaEFDK01QN0lIYz0mbW9kZT1Ob3dTaG93aW5n-lYuQq0i6%2bt8%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Tamerlane: Rise Of The Last Conqueror",
+      "film_lang": "English",
+      "film_rating": null,
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "12:50",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzE4-BJc5CrMRiBk%3d&pid=MzMxMg==-lOeuKcHma9c=&date=1795026600000&time=1795072800000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek14TWc9PS1sT2V1S2NIbWE5Yz0mbW9kZT1Ob3dTaG93aW5n-8YR4diUQW7o%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Ghost Soldier",
+      "film_lang": "English",
+      "film_rating": null,
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "14:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4Njk5-rntG83Ei0TU%3d&pid=MzQwNg==-Asksphau89U=&date=1795026600000&time=1795077000000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF3Tmc9PS1Bc2tzcGhhdTg5VT0mbW9kZT1Ob3dTaG93aW5n-V6%2bkVhjAoqo%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "The Cat In The Hat",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 115,
+      "date": "2026-09-26",
+      "time": "14:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzI2-STq52sJyJjE%3d&pid=Mjk2MQ==-xAB/VhJIBB4=&date=1795026600000&time=1795077900000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NamsyTVE9PS14QUIvVmhKSUJCND0mbW9kZT1Ob3dTaG93aW5n-BGL54oHASBU%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "How To Rob A Bank",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "14:35",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4Njkz-PThWFt1kzZc%3d&pid=MzM5Nw==-+PGtLRxJ0Bc=&date=1795026600000&time=1795079100000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek01Tnc9PS0rUEd0TFJ4SjBCYz0mbW9kZT1Ob3dTaG93aW5n-JQwbKpZHTvA%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Hadoota",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "14:40",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4Njg3-WNIqAghIhLA%3d&pid=MzQwMA==-vA9hZtH0FVo=&date=1795026600000&time=1795079400000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF3TUE9PS12QTloWnRIMEZWbz0mbW9kZT1Ob3dTaG93aW5n-J%2b2DAwM79wA%3d",
+      "lang": "ar"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "14:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzEz-y%2bS7Mrp%2bTOU%3d&pid=MzM5MQ==-qhAC+MP7IHc=&date=1795026600000&time=1795079700000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek01TVE9PS1xaEFDK01QN0lIYz0mbW9kZT1Ob3dTaG93aW5n-lYuQq0i6%2bt8%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "15:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzE5-T5GkT0y%2fE04%3d&pid=MzQxNQ==-2iMjIEvXeqs=&date=1795026600000&time=1795080600000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF4TlE9PS0yaU1qSUV2WGVxcz0mbW9kZT1Ob3dTaG93aW5n-2lFRL5bGnTY%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Three Wishes For Cinderella",
+      "film_lang": "English",
+      "film_rating": "G",
+      "runtime": 90,
+      "date": "2026-09-26",
+      "time": "16:10",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzAw-G2EQIFTwA%2bA%3d&pid=MzQyMw==-i20F9YZwipk=&date=1795026600000&time=1795084800000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF5TXc9PS1pMjBGOVlad2lwaz0mbW9kZT1Ob3dTaG93aW5n-uCsI6aWUCWg%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "The Cat In The Hat",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 115,
+      "date": "2026-09-26",
+      "time": "16:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzMw-aquvvr3RwNY%3d&pid=Mjk2MQ==-xAB/VhJIBB4=&date=1795026600000&time=1795085400000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NamsyTVE9PS14QUIvVmhKSUJCND0mbW9kZT1Ob3dTaG93aW5n-BGL54oHASBU%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Godzilla Minus Zero",
+      "film_lang": "Japanese",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "16:50",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4Njg4-afNUMMCEhns%3d&pid=MzQxNw==-nBcOjVCsDb0=&date=1795026600000&time=1795087200000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF4Tnc9PS1uQmNPalZDc0RiMD0mbW9kZT1Ob3dTaG93aW5n-SBeMFpGf%2bL0%3d",
+      "lang": "ja"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "How To Rob A Bank",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "16:50",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4Njk0-hPmLNuAtAT0%3d&pid=MzM5Nw==-+PGtLRxJ0Bc=&date=1795026600000&time=1795087200000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek01Tnc9PS0rUEd0TFJ4SjBCYz0mbW9kZT1Ob3dTaG93aW5n-JQwbKpZHTvA%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzE0-qGLxp5CPz30%3d&pid=MzM5MQ==-qhAC+MP7IHc=&date=1795026600000&time=1795087800000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek01TVE9PS1xaEFDK01QN0lIYz0mbW9kZT1Ob3dTaG93aW5n-lYuQq0i6%2bt8%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Tamerlane: Rise Of The Last Conqueror",
+      "film_lang": "English",
+      "film_rating": null,
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "17:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzIw-Sp%2bEolGiKrA%3d&pid=MzMxMg==-lOeuKcHma9c=&date=1795026600000&time=1795089000000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek14TWc9PS1sT2V1S2NIbWE5Yz0mbW9kZT1Ob3dTaG93aW5n-8YR4diUQW7o%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Ghost Soldier",
+      "film_lang": "English",
+      "film_rating": null,
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "17:50",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzAx-2E6EIKcNmnQ%3d&pid=MzQwNg==-Asksphau89U=&date=1795026600000&time=1795090800000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF3Tmc9PS1Bc2tzcGhhdTg5VT0mbW9kZT1Ob3dTaG93aW5n-V6%2bkVhjAoqo%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "The Cat In The Hat",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 115,
+      "date": "2026-09-26",
+      "time": "18:25",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzI4-my7ZG2HKsQo%3d&pid=Mjk2MQ==-xAB/VhJIBB4=&date=1795026600000&time=1795092900000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NamsyTVE9PS14QUIvVmhKSUJCND0mbW9kZT1Ob3dTaG93aW5n-BGL54oHASBU%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Forgotten Island",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 109,
+      "date": "2026-09-26",
+      "time": "19:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzE1-j8aSgXHCnGo%3d&pid=MzM5MQ==-qhAC+MP7IHc=&date=1795026600000&time=1795095000000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek01TVE9PS1xaEFDK01QN0lIYz0mbW9kZT1Ob3dTaG93aW5n-lYuQq0i6%2bt8%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "It Feeds",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 100,
+      "date": "2026-09-26",
+      "time": "19:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4Njk1-v5FnRrxgC88%3d&pid=MzM4NA==-Ut61RucczLs=&date=1795026600000&time=1795095000000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek00TkE9PS1VdDYxUnVjY3pMcz0mbW9kZT1Ob3dTaG93aW5n-zGU7dVP93%2fA%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Hadoota",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "19:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4Njg5-T%2bpqnPWK%2b2o%3d&pid=MzQwMA==-vA9hZtH0FVo=&date=1795026600000&time=1795095900000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF3TUE9PS12QTloWnRIMEZWbz0mbW9kZT1Ob3dTaG93aW5n-J%2b2DAwM79wA%3d",
+      "lang": "ar"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "19:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzIx-1nPzuLC0kxw%3d&pid=MzQxNQ==-2iMjIEvXeqs=&date=1795026600000&time=1795096800000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF4TlE9PS0yaU1qSUV2WGVxcz0mbW9kZT1Ob3dTaG93aW5n-2lFRL5bGnTY%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Three Wishes For Cinderella",
+      "film_lang": "English",
+      "film_rating": "G",
+      "runtime": 90,
+      "date": "2026-09-26",
+      "time": "20:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzAy-VndljtWPxUo%3d&pid=MzQyMw==-i20F9YZwipk=&date=1795026600000&time=1795098600000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF5TXc9PS1pMjBGOVlad2lwaz0mbW9kZT1Ob3dTaG93aW5n-uCsI6aWUCWg%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "The Cat In The Hat",
+      "film_lang": "English",
+      "film_rating": "PG",
+      "runtime": 115,
+      "date": "2026-09-26",
+      "time": "20:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzI5-d2o2y%2fUphoY%3d&pid=Mjk2MQ==-xAB/VhJIBB4=&date=1795026600000&time=1795100400000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NamsyTVE9PS14QUIvVmhKSUJCND0mbW9kZT1Ob3dTaG93aW5n-BGL54oHASBU%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "It Feeds",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 100,
+      "date": "2026-09-26",
+      "time": "20:55",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzI0-0M0qf%2bwZ4JY%3d&pid=MzM4NA==-Ut61RucczLs=&date=1795026600000&time=1795101900000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek00TkE9PS1VdDYxUnVjY3pMcz0mbW9kZT1Ob3dTaG93aW5n-zGU7dVP93%2fA%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "21:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzE2-EbNest91Ynk%3d&pid=MzQxNQ==-2iMjIEvXeqs=&date=1795026600000&time=1795102200000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF4TlE9PS0yaU1qSUV2WGVxcz0mbW9kZT1Ob3dTaG93aW5n-2lFRL5bGnTY%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Hadoota",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "21:25",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4Njkw-tCtjNui0yX4%3d&pid=MzQwMA==-vA9hZtH0FVo=&date=1795026600000&time=1795103700000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF3TUE9PS12QTloWnRIMEZWbz0mbW9kZT1Ob3dTaG93aW5n-J%2b2DAwM79wA%3d",
+      "lang": "ar"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Ghost Soldier",
+      "film_lang": "English",
+      "film_rating": null,
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "21:40",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzAz-hBB6f9yqo98%3d&pid=MzQwNg==-Asksphau89U=&date=1795026600000&time=1795104600000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF3Tmc9PS1Bc2tzcGhhdTg5VT0mbW9kZT1Ob3dTaG93aW5n-V6%2bkVhjAoqo%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Tamerlane: Rise Of The Last Conqueror",
+      "film_lang": "English",
+      "film_rating": null,
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "21:50",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzIy-gKz8E%2b2wgiY%3d&pid=MzMxMg==-lOeuKcHma9c=&date=1795026600000&time=1795105200000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek14TWc9PS1sT2V1S2NIbWE5Yz0mbW9kZT1Ob3dTaG93aW5n-8YR4diUQW7o%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Godzilla Minus Zero",
+      "film_lang": "Japanese",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "22:40",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzMx-urt0BlEAy%2f4%3d&pid=MzQxNw==-nBcOjVCsDb0=&date=1795026600000&time=1795108200000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF4Tnc9PS1uQmNPalZDc0RiMD0mbW9kZT1Ob3dTaG93aW5n-SBeMFpGf%2bL0%3d",
+      "lang": "ja"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "It Feeds",
+      "film_lang": "English",
+      "film_rating": "15+",
+      "runtime": 100,
+      "date": "2026-09-26",
+      "time": "22:50",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzI1-mPbpu%2fw2v24%3d&pid=MzM4NA==-Ut61RucczLs=&date=1795026600000&time=1795108800000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek00TkE9PS1VdDYxUnVjY3pMcz0mbW9kZT1Ob3dTaG93aW5n-zGU7dVP93%2fA%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 130,
+      "date": "2026-09-26",
+      "time": "23:25",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzE3-EoevnZKsDmc%3d&pid=MzQxNQ==-2iMjIEvXeqs=&date=1795026600000&time=1795110900000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF4TlE9PS0yaU1qSUV2WGVxcz0mbW9kZT1Ob3dTaG93aW5n-2lFRL5bGnTY%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Hadoota",
+      "film_lang": "Arabic",
+      "film_rating": "PG13",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "23:35",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4Njkx-g8tCoCA0AZM%3d&pid=MzQwMA==-vA9hZtH0FVo=&date=1795026600000&time=1795111500000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF3TUE9PS12QTloWnRIMEZWbz0mbW9kZT1Ob3dTaG93aW5n-J%2b2DAwM79wA%3d",
+      "lang": "ar"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Ghost Soldier",
+      "film_lang": "English",
+      "film_rating": null,
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "23:50",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzA0-2d8uin3awFE%3d&pid=MzQwNg==-Asksphau89U=&date=1795026600000&time=1795112400000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1NelF3Tmc9PS1Bc2tzcGhhdTg5VT0mbW9kZT1Ob3dTaG93aW5n-V6%2bkVhjAoqo%3d",
+      "lang": "en"
+    },
+    {
+      "cinema": "galaxy-fujairah-mall",
+      "film_title": "Tamerlane: Rise Of The Last Conqueror",
+      "film_lang": "English",
+      "film_rating": null,
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "23:59",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "VIP",
+          "aed": 42.0
+        }
+      ],
+      "book": "https://www.galaxycinemas.ae/SeatLayout.aspx?cid=OTYx-a%2bzfpjWgZgA%3d&scheid=MTQ4NzIz-M7P1%2fmthdP0%3d&pid=MzMxMg==-lOeuKcHma9c=&date=1795026600000&time=1795112940000&levelid=1&Returnurl=TW92aWVfZGV0YWlscy5hc3B4P3BpZD1Nek14TWc9PS1sT2V1S2NIbWE5Yz0mbW9kZT1Ob3dTaG93aW5n-8YR4diUQW7o%3d",
+      "lang": "en"
+    }
+  ],
+  "price_health": {
+    "attempted": 1,
+    "priced": 1,
+    "error": null
+  }
+}

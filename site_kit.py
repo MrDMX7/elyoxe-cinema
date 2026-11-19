@@ -213,7 +213,9 @@ FONTS = {"ar": ("plex-ar-400.woff2", "plex-ar-700.woff2"), "en": ("plex-la-400.w
 CHAIN_SITE = {"vox": "https://uae.voxcinemas.com/", "star": "https://www.starcinemas.ae/", "novo": "https://uae.novocinemas.com/",
               "reel": "https://www.reelcinemas.ae/", "roxy": "https://www.theroxycinemas.com/", "cineroyal": "https://cineroyal.ae/",
               "cinemacity": "https://www.cinemacity.ae/", "alshaab": "https://www.alshaabcinema.com/",
-              "cinemax": "https://www.rakcinemax.com/", "cinepolis": "https://uae.cinepolisgulf.com/"}
+              "cinemax": "https://www.rakcinemax.com/", "cinepolis": "https://uae.cinepolisgulf.com/",
+              "akil": "https://www.cinemaakil.com/", "cinemas369": "https://369cinemas.ae/", "safeer": "https://www.safeercinemas.com/",
+              "galaxy": "https://www.galaxycinemas.ae/"}
 
 
 def rel(u):
@@ -907,11 +909,20 @@ class Kit(MediaKit, TileKit, SchedKit, TicketKit, ChromeKit, FiltersKit):
         strings["base"] = P(lang)
         strings["mycard"] = L(CHROME_T["mycard"], lang)   # the card pill with no card chosen
         strings["langs"] = {k: L(v, lang) for k, v in LANGS.items()}
-        strings["ad"] = {ch: int((c or {}).get("ad_offset_min") or 15) for ch, c in (self.d.get("chains") or {}).items() if isinstance(c, dict)}
+        # every page carries these maps, so each chain costs every page its bytes (seven chains joined on 2026-11-19 and
+        # put the busiest film page 162 bytes over its 150 KB): ad offsets only where they differ from ticket.js's own
+        # default of 15, and the sites and names only of chains with a cinema in the data (not a withdrawn one)
+        strings["ad"] = {ch: int(c.get("ad_offset_min")) for ch, c in (self.d.get("chains") or {}).items()
+                         if isinstance(c, dict) and int(c.get("ad_offset_min") or 15) != 15}
         strings["adhan"] = "/assets/" + self.adhan_name
         strings["days"] = sorted({s["date"] for s in self.shows})
-        strings["sites"] = CHAIN_SITE   # a time with no booking URL of its own books on its chain's site
-        strings["chains"] = {ch: self.h.chain_name(ch, lang) for ch in CHAIN_SITE}   # «ستار», not «star», wherever a script names a chain (pick.js, 2026-10-17)   # the slice dates that exist (no 404 for a day not built)
+        live = {c.get("chain") for c in (self.d.get("cinemas") or {}).values()}
+        # a time with no booking URL of its own books on its chain's site — only those chains need the map (on 2026-11-19
+        # every show had its own link: ticket.js reaches the link's href first, beacon.js counts a [data-book] click)
+        cins = self.d.get("cinemas") or {}
+        bookless = {(cins.get(s.get("cinema")) or {}).get("chain") for s in self.shows if not s.get("book")}
+        strings["sites"] = {ch: u for ch, u in CHAIN_SITE.items() if ch in live and ch in bookless}
+        strings["chains"] = {ch: self.h.chain_name(ch, lang) for ch in CHAIN_SITE if ch in live}   # «ستار», not «star», wherever a script names a chain (pick.js, 2026-10-17)
         chunks = {n: self.chunk_urls[n] for n in dict.fromkeys((*js, *self.kind_js.get(pagekind, ()), *self.kind_js.get("*", ()))) if n in self.chunk_urls}
         if chunks: strings["chunks"] = chunks   # main.js loads each after start-up
         pre = [f'<link rel="preload" href="/assets/fonts/{f}" as="font" type="font/woff2" crossorigin>' for f in FONTS[lang]]

@@ -667,3 +667,14 @@ rules:
       source: "https://fazaa.ae/"
       checked: "2026-11-19"
       confidence: official
+
+  safeer:
+    fazaa:
+      # 2026-11-19: the Fazaa app itself (the owner's phone, at his request) lists «Safeer Cinema — 15% Discount». Its
+      # terms page was not opened before the phone locked, so no box-office or ticket-count limit is claimed.
+      type: percent
+      value: 15
+      note_ar: "خصم 15% ببطاقة فزعة"
+      source: "https://fazaa.ae/"
+      checked: "2026-11-19"
+      confidence: official

@@ -1,0 +1,1702 @@
+{
+  "cinemas": [
+    {
+      "id": "cinemas369-al-mariah-mall",
+      "chain": "cinemas369",
+      "name": "369 Cinemas Al Mariah Mall",
+      "name_ar": null,
+      "city": "abu-dhabi",
+      "mall": "Al Mariah Mall",
+      "address": "Al Mariah Mall, 1st floor, Al Danah, Abu Dhabi, United Arab Emirates",
+      "maps": null,
+      "lat": null,
+      "lng": null
+    }
+  ],
+  "shows": [
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "08:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/56b2689378eb8e2fa5c00f53b4b0000f%26shid%3D24150%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-19+08%3A30%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-3",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/152f1e2a26803ff8e8a3300882c240ee%26shid%3D24034%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-19+11%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bouma",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "11:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/e9925b41d059ffb32d84556a6ae8aee3%26shid%3D24024%26mvid%3D654%26mvname%3DBOUMA%26timstr%3D2026-11-19+11%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-2",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Ramayana: Rise Of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": null,
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "11:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/2d75ca00aa483b4b11eb1cf9e2dca267%26shid%3D24049%26mvid%3D661%26mvname%3DRAMAYANA%253A%2BRISE%2BOF%2BA%2BLEGEND%2B%2528Malayalam%2529%26timstr%3D2026-11-19+11%3A15%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-9",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Scene",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-26",
+      "time": "12:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/61e9ac0c67b0f12368789ac517b11cc7%26shid%3D24044%26mvid%3D628%26mvname%3DSCENE%26timstr%3D2026-11-19+12%3A30%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-7",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "12:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/facf19d83db594e4d7a5753c365b0018%26shid%3D24039%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-19+12%3A45%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-6",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Ramayana: Rise Of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": null,
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "13:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/1c763d3bbd386a927301e309799c8d3f%26shid%3D24025%26mvid%3D661%26mvname%3DRAMAYANA%253A%2BRISE%2BOF%2BA%2BLEGEND%2B%2528Malayalam%2529%26timstr%3D2026-11-19+13%3A20%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-2",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "13:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/742773f99a3458e29afc5a5986053731%26shid%3D24030%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-19+13%3A45%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-3",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Scene",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-26",
+      "time": "14:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/2ace6928884a9a127f0c45d42f8559e6%26shid%3D24035%26mvid%3D628%26mvname%3DSCENE%26timstr%3D2026-11-19+14%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-5",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bouma",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "15:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/272bae53bd28ddde7d0525c10c9e896a%26shid%3D24050%26mvid%3D654%26mvname%3DBOUMA%26timstr%3D2026-11-19+15%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-9",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "15:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/5ed9b5c592065afecd9059f39f682330%26shid%3D24040%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-19+15%3A30%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-6",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Scene",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-26",
+      "time": "15:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/c3f5415d2fb7d11a470de371c4b425b6%26shid%3D24045%26mvid%3D628%26mvname%3DSCENE%26timstr%3D2026-11-19+15%3A30%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-7",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "16:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/fdcdeccff488b9ffb19597a6febbf0ce%26shid%3D24031%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-19+16%3A30%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-3",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bouma",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/50a944973fd90b94cbde9477bdbb4353%26shid%3D24026%26mvid%3D654%26mvname%3DBOUMA%26timstr%3D2026-11-19+17%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-2",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "17:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/7820c502208595fbfa2bb6eb646d23eb%26shid%3D24036%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-19+17%3A15%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Ramayana: Rise Of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": null,
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "17:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/adf958405411d443a883655b8778c266%26shid%3D24051%26mvid%3D661%26mvname%3DRAMAYANA%253A%2BRISE%2BOF%2BA%2BLEGEND%2B%2528Malayalam%2529%26timstr%3D2026-11-19+17%3A20%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-9",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "18:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/8d04a62372bac32bdfe698b27196df6c%26shid%3D24041%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-19+18%3A15%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-6",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Scene",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-26",
+      "time": "18:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/38079bfd190ae3b3d0b17d86c428151f%26shid%3D24046%26mvid%3D628%26mvname%3DSCENE%26timstr%3D2026-11-19+18%3A30%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-7",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "19:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/7e76dcfc573ac3a94d23d3be2bcf5c93%26shid%3D24032%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-19+19%3A15%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-3",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Ramayana: Rise Of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": null,
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "19:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/f052695d7e45a7917a8cc5b8f2b9216d%26shid%3D24027%26mvid%3D661%26mvname%3DRAMAYANA%253A%2BRISE%2BOF%2BA%2BLEGEND%2B%2528Malayalam%2529%26timstr%3D2026-11-19+19%3A20%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-2",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "20:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/55fc95ce983972ccc0f33a7f66bf3d1f%26shid%3D24037%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-19+20%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "21:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/6b6f5bb854fb5b17b791b0d1d663161e%26shid%3D24042%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-19+21%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-6",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bouma",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "21:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/c4ac2231a664f5d5d92387b1f1138eb9%26shid%3D24052%26mvid%3D654%26mvname%3DBOUMA%26timstr%3D2026-11-19+21%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-9",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Scene",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-26",
+      "time": "21:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/453941ce9de7c2e93086a75a6b549cc5%26shid%3D24047%26mvid%3D628%26mvname%3DSCENE%26timstr%3D2026-11-19+21%3A30%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-7",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "22:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/43136657807ccb2df700ba94ea0ad755%26shid%3D24033%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-19+22%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-3",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Ramayana: Rise Of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": null,
+      "runtime": 199,
+      "date": "2026-09-26",
+      "time": "22:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/e542fb88b0fa31bcbcabac184335ca51%26shid%3D24038%26mvid%3D661%26mvname%3DRAMAYANA%253A%2BRISE%2BOF%2BA%2BLEGEND%2B%2528Malayalam%2529%26timstr%3D2026-11-19+22%3A45%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-26",
+      "time": "23:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/3c9cad2167a9d26638d82b53a1a28854%26shid%3D24028%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-19+23%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-2",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bouma",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-26",
+      "time": "23:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/4b0fdde55815f2deeb0c6a4e357aab1c%26shid%3D24053%26mvid%3D654%26mvname%3DBOUMA%26timstr%3D2026-11-19+23%3A20%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-9",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "00:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/026f436e3846c743550e0f74d53d91d5%26shid%3D24043%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-20+00%3A15%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-6",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Scene",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-27",
+      "time": "00:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/d08571ecfc348cbd9ad120938bbf89ff%26shid%3D24048%26mvid%3D628%26mvname%3DSCENE%26timstr%3D2026-11-20+00%3A30%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-7",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "02:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/5727ef8c375afbda35c93ed84fc9ec4b%26shid%3D24029%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-20+02%3A30%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-2",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Om Chapter - 1",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "04:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/3f52ccfbfaa30d15a937ea005e79f9a7%26shid%3D24023%26mvid%3D642%26mvname%3DOM%2BCHAPTER%2B-%2B1%26timstr%3D2026-11-20+04%3A30%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-3",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Om Chapter - 1",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "10:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/afa98b6e7f21d645b250eacc5396030f%26shid%3D24126%26mvid%3D642%26mvname%3DOM%2BCHAPTER%2B-%2B1%26timstr%3D2026-11-20+10%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-7",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Scene",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-27",
+      "time": "10:10",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/32355c84a44a74656aae64cc2eb85129%26shid%3D24054%26mvid%3D628%26mvname%3DSCENE%26timstr%3D2026-11-20+10%3A10%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-2",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Ramayana: Rise Of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": null,
+      "runtime": 199,
+      "date": "2026-09-27",
+      "time": "10:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/ff20ac11fef3c133008257b73e4ebafe%26shid%3D24093%26mvid%3D661%26mvname%3DRAMAYANA%253A%2BRISE%2BOF%2BA%2BLEGEND%2B%2528Malayalam%2529%26timstr%3D2026-11-20+10%3A15%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-9",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Aakasamlo Oka Tara (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": null,
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "10:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/c3f06e761c296b050e85106245f0bdfa%26shid%3D24078%26mvid%3D636%26mvname%3DAAKASAMLO%2BOKA%2BTARA%2B%2528MALAYALAM%2529%26timstr%3D2026-11-20+10%3A45%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "11:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/3a1ea212ff2490853157ea892d16b31f%26shid%3D24063%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-20+11%3A15%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-6",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Om Chapter - 1",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "11:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/19b62b4d793f9de09c336a01db0d5a2d%26shid%3D24110%26mvid%3D642%26mvname%3DOM%2BCHAPTER%2B-%2B1%26timstr%3D2026-11-20+11%3A45%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-3",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bouma",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 120,
+      "date": "2026-09-27",
+      "time": "13:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/654b8ddbd3ac47eafb9cd488f05c98c6%26shid%3D24055%26mvid%3D654%26mvname%3DBOUMA%26timstr%3D2026-11-20+13%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-2",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Om Chapter - 1",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "13:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/73cae0220f747a49b58e255be67f98ce%26shid%3D24127%26mvid%3D642%26mvname%3DOM%2BCHAPTER%2B-%2B1%26timstr%3D2026-11-20+13%3A30%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-7",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Aakasamlo Oka Tara",
+      "film_lang": null,
+      "film_rating": null,
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "14:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/e9e41318b14a0dfdeb35b3659160804c%26shid%3D24094%26mvid%3D635%26mvname%3DAAKASAMLO%2BOKA%2BTARA%26timstr%3D2026-11-20+14%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-9"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Aakasamlo Oka Tara (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": null,
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "14:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/60884f501a36743ecd324af937a88a4f%26shid%3D24079%26mvid%3D636%26mvname%3DAAKASAMLO%2BOKA%2BTARA%2B%2528MALAYALAM%2529%26timstr%3D2026-11-20+14%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "14:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/8612200a18e54a1da9d3412b8fc5c311%26shid%3D24064%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-20+14%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-6",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Scene",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 146,
+      "date": "2026-09-27",
+      "time": "15:20",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/7451c6bb608e4d8fb570ba94838ecba8%26shid%3D24056%26mvid%3D628%26mvname%3DSCENE%26timstr%3D2026-11-20+15%3A20%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-2",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Om Chapter - 1",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "15:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/b9b144572ec0f31d3f0ccbb7353fa436%26shid%3D24111%26mvid%3D642%26mvname%3DOM%2BCHAPTER%2B-%2B1%26timstr%3D2026-11-20+15%3A45%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-3",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "16:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/17ce3377d8cf64c3a54c69e6ee75d406%26shid%3D24065%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-20+16%3A45%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-6",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Om Chapter - 1",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/e7dd50895b16e255da9d1dcc7e2aab3f%26shid%3D24128%26mvid%3D642%26mvname%3DOM%2BCHAPTER%2B-%2B1%26timstr%3D2026-11-20+17%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-7",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Ramayana: Rise Of A Legend (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": null,
+      "runtime": 199,
+      "date": "2026-09-27",
+      "time": "17:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/4573faa5224db3ab1d28cdd15e813cb1%26shid%3D24095%26mvid%3D661%26mvname%3DRAMAYANA%253A%2BRISE%2BOF%2BA%2BLEGEND%2B%2528Malayalam%2529%26timstr%3D2026-11-20+17%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-9",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Aakasamlo Oka Tara (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": null,
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "17:05",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/d27bd1921351c750edbc5ba63d373dba%26shid%3D24080%26mvid%3D636%26mvname%3DAAKASAMLO%2BOKA%2BTARA%2B%2528MALAYALAM%2529%26timstr%3D2026-11-20+17%3A05%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Om Chapter - 1",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "18:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/9390775aadc6ab3bc73c4fe1bd8c7e51%26shid%3D24117%26mvid%3D642%26mvname%3DOM%2BCHAPTER%2B-%2B1%26timstr%3D2026-11-20+18%3A15%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-2",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Om Chapter - 1",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "19:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/285bc48bc23f549a9b324be5e7c61771%26shid%3D24112%26mvid%3D642%26mvname%3DOM%2BCHAPTER%2B-%2B1%26timstr%3D2026-11-20+19%3A15%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-3",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "19:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/c5ebab4f90dbda5248c0e6328e7a74b6%26shid%3D24066%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-20+19%3A30%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-6",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Aakasamlo Oka Tara (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": null,
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "20:10",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/7b10c6b8a0ffe1b0d8c2dcc09ad449a6%26shid%3D24081%26mvid%3D636%26mvname%3DAAKASAMLO%2BOKA%2BTARA%2B%2528MALAYALAM%2529%26timstr%3D2026-11-20+20%3A10%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Om Chapter - 1",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "20:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/93298ee5b3a9b5b0338d968ca5444bb2%26shid%3D24129%26mvid%3D642%26mvname%3DOM%2BCHAPTER%2B-%2B1%26timstr%3D2026-11-20+20%3A30%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-7",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "21:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/b85739d16c61266fae0ac4adf824974e%26shid%3D24096%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-20+21%3A00%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-9",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Om Chapter - 1",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "21:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/0aa3871a5c3622437827f1a89276d3b1%26shid%3D24118%26mvid%3D642%26mvname%3DOM%2BCHAPTER%2B-%2B1%26timstr%3D2026-11-20+21%3A45%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-2",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "22:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/2af5f2f1de46a0002cfee6a843969705%26shid%3D24067%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-20+22%3A15%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-6",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Om Chapter - 1",
+      "film_lang": "Tamil",
+      "film_rating": "PG15",
+      "runtime": 178,
+      "date": "2026-09-27",
+      "time": "22:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/23fe450fdc5e4f6bd3356be5696ad3fc%26shid%3D24113%26mvid%3D642%26mvname%3DOM%2BCHAPTER%2B-%2B1%26timstr%3D2026-11-20+22%3A45%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-3",
+      "lang": "ta"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Aakasamlo Oka Tara (Malayalam)",
+      "film_lang": "Malayalam",
+      "film_rating": null,
+      "runtime": 160,
+      "date": "2026-09-27",
+      "time": "23:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/7aae9b18cebb36ad963623127dad493c%26shid%3D24082%26mvid%3D636%26mvname%3DAAKASAMLO%2BOKA%2BTARA%2B%2528MALAYALAM%2529%26timstr%3D2026-11-20+23%3A15%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-5",
+      "lang": "ml"
+    },
+    {
+      "cinema": "cinemas369-al-mariah-mall",
+      "film_title": "Bachelor Party D’Eux",
+      "film_lang": "Malayalam",
+      "film_rating": "PG15",
+      "runtime": 135,
+      "date": "2026-09-27",
+      "time": "23:40",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 36.75
+        },
+        {
+          "seat": "Prime View",
+          "aed": 42.0
+        },
+        {
+          "seat": "VIP",
+          "aed": 47.25
+        }
+      ],
+      "book": "https://369cinemas.ae/desktop-seat/7cb2a06107dd6474d6899ad423d95b40%26shid%3D24097%26mvid%3D641%26mvname%3DBACHELOR%2BPARTY%2BD%25E2%2580%2599EUX%26timstr%3D2026-11-20+23%3A40%3A00%26dimen%3D%26th_id%3D1",
+      "_screen": "Cinema-9",
+      "lang": "ml"
+    }
+  ],
+  "price_health": {
+    "attempted": 12,
+    "priced": 12,
+    "error": null
+  }
+}

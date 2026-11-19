@@ -1,0 +1,171 @@
+{
+  "cinemas": [
+    {
+      "id": "akil-alserkal-avenue",
+      "chain": "akil",
+      "name": "Cinema Akil Alserkal Avenue",
+      "name_ar": null,
+      "city": "dubai",
+      "mall": "Alserkal Avenue",
+      "address": "Warehouse 68, Alserkal Avenue, Al Quoz Industrial Area 1, Dubai, United Arab Emirates",
+      "maps": null,
+      "lat": null,
+      "lng": null
+    },
+    {
+      "id": "akil-25hours-hotel",
+      "chain": "akil",
+      "name": "Cinema Akil 25hours Hotel One Central",
+      "name_ar": null,
+      "city": "dubai",
+      "mall": "25hours Hotel One Central",
+      "address": "25hours Hotel, One Central, Trade Centre St, Dubai, United Arab Emirates",
+      "maps": null,
+      "lat": null,
+      "lng": null
+    }
+  ],
+  "shows": [
+    {
+      "cinema": "akil-alserkal-avenue",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 127,
+      "date": "2026-09-26",
+      "time": "18:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.cinemaakil.com/now-showing-booking/1589/I-Play-Rocky",
+      "lang": "en"
+    },
+    {
+      "cinema": "akil-25hours-hotel",
+      "film_title": "Spirited Away",
+      "film_lang": "Japanese",
+      "film_rating": "PG",
+      "runtime": 125,
+      "date": "2026-09-26",
+      "time": "19:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Chairs",
+          "aed": 110.0
+        }
+      ],
+      "book": "https://www.cinemaakil.com/now-showing-booking/1592/Spirited-Away-with-The-Reel-Deal-Film-Club",
+      "lang": "ja",
+      "subs": [
+        "en"
+      ]
+    },
+    {
+      "cinema": "akil-alserkal-avenue",
+      "film_title": "You Can See Everything",
+      "film_lang": "English",
+      "film_rating": "18+",
+      "runtime": 174,
+      "date": "2026-09-26",
+      "time": "20:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.cinemaakil.com/now-showing-booking/1594/You-Can-See-Everything",
+      "lang": "en"
+    },
+    {
+      "cinema": "akil-25hours-hotel",
+      "film_title": "Before Sunset",
+      "film_lang": "English",
+      "film_rating": "R",
+      "runtime": 80,
+      "date": "2026-09-26",
+      "time": "22:00",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Chairs",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.cinemaakil.com/now-showing-booking/1579/Before-Sunset",
+      "lang": "en"
+    },
+    {
+      "cinema": "akil-alserkal-avenue",
+      "film_title": "I Play Rocky",
+      "film_lang": "English",
+      "film_rating": "PG15",
+      "runtime": 127,
+      "date": "2026-09-27",
+      "time": "15:30",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.cinemaakil.com/now-showing-booking/1589/I-Play-Rocky",
+      "lang": "en"
+    },
+    {
+      "cinema": "akil-alserkal-avenue",
+      "film_title": "Rocky",
+      "film_lang": "English",
+      "film_rating": "PG13",
+      "runtime": 119,
+      "date": "2026-09-27",
+      "time": "18:15",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.cinemaakil.com/now-showing-booking/1588/Rocky",
+      "lang": "en"
+    },
+    {
+      "cinema": "akil-alserkal-avenue",
+      "film_title": "You Can See Everything",
+      "film_lang": "English",
+      "film_rating": "18+",
+      "runtime": 174,
+      "date": "2026-09-27",
+      "time": "20:45",
+      "hall": "Standard",
+      "hall_label": "Standard",
+      "prices": [
+        {
+          "seat": "Standard",
+          "aed": 52.5
+        }
+      ],
+      "book": "https://www.cinemaakil.com/now-showing-booking/1594/You-Can-See-Everything",
+      "lang": "en"
+    }
+  ],
+  "price_health": {
+    "attempted": 0,
+    "priced": 7,
+    "error": null
+  }
+}
