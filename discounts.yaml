@@ -315,10 +315,12 @@ rules:
       checked: "2026-11-19"
       confidence: official
     esaad:
+      # re-checked in the Esaad app itself 2026-11-19 (the owner's phone, at his request): its cinema partners are
+      # Star, Roxy, Novo and Reel only; «royal», «royal cinema» and «cineroyal» find no cinema
       status: none_found
       note_ar: "ما لقينا خصم"
       source: "https://cineroyal.ae/home/fazaa"
-      checked: "2026-09-25"
+      checked: "2026-11-19"
       confidence: official
     homat:
       # 2026-11-19: the Homat Al Watan app itself lists cinema partners VOX, Reel, Roxy and Al Shaab only.
@@ -607,11 +609,12 @@ rules:
       confidence: official
     esaad:
       # The cited page lists Fazaa (20%) and Ministry of Education (22%) — no Esaad offer at all; the
-      # old note was Fazaa's verification step.
+      # old note was Fazaa's verification step. Re-checked in the Esaad app itself 2026-11-19: its cinema
+      # partners are Star, Roxy, Novo and Reel only.
       status: none_found
       note_ar: "صفحة العروض الرسمية تذكر فزعة بس — ما لقينا خصم إسعاد"
       source: "https://www.cinemacity.ae/offers-and-promotions/"
-      checked: "2026-09-26"
+      checked: "2026-11-19"
       confidence: official
     homat:
       # 2026-11-19: the Homat Al Watan app itself lists cinema partners VOX, Reel, Roxy and Al Shaab only.
@@ -631,6 +634,19 @@ rules:
       confidence: official
 
   alshaab:
+    fazaa:
+      # 2026-11-19: read in the Fazaa app itself (the owner's phone, at his request): «Al Shaab Cinema — Up to 50%». Every
+      # Fazaa card takes 20% on the standard ticket; the VIP ticket is Platinum 50%, Gold 40%, Silver 30%, Hemam, Front
+      # Line and the Discount card 20%. Shown at the cinema with a valid card, «available until 01/07/2027». 20% holds
+      # on every seat for every card, so the rule carries it; the VIP tiers are in the note.
+      type: percent
+      value: 20
+      box_office_only: true
+      valid_until: "2027-07-01"
+      note_ar: "خصم 20% على التذكرة العادية لكل بطاقات فزعة، وVIP لين 50% (بلاتينية 50%، ذهبية 40%، فضية 30%)"
+      source: "https://fazaa.ae/"
+      checked: "2026-11-19"
+      confidence: official
     homat:
       # 2026-11-19: read in the Homat Al Watan app itself (the owner's phone, at his request). Store «سينما الشعب», up to
       # 50%: 50% on the VIP ticket, 25% on the regular ticket, a popcorn/nachos + soft drink combo for AED 30; a valid
@@ -644,6 +660,14 @@ rules:
       max_tickets: 8
       note_ar: "خصم 25% على التذكرة العادية و50% على تذكرة VIP، وكومبو فشار ومشروب بـ30 درهم، لين 8 تذاكر بالبطاقة"
       source: "https://play.google.com/store/apps/details?id=com.dhaen.homatalwatan"
+      checked: "2026-11-19"
+      confidence: official
+    esaad:
+      # 2026-11-19: searched in the Esaad app itself (the owner's phone, at his request): its cinema partners are Star,
+      # Roxy, Novo and Reel only; a search for this chain finds no cinema offer.
+      status: none_found
+      note_ar: "ما لقينا خصم إسعاد"
+      source: "https://esaad.dubaipolice.gov.ae/"
       checked: "2026-11-19"
       confidence: official
 
@@ -661,6 +685,14 @@ rules:
       source: "https://fazaa.ae/"
       checked: "2026-11-19"
       confidence: official
+    esaad:
+      # 2026-11-19: searched in the Esaad app itself (the owner's phone, at his request): its cinema partners are Star,
+      # Roxy, Novo and Reel only; a search for this chain finds no cinema offer.
+      status: none_found
+      note_ar: "ما لقينا خصم إسعاد"
+      source: "https://esaad.dubaipolice.gov.ae/"
+      checked: "2026-11-19"
+      confidence: official
 
   cinepolis:
     fazaa:
@@ -669,6 +701,14 @@ rules:
       status: none_found
       note_ar: "ما في خصم فزعة عند الشباك — في تطبيق فزعة حزمة بـ71 درهم"
       source: "https://fazaa.ae/"
+      checked: "2026-11-19"
+      confidence: official
+    esaad:
+      # 2026-11-19: searched in the Esaad app itself (the owner's phone, at his request): its cinema partners are Star,
+      # Roxy, Novo and Reel only; a search for this chain finds no cinema offer.
+      status: none_found
+      note_ar: "ما لقينا خصم إسعاد"
+      source: "https://esaad.dubaipolice.gov.ae/"
       checked: "2026-11-19"
       confidence: official
 
@@ -686,6 +726,14 @@ rules:
       source: "https://fazaa.ae/"
       checked: "2026-11-19"
       confidence: official
+    esaad:
+      # 2026-11-19: searched in the Esaad app itself (the owner's phone, at his request): its cinema partners are Star,
+      # Roxy, Novo and Reel only; a search for this chain finds no cinema offer.
+      status: none_found
+      note_ar: "ما لقينا خصم إسعاد"
+      source: "https://esaad.dubaipolice.gov.ae/"
+      checked: "2026-11-19"
+      confidence: official
 
   cinemas369:
     fazaa:
@@ -700,5 +748,47 @@ rules:
       valid_until: "2027-06-16"
       note_ar: "خصم 20% للبطاقات البلاتينية والذهبية والفضية ومديم، و15% لبطاقة فزعة للخصومات، 4 تذاكر باليوم، وترقية مجانية للفشار والمشروب"
       source: "https://fazaa.ae/"
+      checked: "2026-11-19"
+      confidence: official
+    esaad:
+      # 2026-11-19: searched in the Esaad app itself (the owner's phone, at his request): its cinema partners are Star,
+      # Roxy, Novo and Reel only; a search for this chain finds no cinema offer.
+      status: none_found
+      note_ar: "ما لقينا خصم إسعاد"
+      source: "https://esaad.dubaipolice.gov.ae/"
+      checked: "2026-11-19"
+      confidence: official
+
+  akil:
+    fazaa:
+      # 2026-11-19: searched in the Fazaa app itself (the owner's phone, at his request): no offer for this cinema.
+      status: none_found
+      note_ar: "ما لقينا خصم فزعة"
+      source: "https://fazaa.ae/"
+      checked: "2026-11-19"
+      confidence: official
+    esaad:
+      # 2026-11-19: searched in the Esaad app itself (the owner's phone, at his request): its cinema partners are Star,
+      # Roxy, Novo and Reel only; a search for this chain finds no cinema offer.
+      status: none_found
+      note_ar: "ما لقينا خصم إسعاد"
+      source: "https://esaad.dubaipolice.gov.ae/"
+      checked: "2026-11-19"
+      confidence: official
+
+  galaxy:
+    fazaa:
+      # 2026-11-19: searched in the Fazaa app itself (the owner's phone, at his request): no offer for this cinema.
+      status: none_found
+      note_ar: "ما لقينا خصم فزعة"
+      source: "https://fazaa.ae/"
+      checked: "2026-11-19"
+      confidence: official
+    esaad:
+      # 2026-11-19: searched in the Esaad app itself (the owner's phone, at his request): its cinema partners are Star,
+      # Roxy, Novo and Reel only; a search for this chain finds no cinema offer.
+      status: none_found
+      note_ar: "ما لقينا خصم إسعاد"
+      source: "https://esaad.dubaipolice.gov.ae/"
       checked: "2026-11-19"
       confidence: official
