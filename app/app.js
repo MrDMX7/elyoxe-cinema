@@ -10,6 +10,22 @@
   var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
   var store = { get: function (k) { try { return localStorage.getItem("cinema." + k); } catch (e) { return null; } },
                 set: function (k, v) { try { localStorage.setItem("cinema." + k, v); } catch (e) {} } };
+  /* disc:inline */
+  /* the visitor's card (owner 2026-11-19): the one the site's card sheet saved («cinema.card»), or one picked in a ticket.
+     Its rules are /data/discounts.json and its arithmetic discAfter(), above (build_app inlines src/js/disc.js's block):
+     the same file and code as the cards page, so a price after a card reads the same on every page */
+  var card = store.get("card") || "", DISC = null, discP = null;
+  var loadDisc = function () {
+    if (!discP) discP = fetch("/data/discounts.json").then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { DISC = j && j.rules ? j : null; return DISC; }, function () { return null; });
+    return discP;
+  };
+  /* «33.60» when there are fils, «42» when not: site_kit.money / src/js/pure.js fmt() */
+  var fmt = function (n) { var k = Math.round(n * 100); return k % 100 ? (k / 100).toFixed(2) : String(k / 100); };
+  var cardName = function (id) {
+    var c = DISC && (DISC.cards || []).filter(function (x) { return x.id === id; })[0];
+    return c ? (A.lang === "en" ? c.name_en : c.name_ar) || id : id;
+  };
   var CITY_AR = A.cities || { "dubai": "دبي", "abu-dhabi": "أبوظبي", "sharjah": "الشارقة", "al-ain": "العين", "ajman": "عجمان", "ras-al-khaimah": "رأس الخيمة", "fujairah": "الفجيرة", "umm-al-quwain": "أم القيوين" };
 
   /* UAE time (UTC+4): a show at 00:45 on a date is that night's, the next calendar day's small hours */
@@ -394,7 +410,19 @@
     }
     var T = null;
     try { T = JSON.parse((q("#shows") || {}).textContent || "null"); } catch (e) {}
-    var minOf = function (r) { var ss = T.s[r[6]] || []; return ss.length ? Math.min.apply(null, ss.map(function (p) { return p[1]; })) : 0; };
+    /* one seat of a show after card c: discAfter()'s {a: the price after it or null, st, r: the rule} */
+    var cut = function (r, aed, c) {
+      var cc = T.c[r[7]], hp = (T.h || [])[r[8]] || [];
+      return c && DISC && cc ? discAfter(DISC.rules, A.today, aed, cc[2], hp[0], hp[1], r[7], c, r[0]) : { a: null };
+    };
+    /* the least a visitor with card c pays for a show (its list price where the card does not apply); 0 = no price */
+    var payOf = function (r, c) {
+      var b = 0;
+      (T.s[r[6]] || []).forEach(function (p) { var x = cut(r, p[1], c), v = x.a != null ? x.a : p[1]; if (v > 0 && (!b || v < b)) b = v; });
+      return b;
+    };
+    var listOf = function (r) { var ss = T.s[r[6]] || []; return ss.length ? Math.min.apply(null, ss.map(function (p) { return p[1]; })) : 0; };
+    var minOf = function (r) { return payOf(r, card); };
     var day = A.today;
     var days = qa("[data-day]").filter(function (b) {
       if (b.dataset.day < A.today) { b.remove(); return false; }
@@ -447,16 +475,91 @@
       var eta = mins < 60 ? tx("بعد") + " " + mins + " " + tx("د") : (best.r[0] === A.today ? tx("اليوم") : tx("بكرة"));
       q("[data-nearest-row]", nearest).innerHTML = '<button type="button" class="sr" data-open="' + best.i + '"><span class="tcard"><b>' + tt[0] + "</b><small>" + tt[1] +
         '</small></span><span class="sr-b"><b>' + chm(best.c[2], best.c[3]) + " " + esc(best.c[0]) + "</b>" + (best.r[3] ? "<small>" + esc(best.r[3]) + "</small>" : "") +
-        '<span class="sr-m"><em class="eta' + (mins < 15 ? " hot" : "") + '">' + eta + "</em>" + (pr ? '<b class="pr">' + pr + AED + "</b>" : "") + "</span></span></button>";
+        '<span class="sr-m"><em class="eta' + (mins < 15 ? " hot" : "") + '">' + eta + "</em>" + (pr ? '<b class="pr">' + fmt(pr) + AED + "</b>" : "") + "</span></span></button>";
       nearest.hidden = false;
+    };
+    /* each time button's «from» price: the least after the visitor's card where the card lowers it (.cp), else the list
+       price the page wrote */
+    var paintPrices = function () {
+      if (!T) return;
+      qa(".tbtn[data-i]").forEach(function (b) {
+        var r = T.r[+b.dataset.i], i = q("i", b); if (!r || !i) return;
+        if (i._list == null) i._list = i.innerHTML;
+        var m = payOf(r, card), on = !!(card && m && m < listOf(r));
+        i.innerHTML = on ? fmt(m) + AED : i._list;
+        i.classList.toggle("cp", on);
+      });
     };
     days.forEach(function (b) { b.addEventListener("click", function () { day = b.dataset.day; vt(paint); }); });
     ctabs.forEach(function (b) { b.addEventListener("click", function () { city = b.dataset.ctab; store.set("city", city); vt(function () { paint(); paintNearest(); }); }); });
     paint(); paintNearest();
     setInterval(function () { paint(); paintNearest(); }, 60e3);
+    if (card && T) loadDisc().then(function () { paintPrices(); paintNearest(); });
 
     /* the ticket */
-    var sheet = q("[data-sheet]"), scrim = q("[data-scrim]"), openBtn = null;
+    var sheet = q("[data-sheet]"), scrim = q("[data-scrim]"), openBtn = null, tkRow = null;
+    /* what the ticket says about money, redrawn when the card changes or the rules arrive: each seat after the card (the
+       list price struck after it), a line on the card (its terms, or why it does not apply here) with the cards that lower
+       this show's price as chips, and «نفس الفيلم أرخص» measured after the card too */
+    var fillTicket = function () {
+      var r = tkRow; if (!r || !sheet) return;
+      var seats = T.s[r[6]] || [], c = T.c[r[7]] || [];
+      q("[data-tk-seats]", sheet).innerHTML = seats.length ? seats.map(function (p) {
+        var x = cut(r, p[1], card);
+        return "<tr><td>" + esc(p[0]) + (x.a != null && x.r.type === "bogo" ? "<small>" + tx("للشخص، مع تذكرتين") + "</small>" : "") + "</td><td>" +
+          (x.a != null ? "<b>" + fmt(x.a) + "</b>" + AED + " <s>" + fmt(p[1]) + "</s>" : esc(p[1]) + AED) + "</td></tr>";
+      }).join("") : '<tr><td colspan="2">' + tx("السعر في الشباك") + "</td></tr>";
+      var box = q("[data-tk-card]", sheet);
+      if (box) {
+        var list = listOf(r), mine = card && seats.length ? cut(r, seats[0][1], card) : null, html2 = "";
+        /* the government cards first (most of who asks), then the cheapest; six shown, «المزيد» opens the rest (VOX has 17) */
+        var opts = DISC && list ? (DISC.cards || []).map(function (k) { return { id: k.id, g: k.kind === "gov" ? 0 : 1, n: payOf(r, k.id), x: cut(r, list, k.id) }; })
+          .filter(function (o) { return o.n && o.n < list && o.id !== card; }).sort(function (a, b) { return a.g - b.g || a.n - b.n; }) : [];
+        if (mine && mine.a != null) {
+          var tm = [];
+          if (mine.r.box_office_only) tm.push(tx("من الشباك بس، مب في الحجز أونلاين"));
+          if (mine.r.max_tickets) tm.push(tx("لين") + " " + mine.r.max_tickets + " " + tx("تذاكر"));
+          html2 = '<p class="tkc-h"><span><b>' + tx("السعر بعد") + " " + esc(cardName(card)) + "</b>" + (tm.length ? "<small>" + esc(tm.join(" · ")) + "</small>" : "") +
+            '</span><button type="button" class="tkc-chg" data-tkc-chg>' + tx("غيّر") + "</button></p>";
+        } else if (mine && DISC) {
+          html2 = '<p class="tkc-h"><span>' + esc(cardName(card)) + " " + (mine.st === "excluded" ? tx("ما تشمل هالقاعة") : tx("ما لقينا لها خصم في") + " " + esc(c[3] || "")) + "</span></p>";
+        } else if (opts.length) {
+          html2 = '<p class="tkc-h"><span><b>' + tx("عندك بطاقة خصم؟") + "</b></span></p>";
+        }
+        if (html2 && (opts.length || card)) html2 += '<div class="tkc-opts">' + opts.map(function (o, i) {
+          return '<button type="button" class="tkc' + (i >= 6 ? " xtra" : "") + '" data-card="' + esc(o.id) + '">' + esc(cardName(o.id)) + " <b>" +
+            (o.x.r && o.x.r.type === "bogo" ? "1+1" : fmt(o.n) + AED) + "</b></button>";
+        }).join("") + (opts.length > 6 ? '<button type="button" class="tkc tkc-more" data-tkc-more>' + tx("المزيد") + " <b>" + (opts.length - 6) + "</b></button>" : "") +
+          (card ? '<button type="button" class="tkc" data-card="">' + tx("بدون بطاقة") + "</button>" : "") + "</div>";
+        box.innerHTML = html2; box.hidden = !html2; box.classList.remove("all");
+        box.classList.toggle("shut", !!(mine && mine.a != null));
+      }
+      var altEl = q("[data-tk-alt]", sheet), bk = q("[data-tk-book]", sheet); if (altEl) altEl.remove();
+      if (pg.classList.contains("film") && r[7]) {
+        var me = minOf(r), myCity = c[1], now2 = nowUAE(), cheap = null;
+        T.r.forEach(function (x, i) {
+          if (x[0] !== r[0] || (T.c[x[7]] || [])[1] !== myCity || startOf(x[0], x[1]) < now2 + 5 * 60e3) return;
+          var p = minOf(x); if (p && (!cheap || p < cheap.p)) cheap = { p: p, x: x, i: i };
+        });
+        if (me && cheap && me - cheap.p >= 5) {
+          var cc = T.c[cheap.x[7]], ttc = t12(cheap.x[1]);
+          var line = d.createElement("button"); line.type = "button"; line.className = "tk-alt"; line.setAttribute("data-tk-alt", ""); line.dataset.open = cheap.i;
+          line.innerHTML = tx("نفس الفيلم أرخص بـ") + "<b>" + fmt(me - cheap.p) + "</b>" + AED + ": " + ttc[0] + " " + ttc[1] + " " + tx("في") + " " + esc(cc[3]) + " — " + esc(cc[0]) + (cheap.x[3] ? "، " + esc(cheap.x[3]) : "");
+          bk.parentNode.insertBefore(line, bk);
+        }
+      }
+    };
+    /* a card chip: it becomes the visitor's card on every page (the site's card sheet reads the same «cinema.card»);
+       «غيّر» opens the chips under a card that applies */
+    if (sheet) sheet.addEventListener("click", function (e) {
+      var k = e.target.closest && e.target.closest("[data-card]"), chg = e.target.closest && e.target.closest("[data-tkc-chg]");
+      if (chg) { var bx = q("[data-tk-card]", sheet); if (bx) bx.classList.toggle("shut"); return; }
+      if (e.target.closest && e.target.closest("[data-tkc-more]")) { var bm = q("[data-tk-card]", sheet); if (bm) bm.classList.add("all"); return; }
+      if (!k) return;
+      buzz(); card = k.dataset.card; store.set("card", card);
+      fillTicket(); paintPrices(); paintNearest();
+      toast(card ? tx("الأسعار الحين بعد") + " " + cardName(card) : tx("بدون بطاقة"));
+    });
     var close = function (fromPop) {
       if (!sheet || sheet.hidden) return;
       sheet.classList.add("closing");
@@ -480,23 +583,9 @@
       var tt = t12(s.t);
       q("[data-tk-time]", sheet).textContent = tt[0];
       q("[data-tk-day]", sheet).textContent = (s.d === A.today ? tx("اليوم") : s.d === A.tomorrow ? tx("بكرة") : s.d) + " · " + tt[1];
-      q("[data-tk-seats]", sheet).innerHTML = seats.length ? seats.map(function (p) { return "<tr><td>" + esc(p[0]) + "</td><td>" + esc(p[1]) + AED + "</td></tr>"; }).join("")
-        : '<tr><td colspan="2">' + tx("السعر في الشباك") + '</td></tr>';
-      var bk = q("[data-tk-book]", sheet); bk.href = s.b || "#";
-      var altEl = q("[data-tk-alt]", sheet); if (altEl) altEl.remove();
-      if (pg.classList.contains("film") && T && r[7]) {
-        var mine = minOf(r), myCity = (T.c[r[7]] || [])[1], now2 = nowUAE(), cheap = null;
-        T.r.forEach(function (x, i) {
-          if (x[0] !== r[0] || (T.c[x[7]] || [])[1] !== myCity || startOf(x[0], x[1]) < now2 + 5 * 60e3) return;
-          var p = minOf(x); if (p && (!cheap || p < cheap.p)) cheap = { p: p, x: x, i: i };
-        });
-        if (mine && cheap && mine - cheap.p >= 5) {
-          var cc = T.c[cheap.x[7]], ttc = t12(cheap.x[1]);
-          var line = d.createElement("button"); line.type = "button"; line.className = "tk-alt"; line.setAttribute("data-tk-alt", ""); line.dataset.open = cheap.i;
-          line.innerHTML = tx("نفس الفيلم أرخص بـ") + "<b>" + (Math.round((mine - cheap.p) * 100) / 100) + "</b>" + AED + ": " + ttc[0] + " " + ttc[1] + " " + tx("في") + " " + esc(cc[3]) + " — " + esc(cc[0]) + (cheap.x[3] ? "، " + esc(cheap.x[3]) : "");
-          bk.parentNode.insertBefore(line, bk);
-        }
-      }
+      q("[data-tk-book]", sheet).href = s.b || "#";
+      tkRow = r; fillTicket();
+      if (!DISC) loadDisc().then(function () { if (tkRow === r) fillTicket(); paintPrices(); paintNearest(); });
       sheet.hidden = false; scrim.hidden = false;
       history.pushState({ sheet: 1 }, "");
       var sh = q("[data-tk-share]", sheet);

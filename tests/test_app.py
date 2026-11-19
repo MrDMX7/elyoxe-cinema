@@ -287,3 +287,25 @@ def test_remind_me_writes_an_ics_and_a_google_calendar_link(extras):
     assert "DTSTAMP:20260925T140000Z" in ics                     # the data's own time, in UTC: the same build twice is identical
     js = read(ROOT, "app", "app.js")
     assert "a.href = a.dataset.gcal" in js
+
+
+def test_the_ticket_prices_after_the_visitors_card(live):
+    """Owner 2026-11-19: a card picked on the site changed no price on the film pages or in the ticket. Each show row now
+    carries its [hall code, halls.yaml key] pair (what a card's rule matches halls on, as site_kit.pcell's data-hall and
+    data-hk), and the app's script carries src/js/disc.js's own discAfter() block, inlined at build: no second copy of the
+    arithmetic to drift from discounts.py (tests/test_parity.py holds that block)."""
+    out, app = live
+    h = read(out, "film", app.films[0], "index.html")
+    t = json.loads(re.search(r'<script type="application/json" id="shows">(.*?)</script>', h, re.S).group(1))
+    assert t["h"] and all(len(p) == 2 and p[0] and p[1] for p in t["h"])
+    assert all(len(r) == 9 and 0 <= r[8] < len(t["h"]) for r in t["r"])
+    assert "data-tk-card" in h
+    js_path = os.path.join(out, "assets", app.js_name)
+    js = open(js_path, encoding="utf-8").read()
+    assert "function discAfter(" in js and "/* disc:inline */" not in js
+    assert "/* disc:inline */" in read(ROOT, "app", "app.js")
+    r = subprocess.run(["node", "--check", js_path], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    # every phrase the card line says has its English
+    for k in ("عندك بطاقة خصم؟", "السعر بعد", "بدون بطاقة", "غيّر", "من الشباك بس، مب في الحجز أونلاين", "ما تشمل هالقاعة"):
+        assert k in build_app.JS_KEYS and k in build_app.EN

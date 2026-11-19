@@ -223,6 +223,25 @@ html[data-nav=pop]::view-transition-old(root){animation:var(--m-page) ease-in-ou
 /* the ticket's «نفس الفيلم أرخص» line */
 .tk-alt{display:block;padding:10px 12px;border-radius:12px;background:rgba(31,111,120,.08);color:var(--door);font-size:14px;line-height:1.6;border:0;text-align:start;cursor:pointer;font-family:inherit;inline-size:100%}
 .tk-alt b{color:var(--wood)}
+/* the ticket after the visitor's card (owner 2026-11-19): what you pay first, the list price struck after it; one line on
+   the card (its terms, or why it does not apply here), and the cards that lower this show's price as chips */
+.tk-seats td:last-child b{font-weight:700}
+.tk-seats s{font:400 13px var(--mono);color:var(--stone);margin-inline-start:4px}
+.tk-seats td:first-child small{display:block}
+.tk-card{display:grid;gap:10px;padding:10px 12px;border-radius:12px;background:var(--night)}
+.tkc-h{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;line-height:1.5}
+.tkc-h span{display:grid;gap:2px}
+.tkc-h small{font-size:12px;color:var(--stone)}
+.tkc-chg{flex:none;min-block-size:44px;padding-inline:8px;margin-inline-end:-8px;border:0;background:none;color:var(--door);font:500 14px var(--font);cursor:pointer}
+.tkc-opts{display:flex;flex-wrap:wrap;gap:8px}
+.tk-card.shut .tkc-opts{display:none}
+.tkc.xtra,.tk-card.all .tkc-more{display:none}
+.tk-card.all .tkc.xtra{display:inline-flex}
+.tkc-more{color:var(--door)}
+.tkc{display:inline-flex;align-items:center;gap:6px;min-block-size:40px;padding-inline:12px;border:1px solid var(--line);border-radius:20px;
+  background:var(--paper);color:var(--wood);font:inherit;font-size:13px;cursor:pointer}
+.tkc b{display:inline-flex;align-items:center;gap:1px;font:500 13px var(--mono);color:var(--saff)}
+.tbtn i.cp{font-weight:700}
 /* the footer: the rest of the site in one quiet line */
 .foot{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding:28px var(--gut) calc(28px + env(safe-area-inset-bottom));margin-block-start:24px;border-block-start:1px solid var(--line);font-size:14px}
 .foot a{color:var(--sand);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:4px;padding-block:8px}

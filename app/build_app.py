@@ -150,13 +150,19 @@ EN = {
     "المصدر": "Source", "ذكّرني يوم ينزل": "Remind me on the day", "ينزل في السينما": "opens in cinemas",
     "مواعيده وأسعاره في كل سينمات الإمارات": "Showtimes and prices in every UAE cinema",
     "ما في أفلام بهالقاعة اليوم في": "No film in this hall today in",
+    # the ticket after the visitor's card (owner 2026-11-19)
+    "عندك بطاقة خصم؟": "Have a discount card?", "السعر بعد": "Price after", "بدون بطاقة": "No card", "غيّر": "Change",
+    "من الشباك بس، مب في الحجز أونلاين": "box office only, not with online booking", "لين": "up to", "تذاكر": "tickets",
+    "للشخص، مع تذكرتين": "per person, with two tickets", "ما تشمل هالقاعة": "doesn't cover this hall",
+    "ما لقينا لها خصم في": "has no discount we know of at", "الأسعار الحين بعد": "Prices now after",
 }
 JS_KEYS = ["بالليل", "الصبح", "الظهر", "مساء", "درهم", "انحفظ الرابط", "انشالت من سينماتي", "انضافت لسينماتي", "أقل من كيلو", "كم", "الأفلام",
            "السينمات", "ما لقينا شي بهالاسم", "يبدأ الحين", "بعد", "د", "ما في فيلم يبدأ خلال ساعتين في", "ما في أفلام بهالتصنيف اليوم",
            "أقرب سينما لك", "لحظة، نحدد مكانك…", "ما قدرنا نعرف مكانك — اختار مدينتك", "الإعلان", "سكّر", "في", "أقل", "المزيد", "اليوم", "بكرة",
            "يخلص تقريباً", "إنجليزي", "عربي", "هندي", "تاميل", "مالايالام", "تيلوغو", "السعر في الشباك", "نفس الفيلم أرخص بـ", "لحظة…",
            "وصلنا حد الأسئلة لليوم، جرّب بكرة", "ما قدرنا نجاوب الحين، جرّب مرة ثانية", "من قصة الفيلم", "من معلومات الفيلم", "يحرق — اضغط إذا تبا تعرف",
-           "ما في أفلام بهالقاعة اليوم في"]
+           "ما في أفلام بهالقاعة اليوم في", "عندك بطاقة خصم؟", "السعر بعد", "بدون بطاقة", "غيّر", "من الشباك بس، مب في الحجز أونلاين",
+           "لين", "تذاكر", "للشخص، مع تذكرتين", "ما تشمل هالقاعة", "ما لقينا لها خصم في", "الأسعار الحين بعد"]
 
 
 def tr(ar):
@@ -364,12 +370,14 @@ class App:
 
     def fresh(self):
         self._rows, self._seats, self._seat_i, self._cins = [], [], {}, set()
+        self._halls, self._hall_i = [], {}
 
     def table(self):
         if not self._rows:
             return ""
         cins = {c: [self.cname(c), self.k.cinemas[c].get("city") or "", self.k.cinemas[c]["chain"], self.chain(c)] for c in sorted(self._cins)}
-        j = json.dumps({"r": self._rows, "s": self._seats, "c": cins}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+        # h: the [hall code, halls.yaml key] pairs a card's rule reads (included/excluded halls), shared like the seat lists
+        j = json.dumps({"r": self._rows, "s": self._seats, "c": cins, "h": self._halls}, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
         return f'<script type="application/json" id="shows">{j}</script>'
 
     # -------- what search engines and shares read (live)
@@ -689,12 +697,17 @@ class App:
             hk = self.k.hkey(s)
             hall = self.k.hname(s, LANG) if hk != "Standard" else ""
             # the ticket's details live once per page in #shows (a table, not 600 bytes of attributes per button):
-            # [day, time, ends, hall, booking url, language, seat-list index]; seat lists are shared in #seats
+            # [day, time, ends, hall, booking url, language, seat-list index, cinema, hall-pair index]; seat lists and
+            # hall pairs are shared in #shows's s and h
             seats = [[p["seat"], p["aed"]] for p in sorted(s.get("prices") or [], key=lambda p: p.get("aed") or 0) if (p.get("aed") or 0) > 0]
             sk = json.dumps(seats, ensure_ascii=False)
             if sk not in self._seat_i:
                 self._seat_i[sk] = len(self._seats); self._seats.append(seats)
-            self._rows.append([s["date"], hm(s["time"]), s.get("ends") or "", hall, self.k.book_url(s), s.get("lang") or "", self._seat_i[sk], s["cinema"]])
+            hp = (s.get("hall") or "OTHER", hk)   # as site_kit.pcell's data-hall/data-hk: what discAfter() matches a rule's halls on
+            if hp not in self._hall_i:
+                self._hall_i[hp] = len(self._halls); self._halls.append(list(hp))
+            self._rows.append([s["date"], hm(s["time"]), s.get("ends") or "", hall, self.k.book_url(s), s.get("lang") or "", self._seat_i[sk], s["cinema"],
+                               self._hall_i[hp]])
             self._cins.add(s["cinema"])
             out.append(f'<button type="button" class="tbtn" data-d="{s["date"]}" data-t="{hm(s["time"])}" data-i="{len(self._rows) - 1}">'
                        f'<b>{t12(hm(s["time"]))[0]}<sup>{ap(s["time"])}</sup></b>{f"<small>{E(hall)}</small>" if hall else ""}{f"<i>{num(min(pr))}{dirham()}</i>" if pr else ""}</button>')
@@ -868,7 +881,7 @@ class App:
         return f"""<template id="aed">{dirham()}</template><section class="sheet" data-sheet role="dialog" aria-modal="true" aria-labelledby="tk-film" hidden>
 <div class="grab" data-grab></div><div class="tk"><div class="tk-top"><div><p class="tk-cin" data-tk-cin></p><h3 id="tk-film" data-tk-film></h3><p class="tk-when" data-tk-when></p></div>
 <div class="tk-time"><small data-tk-day></small><b data-tk-time></b></div></div>
-<table class="tk-seats"><tbody data-tk-seats></tbody></table>
+<table class="tk-seats"><tbody data-tk-seats></tbody></table><div class="tk-card" data-tk-card hidden></div>
 <a class="btn velvet wide" data-tk-book target="_blank" rel="noopener nofollow">{tr('احجز')}</a>
 <div class="tk-row"><button type="button" class="btn ghost" data-tk-share>{svg("share")}{tr('شارك')}</button><button type="button" class="btn ghost" data-tk-close>{tr('سكّر')}</button></div></div></section>"""
 
@@ -881,6 +894,11 @@ class App:
                 shutil.copy(os.path.join(HERE, "fonts", fn), os.path.join(a, "fonts", fn))
         css = open(os.path.join(HERE, "app.css"), encoding="utf-8").read().replace("__BASE__", self.base)
         js = open(os.path.join(HERE, "app.js"), encoding="utf-8").read()
+        # the card's arithmetic is src/js/disc.js's own block (tests/test_parity.py holds it to discounts.py), not a twin
+        disc = re.search(r"/\* disc:begin.*?\*/(.*?)/\* disc:end \*/",
+                         open(os.path.join(os.path.dirname(HERE), "src", "js", "disc.js"), encoding="utf-8").read(), re.S)
+        assert disc and "/* disc:inline */" in js, "app.js lost its /* disc:inline */ slot or src/js/disc.js its disc block"
+        js = js.replace("/* disc:inline */", disc.group(1).strip(), 1)
         self.css_name = f"app.{hashlib.sha1(css.encode()).hexdigest()[:10]}.css"
         self.js_name = f"app.{hashlib.sha1(js.encode()).hexdigest()[:10]}.js"
         open(os.path.join(a, self.css_name), "w", encoding="utf-8").write(css)
