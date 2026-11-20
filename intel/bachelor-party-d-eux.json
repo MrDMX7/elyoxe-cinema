@@ -1,7 +1,23 @@
 {
-  "by": "failed",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "bachelor-party-d-eux",
-  "next_check": "2026-11-21",
-  "reason": "could not produce compliant output after 4 attempts (last: banned phrase \"ما نقدر نحكم\" used — say \"لا تعتذر — إن ما في أساس فالسطر يكون القالب الثابت\" instead)",
-  "written": "2026-11-18"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-24",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "ملايالامي من إخراج أمل نيراد، ويُقدَّم كخَلَف روحي لفيلم Bachelor Party الشهير عام 2012."
+    },
+    {
+      "pos": false,
+      "text": "ما لقينا أرقام تقييم نقدي رسمية لهالفيلم للحين، فالحكم على جودته ما هو واضح بعد."
+    }
+  ],
+  "synopsis_ar": "ملايالامي من بطولة ناسلن وكونتشاكو بوبن وتوفينو توماس وسوبين شاهير، يحمل نفس الطاقة الخام والكوميديا الجريئة اللي ميزت سلفه، وياخذ المشاهد في فصل يديد من الصداقة والفوضى واللحظات اللي ما تنسى.",
+  "written": "2026-11-21"
 }

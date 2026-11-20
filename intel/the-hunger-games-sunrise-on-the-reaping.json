@@ -1,7 +1,47 @@
 {
-  "by": "failed",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": "في النهاية يفوز هيمتش بالمسابقة بعد أن قتل سيلكا، لكن أصيب بجروح بليغة. فجّر ما تبقى من متفجراته على حقل القوة لتدمير الساحة، ثم فقد وعيه. بعد أن تعافى في العاصمة، اكتشف أن المسابقة عُدّلت لتخفي أفعاله التمردية وتصوّره أنانيا وماكرا، وكأنه فاز بالحظ. عاد إلى المنطقة 12 ليجد بيته محترقا وأمه وأخاه مقتولين.",
   "fid": "the-hunger-games-sunrise-on-the-reaping",
-  "next_check": "2026-11-21",
-  "reason": "could not produce compliant output after 4 attempts (last: tanwin (ً/ٌ/ٍ) in spoken text — never tanwin in the spoken register)",
-  "written": "2026-11-18"
+  "fun_fact": null,
+  "has_plot": true,
+  "qa": [
+    {
+      "a": "فاز بها بعد أن قتل سيلكا، لكنه كان مصابا بجروح بليغة.",
+      "q": "كيف انتهت المسابقة بالنسبة لهيمتش؟"
+    },
+    {
+      "a": "فجّرها ضد حقل القوة في محاولة أخيرة لتدمير الساحة.",
+      "q": "ماذا فعل هيمتش بالمتفجرات الأخيرة؟"
+    },
+    {
+      "a": "عُدّلت المسابقة لتخفي تمرده وتصوّره أنانيا وماكرا، كأنه فاز بالحظ.",
+      "q": "كيف قُدّم فوز هيمتش للجمهور؟"
+    },
+    {
+      "a": "وجد بيته في النيران، وأمه وأخاه مقتولين.",
+      "q": "ماذا وجد هيمتش عند عودته إلى المنطقة 12؟"
+    },
+    {
+      "a": "ارتدت عليها فأس كانت قد رمتها على هيمتش فقتلتها.",
+      "q": "كيف ماتت سيلكا؟"
+    }
+  ],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "حصل الفيلم على 70% من 115 نقدا على Rotten Tomatoes، وهي نسبة تقيّم جودته عند النقاد بشكل إيجابي عام."
+    },
+    {
+      "pos": true,
+      "text": "الفيلم من بطولة مجموعة ممثلين كبيرة تضم Ralph Fiennes وGlenn Close وElle Fanning وKieran Culkin وJesse Plemons، وهو ما يعطي الفيلم وزنا تمثيليا واضحا."
+    },
+    {
+      "pos": false,
+      "text": "الفيلم يعتمد على رواية Suzanne Collins الصادرة عام 2025 بعنوان Sunrise on the Reaping، وهو حلقة تربط بين أحداث The Hunger Games (2012) وفيلم The Ballad of Songbirds & Snakes (2023)."
+    }
+  ],
+  "synopsis_ar": "أمريكي من نوع الديستوبيا من إخراج Francis Lawrence وسيناريو Billy Ray وMichael Lesslie، ويُعد الجزء السادس في سلسلة مباريات الجوع. يجمع الفيلم بين كونه تكملة لفيلم The Ballad of Songbirds & Snakes وحلقة سابقة لفيلم The Hunger Games الأول، ومن بطولته Joseph Zada وJesse Plemons وRalph Fiennes وGlenn Close.",
+  "written": "2026-11-21"
 }

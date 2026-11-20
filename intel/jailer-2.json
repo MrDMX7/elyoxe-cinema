@@ -2,14 +2,29 @@
   "audience": [],
   "by": "claude",
   "consensus_ar": null,
-  "ending": null,
+  "ending": "بعد ما انقتلت العصابة كلها، Muthuvel ينتقل لأهل بيته، ويختار يسلّم نفسه للشرطة على قتل Arjun رغم إن Viji سامحته. وقبل ما يركب السيارة يوصله تلفون فيه رسالة يديدة من Kantha، والنص يقف هنا بدون ما يكشف محتواها.",
   "fid": "jailer-2",
   "fun_fact": null,
-  "has_plot": false,
-  "next_check": "2026-11-21",
-  "qa": [],
+  "has_plot": true,
+  "qa": [
+    {
+      "a": "لأنه قتل Arjun، وحتى بعد ما سامحته زوجته Viji قرر يتحمّل المسؤولية ويسلّم نفسه.",
+      "q": "ليش Muthuvel يسلّم نفسه للشرطة؟"
+    },
+    {
+      "a": "Dokinath انكشف عليه ومحقون بمصل الحقيقة، وكشف إن Muthuvel هو اللي قتل Arjun، وبعدها Bodhi أخبر أهل البيت بهالشي.",
+      "q": "شو اللي خلّى Viji تعرف بقتل Arjun؟"
+    },
+    {
+      "a": "Muthuvel وبمساعدة Mathew وNarasimha وKamdev أسقطوا الطيارة اللي كان يحاول يهرب فيها Bodhi، فمات فيها وانتهت المنظمة.",
+      "q": "كيف انتهت عصابة Kalpak؟"
+    },
+    {
+      "a": "Chakri حاول يقتل Muthuvel بتفجير انتحاري، لكنه مات بالتفجير، وKantha انصاب إصابة بليغة.",
+      "q": "شو صار لـChakri؟"
+    }
+  ],
   "reasons": [],
-  "retry_reason": "could not produce compliant output after 4 attempts (last: inflected form of banned root \"يجي\" used — say \"إيي (أو تصريفها: تييك، إيينا... حسب المخاطَب)\" instead)",
   "synopsis_ar": "Jailer 2 يتابع السجّان المتقاعد Tiger Muthuvel Pandian لما تهدد حياته الهادية خطر من عالم الجريمة السفلي، فيضطر يرجع لأسلوبه القاسي عشان يحمي عائلته وإرثه. من إخراج Nelson Dilipkumar، ومن تمثيل Rajinikanth وMohanlal وShivarajkumar وVijay Sethupathi وYogi Babu وMithun Chakraborty.",
-  "written": "2026-10-19"
+  "written": "2026-11-21"
 }

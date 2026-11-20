@@ -1,7 +1,23 @@
 {
-  "by": "failed",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "best-pancakes-in-the-county",
-  "next_check": "2026-11-21",
-  "reason": "could not produce compliant output after 4 attempts (last: opens with \"فيلم <title>\" — a repeated, dull template; vary the opening)",
-  "written": "2026-11-18"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-24",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": false,
+      "text": "نسبة Rotten Tomatoes من النقاد 33% من 9 نقد، وهذا رقم ضعيف."
+    },
+    {
+      "pos": true,
+      "text": "الفيلم من أنواع إثارة وأكشن وجريمة، وفيه طاقم يضم نيكولاس كيج وجاستن لونغ."
+    }
+  ],
+  "synopsis_ar": "إثارة أكشن أمريكي من تأليف وإخراج Ken Sanzel، وبطولة Nicolas Cage وJustin Long وShelley Hennig وRavi Patel.",
+  "written": "2026-11-21"
 }

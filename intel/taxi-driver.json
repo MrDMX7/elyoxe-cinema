@@ -1,0 +1,23 @@
+{
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "taxi-driver",
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-24",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "الفيلم من أنواع الدراما والكوميدي، وسنته 2026، ومدته 114 دقيقة."
+    },
+    {
+      "pos": false,
+      "text": "ما عندنا تقييمات نقدية كافية لهالفيلم للحين، فما نقدر نعطي حكم واضح عن جودته."
+    }
+  ],
+  "synopsis_ar": null,
+  "written": "2026-11-21"
+}

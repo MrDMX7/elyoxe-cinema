@@ -1,7 +1,23 @@
 {
-  "by": "failed",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "i-object",
-  "next_check": "2026-11-21",
-  "reason": "could not produce compliant output after 4 attempts (last: reasons must be a list of 2 to 4 items)",
-  "written": "2026-11-18"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-24",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "من إخراج وكتابة وإنتاج Andrew Niccol، ومدته 95 دقيقة."
+    },
+    {
+      "pos": false,
+      "text": "ما لقينا تقييمات نقدية كافية لهالفيلم للحين، فالحكم عليه يبقى محدود."
+    }
+  ],
+  "synopsis_ar": "I, Object من كتابة وإنتاج وإخراج Andrew Niccol، صُوّر سنة 2024 وانعرض في نيوزيلندا بتاريخ 23 يوليو 2026، وهو من نوع الحية المتحركة.",
+  "written": "2026-11-21"
 }
