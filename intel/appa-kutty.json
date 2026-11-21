@@ -1,6 +1,23 @@
 {
-  "by": "skip",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "appa-kutty",
-  "next_check": "2026-11-22",
-  "written": "2026-11-19"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-25",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "درامي تشويقي من إخراج Mu. Maran، من بطولة Vijay Antony وPreethi Asrani."
+    },
+    {
+      "pos": false,
+      "text": "ما توفّرت تقييمات نقدية كافية لهالفيلم للحين، فما نقدر نحدد مستواه بثقة."
+    }
+  ],
+  "synopsis_ar": "تشويقي درامي باللغة التاميلية من تأليف وإخراج Mu. Maran، ويشارك في البطولة Vijay Antony وPreethi Asrani مع Lithanya بدور رئيسي.",
+  "written": "2026-11-22"
 }
