@@ -1,6 +1,27 @@
 {
-  "by": "skip",
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
   "fid": "ene-repeat",
-  "next_check": "2026-11-21",
-  "written": "2026-11-18"
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-24",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "كوميدي بنكهة الأصدقاء، وهو تكملة لفيلم Ee Nagaraniki Emaindhi اللي صدر سنة 2018."
+    },
+    {
+      "pos": true,
+      "text": "الفيلم من إخراج Tharun Bhascker وبطولة Vishwak Sen وAbhinav Gomatam، ويجمع أسماء معروفة من السينما التيلوغوية."
+    },
+    {
+      "pos": false,
+      "text": "ما لقينا تقييمات نقدية كافية لهالفيلم للحين، فالحكم على جودته ما يزال غير واضح."
+    }
+  ],
+  "synopsis_ar": "كوميدي تيلوغوي من إخراج تاروان باسكر وكتابته، ومن إنتاج سروجان ياراغولو وساندييب ناغيريدي. يُعدّ تكملة لفيلم عام 2018 «Ee Nagaraniki Emaindhi»، ويشارك في البطولة فيشواك سين وأبهيناف غوماتام وفينكاتيش كاكومانو وسرينات ماغانتي.",
+  "written": "2026-11-21"
 }
