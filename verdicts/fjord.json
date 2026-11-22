@@ -1,0 +1,14 @@
+{
+  "ar": "فيورد يفرض معضلة أخلاقية صعبة ولا يعطيك إجابات سهلة، والنقاد حبّوه بقوة: 91% على Rotten Tomatoes من 165 نقد. الجمهور بعده مرتاح بنسبة 88%.",
+  "basis": "RT 91% (165 نقد) · الجمهور 88%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 91,
+    "rt_count": 165
+  },
+  "by": "claude",
+  "en": "Fjord poses a tough moral dilemma and refuses easy answers; critics love it with 91% on Rotten Tomatoes from 165 reviews, and audiences score it 88%.",
+  "fid": "fjord",
+  "verdict": "yes",
+  "written": "2026-11-23"
+}
