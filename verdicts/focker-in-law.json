@@ -1,0 +1,14 @@
+{
+  "ar": "فوكر إن لو، الجزء الرابع من سلسلة فوكرز، كوميدي إنجليزي بـ105 دقيقة. ردود النقاد عليه ضعيفة، مب مشكلة إذا تبغي تضحك مع ستيلر وويلسون بس الحكم العام ما يبشّر بشي.",
+  "basis": "RT 26% (31 نقد)",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 26,
+    "rt_count": 31
+  },
+  "by": "claude",
+  "en": "Focker In-Law, the fourth Fockers film, is a 105-minute English comedy that critics have received poorly, so skip it unless you're a series fan.",
+  "fid": "focker-in-law",
+  "verdict": "skip",
+  "written": "2026-11-24"
+}
