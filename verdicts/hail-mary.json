@@ -1,0 +1,14 @@
+{
+  "ar": "حبّه النقاد وايد، 95% على Rotten Tomatoes من 430 نقد، ورايان غوزلينغ فيه بأحسن حالاته. والجمهور مرتاح له بعد، 95% كمان.",
+  "basis": "RT 95% (430 نقد) · الجمهور 95%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 95,
+    "rt_count": 430
+  },
+  "by": "claude",
+  "en": "Critics loved it: 95% on Rotten Tomatoes from 430 reviews, with Ryan Gosling at his best. Audiences agree, also at 95%.",
+  "fid": "hail-mary",
+  "verdict": "yes",
+  "written": "2026-11-25"
+}

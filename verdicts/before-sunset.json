@@ -1,14 +1,14 @@
 {
-  "ar": "ما لقينا تقييمات كافية لهالفيلم للحين.",
-  "basis": "",
+  "ar": "قبل الغروب فيلم رومانسي ذكي وعميق، حوارات ممتعة وكيمياء طبيعية بين هوك ودلبي. نقاد RT يعطونه 95% من 180 نقد، والجمهور 91%.",
+  "basis": "RT 95% (180 نقد) · الجمهور 91%",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": null,
-    "rt_count": null
+    "rt": 95,
+    "rt_count": 180
   },
-  "by": "template",
-  "en": "Not enough ratings yet.",
+  "by": "claude",
+  "en": "Before Sunset is a witty, poignant romance with natural chemistry between Hawke and Delpy. Critics give it 95% from 180 reviews on Rotten Tomatoes, and audiences 91%.",
   "fid": "before-sunset",
-  "verdict": "unknown",
-  "written": "2026-11-19"
+  "verdict": "yes",
+  "written": "2026-11-25"
 }

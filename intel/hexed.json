@@ -1,0 +1,27 @@
+{
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "hexed",
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-28",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "الفيلم حصل على 69% من 45 نقد على Rotten Tomatoes، وهو تقييم جيد من النقاد."
+    },
+    {
+      "pos": true,
+      "text": "الفيلم من إنتاج Walt Disney Animation Studios، وفيه مزيج من المغامرة والكوميديا والفانتازيا."
+    },
+    {
+      "pos": false,
+      "text": "ما لقينا تقييمات كافية من الجمهور لهالفيلم للحين."
+    }
+  ],
+  "synopsis_ar": "أنيميشن فانتازي من إنتاج Walt Disney Animation Studios، يتبع بطلته Billie Doe، وهي مراهقة تكتشف قوى سحرية تنقلها من حياة الضواحي إلى Hexe، عالم الساحرات.",
+  "written": "2026-11-25"
+}

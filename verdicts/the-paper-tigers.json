@@ -1,0 +1,14 @@
+{
+  "ar": "نمر من ورق فيلم جريمة من إخراج James Gray، ونقاده حامسين له بنسبة 87% من 146 نقد على Rotten Tomatoes، والجمهور بعد حبّه بنسبة 72%.",
+  "basis": "RT 87% (146 نقد) · الجمهور 72%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 87,
+    "rt_count": 146
+  },
+  "by": "claude",
+  "en": "Paper Tigers is a crime drama from James Gray, rated 87% by 146 critics on Rotten Tomatoes and 72% by audiences.",
+  "fid": "the-paper-tigers",
+  "verdict": "yes",
+  "written": "2026-11-25"
+}

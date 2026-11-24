@@ -1,0 +1,23 @@
+{
+  "audience": [],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "yeh-prem-mol-liya",
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-28",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "الفيلم مصنّف ضمن رومانسي وكوميدي ودراما وعائلي، وهو من إخراج Sooraj Barjatya."
+    },
+    {
+      "pos": false,
+      "text": "ما توفرت للحين تقييمات نقدية كافية لهالفيلم للحكم عليه بثقة."
+    }
+  ],
+  "synopsis_ar": "هندي رومانسي عائلي بالهندية من إخراج Sooraj Barjatya وإنتاج Rajshri Productions، ويشارك في بطولته Ayushmann Khurrana وSharvari، مع أنوبام خير وسوبريا باثاك ضمن الممثلين الداعمين.",
+  "written": "2026-11-25"
+}

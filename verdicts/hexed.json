@@ -1,0 +1,14 @@
+{
+  "ar": "«حكاية سحر» حصل 69% على Rotten Tomatoes من 45 نقد، يعني تقييم نقدي متوسط. الفيلم أنيميشن عائلي من إخراج Fawn Veerasunthorn وJason Hand، ومدته 109 دقيقة.",
+  "basis": "RT 69% (45 نقد)",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 69,
+    "rt_count": 45
+  },
+  "by": "claude",
+  "en": "\"Hexed\" (حكاية سحر) holds a 69% on Rotten Tomatoes from 45 reviews, a mixed critical reception. It's a family animated fantasy directed by Fawn Veerasunthorn and Jason Hand, running 109 minutes.",
+  "fid": "hexed",
+  "verdict": "mixed",
+  "written": "2026-11-25"
+}
