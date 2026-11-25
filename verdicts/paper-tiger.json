@@ -1,0 +1,14 @@
+{
+  "ar": "نمر من ورق فيلم جريمة وإثارة من إخراج James Gray، ومعدّل النقاد عليه 87% من 147 نقد، والجمهور حاط عليه 66%. هذا يعني إنه مدحه النقاد وايد، بس الجمهور أقل حماس شوي.",
+  "basis": "RT 87% (147 نقد) · الجمهور 66%",
+  "basis_numbers": {
+    "cinemascore": null,
+    "rt": 87,
+    "rt_count": 147
+  },
+  "by": "claude",
+  "en": "Paper Tiger is a crime thriller directed by James Gray, with critics giving it 87% from 147 reviews and audiences 66% on Rotten Tomatoes.",
+  "fid": "paper-tiger",
+  "verdict": "yes",
+  "written": "2026-11-25"
+}

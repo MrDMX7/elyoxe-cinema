@@ -1,0 +1,32 @@
+{
+  "audience": [
+    {
+      "source": "Rotten Tomatoes",
+      "text": "الجمهور أعطى الفيلم تقييما أقل من النقاد، ما يعني أن تجربة المشاهدة قد لا تعجب الجميع."
+    }
+  ],
+  "by": "claude",
+  "consensus_ar": null,
+  "ending": null,
+  "fid": "paper-tiger",
+  "fun_fact": null,
+  "has_plot": false,
+  "next_check": "2026-11-28",
+  "qa": [],
+  "reasons": [
+    {
+      "pos": true,
+      "text": "حصل الفيلم على 87% من 147 نقدا على Rotten Tomatoes، وهذا رقم قوي لنقاد يقيّمون الأفلام المعروضة."
+    },
+    {
+      "pos": false,
+      "text": "تقييم الجمهور على Rotten Tomatoes 66%، أقل بكثير من تقييم النقاد."
+    },
+    {
+      "pos": true,
+      "text": "الفيلم من تأليف وإخراج James Gray ويجمع بين الجريمة والإثارة والدراما."
+    }
+  ],
+  "synopsis_ar": "جريمة درامي من تأليف وإخراج James Gray، وهو إنتاج مشترك بين الولايات المتحدة والبرازيل وإيطاليا. يتابع الفيلم عائلة من نيويورك تتورط مع المافيا الروسية، ويشارك في البطولة Adam Driver وScarlett Johansson وMiles Teller.",
+  "written": "2026-11-25"
+}
