@@ -1,14 +1,14 @@
 {
-  "ar": "فوكر إن لو، الجزء الرابع من سلسلة فوكرز، كوميدي إنجليزي بـ105 دقيقة. ردود النقاد عليه ضعيفة، مب مشكلة إذا تبغي تضحك مع ستيلر وويلسون بس الحكم العام ما يبشّر بشي.",
-  "basis": "RT 26% (31 نقد)",
+  "ar": "الفيلم بالإنجليزي وحكم النقاد عليه ضعيف، 30% من 87 نقد على Rotten Tomatoes. أريانا غراندي تضيف لمسة خفيفة ومضحكة، بس الفكرة كلها مستهلكة ومب متجدّدة.",
+  "basis": "RT 30% (87 نقد)",
   "basis_numbers": {
     "cinemascore": null,
-    "rt": 26,
-    "rt_count": 31
+    "rt": 30,
+    "rt_count": 87
   },
   "by": "claude",
-  "en": "Focker In-Law, the fourth Fockers film, is a 105-minute English comedy that critics have received poorly, so skip it unless you're a series fan.",
+  "en": "The film is in English and critics are lukewarm, with 30% from 87 reviews on Rotten Tomatoes. Ariana Grande adds a bright, funny touch, but the comedic premise feels worn out.",
   "fid": "focker-in-law",
-  "verdict": "skip",
-  "written": "2026-11-24"
+  "verdict": "mixed",
+  "written": "2026-11-27"
 }
